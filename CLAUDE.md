@@ -87,6 +87,20 @@ invece di duplicarlo. Se non c'è nessuna scadenza il file non si riscrive,
 altrimenti l'iPhone cancellerebbe gli eventi. Il file va servito con fine riga
 CRLF: `.gitattributes` impedisce a Git di convertirlo.
 
+## Chiedi
+
+La pagina risponde a: «chi schiero?» (l'undici in poche righe e le cose da
+tenere d'occhio), un ruolo (chi gioca nel modulo scelto con il motivo, gli altri
+solo per nome), un confronto «A o B?», un giocatore (anche senza accenti o con
+parte del cognome; con più omonimi chiede quale), «chi affronto?», «infortunati»,
+«aggiorna i dati». Le domande pronte si generano dai dati: una è sempre il
+ballottaggio vero in difesa.
+
+Microfono: su scelta dell'utente si usa il riconoscimento vocale del browser,
+che su iPhone è poco affidabile, soprattutto dall'icona sulla Home. Ogni errore
+ha un messaggio che dice il perché e ricorda la dettatura della tastiera, che
+funziona sempre: dal messaggio riportato dall'utente si capisce la causa.
+
 ## Siri
 
 Un Comando Rapido apre l'app con la domanda nell'indirizzo (`?q=...`). L'app
@@ -137,11 +151,7 @@ lato, e il risultato sarebbe una precisione finta.
    dell'avversario (`PESI`) sono stime ragionevoli, non tarate. Dopo una decina
    di giornate vanno confrontati con i fantavoti reali e corretti.
 
-2. **Pagina «Chiedi».** Dall'iPhone il microfono non funziona. La pagina va
-   snellita e resa utile e reattiva: risposte sulle cose che servono davvero
-   prima di schierare.
-
-3. **Parte grafica.** Migliorie da concordare con l'utente, che ne ha già in
+2. **Parte grafica.** Migliorie da concordare con l'utente, che ne ha già in
    mente alcune. Il font ora è nel repository (`font/`): verificare sull'iPhone
    che il titolo usi davvero Barlow Condensed.
 

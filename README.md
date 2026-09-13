@@ -103,6 +103,21 @@ solo quando la Lega fissa nuovi orari.
 
 ---
 
+## La scheda Chiedi
+
+Tocca una delle domande pronte o scrivi, per esempio:
+
+- «chi schiero?» — l'undici in poche righe e i dubbi da controllare
+- «chi schiero in difesa?» — chi gioca nel modulo scelto e perché
+- «Kamara o Valle?» — chi schierare tra due, con il motivo
+- «come sta Baturina?» — anche senza accenti o con parte del cognome
+- «chi affronto?», «chi è infortunato?», «aggiorna i dati»
+
+Il microfono dell'app su iPhone può non funzionare: se succede, Jarvis dice il
+perché. Il microfono della tastiera funziona sempre.
+
+---
+
 ## Chiedere a Jarvis con Siri
 
 Jarvis risponde a una domanda passata nell'indirizzo, per esempio

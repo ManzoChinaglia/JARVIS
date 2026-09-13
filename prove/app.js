@@ -15,7 +15,7 @@ function verifica(nome, cond, dettaglio) {
 const circa = (a, b) => Math.abs(a - b) < 1e-9;
 
 // dati: file di dati/ da sostituire con un oggetto finto, o con null per "assente"
-async function avvia({ adesso, senzaOrari = false, dati = {}, search = '' }) {
+async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr }) {
   const RealDate = Date;
   const fisso = new RealDate(adesso).getTime();
   class FintaData extends RealDate {
@@ -28,11 +28,12 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '' }) {
     classList: { _s: new Set(), add(c) { this._s.add(c); }, remove(c) { this._s.delete(c); },
                  toggle(c, v) { (v === undefined ? !this._s.has(c) : v) ? this._s.add(c) : this._s.delete(c); },
                  contains(c) { return this._s.has(c); } },
-    addEventListener() {}, click() {}
+    addEventListener() {}, click() {}, focus() {}, blur() {}
   });
   const ctx = {
     Date: FintaData, console, URLSearchParams, Promise, Object, String, Math, Set, JSON,
-    setInterval() {}, location: { search, host: 'manzochinaglia.github.io', pathname: '/JARVIS/' },
+    setInterval() {}, setTimeout: () => 0, clearTimeout() {}, webkitSpeechRecognition: sr,
+    location: { search, host: 'manzochinaglia.github.io', pathname: '/JARVIS/' },
     document: { getElementById: nodo, querySelector: () => nodo('_q'), querySelectorAll: () => [] },
     fetch: async url => {
       const f = url.split('?')[0], nome = f.replace(/^dati\//, '');
@@ -179,7 +180,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '' }) {
   verifica('attaccante: l\'avversario subisce 0,4·0 + 0,6·1 = 0,6', circa(f.val, 0.6), f.val);
   verifica('attaccante: 0,8 · (0,6 − 1) = −0,32', circa(t.punteggio(att, g) - att.fm, -0.32), (t.punteggio(att, g) - att.fm).toFixed(2));
   verifica('motivo leggibile nella rosa', el.rosa.innerHTML.includes(avvD.avv + ' (4-3-3) segna 2,4 gol a partita'), avvD.avv);
-  verifica('domanda sui difensori', /in ordine di consiglio/.test(t.rispondi('chi schiero in difesa')), t.rispondi('chi schiero in difesa').split('\n')[0]);
+  verifica('domanda sui difensori', /^In difesa/.test(t.rispondi('chi schiero in difesa')), t.rispondi('chi schiero in difesa').split('\n')[0]);
   squadre[avvD.avv] = { ...forte, attuale: { casa: [5, 15, 0, 5], fuori: [5, 15, 0, 5] } };
   ({ t } = await avvia({ adesso: giovedi, dati: senzaTit }));
   verifica('dalla decima partita conta solo quest\'anno', circa(t.forza(P(d1), g).val, 3), t.forza(P(d1), g).val);
@@ -200,7 +201,61 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '' }) {
   ({ t, el } = await avvia({ adesso: '2026-09-13T12:00:00+02:00', search: '?q=come%20sta%20Baturina' }));
   verifica('domanda su un giocatore', /Baturina/.test(el.risposta.textContent), el.risposta.textContent.split('\n')[0]);
 
-  console.log('\n13. Font ospitato nel repository');
+  console.log('\n13. Pagina Chiedi');
+  const cognomeDi = p => p.nome.replace(/\s+\S{1,3}\.$/, '');
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'squadre.json': null, 'infortuni.json': null } }));
+  g = t.prossima();
+  let r = t.rispondi('Chi schiero?');
+  const scelti = Object.values(t.undici(g)).flat();
+  verifica('«chi schiero?»: tutto l\'undici in poche righe', r.startsWith('Giornata 1 contro God Bless The Doc')
+           && scelti.every(p => r.includes(p.nome)) && r.split('\n').length <= 14, r.split('\n').length + ' righe');
+  verifica('dice che le probabili non sono uscite', /non sono ancora uscite/.test(r));
+  r = t.rispondi('chi schiero in difesa');
+  verifica('per ruolo: i 4 del modulo, poi solo i nomi', /^In difesa \(4-3-3\):/.test(r)
+           && r.split('\n').filter(x => x.startsWith('· ')).length === 4 && /\nPoi: /.test(r), r.split('\n').length + ' righe');
+  verifica('domande pronte con un confronto vero', /Chi schiero\?/.test(el.esempi.innerHTML) && / o [^<]+\?/.test(el.esempi.innerHTML),
+           el.esempi.innerHTML.replace(/<\/?button>/g, ' ').trim());
+  el.esempi.onclick({ target: { closest: () => ({ textContent: 'Chi affronto?' }) } });
+  verifica('toccare una domanda pronta risponde', /affronti God Bless The Doc/.test(el.risposta.textContent));
+
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': prob5, 'squadre.json': null, 'infortuni.json': null } }));
+  g = t.prossima();
+  const [A, B] = [P(d1), P(d2)];
+  r = t.rispondi(cognomeDi(A) + ' o ' + cognomeDi(B) + '?');
+  const pa = t.punteggio(A, g), pb = t.punteggio(B, g);
+  const atteso = Math.abs(pa - pb) < 0.25 ? 'Quasi pari' : 'Meglio ' + (pa > pb ? A : B).nome;
+  verifica('confronto: verdetto dal punteggio, poi le due schede', r.startsWith(atteso) && r.includes(A.nome) && r.includes(B.nome), r.split('\n')[0]);
+  verifica('«chi schiero?» segnala chi non è nelle probabili', /non nelle probabili/.test(t.rispondi('chi schiero')));
+  verifica('ricerca senza maiuscole e con accenti', t.rispondi('come sta ' + cognomeDi(A).toUpperCase().replace(/[AEIOU]/, c => c + '̀')).startsWith(A.nome),
+           cognomeDi(A).toUpperCase().replace(/[AEIOU]/, c => c + '̀'));
+  const pezzo = t.mia.map(p => [p, cognomeDi(p).toLowerCase().slice(0, 5)])
+    .find(([p, c]) => c.length === 5 && base.p.filter(a => a[1].toLowerCase().includes(c)).length === 1);
+  if (pezzo) verifica('ricerca con parte del cognome', t.rispondi('come sta ' + pezzo[1]).startsWith(pezzo[0].nome), pezzo[1] + ' → ' + pezzo[0].nome);
+  const perCognome = {};
+  base.p.forEach(a => { const c = a[1].replace(/\s+\S{1,3}\.$/, '').toLowerCase(); (perCognome[c] = perCognome[c] || []).push(a); });
+  const omonimi = Object.entries(perCognome).find(([c, l]) => l.length > 1 && !c.includes(' ') && c.length > 3
+                                                              && l.filter(a => a[4] === base.me).length !== 1);
+  if (omonimi) verifica('omonimi: chiede quale', /Quale\?/.test(t.rispondi('come sta ' + omonimi[0])), omonimi[0]);
+
+  ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'squadre.json': null,
+        'infortuni.json': { aggiornato: '2026-09-13T00:00:00+00:00', voci: { [d2]: { rientro: '30/12/2026', motivo: 'Infortunato' } } } } }));
+  r = t.rispondi(cognomeDi(P(d1)) + ' oppure ' + cognomeDi(P(d2)));
+  verifica('confronto con un infortunato', r.startsWith('Schiera ' + P(d1).nome), r.split('\n')[0]);
+
+  ({ t, el } = await avvia({ adesso: giovedi }));
+  el.mic.onclick();
+  verifica('senza riconoscimento vocale: indica la tastiera', /microfono della tastiera/.test(el.risposta.textContent), el.risposta.textContent);
+  class VoceOk { start() { this.onresult({ results: [[{ transcript: 'chi affronto' }]] }); this.onend(); } stop() {} }
+  ({ t, el } = await avvia({ adesso: giovedi, sr: VoceOk }));
+  el.mic.onclick();
+  verifica('microfono: la frase dettata riceve risposta', /affronti God Bless The Doc/.test(el.risposta.textContent), el.risposta.textContent.split('\n')[0]);
+  class VoceNo { start() { this.onerror({ error: 'service-not-allowed' }); this.onend(); } stop() {} }
+  ({ t, el } = await avvia({ adesso: giovedi, sr: VoceNo }));
+  el.mic.onclick();
+  verifica('microfono bloccato: spiega perché', /non è disponibile/.test(el.risposta.textContent) && /tastiera/.test(el.risposta.textContent),
+           el.risposta.textContent.split('\n')[0]);
+
+  console.log('\n14. Font ospitato nel repository');
   verifica('nessuna richiesta a Google Fonts', !/fonts\.(googleapis|gstatic)\.com/.test(html));
   const fonti = [...html.matchAll(/url\("(font\/[^"]+\.woff2)"\)/g)].map(m => m[1]);
   verifica('tre spessori dichiarati', fonti.length === 3, fonti.join(', '));
