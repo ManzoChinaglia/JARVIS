@@ -69,6 +69,10 @@ Si può lanciare anche a mano: scheda **Actions** del repository → *Aggiorna J
 Se una fonte non risponde o cambia struttura, i dati precedenti **restano intatti**:
 meglio un dato di tre giorni fa che un file vuoto la domenica mattina.
 
+Se lo script si ferma te ne accorgi in due modi: su GitHub il giro risulta rosso
+(e di solito arriva un'email), e nell'app la riga sotto il titolo diventa rossa
+quando i dati hanno più di 4 giorni.
+
 ---
 
 ## Come si aggiorna la formazione consigliata

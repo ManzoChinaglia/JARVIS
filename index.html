@@ -49,6 +49,7 @@
   .refresh{background:none; border:1px solid var(--line); color:var(--dim);
            border-radius:14px; padding:5px 12px; font-size:12px;}
   .refresh.attivo{color:var(--rosa); border-color:var(--rosa);}
+  #stamp.vecchio{color:var(--rosso);}
 
   main{padding:0 18px;}
   section{display:none;}
@@ -257,6 +258,8 @@ async function carica(){
   D.sq    = sq && sq.squadre ? sq : null;
   D.inf_v = inf && inf.aggiornato ? inf.aggiornato.slice(0,10) : null;
   D.tit_v = tit && tit.aggiornato ? tit.aggiornato.slice(0,10) : null;
+  D.inf_t = inf && inf.aggiornato || null;
+  D.orari_v = ora && ora.aggiornato || null;
   players = D.p.map(a=>({id:a[0],nome:a[1],club:a[2],ruolo:a[3],team:a[4],
                          costo:a[5],quot:a[6],pgv:a[7],mv:a[8],fm:a[9],
                          out:null,motivo:null}));
@@ -481,7 +484,20 @@ function cella(p, g){
   '</div>';
 }
 
+/* indisponibile per la giornata secondo la pagina delle probabili: infortunati
+   e squalificati, che la pagina degli infortuni non riporta */
+function fuoriGiornata(p, isoData){
+  const pr = D.prob, g = D.g.find(x=>x[2]===isoData);
+  return pr && g && pr.giornata===g[1] && pr.indisponibili ? pr.indisponibili[String(p.id)] || null : null;
+}
+/* perché è fuori, in poche parole */
+function perche(p, isoData){
+  const v = fuoriGiornata(p, isoData);
+  if(v) return v.motivo+(v.fino ? ' fino al '+v.fino : ', salta questa giornata');
+  return 'Fuori fino al '+p.out+(p.motivo ? ' — '+p.motivo : '');
+}
 function disponibile(p, isoData){
+  if(fuoriGiornata(p, isoData)) return false;
   if(!p.out) return true;
   const [g,m,a] = p.out.split('/');
   return (a+'-'+m+'-'+g) <= isoData;   // rientra entro la giornata
@@ -496,7 +512,7 @@ function riga(p, g){
               : t.stato==='c' ? '<span class="camb">in panchina</span>'
               : '<span class="nodata">non nelle probabili</span>';
   const sotto = ko
-    ? '<span class="ko">Fuori fino al '+p.out+'</span>'
+    ? '<span class="ko">'+perche(p, g[2])+'</span>'
     : p.club + (sfida?' · '+sfida:'') + (stato?' · '+stato:'');
   const fm = p.pgv>0 ? p.fm.toFixed(2) : '—';
   return '<div class="riga'+(ko?' fuori':'')+'"><div class="ruolo '+p.ruolo+' cond">'+p.ruolo+'</div>'+
@@ -578,7 +594,7 @@ function scheda(p, g){
   const r = [p.nome+' — '+p.club+', '+RUOLI[p.ruolo].toLowerCase()+(p.team===ME ? '' : ' · rosa di '+p.team),
              (p.pgv ? 'Fantamedia '+num(p.fm,2)+' in '+p.pgv+(p.pgv===1 ? ' gara' : ' gare') : 'Non ha ancora giocato')+
              (Math.abs(fmStimata(p)-p.fm)>=0.05 ? ' · per il consiglio '+num(fmStimata(p),2) : ''),
-             !disponibile(p, g[2]) ? 'Fuori fino al '+p.out+' — '+p.motivo : descriviTit(titolarita(p, g)).trim()];
+             !disponibile(p, g[2]) ? perche(p, g[2]) : descriviTit(titolarita(p, g)).trim()];
   if(m) r.push((m.casa ? 'In casa con ' : 'A ')+m.avv);
   if(f) r.push(motivoAvv(f));
   return r.join('\n');
@@ -613,7 +629,8 @@ function riassuntoUndici(g){
   const scelti = [].concat(u.P, u.D, u.C, u.A);
   const riga = r => r+' '+u[r].map(p=>p.nome).join(', ');
   const dubbi = [];
-  if(!D.prob || D.prob.giornata!==g[1]) dubbi.push('Le probabili di questa giornata non sono ancora uscite.');
+  if(!D.prob || D.prob.giornata!==g[1] || !(D.prob.squadre||[]).length)
+    dubbi.push('Le probabili di questa giornata non sono ancora uscite.');
   scelti.forEach(p=>{
     const t = titolarita(p, g);
     if(t && (t.stato==='c' || t.stato==='r')) dubbi.push(p.nome+': '+(t.stato==='c' ? 'in panchina' : 'non nelle probabili'));
@@ -667,9 +684,9 @@ function rispondi(q){
   if(/infortun|fuori|indisponib/.test(s)){
     const ko = mia.filter(p=>!disponibile(p,g[2]));
     const koAvv = players.filter(p=>p.team===av.nome && !disponibile(p,g[2]));
-    let r = ko.length ? 'Tuoi indisponibili:\n'+ko.map(p=>'· '+p.nome+' fino al '+p.out+' ('+p.motivo+')').join('\n')
+    let r = ko.length ? 'Tuoi indisponibili:\n'+ko.map(p=>'· '+p.nome+' — '+perche(p, g[2])).join('\n')
                       : 'Nessun tuo giocatore è indisponibile per questa giornata.';
-    if(koAvv.length) r += '\n\nIndisponibili di '+av.nome+':\n'+koAvv.map(p=>'· '+p.nome+' fino al '+p.out).join('\n');
+    if(koAvv.length) r += '\n\nIndisponibili di '+av.nome+':\n'+koAvv.map(p=>'· '+p.nome+' — '+perche(p, g[2])).join('\n');
     return r;
   }
 
@@ -705,11 +722,20 @@ function rispondi(q){
 }
 
 /* ---------- aggiornamento dati ---------- */
+/* se lo script non gira da giorni meglio saperlo: i consigli sarebbero su dati vecchi.
+   orari.json si riscrive a ogni giro, quindi dice se lo script sta girando. */
+const GIORNI_VECCHI = 4;
+function giorniDa(iso){ return iso ? (oggi() - new Date(iso)) / 86400000 : 0; }
 function mostraData(){
   const a = D.inf_v ? 'infortuni del '+dataIt(D.inf_v) : 'infortuni non disponibili';
-  const b = D.prob && D.prob.giornata===prossima()[1] ? 'probabili del '+dataIt(D.tit_v)
-                                                      : 'probabili non ancora uscite';
-  document.getElementById('stamp').textContent = a+' · '+b;
+  const b = D.prob && D.prob.giornata===prossima()[1] && (D.prob.squadre||[]).length
+          ? 'probabili del '+dataIt(D.tit_v) : 'probabili non ancora uscite';
+  const script = giorniDa(D.orari_v), inf = giorniDa(D.inf_t);
+  const avviso = script > GIORNI_VECCHI ? 'dati fermi da '+Math.floor(script)+' giorni: lo script non sta girando'
+               : inf > GIORNI_VECCHI ? 'infortuni fermi da '+Math.floor(inf)+' giorni' : '';
+  const el = document.getElementById('stamp');
+  el.textContent = avviso || a+' · '+b;
+  el.classList.toggle('vecchio', !!avviso);
 }
 async function aggiorna(silenzioso){
   const b = document.getElementById('refresh');
@@ -722,12 +748,12 @@ async function aggiorna(silenzioso){
       fetch('dati/orari.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
       fetch('dati/squadre.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)
     ]);
-    if(o && o.giornate && Object.keys(o.giornate).length>=38) D.orari = o.giornate;
+    if(o && o.giornate && Object.keys(o.giornate).length>=38){ D.orari = o.giornate; D.orari_v = o.aggiornato || D.orari_v; }
     if(s && s.squadre && Object.keys(s.squadre).length>=20) D.sq = s;
     if(i && i.voci && Object.keys(i.voci).length>=5){
       players.forEach(p=>{ const v=i.voci[String(p.id)];
         p.out = v?v.rientro:null; p.motivo = v?v.motivo:null; });
-      D.inf_v = (i.aggiornato||'').slice(0,10) || D.inf_v; cambiato = true;
+      D.inf_v = (i.aggiornato||'').slice(0,10) || D.inf_v; D.inf_t = i.aggiornato || D.inf_t; cambiato = true;
     }
     if(t && t.giornata && t.titolari){
       D.prob = t;

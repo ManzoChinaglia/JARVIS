@@ -67,15 +67,25 @@ def riga(p, perc):
             f'<td class="prb-cella"><span>{perc}%</span></td>'
             f'<td class="prb-cella prb-cella--media"><span>{perc}%</span></td></tr>')
 
+def riga_fuori(p, etichetta, data=None):
+    cognome, ini = come_pagina(p['nome'])
+    return (f'<li class="prb-fuori__riga"><span class="role">X</span>'
+            f'<span class="prb-nome">{cognome} <small>{ini}</small></span>'
+            f'<span class="fco-etichetta fco-etichetta--fare">{etichetta}</span>'
+            + (f'<span class="prb-fuori__data">{data}</span>' if data else '') + '</li>')
+
 def pagina(n, pubblicate, titolari=11, blocchi=20):
     sezioni = []
     for sq in SQUADRE20[:blocchi]:
+        rosa = [p for p in listone if p['squadra'] == sq]
         if sq in pubblicate:
-            rosa = [p for p in listone if p['squadra'] == sq]
             corpo = (f'<table class="prb-tabella"><tbody>{"".join(riga(p, 90) for p in rosa[:titolari])}</tbody></table>'
                      f'<table class="prb-tabella"><tbody>{"".join(riga(p, 30) for p in rosa[titolari:titolari + 2])}</tbody></table>')
         else:
             corpo = '<div class="prb-vuoto">Nessuna redazione ha ancora pubblicato la formazione di questa squadra.</div>'
+        if sq == 'Roma':   # uno squalificato e un infortunato con data di rientro
+            corpo += ('<div class="prb-fuori"><ul class="prb-fuori__elenco">' + riga_fuori(rosa[15], 'Squalificato')
+                      + riga_fuori(rosa[16], 'Infortunato', 'fino al 28/10') + '</ul></div>')
         sezioni.append(f'<section class="prb-squadra"><h2 class="prb-squadra__nome">{sq}</h2>{corpo}</section>')
     return Risposta(f'<html><head><title>Probabili Formazioni Serie A 2026/2027 - {n}ª Giornata</title></head>'
                     f'<body>{"".join(sezioni)}</body></html>')
@@ -92,6 +102,14 @@ verifica('4 in panchina al 30%', len(t['panchina']) == 4 and set(t['panchina'].v
 servi({url5: pagina(5, [])})
 t = mod.titolari(listone, 5)
 verifica('nulla di pubblicato: nessun titolare', t['titolari'] == {} and t['squadre'] == [])
+roma = [p for p in listone if p['squadra'] == 'Roma']
+verifica('indisponibili letti anche senza probabili',
+         t['indisponibili'].get(str(roma[15]['id'])) == {'motivo': 'Squalificato'}
+         and t['indisponibili'].get(str(roma[16]['id'])) == {'motivo': 'Infortunato', 'fino': '28/10'}, t['indisponibili'])
+verifica('2 indisponibili e niente probabili: non si scrive', not mod.titolari_utili(t))
+verifica('con le probabili di una squadra si scrive', mod.titolari_utili({'titolari': {str(i): 90 for i in range(11)}, 'indisponibili': {}}))
+verifica('con 5 indisponibili si scrive anche senza probabili',
+         mod.titolari_utili({'titolari': {}, 'indisponibili': {str(i): {'motivo': 'Infortunato'} for i in range(5)}}))
 with tempfile.TemporaryDirectory() as d:
     p = os.path.join(d, 'titolari.json')
     with open(p, 'w', encoding='utf-8') as f:

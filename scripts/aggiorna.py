@@ -6,7 +6,8 @@ rendimento delle squadre.
 Scrive cinque file in dati/:
   dati/infortuni.json   { "aggiornato": "...", "voci": { "<id>": {...} } }
   dati/titolari.json    { "aggiornato": "...", "giornata": 5, "squadre": [...],
-                          "titolari": { "<id>": 97 }, "panchina": { "<id>": 30 } }
+                          "titolari": { "<id>": 97 }, "panchina": { "<id>": 30 },
+                          "indisponibili": { "<id>": { "motivo": "Squalificato", "fino": "28/10" } } }
   dati/orari.json       { "aggiornato": "...", "giornate": { "<giornata Serie A>": {...} } }
   dati/squadre.json     { "aggiornato": "...", "squadre": { "<squadra>": {...} }, ... }
   dati/jarvis.ics       calendario da sottoscrivere: scadenze e promemoria dell'esportazione
@@ -114,10 +115,12 @@ def trova_composto(listone, squadra, nome):
     return candidati[0] if len(candidati) == 1 else None
 
 
-def scrivi(percorso, contenuto, minimo, etichetta):
-    """Scrive solo se il risultato e' plausibile, altrimenti lascia il file com'e'."""
-    voci = next((contenuto[k] for k in ('voci', 'stato', 'giornate', 'titolari', 'squadre') if k in contenuto), {})
-    n = len(voci)
+def scrivi(percorso, contenuto, minimo, etichetta, n=None):
+    """Scrive solo se il risultato e' plausibile, altrimenti lascia il file com'e'.
+    n: quante voci contare, se non e' la lunghezza della prima raccolta del file."""
+    if n is None:
+        voci = next((contenuto[k] for k in ('voci', 'stato', 'giornate', 'titolari', 'squadre') if k in contenuto), {})
+        n = len(voci)
     if n < minimo:
         print(f'[{etichetta}] solo {n} voci (minimo {minimo}): non aggiorno, tengo i dati precedenti.')
         return False
@@ -195,9 +198,27 @@ def titolari(listone, n):
     if len(blocchi) != 20:
         raise ValueError(f'{len(blocchi)} squadre invece di 20: la fonte ha cambiato struttura')
 
-    tit, panca, pubblicate, mancati = {}, {}, [], []
+    tit, panca, indisp, pubblicate, mancati = {}, {}, {}, [], []
     for b in blocchi:
         squadra = b.select_one('.prb-squadra__nome').get_text(' ', strip=True)
+        # indisponibili della giornata (infortunati e squalificati): escono prima delle probabili
+        for riga in b.select('.prb-fuori__riga'):
+            span = riga.select_one('.prb-nome')
+            if not span:
+                continue
+            nome = leggi_nome(span)
+            p = trova(listone, squadra, nome)
+            if not p:
+                mancati.append(f'{squadra} {nome}')
+                continue
+            etichetta = riga.select_one('.fco-etichetta')
+            voce = {'motivo': etichetta.get_text(' ', strip=True) if etichetta else 'Indisponibile'}
+            data = riga.select_one('.prb-fuori__data')
+            fino = re.search(r'(\d{1,2})/(\d{1,2})', data.get_text()) if data else None
+            if fino:
+                voce['fino'] = f'{int(fino[1]):02d}/{int(fino[2]):02d}'
+            indisp[str(p['id'])] = voce
+
         tabelle = b.select('table.prb-tabella')
         if not tabelle:
             continue                      # nessuna redazione ha ancora pubblicato
@@ -220,9 +241,17 @@ def titolari(listone, n):
 
     if mancati:
         print('[titolari] non abbinati:', ', '.join(mancati))
-    print(f'[titolari] giornata {n}: {len(pubblicate)} squadre pubblicate su 20.')
+    squalificati = sum(1 for v in indisp.values() if v['motivo'].lower().startswith('squalific'))
+    print(f'[titolari] giornata {n}: {len(pubblicate)} squadre pubblicate su 20, '
+          f'{len(indisp)} indisponibili ({squalificati} squalificati).')
     return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'giornata': n,
-            'squadre': sorted(pubblicate), 'titolari': tit, 'panchina': panca}
+            'squadre': sorted(pubblicate), 'titolari': tit, 'panchina': panca, 'indisponibili': indisp}
+
+
+def titolari_utili(t):
+    """Si scrive se ci sono le probabili di almeno una squadra, oppure gli
+    indisponibili della giornata, che escono giorni prima delle probabili."""
+    return len(t['titolari']) >= 11 or len(t.get('indisponibili', {})) >= 5
 
 
 def precedenti(percorso, chiave):
@@ -466,7 +495,12 @@ def main():
         if n is None:
             print('[titolari] campionato finito, niente da scaricare.')
         else:
-            scrivi(os.path.join(DATI, 'titolari.json'), titolari(listone, n), 11, 'titolari')
+            t = titolari(listone, n)
+            if titolari_utili(t):
+                scrivi(os.path.join(DATI, 'titolari.json'), t, 0, 'titolari',
+                       n=len(t['titolari']) + len(t['panchina']) + len(t['indisponibili']))
+            else:
+                print('[titolari] né probabili né indisponibili per questa giornata: tengo il file precedente.')
     except Exception as e:
         print('[titolari] fallito:', e)
         uscita = 1

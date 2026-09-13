@@ -15,6 +15,8 @@ function verifica(nome, cond, dettaglio) {
 const circa = (a, b) => Math.abs(a - b) < 1e-9;
 
 // dati: file di dati/ da sostituire con un oggetto finto, o con null per "assente"
+// orari.json e infortuni.json veri vengono "aggiornati" al giorno simulato, così
+// l'avviso dei dati vecchi non dipende dal giorno in cui si lanciano le prove
 async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr }) {
   const RealDate = Date;
   const fisso = new RealDate(adesso).getTime();
@@ -46,6 +48,11 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
       const p = path.join(REPO, f);
       if (!fs.existsSync(p)) return { ok: false, status: 404 };
       const testo = fs.readFileSync(p, 'utf8');
+      if (nome === 'orari.json' || nome === 'infortuni.json') {
+        const o = JSON.parse(testo);
+        o.aggiornato = new RealDate(fisso).toISOString();
+        return { ok: true, status: 200, json: async () => o };
+      }
       return { ok: true, status: 200, json: async () => JSON.parse(testo) };
     }
   };
@@ -53,7 +60,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   vm.createContext(ctx);
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},' +
-    'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata};', ctx);
+    'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -247,6 +254,31 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   const nuovo = t.mia.find(p => p.pgv === 0 && p.ruolo !== 'P');
   if (nuovo) verifica('la scheda mostra la stima usata', /per il consiglio/.test(t.rispondi('come sta ' + cognomeDi(nuovo))),
                       t.rispondi('come sta ' + cognomeDi(nuovo)).split('\n')[1]);
+
+  console.log('\n11ter. Squalificati e dati vecchi');
+  const indisp5 = { aggiornato: '2026-09-15T09:00:00+00:00', giornata: 5, squadre: [], titolari: {}, panchina: {},
+                    indisponibili: { [d1]: { motivo: 'Squalificato' }, [d2]: { motivo: 'Infortunato', fino: '28/10' } } };
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': indisp5, 'squadre.json': null, 'infortuni.json': null } }));
+  g = t.prossima();
+  verifica('lo squalificato non è disponibile e non entra nell\'undici', !t.disponibile(P(d1), g[2])
+           && !Object.values(t.undici(g)).flat().includes(P(d1)));
+  verifica('motivo nella rosa', el.rosa.innerHTML.includes('Squalificato, salta questa giornata'));
+  verifica('infortunato dalla pagina di giornata, con la data', el.rosa.innerHTML.includes('Infortunato fino al 28/10'));
+  verifica('«chi è infortunato?» li elenca', /Squalificato/.test(t.rispondi('chi è infortunato')) && /28\/10/.test(t.rispondi('chi è infortunato')));
+  verifica('solo indisponibili: le probabili risultano non uscite', /probabili non ancora uscite/.test(el.stamp.textContent), el.stamp.textContent);
+  ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': { ...indisp5, giornata: 4 }, 'squadre.json': null, 'infortuni.json': null } }));
+  g = t.prossima();
+  verifica('squalifica di un\'altra giornata: disponibile', t.disponibile(P(d1), g[2]));
+  const orariVeri = JSON.parse(fs.readFileSync(path.join(REPO, 'dati', 'orari.json'), 'utf8'));
+  ({ el } = await avvia({ adesso: '2026-09-20T12:00:00+02:00', dati: { 'orari.json': { ...orariVeri, aggiornato: '2026-09-13T08:00:00+00:00' } } }));
+  verifica('script fermo da 7 giorni: avviso in rosso', /dati fermi da 7 giorni/.test(el.stamp.textContent)
+           && el.stamp.classList.contains('vecchio'), el.stamp.textContent);
+  ({ el } = await avvia({ adesso: '2026-09-20T12:00:00+02:00', dati: {
+          'orari.json': { ...orariVeri, aggiornato: '2026-09-19T08:00:00+00:00' },
+          'infortuni.json': { aggiornato: '2026-09-13T08:00:00+00:00', voci: {} } } }));
+  verifica('infortuni fermi da 7 giorni', /infortuni fermi da 7 giorni/.test(el.stamp.textContent), el.stamp.textContent);
+  ({ el } = await avvia({ adesso: '2026-09-20T12:00:00+02:00' }));
+  verifica('dati freschi: nessun avviso', !el.stamp.classList.contains('vecchio'), el.stamp.textContent);
 
   console.log('\n12. Domanda dal Comando Rapido di Siri (?q=...)');
   ({ t, el } = await avvia({ adesso: '2026-09-13T12:00:00+02:00', search: '?q=chi%20affronto' }));

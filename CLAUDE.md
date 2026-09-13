@@ -101,6 +101,15 @@ che su iPhone è poco affidabile, soprattutto dall'icona sulla Home. Ogni errore
 ha un messaggio che dice il perché e ricorda la dettatura della tastiera, che
 funziona sempre: dal messaggio riportato dall'utente si capisce la causa.
 
+## Dati vecchi
+
+Lo script può fallire senza che nessuno lo veda. Due difese:
+- nel workflow il salvataggio ha `if: always()` e lo script non ha più
+  `continue-on-error`: i dati buoni si salvano comunque, ma il giro risulta
+  rosso su GitHub, che di norma avvisa per email
+- nell'app l'intestazione diventa rossa se `orari.json` (riscritto a ogni giro)
+  o gli infortuni hanno più di 4 giorni (`GIORNI_VECCHI`)
+
 ## Siri
 
 Un Comando Rapido apre l'app con la domanda nell'indirizzo (`?q=...`). L'app
@@ -116,6 +125,13 @@ Lo script scarica la giornata di Serie A della prossima giornata di lega e salva
 in `dati/titolari.json` anche il numero della giornata e le squadre già
 pubblicate. L'app usa le percentuali **solo se la giornata coincide** con quella
 mostrata; altrimenti scrive «probabili non ancora uscite».
+
+La stessa pagina elenca gli **indisponibili della giornata** (infortunati e
+squalificati, a volte con «fino al»), anche giorni prima delle probabili: lo
+script li salva in `titolari.json` e scrive il file se ci sono le probabili di
+almeno una squadra o almeno 5 indisponibili. La pagina degli infortuni non
+riporta gli squalificati. Nell'app chi è indisponibile per la giornata non viene
+consigliato, con il motivo.
 
 La pagina `/it/consigli-fantacalcio/probabili-formazioni-serie-a` contiene le
 formazioni tipo di stagione: serve solo per il modulo abituale, mai per la
@@ -163,20 +179,15 @@ lato, e il risultato sarebbe una precisione finta.
    strumento per farlo. Serve uno script che converta l'esportazione di Leghe
    Fantacalcio mantenendo gli Id del listone e il calendario già presente.
 
-2. **Squalificati e dati vecchi.** Lo script legge solo gli infortunati: gli
-   squalificati vanno presi dalle probabili per giornata. L'app deve avvisare se
-   infortuni o probabili non si aggiornano da troppi giorni (lo script può
-   fallire senza che nessuno se ne accorga).
-
-3. **Probabili più fresche e panchina.** Giri in più dello script poco prima
+2. **Probabili più fresche e panchina.** Giri in più dello script poco prima
    delle scadenze del weekend (le probabili si aggiornano alle 11:30 e alle
    19:30); suggerire l'ordine della panchina.
 
-4. **Verificare i pesi del consiglio.** I pesi della titolarità e
+3. **Verificare i pesi del consiglio.** I pesi della titolarità e
    dell'avversario (`PESI`) sono stime ragionevoli, non tarate. Dopo una decina
    di giornate vanno confrontati con i fantavoti reali e corretti.
 
-5. **Parte grafica.** Migliorie da concordare con l'utente, che ne ha già in
+4. **Parte grafica.** Migliorie da concordare con l'utente, che ne ha già in
    mente alcune. Il font ora è nel repository (`font/`): verificare sull'iPhone
    che il titolo usi davvero Barlow Condensed.
 

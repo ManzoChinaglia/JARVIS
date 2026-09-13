@@ -25,9 +25,11 @@ jobs:
 
       - name: Scarica i dati e genera il calendario
         run: python scripts/aggiorna.py
-        continue-on-error: true
 
+      # si salva anche se una fonte è fallita: i dati buoni restano, ma il giro
+      # risulta rosso su GitHub (che di norma avvisa per email)
       - name: Salva i dati aggiornati
+        if: always()
         run: |
           if [ -n "$(git status --porcelain dati/)" ]; then
             git config user.name  "Jarvis"
