@@ -76,11 +76,14 @@ meglio un dato di tre giorni fa che un file vuoto la domenica mattina.
 La difesa è **sempre a quattro**. Il modulo cambia solo nei reparti avanzati
 (4-3-3, 4-4-2, 4-5-1) dal selettore sopra il campo.
 
-Il punteggio con cui Jarvis ordina i giocatori parte dalla fantamedia e tiene conto di:
+Il punteggio con cui Jarvis ordina i giocatori parte dalla fantamedia (con poche
+partite avvicinata a quella attesa per la quotazione, così un gol fortunato o un
+esordio non contano troppo) e tiene conto di:
 
 1. **disponibilità** — chi è infortunato alla data della giornata è escluso
 2. **titolarità** — la percentuale media delle quattro redazioni nelle probabili
-   della giornata. Finché non escono non conta, e l'app lo dice
+   della giornata. Finché non escono si stima dalle presenze (partite giocate su
+   quelle della squadra), e l'app lo dice
 3. **avversario**, nel campo in cui gioca: per portiere e difensori quanti gol
    segna, per centrocampisti e attaccanti quanti ne subisce. Fino alla decima
    giornata i numeri di quest'anno si mescolano con quelli dell'anno scorso;

@@ -52,7 +52,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   ctx.window = ctx;
   vm.createContext(ctx);
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
-    'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub};', ctx);
+    'get players(){return players},get STIME(){return STIME},' +
+    'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -125,6 +126,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   const clubs = [...new Set(base.p.map(a => a[2]))];
   const [d1, d2, d3] = base.p.filter(a => a[4] === base.me && a[3] === 'D').map(a => a[0]);
   const P = id => t.mia.find(p => p.id === id);
+  const cognomeDi = p => p.nome.replace(/\s+\S{1,3}\.$/, '');
   const prob5 = { aggiornato: '2026-09-17T09:30:00+00:00', giornata: 5, squadre: clubs,
                   titolari: { [d1]: 95 }, panchina: { [d2]: 40 } };
   const giovedi = '2026-09-17T12:00:00+02:00';
@@ -138,8 +140,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   verifica('in panchina', x && x.stato === 'c', JSON.stringify(x));
   x = t.titolarita(P(d3), g);
   verifica('squadra pubblicata, giocatore assente: 0%', x && x.stato === 'r' && x.perc === 0, JSON.stringify(x));
-  verifica('titolare al 95% vale +1,12', circa(t.punteggio(P(d1), g) - P(d1).fm, 1.12), (t.punteggio(P(d1), g) - P(d1).fm).toFixed(2));
-  verifica('fuori dalle probabili vale −0,40', circa(t.punteggio(P(d3), g) - P(d3).fm, -0.4), (t.punteggio(P(d3), g) - P(d3).fm).toFixed(2));
+  verifica('titolare al 95% vale +1,12', circa(t.punteggio(P(d1), g) - t.fmStimata(P(d1)), 1.12), (t.punteggio(P(d1), g) - t.fmStimata(P(d1))).toFixed(2));
+  verifica('fuori dalle probabili vale −0,40', circa(t.punteggio(P(d3), g) - t.fmStimata(P(d3)), -0.4), (t.punteggio(P(d3), g) - t.fmStimata(P(d3))).toFixed(2));
   verifica('la rosa mostra la percentuale', el.rosa.innerHTML.includes('titolare 95%'));
   verifica('intestazione', /probabili del/.test(el.stamp.textContent), el.stamp.textContent);
   verifica('risposta su un giocatore', /Titolare al 95%/.test(t.rispondi('come sta ' + P(d1).nome)), t.rispondi('come sta ' + P(d1).nome).replace(/\n/g, ' / '));
@@ -150,7 +152,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
     ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': file, 'squadre.json': null } }));
     g = t.prossima();
     verifica(nome + ': nessuna titolarità inventata', t.mia.every(p => t.titolarita(p, g) === null));
-    verifica(nome + ': punteggio = fantamedia', t.mia.every(p => t.punteggio(p, g) === p.fm));
+    verifica(nome + ': punteggio = fantamedia stimata', t.mia.every(p => t.punteggio(p, g) === t.fmStimata(p)));
     verifica(nome + ': intestazione', /probabili non ancora uscite/.test(el.stamp.textContent), el.stamp.textContent);
   }
 
@@ -166,7 +168,10 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   g = t.prossima();
   const att = t.mia.find(p => p.ruolo === 'A');
   const avvD = t.avversarioClub(P(d1).club, g[1]), avvA = t.avversarioClub(att.club, g[1]);
-  verifica('avversario nella media: nessun effetto', circa(t.forza(P(d1), g).delta, 0) && t.punteggio(P(d1), g) === P(d1).fm);
+  // senza probabili la titolarità si stima dalle presenze: la si toglie per isolare l'avversario
+  const tit = p => { const y = t.titolarita(p, g); return y ? -0.4 + 1.6 * y.perc / 100 : 0; };
+  const base1 = p => t.fmStimata(p) + tit(p);
+  verifica('avversario nella media: nessun effetto', circa(t.forza(P(d1), g).delta, 0) && circa(t.punteggio(P(d1), g), base1(P(d1))));
   // avversario che segna tanto e non subisce: 4 partite quest'anno, quindi 40% quest'anno e 60% l'anno scorso
   const forte = { attuale: { casa: [2, 6, 0, 2], fuori: [2, 6, 0, 2] },
                   precedente: { casa: [19, 38, 19, 5], fuori: [19, 38, 19, 5] }, modulo: '4-3-3' };
@@ -174,11 +179,11 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   ({ t, el } = await avvia({ adesso: giovedi, dati: senzaTit }));
   let f = t.forza(P(d1), g);
   verifica('difensore: l\'avversario segna 0,4·3 + 0,6·2 = 2,4', circa(f.val, 2.4), f.val);
-  verifica('difensore: 0,8 · (1 − 2,4) = −1,12', circa(t.punteggio(P(d1), g) - P(d1).fm, -1.12), (t.punteggio(P(d1), g) - P(d1).fm).toFixed(2));
+  verifica('difensore: 0,8 · (1 − 2,4) = −1,12', circa(t.punteggio(P(d1), g) - base1(P(d1)), -1.12), (t.punteggio(P(d1), g) - base1(P(d1))).toFixed(2));
   verifica('campo dell\'avversario', f.campo === (avvD.casa ? 'fuori' : 'casa'), f.campo + (avvD.casa ? ' (noi in casa)' : ' (noi fuori)'));
   f = t.forza(att, g);
   verifica('attaccante: l\'avversario subisce 0,4·0 + 0,6·1 = 0,6', circa(f.val, 0.6), f.val);
-  verifica('attaccante: 0,8 · (0,6 − 1) = −0,32', circa(t.punteggio(att, g) - att.fm, -0.32), (t.punteggio(att, g) - att.fm).toFixed(2));
+  verifica('attaccante: 0,8 · (0,6 − 1) = −0,32', circa(t.punteggio(att, g) - base1(att), -0.32), (t.punteggio(att, g) - base1(att)).toFixed(2));
   verifica('motivo leggibile nella rosa', el.rosa.innerHTML.includes(avvD.avv + ' (4-3-3) segna 2,4 gol a partita'), avvD.avv);
   verifica('domanda sui difensori', /^In difesa/.test(t.rispondi('chi schiero in difesa')), t.rispondi('chi schiero in difesa').split('\n')[0]);
   squadre[avvD.avv] = { ...forte, attuale: { casa: [5, 15, 0, 5], fuori: [5, 15, 0, 5] } };
@@ -188,11 +193,60 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   ({ t, el } = await avvia({ adesso: giovedi, dati: senzaTit }));
   verifica('neopromossa segnalata come stima', el.rosa.innerHTML.includes('neopromossa, stima'));
 
+  console.log('\n10bis. Presenze finché non escono le probabili');
+  const uniformi = {};
+  clubs.forEach(c => uniformi[c] = { attuale: { casa: [2, 2, 2, 1], fuori: [2, 2, 2, 1] },
+                                     precedente: { casa: [19, 19, 19, 5], fuori: [19, 19, 19, 5] } });
+  const sq2 = { ...sq, squadre: uniformi };
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'infortuni.json': null, 'squadre.json': sq2 } }));
+  g = t.prossima();
+  const reg = t.mia.find(p => p.pgv === 3), zero = t.mia.find(p => p.pgv === 0 && p.ruolo !== 'P');
+  x = t.titolarita(reg, g);
+  verifica('3 partite su 4: presenze al 75%', x && x.stato === 's' && x.perc === 75, JSON.stringify(x));
+  verifica('vale come titolarità al 75%: +0,80', circa(t.punteggio(reg, g) - t.fmStimata(reg), 0.8), (t.punteggio(reg, g) - t.fmStimata(reg)).toFixed(2));
+  if (zero) {
+    x = t.titolarita(zero, g);
+    verifica('0 partite su 4: pesa come fuori dalle probabili', x && x.perc === 0 && circa(t.punteggio(zero, g) - t.fmStimata(zero), -0.4),
+             zero.nome + ' ' + JSON.stringify(x));
+    verifica('ed è tra le cose da tenere d\'occhio se entra', !Object.values(t.undici(g)).flat().includes(zero) ||
+             t.rispondi('chi schiero').includes(zero.nome + ': ha giocato 0 partite su 4'));
+  }
+  verifica('la rosa mostra le presenze', el.rosa.innerHTML.includes('presenze 3/4'));
+  ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': prob5, 'infortuni.json': null, 'squadre.json': sq2 } }));
+  verifica('uscite le probabili, contano solo quelle', t.mia.every(p => t.titolarita(p, g).stato !== 's'));
+  ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': { ...prob5, squadre: [] }, 'infortuni.json': null, 'squadre.json': sq2 } }));
+  verifica('squadra non ancora pubblicata: si resta sulle presenze', t.mia.every(p => t.titolarita(p, g).stato === 's'));
+
   console.log('\n11. Senza squadre.json');
   ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'squadre.json': null } }));
   g = t.prossima();
   verifica('nessuna forza inventata', t.mia.every(p => t.forza(p, g) === null));
   verifica('undici completo lo stesso', Object.values(t.undici(g)).flat().length === 11);
+
+  console.log('\n11bis. Fantamedia stimata con poche partite');
+  ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'squadre.json': null } }));
+  // retta fantamedia ~ quotazione per ruolo, pesata per partite: ricalcolata qui da zero
+  const retta = r => {
+    const gg = base.p.filter(a => a[3] === r && a[7] > 0), W = gg.reduce((s, a) => s + a[7], 0);
+    const mq = gg.reduce((s, a) => s + a[7] * a[6], 0) / W, mf = gg.reduce((s, a) => s + a[7] * a[9], 0) / W;
+    const b = Math.max(0, gg.reduce((s, a) => s + a[7] * (a[6] - mq) * (a[9] - mf), 0) /
+                          gg.reduce((s, a) => s + a[7] * (a[6] - mq) ** 2, 0));
+    return { a: mf - b * mq, b };
+  };
+  const R = { P: retta('P'), D: retta('D'), C: retta('C'), A: retta('A') };
+  const attesa = a => (a[7] * a[9] + 5 * (R[a[3]].a + R[a[3]].b * a[6])) / (a[7] + 5);
+  verifica('stessa stima calcolata da zero, per tutti i giocatori delle rose',
+           base.p.every(a => circa(t.fmStimata(t.players.find(p => p.id === a[0])), attesa(a))), base.p.length + ' giocatori');
+  const mai = t.players.filter(p => p.pgv === 0);
+  verifica('chi non ha ancora giocato non vale 0', mai.every(p => t.fmStimata(p) > 3),
+           mai.slice(0, 3).map(p => p.nome + ' ' + t.fmStimata(p).toFixed(2)).join(', '));
+  verifica('pendenza della quotazione mai negativa', Object.values(t.STIME).every(s => s && s.b >= 0));
+  const alto = t.mia.filter(p => p.pgv <= 1 && p.ruolo === 'A').sort((a, b) => b.quot - a.quot);
+  if (alto.length > 1) verifica('a parità di partite conta la quotazione', t.fmStimata(alto[0]) > t.fmStimata(alto[alto.length - 1]) ||
+                                alto[0].fm < alto[alto.length - 1].fm, alto.map(p => p.nome + ' q' + p.quot + ' ' + t.fmStimata(p).toFixed(2)).join(', '));
+  const nuovo = t.mia.find(p => p.pgv === 0 && p.ruolo !== 'P');
+  if (nuovo) verifica('la scheda mostra la stima usata', /per il consiglio/.test(t.rispondi('come sta ' + cognomeDi(nuovo))),
+                      t.rispondi('come sta ' + cognomeDi(nuovo)).split('\n')[1]);
 
   console.log('\n12. Domanda dal Comando Rapido di Siri (?q=...)');
   ({ t, el } = await avvia({ adesso: '2026-09-13T12:00:00+02:00', search: '?q=chi%20affronto' }));
@@ -202,7 +256,6 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   verifica('domanda su un giocatore', /Baturina/.test(el.risposta.textContent), el.risposta.textContent.split('\n')[0]);
 
   console.log('\n13. Pagina Chiedi');
-  const cognomeDi = p => p.nome.replace(/\s+\S{1,3}\.$/, '');
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'squadre.json': null, 'infortuni.json': null } }));
   g = t.prossima();
   let r = t.rispondi('Chi schiero?');

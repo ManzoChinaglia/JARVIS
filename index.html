@@ -263,6 +263,7 @@ async function carica(){
   if(inf && inf.voci) players.forEach(p=>{ const v=inf.voci[String(p.id)];
     if(v){ p.out=v.rientro; p.motivo=v.motivo; } });
   mia = players.filter(p=>p.team===ME);
+  stimaQuotazioni();
 }
 
 function oggi(){ return new Date(); }
@@ -355,14 +356,23 @@ let modulo = '4-3-3';
    null se per quella squadra e quella giornata non sono ancora uscite. */
 function titolarita(p, g){
   const pr = D.prob;
-  if(!pr || pr.giornata!==g[1] || !(pr.squadre||[]).includes(p.club)) return null;
-  const id = String(p.id);
-  if(id in pr.titolari) return {stato:'t', perc:pr.titolari[id]};
-  if(pr.panchina && id in pr.panchina) return {stato:'c', perc:pr.panchina[id]};
-  return {stato:'r', perc:0};
+  if(pr && pr.giornata===g[1] && (pr.squadre||[]).includes(p.club)){
+    const id = String(p.id);
+    if(id in pr.titolari) return {stato:'t', perc:pr.titolari[id]};
+    if(pr.panchina && id in pr.panchina) return {stato:'c', perc:pr.panchina[id]};
+    return {stato:'r', perc:0};
+  }
+  /* probabili non ancora uscite: una stima dalle presenze (partite giocate su
+     quelle della squadra), altrimenti chi non ha mai giocato conterebbe come gli altri */
+  const s = D.sq && D.sq.squadre[p.club];
+  const n = s ? s.attuale.casa[0] + s.attuale.fuori[0] : 0;
+  if(!n) return null;
+  const giocate = Math.min(p.pgv, n);
+  return {stato:'s', perc:Math.round(100*giocate/n), giocate, di:n};
 }
 function descriviTit(t){
   return !t ? '\nProbabili di questa giornata non ancora uscite.'
+       : t.stato==='s' ? '\nProbabili non ancora uscite: ha giocato '+t.giocate+(t.giocate===1 ? ' partita' : ' partite')+' su '+t.di+'.'
        : t.stato==='t' ? '\nTitolare al '+t.perc+'% nelle probabili.'
        : t.stato==='c' ? '\nIn panchina nelle probabili.' : '\nNon compare nelle probabili.';
 }
@@ -399,8 +409,32 @@ function motivoAvv(f){
    difensori pesano di più per porta inviolata e modificatore difesa */
 const PESI = {P:1.0, D:0.8, C:0.4, A:0.8};
 
+/* fantamedia per il consiglio: con poche partite è rumore, quindi parte da quella
+   attesa per la quotazione (retta per ruolo, stimata sulle rose e pesata per
+   partite giocate) e si avvicina alla vera man mano che le partite crescono */
+const PARTITE_PRIOR = 5;
+let STIME = {};
+function stimaQuotazioni(){
+  STIME = {};
+  ['P','D','C','A'].forEach(r=>{
+    const g = players.filter(p=>p.ruolo===r && p.pgv>0);
+    const W = g.reduce((s,p)=>s+p.pgv, 0);
+    if(!W){ STIME[r] = null; return; }
+    const mq = g.reduce((s,p)=>s+p.pgv*p.quot, 0)/W, mf = g.reduce((s,p)=>s+p.pgv*p.fm, 0)/W;
+    const sqq = g.reduce((s,p)=>s+p.pgv*(p.quot-mq)**2, 0);
+    // una pendenza negativa sarebbe rumore: in quel caso vale la media del ruolo
+    const b = sqq ? Math.max(0, g.reduce((s,p)=>s+p.pgv*(p.quot-mq)*(p.fm-mf), 0)/sqq) : 0;
+    STIME[r] = {a: mf - b*mq, b};
+  });
+}
+function fmStimata(p){
+  const s = STIME[p.ruolo];
+  if(!s) return p.fm;
+  return (p.pgv*p.fm + PARTITE_PRIOR*(s.a + s.b*p.quot)) / (p.pgv + PARTITE_PRIOR);
+}
+
 function punteggio(p, g){
-  let v = p.fm;
+  let v = fmStimata(p);
   const t = titolarita(p, g);
   if(t) v += -0.4 + 1.6*t.perc/100;          // titolare sicuro +1,2 · fuori −0,4
   const f = forza(p, g);
@@ -439,7 +473,7 @@ function disegnaCampo(g){
 function cella(p, g){
   const m = avversarioClub(p.club, g[1]);
   const t = titolarita(p, g);
-  const rischio = t && (t.stato!=='t' || t.perc<60);
+  const rischio = t && (t.stato==='c' || t.stato==='r' || t.perc<60);
   return '<div class="gioc'+(rischio?' rischio':'')+'">'+
     '<div class="maglia '+p.ruolo+'">'+(p.pgv?p.fm.toFixed(1):'–')+'</div>'+
     '<div class="nm">'+p.nome+'</div>'+
@@ -457,7 +491,8 @@ function riga(p, g){
   const ko = !disponibile(p, g[2]);
   const sfida = m ? (m.casa?'in casa con ':'a ') + m.avv : '';
   const t = titolarita(p, g), f = forza(p, g);
-  const stato = !t ? '' : t.stato==='t' ? '<span class="tit">titolare '+t.perc+'%</span>'
+  const stato = !t ? '' : t.stato==='s' ? '<span class="nodata">presenze '+t.giocate+'/'+t.di+'</span>'
+              : t.stato==='t' ? '<span class="tit">titolare '+t.perc+'%</span>'
               : t.stato==='c' ? '<span class="camb">in panchina</span>'
               : '<span class="nodata">non nelle probabili</span>';
   const sotto = ko
@@ -541,7 +576,8 @@ function quale(lista){
 function scheda(p, g){
   const m = avversarioClub(p.club, g[1]), f = forza(p, g);
   const r = [p.nome+' — '+p.club+', '+RUOLI[p.ruolo].toLowerCase()+(p.team===ME ? '' : ' · rosa di '+p.team),
-             p.pgv ? 'Fantamedia '+num(p.fm,2)+' in '+p.pgv+(p.pgv===1 ? ' gara' : ' gare') : 'Non ha ancora giocato',
+             (p.pgv ? 'Fantamedia '+num(p.fm,2)+' in '+p.pgv+(p.pgv===1 ? ' gara' : ' gare') : 'Non ha ancora giocato')+
+             (Math.abs(fmStimata(p)-p.fm)>=0.05 ? ' · per il consiglio '+num(fmStimata(p),2) : ''),
              !disponibile(p, g[2]) ? 'Fuori fino al '+p.out+' — '+p.motivo : descriviTit(titolarita(p, g)).trim()];
   if(m) r.push((m.casa ? 'In casa con ' : 'A ')+m.avv);
   if(f) r.push(motivoAvv(f));
@@ -551,7 +587,8 @@ function scheda(p, g){
 function breve(p, g){
   const m = avversarioClub(p.club, g[1]), t = titolarita(p, g), f = forza(p, g);
   const r = [];
-  if(t) r.push(t.stato==='t' ? 'titolare '+t.perc+'%' : t.stato==='c' ? 'in panchina' : 'non nelle probabili');
+  if(t) r.push(t.stato==='s' ? 'presenze '+t.giocate+'/'+t.di : t.stato==='t' ? 'titolare '+t.perc+'%'
+               : t.stato==='c' ? 'in panchina' : 'non nelle probabili');
   if(m) r.push((m.casa ? 'in casa con ' : 'a ')+m.avv);
   if(f && Math.abs(f.delta)>=0.2) r.push(f.delta>0 ? 'avversario favorevole' : 'avversario difficile');
   return r.join(' · ');
@@ -562,8 +599,11 @@ function confronto(a, b, g){
   let v;
   if(koA && koB) v = 'Sono fuori tutti e due.';
   else if(koA || koB) v = 'Schiera '+(koA ? b : a).nome+': '+(koA ? a : b).nome+' è fuori.';
-  else if(Math.abs(pa-pb)<0.25) v = 'Quasi pari ('+num(pa,2)+' contro '+num(pb,2)+').'+
-                                   (!titolarita(a, g) || !titolarita(b, g) ? ' Aspetta le probabili: possono decidere loro.' : '');
+  else if(Math.abs(pa-pb)<0.25){
+    const vere = x=>{ const t = titolarita(x, g); return t && t.stato!=='s'; };
+    v = 'Quasi pari ('+num(pa,2)+' contro '+num(pb,2)+').'+
+        (!vere(a) || !vere(b) ? ' Aspetta le probabili: possono decidere loro.' : '');
+  }
   else v = 'Meglio '+(pa>pb ? a : b).nome+' ('+num(Math.max(pa,pb),2)+' contro '+num(Math.min(pa,pb),2)+').';
   return v+'\n\n'+scheda(a, g)+'\n\n'+scheda(b, g);
 }
@@ -576,7 +616,9 @@ function riassuntoUndici(g){
   if(!D.prob || D.prob.giornata!==g[1]) dubbi.push('Le probabili di questa giornata non sono ancora uscite.');
   scelti.forEach(p=>{
     const t = titolarita(p, g);
-    if(t && t.stato!=='t') dubbi.push(p.nome+': '+(t.stato==='c' ? 'in panchina' : 'non nelle probabili'));
+    if(t && (t.stato==='c' || t.stato==='r')) dubbi.push(p.nome+': '+(t.stato==='c' ? 'in panchina' : 'non nelle probabili'));
+    else if(t && t.stato==='s' && t.perc<60)
+      dubbi.push(p.nome+': ha giocato '+t.giocate+(t.giocate===1 ? ' partita' : ' partite')+' su '+t.di);
     else if(t && t.perc<60) dubbi.push(p.nome+': titolare solo al '+t.perc+'%');
   });
   ['D','C','A'].forEach(r=>{

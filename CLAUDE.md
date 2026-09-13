@@ -123,9 +123,12 @@ titolarità. Fino al 13 settembre 2026 lo script la usava per errore come probab
 
 ## Consiglio di formazione
 
-Il punteggio parte dalla fantamedia e aggiunge:
+Il punteggio parte dalla **fantamedia stimata** e aggiunge:
 - **titolarità**: da −0,4 (fuori dalle probabili) a +1,2 (titolare sicuro), in
-  proporzione alla percentuale; zero finché le probabili non escono
+  proporzione alla percentuale. Finché le probabili della sua squadra non escono
+  si stima dalle presenze (partite giocate su quelle della squadra, «presenze
+  3/3»): senza, chi non ha mai giocato entrerebbe nell'undici solo per la
+  quotazione
 - **avversario, nel campo in cui gioca** (casa e fuori separati): per portiere e
   difensori quanti gol segna, per centrocampisti e attaccanti quanti ne subisce,
   come differenza dalla media del campionato scorso nello stesso campo,
@@ -139,6 +142,14 @@ neopromosse non hanno la Serie A dell'anno scorso: si usa la media delle tre
 retrocesse, e l'app la segnala come stima. I dati sono in `dati/squadre.json`,
 calcolati dai risultati del feed di fixturedownload.com.
 
+**Fantamedia stimata:** con poche partite la fantamedia è rumore, e chi non ha
+ancora giocato avrebbe 0. Si parte dalla fantamedia attesa per la quotazione del
+listone (una retta per ruolo, ricalcolata a ogni caricamento sulle rose, pesata
+per partite giocate; se la pendenza viene negativa vale la media del ruolo) e ci
+si avvicina alla fantamedia vera: `(partite·FM + 5·attesa) / (partite + 5)`.
+Nelle liste si mostra la fantamedia vera; la scheda del giocatore mostra anche
+quella usata per il consiglio.
+
 Il modulo abituale dell'avversario si mostra, ma non entra nel punteggio.
 
 **Da NON fare:** punteggi basati sul duello individuale (tizio marca caio su
@@ -147,11 +158,25 @@ lato, e il risultato sarebbe una precisione finta.
 
 ## Lavori aperti, in ordine di priorità
 
-1. **Verificare i pesi del consiglio.** I pesi della titolarità e
+1. **Importare la «Lista calciatori».** Il README chiede di rigenerare
+   `dati/base.json` dal file esportato ogni settimana, ma non esiste uno
+   strumento per farlo. Serve uno script che converta l'esportazione di Leghe
+   Fantacalcio mantenendo gli Id del listone e il calendario già presente.
+
+2. **Squalificati e dati vecchi.** Lo script legge solo gli infortunati: gli
+   squalificati vanno presi dalle probabili per giornata. L'app deve avvisare se
+   infortuni o probabili non si aggiornano da troppi giorni (lo script può
+   fallire senza che nessuno se ne accorga).
+
+3. **Probabili più fresche e panchina.** Giri in più dello script poco prima
+   delle scadenze del weekend (le probabili si aggiornano alle 11:30 e alle
+   19:30); suggerire l'ordine della panchina.
+
+4. **Verificare i pesi del consiglio.** I pesi della titolarità e
    dell'avversario (`PESI`) sono stime ragionevoli, non tarate. Dopo una decina
    di giornate vanno confrontati con i fantavoti reali e corretti.
 
-2. **Parte grafica.** Migliorie da concordare con l'utente, che ne ha già in
+5. **Parte grafica.** Migliorie da concordare con l'utente, che ne ha già in
    mente alcune. Il font ora è nel repository (`font/`): verificare sull'iPhone
    che il titolo usi davvero Barlow Condensed.
 
