@@ -382,6 +382,18 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   verifica('titolo disegnato: si vede uguale anche senza font', /<h1 class="titolo" aria-label="JARVIS"><svg viewBox="0 -10 2867 722"/.test(html)
            && /<path fill="url\(#gradTitolo\)" d="M14 520V451/.test(html));
 
+  console.log('\n15. Identità Burkina Faso');
+  const png = f => fs.existsSync(f) && fs.readFileSync(f).subarray(1, 4).toString() === 'PNG';
+  verifica('icona per la Home', /<link rel="apple-touch-icon" href="img\/icona-180.png">/.test(html) && png(path.join(REPO, 'img', 'icona-180.png')));
+  const manifesto = JSON.parse(fs.readFileSync(path.join(REPO, 'manifest.webmanifest'), 'utf8'));
+  verifica('manifest con icone che esistono', /<link rel="manifest" href="manifest.webmanifest">/.test(html)
+           && manifesto.icons.every(i => png(path.join(REPO, i.src))), manifesto.icons.map(i => i.src).join(', '));
+  verifica('colori della bandiera', /--bf-rosso:#EF2B2D/.test(html) && /--bf-verde:#009E49/.test(html) && /--bf-stella:#FCD116/.test(html)
+           && !/var\(--rosa\)/.test(html));
+  const stemma = path.join(REPO, 'img', 'stemma.jpg');
+  verifica('sfondo velato leggero', fs.existsSync(stemma) && fs.statSync(stemma).size < 80000 && /url\("img\/stemma.jpg"\)/.test(html),
+           fs.existsSync(stemma) ? Math.round(fs.statSync(stemma).size / 1024) + ' KB' : 'manca');
+
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
 })().catch(e => { console.error('ERRORE', e); process.exit(2); });

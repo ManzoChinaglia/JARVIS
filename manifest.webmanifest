@@ -1,0 +1,15 @@
+{
+  "name": "Jarvis",
+  "short_name": "Jarvis",
+  "description": "Assistente di fantacalcio di BURKINA FASO",
+  "lang": "it",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0F1311",
+  "theme_color": "#0F1311",
+  "icons": [
+    { "src": "img/icona-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "img/icona-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

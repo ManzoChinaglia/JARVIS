@@ -35,6 +35,8 @@ Indirizzo: https://manzochinaglia.github.io/JARVIS/
 index.html              app completa (HTML, CSS, JS in un file solo)
 font/                   Barlow Condensed in woff2 e la sua licenza (OFL): da Google Fonts
                         sull'iPhone non si caricava, non reintrodurre dipendenze esterne
+img/                    icona per la Home (bandiera con la stella) e stemma per lo sfondo velato
+manifest.webmanifest    nome, colori e icone dell'app per iPhone e browser
 dati/base.json          rose, calendario lega, calendario Serie A, statistiche
 dati/infortuni.json     aggiornato automaticamente
 dati/titolari.json      aggiornato automaticamente: probabili della prossima giornata, in percentuale
@@ -115,6 +117,23 @@ fissa gli orari. Gli UID sono stabili, così un orario cambiato aggiorna l'event
 invece di duplicarlo. Se non c'è nessuna scadenza il file non si riscrive,
 altrimenti l'iPhone cancellerebbe gli eventi. Il file va servito con fine riga
 CRLF: `.gitattributes` impedisce a Git di convertirlo.
+
+## Grafica
+
+- Colori della bandiera del Burkina Faso in `:root` (`--bf-rosso`, `--bf-verde`,
+  `--bf-stella`); l'accento dell'app (`--accento`) è il giallo della stella.
+  «BURKINA FASO» è rosso sopra e verde sotto, con la stella gialla.
+- Il titolo JARVIS è un disegno SVG: le lettere di Barlow Condensed tracciate con
+  fonttools, così si vede uguale anche se il font non si carica.
+- In fondo alla schermata Giornata «versione del …» (da `document.lastModified`):
+  dice se l'iPhone ha l'ultima versione o una copia vecchia.
+- Icona per la Home: `img/icona-180.png` e `manifest.webmanifest`. iOS non
+  aggiorna l'icona da solo: bisogna togliere Jarvis dalla Home e rimetterlo.
+- Sfondo velato: `img/stemma.jpg`, solo la parte centrale dello stemma della
+  squadra (mappa dorata e stella), sfocata e molto trasparente.
+- **Nessun volto di persone nel repository**, che è pubblico (scelta
+  dell'utente del 13/09/2026): lo stemma originale con i ritratti e le foto
+  restano solo sul PC.
 
 ## Chiedi
 
@@ -212,9 +231,12 @@ lato, e il risultato sarebbe una precisione finta.
    dell'avversario (`PESI`) sono stime ragionevoli, non tarate. Dopo una decina
    di giornate vanno confrontati con i fantavoti reali e corretti.
 
-2. **Parte grafica.** Migliorie da concordare con l'utente, che ne ha già in
-   mente alcune. Il font ora è nel repository (`font/`): verificare sull'iPhone
-   che il titolo usi davvero Barlow Condensed.
+2. **Parte grafica, in corso** (piano del 13/09/2026). Fatte: nomi delle squadre
+   dell'app, titolo disegnato, versione visibile, archivio dei file, colori e
+   icona del Burkina Faso, sfondo velato. Da fare: scheda «Avvisi» con notifiche
+   tramite ntfy (argomento segreto nei Secrets di GitHub, lo inserisce l'utente),
+   poi animazioni e sensazione da app con HTML/CSS/JS (niente framework, scelta
+   dell'utente).
 
 ## Come si prova
 

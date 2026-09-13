@@ -115,6 +115,16 @@ aggiorna da solo quando la Lega fissa nuovi orari.
 
 ---
 
+## Icona sulla Home
+
+L'icona è la bandiera del Burkina Faso con la stella. iOS non aggiorna le icone
+da solo: per vederla, tieni premuto Jarvis sulla Home → Rimuovi app → Rimuovi
+dalla schermata Home, poi da Safari apri il sito → Condividi → Aggiungi alla
+schermata Home. In fondo alla schermata Giornata la riga «versione del …» dice
+se l'iPhone sta mostrando l'ultima versione.
+
+---
+
 ## La scheda Chiedi
 
 Tocca una delle domande pronte o scrivi, per esempio:

@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-title" content="Jarvis">
 <meta name="theme-color" content="#0F1311">
 <title>Jarvis</title>
+<link rel="apple-touch-icon" href="img/icona-180.png">
+<link rel="icon" type="image/png" href="img/icona-180.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preload" href="font/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
 <style>
   /* Barlow Condensed ospitato nel repository (SIL Open Font License, font/OFL.txt):
@@ -21,7 +24,9 @@
   :root{
     --bg:#0F1311; --surface:#171C19; --surface2:#1F2521; --line:#2C332E;
     --ink:#ECEFEA; --dim:#8E9A92;
-    --rosa:#F2A0AE;          /* accento principale */
+    /* bandiera del Burkina Faso: rosso sopra, verde sotto, stella gialla */
+    --bf-rosso:#EF2B2D; --bf-verde:#009E49; --bf-stella:#FCD116;
+    --accento:var(--bf-stella);   /* accento principale: il giallo della stella */
     --oro:#E4B451;
     --rosso:#E0605C;
     --verde:#71C295;
@@ -36,6 +41,14 @@
     -webkit-font-smoothing:antialiased;
   }
   .cond{font-family:"Barlow Condensed",-apple-system,sans-serif; font-weight:600; letter-spacing:.01em;}
+
+  /* stemma della squadra come sfondo velato: solo la parte centrale (mappa e
+     stella), senza volti, perché il repository è pubblico */
+  body::before{content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+               background:url("img/stemma.jpg") center 45%/min(72vw,340px) auto no-repeat;
+               opacity:.10;}
+  header, main{position:relative; z-index:1;}
+  nav{z-index:5;}
   .num{font-variant-numeric:tabular-nums;}
 
   /* ---- intestazione ---- */
@@ -48,7 +61,7 @@
                margin-top:4px; font-size:12px; color:var(--dim);}
   .refresh{background:none; border:1px solid var(--line); color:var(--dim);
            border-radius:14px; padding:5px 12px; font-size:12px;}
-  .refresh.attivo{color:var(--rosa); border-color:var(--rosa);}
+  .refresh.attivo{color:var(--accento); border-color:var(--accento);}
   #stamp.vecchio{color:var(--rosso);}
   .versione{margin:28px 0 6px; text-align:center; font-size:11px; color:var(--dim);}
 
@@ -60,15 +73,21 @@
   .sfida{margin:6px 0 18px;}
   .sfida .gg{font-size:13px; color:var(--dim); margin-bottom:8px;}
   .sfida .vs{font-family:"Barlow Condensed",sans-serif; font-weight:700; line-height:.95;}
-  .sfida .mia{font-size:40px; color:var(--rosa);}
+  /* la tua squadra nei colori della bandiera: rosso sopra, verde sotto, stella gialla */
+  .sfida .mia{font-size:40px; color:var(--bf-rosso);
+              background:linear-gradient(180deg,var(--bf-rosso) 0 50%,var(--bf-verde) 50% 100%);
+              -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;}
+  .sfida .mia .stella{-webkit-text-fill-color:var(--bf-stella); color:var(--bf-stella);
+                      font-size:.62em; vertical-align:.18em; margin-left:.18em;}
   .sfida .sep{font-size:20px; color:var(--dim); margin:4px 0; font-weight:500;}
   .sfida .loro{font-size:34px; color:var(--ink);}
-  .countdown{margin-top:16px; padding:14px 16px; background:var(--surface);
+  .countdown{margin-top:16px; padding:14px 16px; background:rgba(23,28,25,.82);
+             -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
              border:1px solid var(--line); border-radius:var(--r);}
   .countdown .k{font-size:13px; color:var(--dim);}
   .countdown .t{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:30px; margin-top:2px;}
   .countdown .q{font-size:12px; color:var(--dim); margin-top:4px;}
-  .countdown a.ics{display:inline-block; margin-top:10px; color:var(--rosa); text-decoration:none;}
+  .countdown a.ics{display:inline-block; margin-top:10px; color:var(--accento); text-decoration:none;}
   .countdown.urgente{border-color:var(--rosso);}
   .countdown.urgente .t{color:var(--rosso);}
 
@@ -97,7 +116,7 @@
   /* ---- tabelle lega ---- */
   .team{display:flex; align-items:baseline; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);}
   .team:last-child{border-bottom:none;}
-  .team.io .nome{color:var(--rosa);}
+  .team.io .nome{color:var(--accento);}
   .team .nome{flex:1; font-size:15px;}
   .team .val{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:18px;}
 
@@ -105,16 +124,17 @@
   .cal:last-child{border-bottom:none;}
   .cal .d{font-size:12px; color:var(--dim); width:62px; flex-shrink:0;}
   .cal .m{flex:1; font-size:14px;}
-  .cal.io .m{color:var(--rosa);}
+  .cal.io .m{color:var(--accento);}
 
   /* ---- chiedi ---- */
   .chiedi-in{display:flex; gap:8px; margin-bottom:14px;}
   .chiedi-in input{flex:1; background:var(--surface2); border:1px solid var(--line);
                    color:var(--ink); border-radius:12px; padding:13px 14px;}
   .mic{width:50px; border-radius:12px; border:1px solid var(--line);
-       background:var(--surface2); color:var(--rosa); font-size:20px;}
-  .mic.ascolto{background:var(--rosa); color:#2A1116; border-color:var(--rosa);}
-  .risposta{background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+       background:var(--surface2); color:var(--accento); font-size:20px;}
+  .mic.ascolto{background:var(--accento); color:#2A1116; border-color:var(--accento);}
+  .risposta{background:rgba(23,28,25,.82); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+            border:1px solid var(--line); border-radius:var(--r);
             padding:15px 16px; font-size:15px; line-height:1.55; white-space:pre-line;}
   .esempi{margin:0 0 14px; display:flex; flex-wrap:wrap; gap:7px;}
   .esempi button{background:none; border:1px solid var(--line); color:var(--dim);
@@ -127,7 +147,7 @@
   nav button{flex:1; background:none; border:none; color:var(--dim);
              padding:11px 0 12px; font-size:11px;}
   nav button .ic{display:block; font-size:19px; margin-bottom:2px; line-height:1;}
-  nav button.on{color:var(--rosa);}
+  nav button.on{color:var(--accento);}
   .vuoto{color:var(--dim); font-size:14px; padding:26px 0; text-align:center;}
   .errore{background:var(--surface); border:1px solid var(--rosso); border-radius:14px;
           padding:18px; color:var(--ink); font-size:14px; line-height:1.6; margin-top:16px;}
@@ -136,7 +156,7 @@
                  color:var(--ink); border-radius:10px; padding:7px 10px; margin-top:22px;}
   .campo{margin:12px 0 4px; padding:16px 8px 10px; border-radius:16px;
          background:
-           repeating-linear-gradient(180deg,#16241B 0 34px,#152119 34px 68px);
+           repeating-linear-gradient(180deg,rgba(22,36,27,.9) 0 34px,rgba(21,33,25,.9) 34px 68px);
          border:1px solid #23342A; position:relative; overflow:hidden;}
   .campo::before{content:''; position:absolute; left:12%; right:12%; top:8px; height:34px;
                  border:1px solid rgba(255,255,255,.10); border-top:none; border-radius:0 0 6px 6px;}
@@ -164,7 +184,7 @@
 <header>
   <h1 class="titolo" aria-label="JARVIS"><svg viewBox="0 -10 2867 722" aria-hidden="true">
     <defs><linearGradient id="gradTitolo" x1="0" y1="0" x2="1" y2=".15">
-      <stop offset="0" style="stop-color:var(--rosa)"/><stop offset=".55" style="stop-color:#F7D9A0"/>
+      <stop offset="0" style="stop-color:var(--bf-stella)"/><stop offset=".55" style="stop-color:#F7D9A0"/>
       <stop offset="1" style="stop-color:var(--oro)"/></linearGradient></defs>
     <path fill="url(#gradTitolo)" d="M14 520V451Q14 446 18 442Q21 439 26 439H143Q148 439 152 442Q155 446 155 451V522Q155 551 170 569Q185 587 210 587Q236 587 252 569Q267 551 267 522V12Q267 7 270 4Q274 0 279 0H396Q401 0 404 4Q408 7 408 12V520Q408 605 354 656Q299 708 210 708Q122 708 68 656Q14 605 14 520Z M837 689 821 593Q821 588 815 588H688Q682 588 682 593L666 689Q665 700 653 700H536Q523 700 526 687L673 11Q675 0 686 0H821Q832 0 834 11L980 687L981 691Q981 700 970 700H850Q838 700 837 689ZM706 479H796Q801 479 800 474L753 201Q752 198 750 198Q748 198 747 201L702 474Q702 479 706 479Z M1360 690 1283 414Q1281 410 1278 410H1244Q1239 410 1239 415V688Q1239 693 1236 696Q1232 700 1227 700H1110Q1105 700 1102 696Q1098 693 1098 688V12Q1098 7 1102 4Q1105 0 1110 0H1312Q1367 0 1410 26Q1453 53 1476 101Q1500 149 1500 211Q1500 270 1478 315Q1455 360 1415 385Q1413 386 1412 388Q1411 389 1412 391L1504 686L1505 690Q1505 700 1494 700H1374Q1363 700 1360 690ZM1239 126V297Q1239 302 1244 302H1289Q1320 302 1340 278Q1359 253 1359 212Q1359 170 1340 146Q1320 121 1289 121H1244Q1239 121 1239 126Z M1751 689 1608 13 1607 9Q1607 0 1618 0H1747Q1759 0 1760 11L1829 451Q1830 455 1832 455Q1834 455 1835 451L1902 11Q1903 0 1915 0H2040Q2053 0 2050 13L1906 689Q1904 700 1893 700H1764Q1753 700 1751 689Z M2177 688V12Q2177 7 2180 4Q2184 0 2189 0H2306Q2311 0 2314 4Q2318 7 2318 12V688Q2318 693 2314 696Q2311 700 2306 700H2189Q2184 700 2180 696Q2177 693 2177 688Z M2453 525V496Q2453 491 2456 488Q2460 484 2465 484H2580Q2585 484 2588 488Q2592 491 2592 496V518Q2592 549 2608 568Q2624 587 2648 587Q2672 587 2688 569Q2704 551 2704 522Q2704 492 2684 470Q2664 449 2606 407Q2556 371 2525 343Q2494 315 2472 274Q2450 233 2450 179Q2450 94 2503 43Q2556 -8 2643 -8Q2731 -8 2784 45Q2838 98 2838 184V208Q2838 213 2834 216Q2831 220 2826 220H2711Q2706 220 2702 216Q2699 213 2699 208V181Q2699 150 2684 132Q2668 113 2643 113Q2619 113 2604 130Q2589 148 2589 179Q2589 209 2608 232Q2627 255 2683 296Q2745 342 2776 370Q2808 399 2826 434Q2843 468 2843 516Q2843 604 2789 656Q2735 708 2647 708Q2589 708 2545 685Q2501 662 2477 620Q2453 579 2453 525Z"/>
   </svg></h1>
@@ -179,7 +199,7 @@
     <div class="sfida">
       <div class="gg" id="gg"></div>
       <div class="vs">
-        <div class="mia cond">BURKINA FASO</div>
+        <div class="mia cond">BURKINA FASO<span class="stella" aria-hidden="true">★</span></div>
         <div class="sep cond">contro</div>
         <div class="loro cond" id="avv"></div>
       </div>
