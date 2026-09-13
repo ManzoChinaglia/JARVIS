@@ -11,6 +11,7 @@ da lì funziona a schermo intero, come un'app.
 
 ```
 index.html                    l'app (codice, nessun dato dentro)
+font/                         Barlow Condensed e la sua licenza (OFL)
 dati/
   base.json                   rose, calendario lega, calendario Serie A, statistiche
   infortuni.json              chi è fuori e fino a quando        [automatico]

@@ -8,10 +8,16 @@
 <meta name="apple-mobile-web-app-title" content="Jarvis">
 <meta name="theme-color" content="#0F1311">
 <title>Jarvis</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="font/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+  /* Barlow Condensed ospitato nel repository (SIL Open Font License, font/OFL.txt):
+     caricato da Google Fonts, sull'iPhone non arrivava */
+  @font-face{font-family:"Barlow Condensed"; font-style:normal; font-weight:500; font-display:swap;
+             src:url("font/barlow-condensed-500.woff2") format("woff2");}
+  @font-face{font-family:"Barlow Condensed"; font-style:normal; font-weight:600; font-display:swap;
+             src:url("font/barlow-condensed-600.woff2") format("woff2");}
+  @font-face{font-family:"Barlow Condensed"; font-style:normal; font-weight:700; font-display:swap;
+             src:url("font/barlow-condensed-700.woff2") format("woff2");}
   :root{
     --bg:#0F1311; --surface:#171C19; --surface2:#1F2521; --line:#2C332E;
     --ink:#ECEFEA; --dim:#8E9A92;

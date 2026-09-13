@@ -192,6 +192,14 @@ async function avvia({ adesso, senzaOrari = false, dati = {} }) {
   verifica('nessuna forza inventata', t.mia.every(p => t.forza(p, g) === null));
   verifica('undici completo lo stesso', Object.values(t.undici(g)).flat().length === 11);
 
+  console.log('\n12. Font ospitato nel repository');
+  verifica('nessuna richiesta a Google Fonts', !/fonts\.(googleapis|gstatic)\.com/.test(html));
+  const fonti = [...html.matchAll(/url\("(font\/[^"]+\.woff2)"\)/g)].map(m => m[1]);
+  verifica('tre spessori dichiarati', fonti.length === 3, fonti.join(', '));
+  verifica('i file esistono e sono woff2', fonti.every(f => fs.existsSync(path.join(REPO, f)) &&
+           fs.readFileSync(path.join(REPO, f)).subarray(0, 4).toString() === 'wOF2'));
+  verifica('licenza inclusa', fs.existsSync(path.join(REPO, 'font', 'OFL.txt')));
+
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
 })().catch(e => { console.error('ERRORE', e); process.exit(2); });

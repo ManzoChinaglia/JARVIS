@@ -33,6 +33,8 @@ Indirizzo: https://manzochinaglia.github.io/JARVIS/
 
 ```
 index.html              app completa (HTML, CSS, JS in un file solo)
+font/                   Barlow Condensed in woff2 e la sua licenza (OFL): da Google Fonts
+                        sull'iPhone non si caricava, non reintrodurre dipendenze esterne
 dati/base.json          rose, calendario lega, calendario Serie A, statistiche
 dati/infortuni.json     aggiornato automaticamente
 dati/titolari.json      aggiornato automaticamente: probabili della prossima giornata, in percentuale
@@ -109,18 +111,15 @@ lato, e il risultato sarebbe una precisione finta.
 
 ## Lavori aperti, in ordine di priorità
 
-1. **Font.** `Barlow Condensed` da Google Fonts non si carica sul sito
-   pubblicato e i titoli ricadono sul carattere di sistema. Capire perché.
-
-2. **Calendario sottoscrivibile (.ics)** con le scadenze di schieramento e il
+1. **Calendario sottoscrivibile (.ics)** con le scadenze di schieramento e il
    promemoria di esportare la lista calciatori. Su iPhone le notifiche del
    calendario di sistema sono più affidabili delle notifiche push da app web.
 
-3. **Comando Siri.** L'app accetta già una domanda dall'indirizzo
+2. **Comando Siri.** L'app accetta già una domanda dall'indirizzo
    (`?q=...`), ma la elabora prima che i dati siano caricati e la risposta
    fallisce: va sistemato. Poi manca la guida per creare il Comando Rapido.
 
-4. **Verificare i pesi del consiglio.** I pesi della titolarità e
+3. **Verificare i pesi del consiglio.** I pesi della titolarità e
    dell'avversario (`PESI`) sono stime ragionevoli, non tarate. Dopo una decina
    di giornate vanno confrontati con i fantavoti reali e corretti.
 
