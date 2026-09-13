@@ -35,10 +35,11 @@ Indirizzo: https://manzochinaglia.github.io/JARVIS/
 index.html              app completa (HTML, CSS, JS in un file solo)
 dati/base.json          rose, calendario lega, calendario Serie A, statistiche
 dati/infortuni.json     aggiornato automaticamente
-dati/titolari.json      aggiornato automaticamente
+dati/titolari.json      aggiornato automaticamente: probabili della prossima giornata, in percentuale
 dati/orari.json         aggiornato automaticamente: primo e ultimo calcio d'inizio di ogni giornata
+dati/squadre.json       aggiornato automaticamente: rendimento casa/fuori, quest'anno e l'anno scorso
 dati/listone.json       elenco ufficiale, usato dagli script
-scripts/aggiorna.py     scarica infortuni, probabili formazioni e orari
+scripts/aggiorna.py     scarica infortuni, probabili, orari e rendimento delle squadre
 prove/                  prove automatiche (vedi «Come si prova»)
 .github/workflows/aggiorna.yml   esegue lo script martedì 08:00, venerdì 10:00 e sabato 06:00
                                  (ora italiana legale; con l'ora solare un'ora prima)
@@ -68,36 +69,60 @@ senza orario ufficiale: quelle giornate sono salvate come `"ufficiale": false`,
 senza orario, e l'app scrive «orario non ancora ufficiale» invece di stimare.
 La giornata mostrata passa alla successiva due ore dopo l'ultimo calcio d'inizio.
 
+## Probabili formazioni
+
+Vengono dalla pagina per giornata di fantacalcio-online
+(`/it/serie-a/2026-2027/probabili-formazioni/N-giornata`): per ogni giocatore la
+percentuale media di quattro redazioni (Fantacalcio.it, Gazzetta, SOS Fanta, Sky).
+Lo script scarica la giornata di Serie A della prossima giornata di lega e salva
+in `dati/titolari.json` anche il numero della giornata e le squadre già
+pubblicate. L'app usa le percentuali **solo se la giornata coincide** con quella
+mostrata; altrimenti scrive «probabili non ancora uscite».
+
+La pagina `/it/consigli-fantacalcio/probabili-formazioni-serie-a` contiene le
+formazioni tipo di stagione: serve solo per il modulo abituale, mai per la
+titolarità. Fino al 13 settembre 2026 lo script la usava per errore come probabili.
+
+## Consiglio di formazione
+
+Il punteggio parte dalla fantamedia e aggiunge:
+- **titolarità**: da −0,4 (fuori dalle probabili) a +1,2 (titolare sicuro), in
+  proporzione alla percentuale; zero finché le probabili non escono
+- **avversario, nel campo in cui gioca** (casa e fuori separati): per portiere e
+  difensori quanti gol segna, per centrocampisti e attaccanti quanti ne subisce,
+  come differenza dalla media del campionato scorso nello stesso campo,
+  moltiplicata per `PESI` in `index.html`. Portiere e difensori pesano di più per
+  porta inviolata e modificatore difesa.
+
+**Campione piccolo:** a settembre ogni squadra ha giocato 3-4 partite e ogni
+statistica di forma è rumore. Il peso di quest'anno cresce in modo lineare fino
+alla decima partita giocata; prima si mescola con la stagione precedente. Le
+neopromosse non hanno la Serie A dell'anno scorso: si usa la media delle tre
+retrocesse, e l'app la segnala come stima. I dati sono in `dati/squadre.json`,
+calcolati dai risultati del feed di fixturedownload.com.
+
+Il modulo abituale dell'avversario si mostra, ma non entra nel punteggio.
+
+**Da NON fare:** punteggi basati sul duello individuale (tizio marca caio su
+quella fascia). Il dato pubblico non dice in modo affidabile chi occupa quale
+lato, e il risultato sarebbe una precisione finta.
+
 ## Lavori aperti, in ordine di priorità
 
-1. **Arricchire il consiglio di formazione.** Oggi pesa solo: disponibilità,
-   titolarità, fantamedia, piccolo malus trasferta. Va aggiunto:
-   - forza difensiva dell'avversario (gol subiti, porte inviolate) — pesa molto
-     per i difensori, vista la presenza del modificatore difesa
-   - forza offensiva dell'avversario, per valutare il rischio dei difensori
-   - casa/trasferta calcolato separatamente, non come media unica
-   - modulo dell'avversario dalle probabili formazioni
-
-   **Attenzione al campione:** a settembre ogni squadra ha giocato 3-4 partite.
-   Qualsiasi statistica di forma è rumore. Fino a circa la decima giornata i dati
-   di quest'anno vanno mescolati con quelli della stagione precedente, dando peso
-   crescente all'attuale. Senza questo accorgimento Jarvis darà consigli sicuri
-   di sé e sbagliati.
-
-   **Da NON fare:** punteggi basati sul duello individuale (tizio marca caio su
-   quella fascia). Il dato pubblico non dice in modo affidabile chi occupa quale
-   lato, e il risultato sarebbe una precisione finta.
-
-2. **Font.** `Barlow Condensed` da Google Fonts non si carica sul sito
+1. **Font.** `Barlow Condensed` da Google Fonts non si carica sul sito
    pubblicato e i titoli ricadono sul carattere di sistema. Capire perché.
 
-3. **Calendario sottoscrivibile (.ics)** con le scadenze di schieramento e il
+2. **Calendario sottoscrivibile (.ics)** con le scadenze di schieramento e il
    promemoria di esportare la lista calciatori. Su iPhone le notifiche del
    calendario di sistema sono più affidabili delle notifiche push da app web.
 
-4. **Comando Siri.** L'app accetta già una domanda dall'indirizzo
+3. **Comando Siri.** L'app accetta già una domanda dall'indirizzo
    (`?q=...`), ma la elabora prima che i dati siano caricati e la risposta
    fallisce: va sistemato. Poi manca la guida per creare il Comando Rapido.
+
+4. **Verificare i pesi del consiglio.** I pesi della titolarità e
+   dell'avversario (`PESI`) sono stime ragionevoli, non tarate. Dopo una decina
+   di giornate vanno confrontati con i fantavoti reali e corretti.
 
 ## Come si prova
 
@@ -106,13 +131,15 @@ Le prove sono in `prove/` e vanno lanciate prima di ogni consegna:
 ```
 node prove/app.js
 python prove/orari.py
+python prove/script.py
 ```
 
 `prove/app.js` segue il metodo usato finora, da mantenere: estrae il blocco
 `<script>` da `index.html`, lo esegue in Node con un finto DOM e una `fetch`
 che legge i file da disco, e verifica i risultati reali (undici generato,
 risposte alle domande, conteggi, scadenze). Ogni nuova funzione aggiunge qui
-le sue verifiche. `prove/orari.py` prova lo script con una fonte finta. Ha già intercettato
+le sue verifiche. `prove/orari.py` e `prove/script.py` provano lo script con
+fonti finte che imitano le pagine vere. Ha già intercettato
 un errore sugli identificativi e una funzione cancellata per sbaglio.
 Per le date usare un orologio finto e `TZ=Europe/Rome`: la scadenza dipende
 dall'ora legale.

@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """
-Aggiorna i dati vivi di Jarvis: infortunati, probabili formazioni e orari.
+Aggiorna i dati vivi di Jarvis: infortunati, probabili formazioni, orari e
+rendimento delle squadre.
 
-Scrive tre file in dati/:
+Scrive quattro file in dati/:
   dati/infortuni.json   { "aggiornato": "...", "voci": { "<id>": {...} } }
-  dati/titolari.json    { "aggiornato": "...", "stato": { "<id>": "t|c|r" } }
+  dati/titolari.json    { "aggiornato": "...", "giornata": 5, "squadre": [...],
+                          "titolari": { "<id>": 97 }, "panchina": { "<id>": 30 } }
   dati/orari.json       { "aggiornato": "...", "giornate": { "<giornata Serie A>": {...} } }
+  dati/squadre.json     { "aggiornato": "...", "squadre": { "<squadra>": {...} }, ... }
 
 Regole di sicurezza:
  - se una fonte non risponde o cambia struttura, il file esistente NON viene toccato
@@ -25,10 +28,14 @@ UA = {'User-Agent': 'Jarvis/1.0 (uso personale; aggiornamento 3 volte a settiman
 TIMEOUT = 30
 
 URL_INFORTUNI = 'https://www.fantacalcio-online.com/it/infortunati-serie-a'
-URL_PROBABILI = 'https://www.fantacalcio-online.com/it/consigli-fantacalcio/probabili-formazioni-serie-a'
+# probabili della singola giornata: media di quattro redazioni
+URL_GIORNATA = 'https://www.fantacalcio-online.com/it/serie-a/2026-2027/probabili-formazioni/{}-giornata'
+# formazioni tipo di stagione: servono solo per il modulo abituale, mai per la titolarita'
+URL_SQUADRE_TIPO = 'https://www.fantacalcio-online.com/it/consigli-fantacalcio/probabili-formazioni-serie-a'
 URL_ORARI = 'https://fixturedownload.com/feed/json/serie-a-2026'
+URL_PRECEDENTE = 'https://fixturedownload.com/feed/json/serie-a-2025'
 
-# nomi della fonte degli orari che differiscono da quelli del listone
+# nomi del feed delle partite che differiscono da quelli del listone
 SQUADRE = {'Internazionale': 'Inter'}
 
 
@@ -71,12 +78,42 @@ def trova(listone, squadra, nome):
         scelto = esatto or ripiego
         if scelto:
             return scelto
-    return None
+    return trova_composto(listone, squadra, nome)
+
+
+def iniziale(parole):
+    """L'iniziale del nome, se l'ultima parola e' una lettera sola."""
+    return parole[-1] if parole and len(parole[-1]) == 1 else None
+
+
+def trova_composto(listone, squadra, nome):
+    """Ripiego per cognomi composti o scritti in altro modo: "DEL PRATO E" e
+    "Delprato", "MILINKOVIC V" e "Milinkovic-Savic V.", "NUNO TAVARES" e
+    "Tavares N.". Solo dentro la squadra, mai con iniziali diverse, e solo se il
+    candidato e' uno: meglio nessun abbinamento che uno sbagliato."""
+    parti = norm(nome).split()
+    ini = iniziale(parti)
+    lungo = ''.join(w for w in parti if len(w) > 1)
+    if len(lungo) < 4:
+        return None
+    candidati = []
+    for p in listone:
+        if norm(p['squadra']) != norm(squadra):
+            continue
+        pn = norm(p['nome']).split()
+        pini = iniziale(pn)
+        if ini and pini and ini != pini:
+            continue
+        suo = ''.join(w for w in pn if len(w) > 1)
+        if len(suo) >= 4 and (suo in lungo or lungo in suo):
+            candidati.append(p)
+    return candidati[0] if len(candidati) == 1 else None
 
 
 def scrivi(percorso, contenuto, minimo, etichetta):
     """Scrive solo se il risultato e' plausibile, altrimenti lascia il file com'e'."""
-    n = len(contenuto.get('voci') or contenuto.get('stato') or contenuto.get('giornate') or {})
+    voci = next((contenuto[k] for k in ('voci', 'stato', 'giornate', 'titolari', 'squadre') if k in contenuto), {})
+    n = len(voci)
     if n < minimo:
         print(f'[{etichetta}] solo {n} voci (minimo {minimo}): non aggiorno, tengo i dati precedenti.')
         return False
@@ -111,28 +148,77 @@ def infortuni(listone):
     return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'voci': voci}
 
 
-def probabili(listone):
-    r = requests.get(URL_PROBABILI, headers=UA, timeout=TIMEOUT)
-    r.raise_for_status()
-    testo = BeautifulSoup(r.text, 'lxml').get_text('\n', strip=True)
+def leggi_nome(span):
+    """"FALCONE <small>W</small>" -> "FALCONE W". Il trattino vuol dire nessuna iniziale."""
+    cognome = ' '.join(''.join(span.find_all(string=True, recursive=False)).split())
+    small = span.find('small')
+    ini = small.get_text(strip=True) if small else ''
+    return f'{cognome} {ini}' if ini and ini != '-' else cognome
 
-    stato, squadra = {}, None
-    squadre = {norm(p['squadra']) for p in listone}
-    for riga in testo.split('\n'):
-        if norm(riga) in squadre:
-            squadra = riga.strip()
-            continue
-        if not squadra:
-            continue
-        # righe con 11 nomi separati da virgola = formazione titolare
-        if riga.count(',') >= 9:
-            for nome in [x.strip() for x in riga.split(',')]:
+
+def percentuale(td):
+    m = re.search(r'(\d{1,3})\s*%', td.get_text(' ', strip=True)) if td else None
+    return int(m.group(1)) if m else None
+
+
+def giornata_da_seguire(lega, giornate, ora=None):
+    """La giornata di Serie A della prossima giornata di lega: la prima non ancora
+    finita. Stessa regola dell'app: finisce due ore dopo l'ultimo calcio d'inizio."""
+    ora = ora or datetime.now(timezone.utc)
+    for n in lega:
+        g = giornate.get(str(n)) or {}
+        if not g.get('ufficiale'):
+            return n                      # orario non ancora fissato: e' futura
+        if datetime.fromisoformat(g['fine']) + timedelta(hours=2) > ora:
+            return n
+    return None
+
+
+def titolari(listone, n):
+    """Probabili formazioni della giornata n: percentuale media di schierabilita'
+    delle quattro redazioni, per i titolari e per la panchina.
+
+    Le squadre per cui nessuna redazione ha ancora pubblicato restano fuori:
+    l'app le mostra come "probabili non ancora uscite" invece di indovinare.
+    """
+    r = requests.get(URL_GIORNATA.format(n), headers=UA, timeout=TIMEOUT)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, 'lxml')
+    titolo = soup.title.get_text(strip=True) if soup.title else ''
+    if not re.search(rf'\b{n}\s*[ªa°]?\s*giornata', titolo, re.I):
+        raise ValueError(f'la pagina non e\' della giornata {n}: {titolo!r}')
+    blocchi = soup.select('.prb-squadra')
+    if len(blocchi) != 20:
+        raise ValueError(f'{len(blocchi)} squadre invece di 20: la fonte ha cambiato struttura')
+
+    tit, panca, pubblicate, mancati = {}, {}, [], []
+    for b in blocchi:
+        squadra = b.select_one('.prb-squadra__nome').get_text(' ', strip=True)
+        tabelle = b.select('table.prb-tabella')
+        if not tabelle:
+            continue                      # nessuna redazione ha ancora pubblicato
+        for i, tabella in enumerate(tabelle[:2]):
+            righe = tabella.select('tbody tr')
+            if i == 0 and len(righe) != 11:
+                raise ValueError(f'{squadra}: {len(righe)} titolari invece di 11')
+            for tr in righe:
+                span = tr.select_one('.prb-nome')
+                perc = percentuale(tr.select_one('.prb-cella--media'))
+                if not span or perc is None:
+                    continue
+                nome = leggi_nome(span)
                 p = trova(listone, squadra, nome)
                 if p:
-                    stato[str(p['id'])] = 't'
-            squadra = None
+                    (tit if i == 0 else panca)[str(p['id'])] = perc
+                else:
+                    mancati.append(f'{squadra} {nome}')
+        pubblicate.append(squadra)
 
-    return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'stato': stato}
+    if mancati:
+        print('[titolari] non abbinati:', ', '.join(mancati))
+    print(f'[titolari] giornata {n}: {len(pubblicate)} squadre pubblicate su 20.')
+    return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'giornata': n,
+            'squadre': sorted(pubblicate), 'titolari': tit, 'panchina': panca}
 
 
 def precedenti(percorso, chiave):
@@ -188,6 +274,79 @@ def orari(vecchie):
     return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'giornate': giornate}
 
 
+def rendimento(partite):
+    """Per squadra e per campo: [partite, gol fatti, gol subiti, porte inviolate]."""
+    tab = {}
+    for m in partite:
+        if m.get('HomeTeamScore') is None or m.get('AwayTeamScore') is None:
+            continue
+        casa, fuori = SQUADRE.get(m['HomeTeam'], m['HomeTeam']), SQUADRE.get(m['AwayTeam'], m['AwayTeam'])
+        gc, gf = int(m['HomeTeamScore']), int(m['AwayTeamScore'])
+        for squadra, campo, fatti, subiti in ((casa, 'casa', gc, gf), (fuori, 'fuori', gf, gc)):
+            s = tab.setdefault(squadra, {'casa': [0, 0, 0, 0], 'fuori': [0, 0, 0, 0]})[campo]
+            s[0] += 1
+            s[1] += fatti
+            s[2] += subiti
+            s[3] += int(subiti == 0)
+    return tab
+
+
+def somma(righe):
+    return [sum(x) for x in zip(*righe)] if righe else [0, 0, 0, 0]
+
+
+def moduli():
+    """Modulo abituale di ogni squadra, dalla tabella delle formazioni tipo di stagione."""
+    r = requests.get(URL_SQUADRE_TIPO, headers=UA, timeout=TIMEOUT)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, 'lxml')
+    out = {}
+    for tr in soup.select('div.art-tabella tr'):
+        celle = [td.get_text(' ', strip=True) for td in tr.find_all('td')]
+        if len(celle) >= 2 and re.fullmatch(r'[3-5](-[1-5]){2,3}', celle[1]):
+            out.setdefault(celle[0], celle[1])
+    return out
+
+
+def squadre(abituali):
+    """Rendimento di ogni squadra in casa e fuori, quest'anno e l'anno scorso, e il
+    suo modulo abituale. L'app mescola le due stagioni: con poche partite giocate i
+    numeri di quest'anno sono rumore.
+
+    Le neopromosse non hanno la Serie A dell'anno scorso: al loro posto si usa la
+    media delle tre retrocesse, segnata come stima.
+    """
+    attuale = requests.get(URL_ORARI, headers=UA, timeout=TIMEOUT)
+    attuale.raise_for_status()
+    passata = requests.get(URL_PRECEDENTE, headers=UA, timeout=TIMEOUT)
+    passata.raise_for_status()
+    partite, vecchie = attuale.json(), passata.json()
+    if len(vecchie) != 380 or any(m.get('HomeTeamScore') is None for m in vecchie):
+        raise ValueError('stagione precedente incompleta: la fonte ha cambiato struttura')
+
+    elenco = sorted({SQUADRE.get(m['HomeTeam'], m['HomeTeam']) for m in partite})
+    ora, prima = rendimento(partite), rendimento(vecchie)
+    retrocesse = sorted(s for s in prima if s not in elenco)
+    if len(elenco) != 20 or len(retrocesse) != 3:
+        raise ValueError(f'{len(elenco)} squadre e {len(retrocesse)} retrocesse: la fonte ha cambiato struttura')
+    stima = {c: [round(x / 3, 2) for x in somma([prima[s][c] for s in retrocesse])] for c in ('casa', 'fuori')}
+
+    out = {}
+    for s in elenco:
+        voce = {'attuale': ora.get(s) or {'casa': [0, 0, 0, 0], 'fuori': [0, 0, 0, 0]}}
+        if s in prima:
+            voce['precedente'] = prima[s]
+        else:
+            voce['precedente'], voce['neopromossa'] = stima, True
+        if abituali.get(s):
+            voce['modulo'] = abituali[s]
+        out[s] = voce
+
+    return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'squadre': out,
+            'campionato_precedente': {c: somma([prima[s][c] for s in prima]) for c in ('casa', 'fuori')},
+            'retrocesse': retrocesse}
+
+
 def main():
     listone = carica_listone()
     print(f'listone: {len(listone)} calciatori')
@@ -199,17 +358,35 @@ def main():
         print('[infortuni] fallito:', e)
         uscita = 1
 
+    percorso = os.path.join(DATI, 'orari.json')
     try:
-        scrivi(os.path.join(DATI, 'titolari.json'), probabili(listone), 150, 'titolari')
+        scrivi(percorso, orari(precedenti(percorso, 'giornate')), 38, 'orari')
+    except Exception as e:
+        print('[orari] fallito:', e)
+        uscita = 1
+
+    # le probabili della giornata che interessa la lega, secondo gli orari salvati
+    try:
+        with open(os.path.join(DATI, 'base.json'), encoding='utf-8') as f:
+            lega = [g[1] for g in json.load(f)['g']]
+        n = giornata_da_seguire(lega, precedenti(percorso, 'giornate'))
+        if n is None:
+            print('[titolari] campionato finito, niente da scaricare.')
+        else:
+            scrivi(os.path.join(DATI, 'titolari.json'), titolari(listone, n), 11, 'titolari')
     except Exception as e:
         print('[titolari] fallito:', e)
         uscita = 1
 
     try:
-        percorso = os.path.join(DATI, 'orari.json')
-        scrivi(percorso, orari(precedenti(percorso, 'giornate')), 38, 'orari')
+        try:
+            abituali = moduli()
+        except Exception as e:
+            print('[moduli] fallito, proseguo senza:', e)
+            abituali = {}
+        scrivi(os.path.join(DATI, 'squadre.json'), squadre(abituali), 20, 'squadre')
     except Exception as e:
-        print('[orari] fallito:', e)
+        print('[squadre] fallito:', e)
         uscita = 1
 
     sys.exit(uscita)

@@ -12,8 +12,10 @@ function verifica(nome, cond, dettaglio) {
   if (!cond) falliti++;
   console.log((cond ? '  ok   ' : '  NO   ') + nome + (dettaglio !== undefined ? '  →  ' + dettaglio : ''));
 }
+const circa = (a, b) => Math.abs(a - b) < 1e-9;
 
-async function avvia({ adesso, senzaOrari = false }) {
+// dati: file di dati/ da sostituire con un oggetto finto, o con null per "assente"
+async function avvia({ adesso, senzaOrari = false, dati = {} }) {
   const RealDate = Date;
   const fisso = new RealDate(adesso).getTime();
   class FintaData extends RealDate {
@@ -33,8 +35,13 @@ async function avvia({ adesso, senzaOrari = false }) {
     setInterval() {}, location: { search: '' },
     document: { getElementById: nodo, querySelector: () => nodo('_q'), querySelectorAll: () => [] },
     fetch: async url => {
-      const f = url.split('?')[0];
-      if (senzaOrari && f.endsWith('orari.json')) return { ok: false, status: 404 };
+      const f = url.split('?')[0], nome = f.replace(/^dati\//, '');
+      if (senzaOrari && nome === 'orari.json') return { ok: false, status: 404 };
+      if (nome in dati) {
+        const v = dati[nome];
+        return v === null ? { ok: false, status: 404 }
+                          : { ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(v)) };
+      }
       const p = path.join(REPO, f);
       if (!fs.existsSync(p)) return { ok: false, status: 404 };
       const testo = fs.readFileSync(p, 'utf8');
@@ -43,7 +50,8 @@ async function avvia({ adesso, senzaOrari = false }) {
   };
   ctx.window = ctx;
   vm.createContext(ctx);
-  vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},prossima,scadenza,orario,undici,rispondi,quando};', ctx);
+  vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
+    'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -109,6 +117,80 @@ async function avvia({ adesso, senzaOrari = false }) {
   verifica('l\'app parte comunque', !!t.D && t.mia.length === 25, t.mia.length + ' giocatori in rosa');
   verifica('lo dice invece di stimare', el.cdt.textContent === 'orari non disponibili', el.cdt.textContent);
   verifica('giornata dal calendario', t.prossima()[0] === 1, 'G' + t.prossima()[0]);
+
+  // da qui dati finti: i risultati non devono dipendere dal giorno in cui si prova
+  const base = JSON.parse(fs.readFileSync(path.join(REPO, 'dati', 'base.json'), 'utf8'));
+  const clubs = [...new Set(base.p.map(a => a[2]))];
+  const [d1, d2, d3] = base.p.filter(a => a[4] === base.me && a[3] === 'D').map(a => a[0]);
+  const P = id => t.mia.find(p => p.id === id);
+  const prob5 = { aggiornato: '2026-09-17T09:30:00+00:00', giornata: 5, squadre: clubs,
+                  titolari: { [d1]: 95 }, panchina: { [d2]: 40 } };
+  const giovedi = '2026-09-17T12:00:00+02:00';
+
+  console.log('\n8. Probabili della giornata giusta');
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': prob5, 'squadre.json': null, 'infortuni.json': null } }));
+  g = t.prossima();
+  let x = t.titolarita(P(d1), g);
+  verifica('titolare al 95%', x && x.stato === 't' && x.perc === 95, JSON.stringify(x));
+  x = t.titolarita(P(d2), g);
+  verifica('in panchina', x && x.stato === 'c', JSON.stringify(x));
+  x = t.titolarita(P(d3), g);
+  verifica('squadra pubblicata, giocatore assente: 0%', x && x.stato === 'r' && x.perc === 0, JSON.stringify(x));
+  verifica('titolare al 95% vale +1,12', circa(t.punteggio(P(d1), g) - P(d1).fm, 1.12), (t.punteggio(P(d1), g) - P(d1).fm).toFixed(2));
+  verifica('fuori dalle probabili vale −0,40', circa(t.punteggio(P(d3), g) - P(d3).fm, -0.4), (t.punteggio(P(d3), g) - P(d3).fm).toFixed(2));
+  verifica('la rosa mostra la percentuale', el.rosa.innerHTML.includes('titolare 95%'));
+  verifica('intestazione', /probabili del/.test(el.stamp.textContent), el.stamp.textContent);
+  verifica('risposta su un giocatore', /Titolare al 95%/.test(t.rispondi('come sta ' + P(d1).nome)), t.rispondi('come sta ' + P(d1).nome).replace(/\n/g, ' / '));
+
+  console.log('\n9. Probabili di un\'altra giornata, o nel vecchio formato');
+  for (const [nome, file] of [['giornata 4', { ...prob5, giornata: 4 }],
+                              ['vecchio formato', { aggiornato: '2026-09-13T00:00:00+00:00', stato: { [d1]: 't' } }]]) {
+    ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': file, 'squadre.json': null } }));
+    g = t.prossima();
+    verifica(nome + ': nessuna titolarità inventata', t.mia.every(p => t.titolarita(p, g) === null));
+    verifica(nome + ': punteggio = fantamedia', t.mia.every(p => t.punteggio(p, g) === p.fm));
+    verifica(nome + ': intestazione', /probabili non ancora uscite/.test(el.stamp.textContent), el.stamp.textContent);
+  }
+
+  console.log('\n10. Forza dell\'avversario');
+  // tutte le squadre nella media: 1 gol fatto e 1 subito a partita, in entrambi gli anni
+  const squadre = {};
+  clubs.forEach(c => squadre[c] = { attuale: { casa: [2, 2, 2, 1], fuori: [2, 2, 2, 1] },
+                                    precedente: { casa: [19, 19, 19, 5], fuori: [19, 19, 19, 5] } });
+  const sq = { aggiornato: '2026-09-17T09:30:00+00:00', squadre,
+               campionato_precedente: { casa: [190, 190, 190, 50], fuori: [190, 190, 190, 50] } };
+  const senzaTit = { 'titolari.json': null, 'infortuni.json': null, 'squadre.json': sq };
+  ({ t, el } = await avvia({ adesso: giovedi, dati: senzaTit }));
+  g = t.prossima();
+  const att = t.mia.find(p => p.ruolo === 'A');
+  const avvD = t.avversarioClub(P(d1).club, g[1]), avvA = t.avversarioClub(att.club, g[1]);
+  verifica('avversario nella media: nessun effetto', circa(t.forza(P(d1), g).delta, 0) && t.punteggio(P(d1), g) === P(d1).fm);
+  // avversario che segna tanto e non subisce: 4 partite quest'anno, quindi 40% quest'anno e 60% l'anno scorso
+  const forte = { attuale: { casa: [2, 6, 0, 2], fuori: [2, 6, 0, 2] },
+                  precedente: { casa: [19, 38, 19, 5], fuori: [19, 38, 19, 5] }, modulo: '4-3-3' };
+  squadre[avvD.avv] = forte; squadre[avvA.avv] = forte;
+  ({ t, el } = await avvia({ adesso: giovedi, dati: senzaTit }));
+  let f = t.forza(P(d1), g);
+  verifica('difensore: l\'avversario segna 0,4·3 + 0,6·2 = 2,4', circa(f.val, 2.4), f.val);
+  verifica('difensore: 0,8 · (1 − 2,4) = −1,12', circa(t.punteggio(P(d1), g) - P(d1).fm, -1.12), (t.punteggio(P(d1), g) - P(d1).fm).toFixed(2));
+  verifica('campo dell\'avversario', f.campo === (avvD.casa ? 'fuori' : 'casa'), f.campo + (avvD.casa ? ' (noi in casa)' : ' (noi fuori)'));
+  f = t.forza(att, g);
+  verifica('attaccante: l\'avversario subisce 0,4·0 + 0,6·1 = 0,6', circa(f.val, 0.6), f.val);
+  verifica('attaccante: 0,8 · (0,6 − 1) = −0,32', circa(t.punteggio(att, g) - att.fm, -0.32), (t.punteggio(att, g) - att.fm).toFixed(2));
+  verifica('motivo leggibile nella rosa', el.rosa.innerHTML.includes(avvD.avv + ' (4-3-3) segna 2,4 gol a partita'), avvD.avv);
+  verifica('domanda sui difensori', /in ordine di consiglio/.test(t.rispondi('chi schiero in difesa')), t.rispondi('chi schiero in difesa').split('\n')[0]);
+  squadre[avvD.avv] = { ...forte, attuale: { casa: [5, 15, 0, 5], fuori: [5, 15, 0, 5] } };
+  ({ t } = await avvia({ adesso: giovedi, dati: senzaTit }));
+  verifica('dalla decima partita conta solo quest\'anno', circa(t.forza(P(d1), g).val, 3), t.forza(P(d1), g).val);
+  squadre[avvD.avv] = { ...forte, neopromossa: true };
+  ({ t, el } = await avvia({ adesso: giovedi, dati: senzaTit }));
+  verifica('neopromossa segnalata come stima', el.rosa.innerHTML.includes('neopromossa, stima'));
+
+  console.log('\n11. Senza squadre.json');
+  ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'squadre.json': null } }));
+  g = t.prossima();
+  verifica('nessuna forza inventata', t.mia.every(p => t.forza(p, g) === null));
+  verifica('undici completo lo stesso', Object.values(t.undici(g)).flat().length === 11);
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);

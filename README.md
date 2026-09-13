@@ -14,16 +14,18 @@ index.html                    l'app (codice, nessun dato dentro)
 dati/
   base.json                   rose, calendario lega, calendario Serie A, statistiche
   infortuni.json              chi è fuori e fino a quando        [automatico]
-  titolari.json               chi è dato titolare                [automatico]
+  titolari.json               probabili della giornata, in %     [automatico]
   orari.json                  orari delle giornate di Serie A    [automatico]
+  squadre.json                rendimento in casa e fuori         [automatico]
   listone.json                elenco ufficiale, serve agli script
 scripts/
-  aggiorna.py                 scarica infortuni, probabili formazioni e orari
+  aggiorna.py                 scarica infortuni, probabili, orari e rendimento squadre
 .github/workflows/
   aggiorna.yml                esegue lo script tre volte a settimana
 prove/
   app.js                      prova l'app in Node:     node prove/app.js
   orari.py                    prova la logica orari:   python prove/orari.py
+  script.py                   prova lo script:         python prove/script.py
 ```
 
 Il codice e i dati sono separati di proposito: si aggiorna l'uno senza toccare l'altro.
@@ -39,7 +41,8 @@ Il codice e i dati sono separati di proposito: si aggiorna l'uno senza toccare l
 | Calendario Serie A | date ufficiali | una volta |
 | Statistiche giocatori (PGv, MV, FM) | esportazione «Lista calciatori» | **manuale, 1 volta a settimana** |
 | Infortunati con data di rientro | pagina pubblica | automatico |
-| Probabili formazioni | pagina pubblica | automatico |
+| Probabili formazioni della giornata | pagina pubblica, media di 4 redazioni | automatico |
+| Rendimento delle squadre | risultati dal feed fixturedownload.com | automatico |
 | Orari delle partite di Serie A | feed pubblico fixturedownload.com | automatico |
 
 La scadenza per schierare la formazione è un quarto d'ora prima del primo anticipo
@@ -71,15 +74,18 @@ meglio un dato di tre giorni fa che un file vuoto la domenica mattina.
 La difesa è **sempre a quattro**. Il modulo cambia solo nei reparti avanzati
 (4-3-3, 4-4-2, 4-5-1) dal selettore sopra il campo.
 
-Il punteggio con cui Jarvis ordina i giocatori tiene conto di:
+Il punteggio con cui Jarvis ordina i giocatori parte dalla fantamedia e tiene conto di:
 
-1. disponibilità — chi è infortunato alla data della giornata è escluso
-2. titolarità secondo le ultime probabili formazioni
-3. fantamedia personale
-4. trasferta (piccolo malus)
+1. **disponibilità** — chi è infortunato alla data della giornata è escluso
+2. **titolarità** — la percentuale media delle quattro redazioni nelle probabili
+   della giornata. Finché non escono non conta, e l'app lo dice
+3. **avversario**, nel campo in cui gioca: per portiere e difensori quanti gol
+   segna, per centrocampisti e attaccanti quanti ne subisce. Fino alla decima
+   giornata i numeri di quest'anno si mescolano con quelli dell'anno scorso;
+   per le neopromosse vale la media delle retrocesse, segnata come stima
 
-Da aggiungere: forza difensiva e offensiva dell'avversario, casa/trasferta pesata
-per ruolo, modulo avversario.
+Sotto ogni giocatore l'app scrive il motivo. Il modulo abituale dell'avversario
+si vede, ma non entra nel punteggio.
 
 ---
 

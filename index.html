@@ -238,18 +238,20 @@ async function carica(){
   const inf  = await leggi('infortuni.json', false);
   const tit  = await leggi('titolari.json', false);
   const ora  = await leggi('orari.json', false);
+  const sq   = await leggi('squadre.json', false);
 
   D = base;
   ME = D.me;
   D.orari = ora && ora.giornate ? ora.giornate : null;
+  D.prob  = tit && tit.giornata && tit.titolari ? tit : null;
+  D.sq    = sq && sq.squadre ? sq : null;
   D.inf_v = inf && inf.aggiornato ? inf.aggiornato.slice(0,10) : null;
   D.tit_v = tit && tit.aggiornato ? tit.aggiornato.slice(0,10) : null;
   players = D.p.map(a=>({id:a[0],nome:a[1],club:a[2],ruolo:a[3],team:a[4],
                          costo:a[5],quot:a[6],pgv:a[7],mv:a[8],fm:a[9],
-                         out:null,motivo:null,tit:'r'}));
+                         out:null,motivo:null}));
   if(inf && inf.voci) players.forEach(p=>{ const v=inf.voci[String(p.id)];
     if(v){ p.out=v.rientro; p.motivo=v.motivo; } });
-  if(tit && tit.stato) players.forEach(p=>{ p.tit = tit.stato[String(p.id)] || 'r'; });
   mia = players.filter(p=>p.team===ME);
 }
 
@@ -339,11 +341,60 @@ function renderGiornata(){
 const MODULI = {'4-3-3':{D:4,C:3,A:3}, '4-4-2':{D:4,C:4,A:2}, '4-5-1':{D:4,C:5,A:1}};
 let modulo = '4-3-3';
 
+/* probabili della giornata: percentuale media delle quattro redazioni.
+   null se per quella squadra e quella giornata non sono ancora uscite. */
+function titolarita(p, g){
+  const pr = D.prob;
+  if(!pr || pr.giornata!==g[1] || !(pr.squadre||[]).includes(p.club)) return null;
+  const id = String(p.id);
+  if(id in pr.titolari) return {stato:'t', perc:pr.titolari[id]};
+  if(pr.panchina && id in pr.panchina) return {stato:'c', perc:pr.panchina[id]};
+  return {stato:'r', perc:0};
+}
+function descriviTit(t){
+  return !t ? '\nProbabili di questa giornata non ancora uscite.'
+       : t.stato==='t' ? '\nTitolare al '+t.perc+'% nelle probabili.'
+       : t.stato==='c' ? '\nIn panchina nelle probabili.' : '\nNon compare nelle probabili.';
+}
+
+/* rendimento per partita in un campo (casa o fuori), i: 1 gol fatti, 2 gol subiti.
+   Fino alla decima giornata si mescola con l'anno scorso, con peso crescente a quest'anno. */
+function perPartita(s, campo, i){
+  const a = s.attuale[campo], b = s.precedente[campo];
+  const w = a[0] ? Math.min(1, (s.attuale.casa[0]+s.attuale.fuori[0])/10) : 0;
+  return w*(a[0] ? a[i]/a[0] : 0) + (1-w)*b[i]/b[0];
+}
+/* l'avversario nel campo in cui gioca: per portiere e difensori conta quanto segna,
+   per centrocampisti e attaccanti quanto subisce, rispetto alla media dell'anno scorso */
+function forza(p, g){
+  const m = D.sq && avversarioClub(p.club, g[1]);
+  const s = m && D.sq.squadre[m.avv];
+  if(!s) return null;
+  const campo = m.casa ? 'fuori' : 'casa';
+  const dietro = p.ruolo==='P' || p.ruolo==='D';
+  const i = dietro ? 1 : 2;
+  const c = D.sq.campionato_precedente[campo];
+  const val = perPartita(s, campo, i), media = c[i]/c[0];
+  return {avv:m.avv, campo, dietro, val, media, modulo:s.modulo||null,
+          stima:!!s.neopromossa, delta: dietro ? media-val : val-media};
+}
+function motivoAvv(f){
+  const n = x=>x.toFixed(1).replace('.',',');
+  return f.avv+(f.modulo?' ('+f.modulo+')':'')+(f.dietro?' segna ':' subisce ')+n(f.val)+
+         ' gol a partita '+(f.campo==='casa'?'in casa':'fuori')+', media '+n(f.media)+
+         (f.stima?' · neopromossa, stima':'');
+}
+
+/* fantapunti per ogni gol a partita di differenza dalla media: portiere e
+   difensori pesano di più per porta inviolata e modificatore difesa */
+const PESI = {P:1.0, D:0.8, C:0.4, A:0.8};
+
 function punteggio(p, g){
   let v = p.fm;
-  if(p.tit==='t') v += 1.2; else if(p.tit==='c') v += 0.3; else v -= 0.4;
-  const m = avversarioClub(p.club, g[1]);
-  if(m && !m.casa) v -= 0.15;
+  const t = titolarita(p, g);
+  if(t) v += -0.4 + 1.6*t.perc/100;          // titolare sicuro +1,2 · fuori −0,4
+  const f = forza(p, g);
+  if(f) v += PESI[p.ruolo]*f.delta;
   return v;
 }
 function undici(g){
@@ -369,15 +420,16 @@ function disegnaCampo(g){
   const panca = mia.filter(p=>disponibile(p,g[2]) && !scelti.has(p.id))
                    .sort((a,b)=>ORD[a.ruolo]-ORD[b.ruolo] || punteggio(b,g)-punteggio(a,g));
   document.getElementById('panchina').innerHTML =
-    '<h2>In panchina</h2>' + panca.map(p=>riga(p,g[1],g[2])).join('');
+    '<h2>In panchina</h2>' + panca.map(p=>riga(p,g)).join('');
 
   const ko = mia.filter(p=>!disponibile(p,g[2]));
   document.getElementById('kobox').innerHTML = ko.length
-    ? '<h2>Non disponibili</h2>' + ko.map(p=>riga(p,g[1],g[2])).join('') : '';
+    ? '<h2>Non disponibili</h2>' + ko.map(p=>riga(p,g)).join('') : '';
 }
 function cella(p, g){
   const m = avversarioClub(p.club, g[1]);
-  const rischio = p.tit!=='t';
+  const t = titolarita(p, g);
+  const rischio = t && (t.stato!=='t' || t.perc<60);
   return '<div class="gioc'+(rischio?' rischio':'')+'">'+
     '<div class="maglia '+p.ruolo+'">'+(p.pgv?p.fm.toFixed(1):'–')+'</div>'+
     '<div class="nm">'+p.nome+'</div>'+
@@ -390,18 +442,21 @@ function disponibile(p, isoData){
   const [g,m,a] = p.out.split('/');
   return (a+'-'+m+'-'+g) <= isoData;   // rientra entro la giornata
 }
-function riga(p, sa, isoData){
-  const m = avversarioClub(p.club, sa);
-  const ko = isoData && !disponibile(p, isoData);
+function riga(p, g){
+  const m = avversarioClub(p.club, g[1]);
+  const ko = !disponibile(p, g[2]);
   const sfida = m ? (m.casa?'in casa con ':'a ') + m.avv : '';
-  const stato = p.tit==='t' ? '<span class="tit">titolare</span>'
-              : p.tit==='c' ? '<span class="camb">primo cambio</span>' : '';
+  const t = titolarita(p, g), f = forza(p, g);
+  const stato = !t ? '' : t.stato==='t' ? '<span class="tit">titolare '+t.perc+'%</span>'
+              : t.stato==='c' ? '<span class="camb">in panchina</span>'
+              : '<span class="nodata">non nelle probabili</span>';
   const sotto = ko
     ? '<span class="ko">Fuori fino al '+p.out+'</span>'
     : p.club + (sfida?' · '+sfida:'') + (stato?' · '+stato:'');
   const fm = p.pgv>0 ? p.fm.toFixed(2) : '—';
   return '<div class="riga'+(ko?' fuori':'')+'"><div class="ruolo '+p.ruolo+' cond">'+p.ruolo+'</div>'+
-    '<div class="chi"><div class="n">'+p.nome+'</div><div class="sotto">'+sotto+'</div></div>'+
+    '<div class="chi"><div class="n">'+p.nome+'</div><div class="sotto">'+sotto+'</div>'+
+    (f && !ko ? '<div class="sotto">'+motivoAvv(f)+'</div>' : '')+'</div>'+
     '<div class="fm '+(p.pgv?'':'nodata')+'">'+fm+'<small>'+(p.pgv||0)+' gare</small></div></div>';
 }
 
@@ -409,7 +464,7 @@ function riga(p, sa, isoData){
 function renderRosa(){
   const g = prossima();
   const ord = mia.slice().sort((a,b)=>ORD[a.ruolo]-ORD[b.ruolo] || b.fm-a.fm);
-  document.getElementById('rosa').innerHTML = ord.map(p=>riga(p,g[1],g[2])).join('');
+  document.getElementById('rosa').innerHTML = ord.map(p=>riga(p,g)).join('');
 }
 
 /* ---------- lega ---------- */
@@ -465,11 +520,13 @@ function rispondi(q){
   const ruolo = /portier|porta/.test(s)?'P': /difens|difesa|dietro/.test(s)?'D':
                 /centrocamp|mediana|centro/.test(s)?'C': /attacc|attacco|avanti|punt/.test(s)?'A': null;
   if(ruolo){
-    const l = mia.filter(p=>p.ruolo===ruolo && p.pgv>0 && disponibile(p,g[2])).sort((a,b)=>b.fm-a.fm);
+    const l = mia.filter(p=>p.ruolo===ruolo && p.pgv>0 && disponibile(p,g[2]))
+                 .sort((a,b)=>punteggio(b,g)-punteggio(a,g));
     if(!l.length) return 'Nessun '+RUOLI[ruolo].toLowerCase()+' con partite giocate.';
-    return RUOLI[ruolo]+', per fantamedia:\n' + l.map(p=>{
-      const m = avversarioClub(p.club, g[1]);
-      return '· '+p.nome+' '+p.fm.toFixed(2)+(p.tit==='t'?' (titolare)':'')+(m?' — '+(m.casa?'in casa con ':'a ')+m.avv:'');
+    return RUOLI[ruolo]+', in ordine di consiglio:\n' + l.map(p=>{
+      const m = avversarioClub(p.club, g[1]), t = titolarita(p, g), f = forza(p, g);
+      return '· '+p.nome+' '+p.fm.toFixed(2)+(t&&t.stato==='t'?' (titolare '+t.perc+'%)':'')+
+             (m?' — '+(m.casa?'in casa con ':'a ')+m.avv:'')+(f?'\n   '+motivoAvv(f):'');
     }).join('\n');
   }
 
@@ -480,8 +537,9 @@ function rispondi(q){
       (trovato.pgv? 'Fantamedia '+trovato.fm.toFixed(2)+' su '+trovato.pgv+' gare, media voto '+trovato.mv.toFixed(2)
                   : 'Non ha ancora giocato.')+'\n'+
       'Rosa di '+trovato.team+'.'+
-      (trovato.out? '\nFuori fino al '+trovato.out+' — '+trovato.motivo : (trovato.tit==='t'?'\nTitolare nelle ultime probabili.':''))+
-      (m? '\nGiornata '+g[1]+': '+(m.casa?'in casa con ':'a ')+m.avv : '');
+      (trovato.out? '\nFuori fino al '+trovato.out+' — '+trovato.motivo : descriviTit(titolarita(trovato, g)))+
+      (m? '\nGiornata '+g[1]+': '+(m.casa?'in casa con ':'a ')+m.avv : '')+
+      (forza(trovato, g) ? '\n'+motivoAvv(forza(trovato, g)) : '');
   }
   return 'Non ho capito. Prova con un ruolo, il nome di un giocatore, o "chi affronto".';
 }
@@ -489,7 +547,8 @@ function rispondi(q){
 /* ---------- aggiornamento dati ---------- */
 function mostraData(){
   const a = D.inf_v ? 'infortuni del '+dataIt(D.inf_v) : 'infortuni non disponibili';
-  const b = D.tit_v ? 'probabili del '+dataIt(D.tit_v) : 'probabili non disponibili';
+  const b = D.prob && D.prob.giornata===prossima()[1] ? 'probabili del '+dataIt(D.tit_v)
+                                                      : 'probabili non ancora uscite';
   document.getElementById('stamp').textContent = a+' · '+b;
 }
 async function aggiorna(silenzioso){
@@ -497,19 +556,21 @@ async function aggiorna(silenzioso){
   b.classList.add('attivo'); b.textContent = 'cerco…';
   let cambiato = false;
   try{
-    const [i,t,o] = await Promise.all([
+    const [i,t,o,s] = await Promise.all([
       fetch('dati/infortuni.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
       fetch('dati/titolari.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
-      fetch('dati/orari.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)
+      fetch('dati/orari.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
+      fetch('dati/squadre.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)
     ]);
     if(o && o.giornate && Object.keys(o.giornate).length>=38) D.orari = o.giornate;
+    if(s && s.squadre && Object.keys(s.squadre).length>=20) D.sq = s;
     if(i && i.voci && Object.keys(i.voci).length>=5){
       players.forEach(p=>{ const v=i.voci[String(p.id)];
         p.out = v?v.rientro:null; p.motivo = v?v.motivo:null; });
       D.inf_v = (i.aggiornato||'').slice(0,10) || D.inf_v; cambiato = true;
     }
-    if(t && t.stato && Object.keys(t.stato).length>=150){
-      players.forEach(p=>{ p.tit = t.stato[String(p.id)] || 'r'; });
+    if(t && t.giornata && t.titolari){
+      D.prob = t;
       D.tit_v = (t.aggiornato||'').slice(0,10) || D.tit_v; cambiato = true;
     }
   }catch(e){}
@@ -519,7 +580,7 @@ async function aggiorna(silenzioso){
   renderGiornata(); renderRosa(); renderLega();
   if(!silenzioso){
     document.getElementById('risposta').textContent = cambiato
-      ? 'Dati aggiornati: infortuni del '+dataIt(D.inf_v)+', probabili del '+dataIt(D.tit_v)+'.'
+      ? 'Dati aggiornati: '+document.getElementById('stamp').textContent+'.'
       : 'Nessun dato nuovo disponibile. Resto su quelli che ho.';
   }
   return cambiato;

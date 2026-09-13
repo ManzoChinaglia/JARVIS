@@ -23,7 +23,7 @@ jobs:
       - name: Installa dipendenze
         run: pip install requests beautifulsoup4 lxml
 
-      - name: Scarica infortuni e probabili formazioni
+      - name: Scarica infortuni, probabili, orari e rendimento squadre
         run: python scripts/aggiorna.py
         continue-on-error: true
 
