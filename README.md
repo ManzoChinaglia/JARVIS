@@ -103,6 +103,26 @@ solo quando la Lega fissa nuovi orari.
 
 ---
 
+## Chiedere a Jarvis con Siri
+
+Jarvis risponde a una domanda passata nell'indirizzo, per esempio
+`https://manzochinaglia.github.io/JARVIS/?q=chi affronto`. Con un Comando Rapido
+basta dire «Ehi Siri, Jarvis» e fare la domanda a voce.
+
+1. Apri l'app **Comandi** e tocca **+** in alto a destra.
+2. Cerca «detta» e aggiungi l'azione **Detta testo** (*Dictate Text*), lingua italiano.
+3. Cerca «codifica» e aggiungi **Codifica URL** (*URL Encode*): deve codificare il testo dettato.
+4. Aggiungi l'azione **URL** e scrivi `https://manzochinaglia.github.io/JARVIS/?q=`,
+   poi, subito dopo il segno `=`, inserisci la variabile del testo codificato.
+5. Aggiungi **Apri URL** (*Open URLs*).
+6. Tocca il nome del comando in alto e chiamalo **Jarvis**.
+
+Da quel momento: «Ehi Siri, Jarvis» → «chi schiero in difesa?» → si apre Jarvis
+con la risposta nella scheda Chiedi. Il comando apre Jarvis in Safari, non
+nell'icona sulla Home: i dati sono gli stessi.
+
+---
+
 ## Manutenzione settimanale
 
 1. Da Leghe Fantacalcio → Menu → Lista calciatori → **Scarica**

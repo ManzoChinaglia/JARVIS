@@ -87,6 +87,12 @@ invece di duplicarlo. Se non c'è nessuna scadenza il file non si riscrive,
 altrimenti l'iPhone cancellerebbe gli eventi. Il file va servito con fine riga
 CRLF: `.gitattributes` impedisce a Git di convertirlo.
 
+## Siri
+
+Un Comando Rapido apre l'app con la domanda nell'indirizzo (`?q=...`). L'app
+risponde solo dopo aver caricato i dati, poi toglie `?q=` dall'indirizzo. La
+guida per creare il comando è nel README; `prove/app.js` verifica la risposta.
+
 ## Probabili formazioni
 
 Vengono dalla pagina per giornata di fantacalcio-online
@@ -127,19 +133,15 @@ lato, e il risultato sarebbe una precisione finta.
 
 ## Lavori aperti, in ordine di priorità
 
-1. **Comando Siri.** L'app accetta già una domanda dall'indirizzo
-   (`?q=...`), ma la elabora prima che i dati siano caricati e la risposta
-   fallisce: va sistemato. Poi manca la guida per creare il Comando Rapido.
-
-2. **Verificare i pesi del consiglio.** I pesi della titolarità e
+1. **Verificare i pesi del consiglio.** I pesi della titolarità e
    dell'avversario (`PESI`) sono stime ragionevoli, non tarate. Dopo una decina
    di giornate vanno confrontati con i fantavoti reali e corretti.
 
-3. **Pagina «Chiedi».** Dall'iPhone il microfono non funziona. La pagina va
+2. **Pagina «Chiedi».** Dall'iPhone il microfono non funziona. La pagina va
    snellita e resa utile e reattiva: risposte sulle cose che servono davvero
    prima di schierare.
 
-4. **Parte grafica.** Migliorie da concordare con l'utente, che ne ha già in
+3. **Parte grafica.** Migliorie da concordare con l'utente, che ne ha già in
    mente alcune. Il font ora è nel repository (`font/`): verificare sull'iPhone
    che il titolo usi davvero Barlow Condensed.
 

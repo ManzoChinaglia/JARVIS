@@ -637,15 +637,20 @@ if(SR){
   mic.style.display='none';
 }
 
-/* domanda passata da un comando Siri: jarvis.html?q=... */
-const qp = new URLSearchParams(location.search).get('q');
-if(qp){
+/* domanda passata dal Comando Rapido di Siri: index.html?q=...
+   Si risponde solo a dati caricati: prima D era ancora vuoto e la risposta falliva. */
+function domandaDaIndirizzo(){
+  const qp = new URLSearchParams(location.search).get('q');
+  if(!qp) return;
   document.querySelector('nav button[data-s="chiedi"]').click();
-  document.getElementById('q').value = qp; chiedi();
+  document.getElementById('q').value = qp;
+  chiedi();
+  // ricaricando la pagina la domanda non si ripete
+  if(window.history && history.replaceState) history.replaceState(null, '', location.pathname);
 }
 
 carica()
-  .then(avvia)
+  .then(()=>{ avvia(); domandaDaIndirizzo(); })
   .catch(err=>{
     document.querySelector('main').innerHTML =
       '<div class="errore"><b>Dati non disponibili</b><br>'+err.message+

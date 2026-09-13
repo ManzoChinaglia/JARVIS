@@ -15,7 +15,7 @@ function verifica(nome, cond, dettaglio) {
 const circa = (a, b) => Math.abs(a - b) < 1e-9;
 
 // dati: file di dati/ da sostituire con un oggetto finto, o con null per "assente"
-async function avvia({ adesso, senzaOrari = false, dati = {} }) {
+async function avvia({ adesso, senzaOrari = false, dati = {}, search = '' }) {
   const RealDate = Date;
   const fisso = new RealDate(adesso).getTime();
   class FintaData extends RealDate {
@@ -32,7 +32,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {} }) {
   });
   const ctx = {
     Date: FintaData, console, URLSearchParams, Promise, Object, String, Math, Set, JSON,
-    setInterval() {}, location: { search: '', host: 'manzochinaglia.github.io', pathname: '/JARVIS/' },
+    setInterval() {}, location: { search, host: 'manzochinaglia.github.io', pathname: '/JARVIS/' },
     document: { getElementById: nodo, querySelector: () => nodo('_q'), querySelectorAll: () => [] },
     fetch: async url => {
       const f = url.split('?')[0], nome = f.replace(/^dati\//, '');
@@ -193,7 +193,14 @@ async function avvia({ adesso, senzaOrari = false, dati = {} }) {
   verifica('nessuna forza inventata', t.mia.every(p => t.forza(p, g) === null));
   verifica('undici completo lo stesso', Object.values(t.undici(g)).flat().length === 11);
 
-  console.log('\n12. Font ospitato nel repository');
+  console.log('\n12. Domanda dal Comando Rapido di Siri (?q=...)');
+  ({ t, el } = await avvia({ adesso: '2026-09-13T12:00:00+02:00', search: '?q=chi%20affronto' }));
+  verifica('risponde a dati caricati', /affronti God Bless The Doc/.test(el.risposta.textContent), el.risposta.textContent.replace(/\n/g, ' / '));
+  verifica('la domanda resta nel campo', el.q.value === 'chi affronto', el.q.value);
+  ({ t, el } = await avvia({ adesso: '2026-09-13T12:00:00+02:00', search: '?q=come%20sta%20Baturina' }));
+  verifica('domanda su un giocatore', /Baturina/.test(el.risposta.textContent), el.risposta.textContent.split('\n')[0]);
+
+  console.log('\n13. Font ospitato nel repository');
   verifica('nessuna richiesta a Google Fonts', !/fonts\.(googleapis|gstatic)\.com/.test(html));
   const fonti = [...html.matchAll(/url\("(font\/[^"]+\.woff2)"\)/g)].map(m => m[1]);
   verifica('tre spessori dichiarati', fonti.length === 3, fonti.join(', '));
