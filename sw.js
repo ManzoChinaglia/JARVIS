@@ -30,3 +30,22 @@ self.addEventListener('fetch', e => {
     }).catch(() => caches.match(chiave).then(c => c || caches.match('./')))
   );
 });
+
+// Notifiche di Jarvis: il workflow manda {titolo, testo, id, livello}; l'iPhone vuole
+// che ogni messaggio diventi una notifica visibile. Lo stesso id la sostituisce.
+self.addEventListener('push', e => {
+  let m = {};
+  try { m = e.data ? e.data.json() : {}; } catch (err) { m = { testo: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(m.titolo || 'Jarvis', {
+    body: m.testo || '', tag: m.id || undefined, icon: 'img/icona-180.png', data: { id: m.id }
+  }));
+});
+
+// toccando la notifica si apre Jarvis (sull'iPhone l'app della Home, non Safari)
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(finestre => {
+    const aperta = finestre.find(f => 'focus' in f);
+    return aperta ? aperta.focus() : self.clients.openWindow('./');
+  }));
+});

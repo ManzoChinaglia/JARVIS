@@ -479,6 +479,16 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('nel pannello il dettaglio dei dati', /probabili del/.test(el['stamp-dett'].textContent), el['stamp-dett'].textContent);
   verifica('sigla dell\'avversario nello stemmino', /^[A-Z0-9]{1,2}$/.test(el['avv-sigla'].textContent), el['avv-sigla'].textContent);
 
+  console.log('\n19. Notifiche di Jarvis');
+  verifica('chiave pubblica delle notifiche nell\'app, una sola', (html.match(/const CHIAVE_PUSH = 'B[A-Za-z0-9_-]{86}'/g) || []).length === 1);
+  verifica('service worker: mostra la notifica e al tocco apre Jarvis', /addEventListener\('push'/.test(sw) && /showNotification/.test(sw)
+           && /addEventListener\('notificationclick'/.test(sw) && /openWindow\('\.\/'\)/.test(sw));
+  verifica('pulsante per attivarle e codice da copiare nel pannello degli avvisi', /id="push-attiva"/.test(html)
+           && /id="push-copia"/.test(html) && /PUSH_ISCRIZIONE/.test(html));
+  const wf = fs.readFileSync(path.join(REPO, '.github', 'workflows', 'aggiorna.yml'), 'utf8');
+  verifica('workflow: iscrizione e chiave dai Secrets, notifica di prova a richiesta', /secrets\.PUSH_ISCRIZIONE/.test(wf)
+           && /secrets\.PUSH_CHIAVE/.test(wf) && /inputs\.prova/.test(wf) && /web-push@\d+\.\d+\.\d+/.test(wf));
+
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
 })().catch(e => { console.error('ERRORE', e); process.exit(2); });

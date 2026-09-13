@@ -1,3 +1,5 @@
 __pycache__/
+# web-push, installato dal workflow solo per mandare le notifiche
+node_modules/
 # file delle rose già importati: restano solo sul PC
 archivio/

@@ -10,6 +10,11 @@ on:
     - cron: '45 17 * * *'   # 19:45 con l'ora legale, 18:45 con la solare
     - cron: '45 18 * * *'   # 20:45 con l'ora legale, 19:45 con la solare
   workflow_dispatch:
+    inputs:
+      prova:
+        description: 'Manda anche una notifica di prova'
+        type: boolean
+        default: false
 
 jobs:
   aggiorna:
@@ -29,13 +34,19 @@ jobs:
       - name: Scarica i dati e genera il calendario
         run: python scripts/aggiorna.py
 
-      # gli avvisi nuovi arrivano sull'iPhone con ntfy; l'argomento sta nei Secrets
-      # di GitHub (NTFY_ARGOMENTO), mai nel codice. Non fa mai fallire il giro.
+      # gli avvisi nuovi arrivano sull'iPhone da Jarvis (Web Push) o, di riserva, con
+      # ntfy. Iscrizione, chiave privata e argomento stanno nei Secrets di GitHub, mai
+      # nel codice. Se web-push non si installa resta ntfy. Non fa mai fallire il giro.
       - name: Manda le notifiche
         if: always()
         env:
           NTFY_ARGOMENTO: ${{ secrets.NTFY_ARGOMENTO }}
-        run: node scripts/notifiche.js
+          PUSH_ISCRIZIONE: ${{ secrets.PUSH_ISCRIZIONE }}
+          PUSH_CHIAVE: ${{ secrets.PUSH_CHIAVE }}
+          PROVA_NOTIFICHE: ${{ inputs.prova }}
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund web-push@3.6.7 || echo "web-push non installato: solo ntfy"
+          node scripts/notifiche.js
 
       # si salva anche se una fonte è fallita: i dati buoni restano, ma il giro
       # risulta rosso su GitHub (che di norma avvisa per email)

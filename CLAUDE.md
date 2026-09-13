@@ -48,7 +48,7 @@ dati/statistiche.json   aggiornato automaticamente: partite, MV, FM e quotazioni
 dati/listone.json       elenco ufficiale, usato dagli script
 scripts/aggiorna.py     scarica infortuni, probabili, orari, rendimento delle squadre e statistiche
 scripts/importa_rose.py aggiorna le rose di base.json dal file dell'app di Leghe, dopo scambi o mercato
-scripts/notifiche.js    manda sull'iPhone con ntfy gli avvisi nuovi (gira nel workflow)
+scripts/notifiche.js    manda sull'iPhone gli avvisi nuovi: da Jarvis (Web Push) o con ntfy (gira nel workflow)
 dati/notifiche.json     codici degli avvisi già inviati, per non mandarli due volte
 archivio/               file delle rose già importati e vecchi file del fantacalcio (solo sul PC, escluso da Git)
 prove/                  prove automatiche (vedi «Come si prova»)
@@ -190,14 +190,32 @@ giocatori dell'undici in panchina o fuori nelle probabili, il martedì il
 promemoria per le rose (o le rose ferme da più di 3 settimane). Aperto il
 pannello, gli avvisi diventano letti (salvati nel telefono con localStorage).
 
-Le **stesse** notifiche arrivano sull'iPhone ad app chiusa con **ntfy** (open
-source, niente account; scelta dell'utente): `scripts/notifiche.js` gira nel
-workflow dopo lo script dei dati, esegue il codice dell'app sui dati appena
-scaricati e invia a ntfy.sh solo gli avvisi mai inviati (codici in
-`dati/notifiche.json`), al massimo 6 per giro. L'argomento ntfy è segreto: sta
-solo nei Secrets di GitHub come `NTFY_ARGOMENTO` (inserito dall'utente) e nell'app
-ntfy del telefono, **mai nel codice o nei file**. Senza argomento non invia e non
-segna niente. Un errore di ntfy non fa mai fallire il giro.
+Le **stesse** notifiche arrivano sull'iPhone ad app chiusa: `scripts/notifiche.js`
+gira nel workflow dopo lo script dei dati, esegue il codice dell'app sui dati
+appena scaricati e invia solo gli avvisi mai inviati (codici in
+`dati/notifiche.json`), al massimo 6 per giro. Due canali:
+
+- **notifiche di Jarvis** (Web Push, dal 14/09/2026, scelta dell'utente): arrivano
+  con l'icona di Jarvis e **toccandole si apre l'app sulla Home**. Con un link,
+  anche da ntfy, l'iPhone apre sempre Safari: un'app della Home si apre solo dalle
+  sue notifiche. Si attivano una volta dal pannello Avvisi («Attiva le notifiche»,
+  solo dall'icona sulla Home, iOS 16.4 o più recente): l'iPhone dà un'iscrizione
+  che l'utente copia nel Secret `PUSH_ISCRIZIONE`. La chiave privata VAPID sta solo
+  nel Secret `PUSH_CHIAVE` (generata da Claude e data in chat, mai scritta in un
+  file); la pubblica è `CHIAVE_PUSH` in `index.html`. Se si rigenerano le chiavi
+  cambiano tutte e due e va rifatta l'iscrizione. Il workflow installa `web-push`
+  (3.6.7) solo per questo passo; `sw.js` mostra la notifica (`push`) e al tocco
+  apre Jarvis (`notificationclick`).
+- **ntfy**, di riserva (open source, niente account): se le notifiche di Jarvis
+  non sono attive, se un invio fallisce, o se l'iPhone chiude l'iscrizione (404 o
+  410: allora arriva anche «Riattiva le notifiche di Jarvis», una volta sola; nel
+  registro resta solo un'impronta dell'iscrizione, per riprovare quando cambia).
+  L'argomento sta solo nel Secret `NTFY_ARGOMENTO` e nell'app ntfy del telefono.
+
+Argomento, iscrizione e chiave privata **mai nel codice o nei file**. Senza
+nessun canale non invia e non segna niente; un errore non fa mai fallire il giro.
+Per provare: Actions → *Aggiorna Jarvis* → *Run workflow*, con «Manda anche una
+notifica di prova».
 
 ## Chiedi
 

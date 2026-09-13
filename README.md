@@ -121,16 +121,25 @@ aggiorna da solo quando la Lega fissa nuovi orari.
 
 ## Notifiche sull'iPhone
 
-Gli avvisi (campanella in alto a destra) arrivano anche come notifiche, ad app chiusa,
-con l'app gratuita **ntfy** (open source, niente account):
+Gli avvisi (campanella in alto a destra) arrivano anche come notifiche, ad app
+chiusa. Meglio da **Jarvis stesso**: hanno la sua icona e toccandole si apre
+l'app (un link, invece, sull'iPhone apre sempre Safari).
 
-1. Installa **ntfy** dall'App Store, tocca **+** e iscriviti all'argomento che ti
-   ha dato Claude (server predefinito, ntfy.sh). Consenti le notifiche.
+1. Apri Jarvis **dall'icona sulla Home** → campanella → **Attiva le notifiche** →
+   Consenti → **Copia il codice**.
 2. Su GitHub: repository → **Settings** → **Secrets and variables** → **Actions**
-   → **New repository secret**, nome `NTFY_ARGOMENTO`, valore l'argomento.
+   → **New repository secret**, nome `PUSH_ISCRIZIONE`, valore il codice copiato.
+   Serve anche il Secret `PUSH_CHIAVE`, con la chiave privata che ti ha dato Claude.
+3. Prova: **Actions** → *Aggiorna Jarvis* → *Run workflow*, spunta «Manda anche
+   una notifica di prova».
 
-L'argomento funziona come una password: non scriverlo in nessun file del
-progetto e non condividerlo. Arrivano al massimo 6 notifiche per giro, mai la
+Di riserva c'è l'app gratuita **ntfy** (open source, niente account): se le
+notifiche di Jarvis non funzionano, gli avvisi arrivano lì. Per attivarla:
+installa ntfy, tocca **+** e iscriviti all'argomento che ti ha dato Claude; su
+GitHub crea il Secret `NTFY_ARGOMENTO` con lo stesso argomento.
+
+Argomento, codice e chiave funzionano come password: non scriverli in nessun file
+del progetto e non condividerli. Arrivano al massimo 6 notifiche per giro, mai la
 stessa due volte.
 
 ---
