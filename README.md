@@ -41,7 +41,7 @@ Il codice e i dati sono separati di proposito: si aggiorna l'uno senza toccare l
 
 | Dato | Fonte | Aggiornamento |
 |---|---|---|
-| Rose delle 10 squadre | `rose.csv` da Leghe Fantacalcio | a ogni scambio |
+| Rose delle 10 squadre | file delle rose dall'app di Leghe Fantacalcio | a ogni scambio |
 | Calendario della lega | esportazione da Fantalab | una volta |
 | Calendario Serie A | date ufficiali | una volta |
 | Statistiche giocatori (PGv, MV, FM) e quotazioni | pagine pubbliche di fantacalcio.it | automatico, 1 volta al giorno |
@@ -152,11 +152,13 @@ nell'icona sulla Home: i dati sono gli stessi.
 
 ## Dopo uno scambio
 
-1. Da Leghe Fantacalcio scarica il file delle rose (`rose.csv`): finisce nella
-   cartella Download, non serve spostarlo.
+1. Dall'app di Leghe Fantacalcio scarica il file delle rose
+   («rivoluzione-fantacalcio-rosters-….xlsx»): finisce nella cartella Download,
+   non serve spostarlo né rinominarlo.
 2. Scrivi a Claude «rose aggiornate». Lancia `python scripts/importa_rose.py`,
-   che controlla il file (10 squadre da 25, ruoli giusti), aggiorna le rose,
-   elenca gli scambi trovati; poi prove e pubblicazione.
+   che riconosce le squadre anche se nell'app hanno un nome diverso, controlla il
+   file (10 squadre da 25, ruoli giusti), aggiorna le rose ed elenca gli scambi
+   trovati; poi prove e pubblicazione.
 
 Statistiche e quotazioni si aggiornano da sole ogni giorno: niente più
 esportazione settimanale.

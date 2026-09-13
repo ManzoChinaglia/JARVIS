@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """
-Aggiorna le rose della lega in dati/base.json da rose.csv, il file che si scarica
-da Leghe Fantacalcio dopo uno scambio o durante il mercato.
+Aggiorna le rose della lega in dati/base.json dal file delle rose di Leghe
+Fantacalcio, dopo uno scambio o durante il mercato. Accetta:
+- il file dell'app, «<lega>-rosters-<numero>.xlsx»: un blocco di colonne per
+  squadra (nome, «costo»), 25 giocatori in ordine P, D, C, A, riga «totale»
+- rose.csv, con l'Id del listone per ogni giocatore
 
-Uso: python scripts/importa_rose.py [percorso di rose.csv]
-Senza percorso prende il rose*.csv più recente nella cartella Download.
+Uso: python scripts/importa_rose.py [percorso] [--prova]
+Senza percorso prende il file delle rose più recente nella cartella Download.
+Con --prova mostra cosa cambierebbe, senza scrivere niente.
 
 - tocca solo le rose (squadra, prezzo, ruolo, nome, quotazione) e la data "v":
   calendario e sfide restano quelli di base.json
@@ -15,13 +19,21 @@ Senza percorso prende il rose*.csv più recente nella cartella Download.
 - aggiunge al listone i giocatori nuovi, così lo script li riconosce nelle
   probabili e negli infortuni
 """
-import csv, glob, json, os, sys
+import csv, glob, json, os, re, sys, unicodedata
 from collections import Counter
 from datetime import date
 
 RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATI = os.path.join(RADICE, 'dati')
+DOWNLOAD = os.path.join(os.path.expanduser('~'), 'Downloads')
 RUOLI = {'P': 3, 'D': 8, 'C': 8, 'A': 6}
+RUOLI_IN_ORDINE = ['P'] * 3 + ['D'] * 8 + ['C'] * 8 + ['A'] * 6   # come nei blocchi dell'app
+
+
+def norm(s):
+    """Per confrontare i nomi: senza accenti, maiuscole, spazi e punteggiatura."""
+    s = unicodedata.normalize('NFD', str(s or '')).encode('ascii', 'ignore').decode()
+    return re.sub(r'[^a-z0-9]', '', s.lower())
 
 
 def leggi_json(nome):
@@ -34,12 +46,85 @@ def testo_json(dati):
     return json.dumps(dati, ensure_ascii=False, separators=(',', ':'))
 
 
-def trova_csv(cartella):
-    """Il rose*.csv più recente nella cartella."""
-    file = glob.glob(os.path.join(cartella, 'rose*.csv'))
+def trova_file(cartella):
+    """Il file delle rose più recente: quello dell'app (…rosters….xlsx) o rose*.csv."""
+    file = glob.glob(os.path.join(cartella, '*rosters*.xlsx')) + glob.glob(os.path.join(cartella, 'rose*.csv'))
     if not file:
-        raise FileNotFoundError(f'nessun rose*.csv in {cartella}')
+        raise FileNotFoundError(f'nessun file delle rose (…rosters….xlsx o rose*.csv) in {cartella}')
     return max(file, key=os.path.getmtime)
+
+
+def leggi_rosters(percorso):
+    """Blocchi del file dell'app: [(nome della squadra, [(giocatore, costo), …]), …]."""
+    import openpyxl                       # serve solo qui, e solo sul PC
+    libro = openpyxl.load_workbook(percorso, read_only=True, data_only=True)
+    try:
+        righe = [list(r) for r in libro.worksheets[0].iter_rows(values_only=True)]
+    finally:
+        libro.close()                     # in sola lettura il file resta aperto, e Windows lo blocca
+    testa, blocchi = righe[0], []
+    for c in range(len(testa) - 1):
+        if testa[c] and str(testa[c + 1] or '').strip().lower() == 'costo':
+            giocatori = []
+            for r in righe[1:]:
+                nome = r[c] if c < len(r) else None
+                if not nome or str(nome).strip().lower() == 'totale':
+                    break
+                giocatori.append((str(nome).strip(), int(r[c + 1] or 0)))
+            blocchi.append((str(testa[c]).strip(), giocatori))
+    if not blocchi:
+        raise ValueError('nessun blocco «squadra / costo»: il file ha cambiato struttura')
+    return blocchi
+
+
+def righe_da_blocchi(blocchi, base, listone):
+    """Righe come quelle di rose.csv, dai blocchi dell'app.
+
+    Le squadre si riconoscono dai giocatori (almeno 13 su 25 in comune con una
+    rosa attuale), perché nell'app i nomi possono essere diversi da quelli del
+    calendario. I giocatori si riconoscono dal nome: prima nella rosa attuale
+    della squadra, poi nel listone, dove ogni nome compare una volta sola.
+    Restituisce le righe e le coppie (nome nel file, nome nel calendario) diverse.
+    """
+    attuali = {}
+    for p in base['p']:
+        attuali.setdefault(p[4], {})[norm(p[1])] = p
+    per_nome = {}
+    for x in listone:
+        per_nome.setdefault(norm(x['nome']), []).append(x)
+
+    righe, errori, diversi, usate = [], [], [], set()
+    for nome_file, giocatori in blocchi:
+        if len(giocatori) != 25:
+            errori.append(f'«{nome_file}»: {len(giocatori)} giocatori invece di 25')
+            continue
+        chiavi = {norm(n) for n, _ in giocatori}
+        comuni, squadra = max(((len(chiavi & set(r)), s) for s, r in attuali.items()), default=(0, None))
+        if comuni < 13:
+            squadra = next((s for s in attuali if norm(s) == norm(nome_file)), None)
+        if not squadra or squadra in usate:
+            errori.append(f'squadra «{nome_file}» non riconosciuta')
+            continue
+        usate.add(squadra)
+        if norm(squadra) != norm(nome_file):
+            diversi.append((nome_file, squadra))
+        for k, (nome, costo) in enumerate(giocatori):
+            ruolo, noto = RUOLI_IN_ORDINE[k], attuali[squadra].get(norm(nome))
+            if noto:
+                i = noto[0]
+                if noto[3] != ruolo:
+                    errori.append(f'{nome} ({nome_file}): nel file è tra i {ruolo}, nel listone è {noto[3]}')
+            else:
+                cand = per_nome.get(norm(nome), [])
+                if len(cand) != 1:
+                    errori.append(f'{nome} ({nome_file}): ' + ('non è nel listone' if not cand else 'più giocatori con questo nome'))
+                    continue
+                i = cand[0]['id']
+            righe.append({'Squadra': squadra, 'Nome': nome, 'Squadra_Appartenenza': '', 'Ruolo': ruolo,
+                          'Prezzo': str(costo), 'Quotazione': '', 'Fantacalcio_Id': str(i)})
+    if errori:
+        raise ValueError('\n'.join(errori))
+    return righe, diversi
 
 
 def leggi_csv(percorso):
@@ -72,7 +157,8 @@ def importa(righe, base, listone, stat=None):
             continue
         s, vecchio = (stat or {}).get(str(i)), prima.get(i)
         pgv, mv, fm = (s[0], s[1], s[2]) if s else ((vecchio[7], vecchio[8], vecchio[9]) if vecchio else (0, 0.0, 0.0))
-        quot = int(r['Quotazione']) if r.get('Quotazione', '').strip().isdigit() else (s[3] if s else 0)
+        quot = (int(r['Quotazione']) if r.get('Quotazione', '').strip().isdigit()
+                else s[3] if s else vecchio[6] if vecchio else 0)
         rose.append([i, nome, club, ruolo, squadra, int(r['Prezzo']), quot, pgv, mv, fm])
 
     conta = Counter(p[4] for p in rose)
@@ -92,6 +178,13 @@ def importa(righe, base, listone, stat=None):
     if errori:
         raise ValueError('\n'.join(errori))
 
+    # ordine come nel file di prima (squadra, ruolo, posizione): differenze leggibili
+    pos = {p[0]: k for k, p in enumerate(base['p'])}
+    ordine_sq = {}
+    for p in base['p']:
+        ordine_sq.setdefault(p[4], len(ordine_sq))
+    rose.sort(key=lambda p: (ordine_sq.get(p[4], 99), 'PDCA'.index(p[3]), pos.get(p[0], 10 ** 6)))
+
     nuovo = dict(base)                    # stesse chiavi, stesso ordine
     nuovo['v'] = date.today().isoformat()
     nuovo['p'] = rose
@@ -109,7 +202,9 @@ def scambi(prima, dopo):
 
 
 def main():
-    percorso = sys.argv[1] if len(sys.argv) > 1 else trova_csv(os.path.join(os.path.expanduser('~'), 'Downloads'))
+    argomenti = [a for a in sys.argv[1:] if not a.startswith('--')]
+    prova = '--prova' in sys.argv
+    percorso = argomenti[0] if argomenti else trova_file(DOWNLOAD)
     print(f'file: {percorso}')
     base, listone = leggi_json('base.json'), leggi_json('listone.json')
     try:
@@ -117,7 +212,13 @@ def main():
     except (OSError, ValueError):
         stat = None
     try:
-        nuovo, nuovo_listone, aggiunti = importa(leggi_csv(percorso), base, listone, stat)
+        if percorso.lower().endswith('.xlsx'):
+            righe, diversi = righe_da_blocchi(leggi_rosters(percorso), base, listone)
+            for dal_file, nel_calendario in diversi:
+                print(f'  nel file «{dal_file}» è «{nel_calendario}» del calendario')
+        else:
+            righe = leggi_csv(percorso)
+        nuovo, nuovo_listone, aggiunti = importa(righe, base, listone, stat)
     except ValueError as e:
         print('Rose NON aggiornate, il file non è plausibile:\n' + str(e))
         sys.exit(1)
@@ -133,6 +234,9 @@ def main():
         print('  nessun cambio nelle rose')
     for p in aggiunti:
         print(f'  nuovo nel listone: {p["nome"]} ({p["squadra"]})')
+    if prova:
+        print('prova: nessun file scritto.')
+        return
 
     with open(os.path.join(DATI, 'base.json'), 'w', encoding='utf-8') as f:
         f.write(testo_json(nuovo))

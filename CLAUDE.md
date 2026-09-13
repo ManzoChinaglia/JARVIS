@@ -62,11 +62,21 @@ qui ha già rotto un'app precedente in modo silenzioso.
 ## Dati che si aggiornano a mano
 
 Solo le **rose**, che cambiano con scambi e mercato (soste per le nazionali,
-gennaio). Dopo uno scambio l'utente scarica `rose.csv` da Leghe Fantacalcio e
-dice «rose aggiornate»; si lancia `python scripts/importa_rose.py`, che prende il
-`rose*.csv` più recente nella cartella Download, controlla 10 squadre da 25
-(3/8/8/6) con i nomi del calendario, aggiorna `base.json`, aggiunge al listone i
-giocatori nuovi ed elenca gli scambi. Poi prove, commit e push come sempre.
+gennaio). Dopo uno scambio l'utente scarica il file delle rose dall'app di Leghe
+Fantacalcio («rivoluzione-fantacalcio-rosters-<numero>.xlsx», finisce nella
+cartella Download) e dice «rose aggiornate». Si lancia prima
+`python scripts/importa_rose.py --prova` (mostra gli scambi senza scrivere),
+poi senza `--prova`; poi prove, commit e push come sempre.
+
+Il file dell'app ha un blocco per squadra (nome, «costo», 25 giocatori in ordine
+P, D, C, A, riga «totale») e **niente Id**: le squadre si riconoscono dai
+giocatori in comune con la rosa attuale (almeno 13), perché nell'app quattro
+squadre hanno un nome diverso dal calendario (AS Quell, Palle Sudate,
+FC FRINGUELLI, Dinastia Fontana = FC TETTENHAM); i giocatori dal nome, prima
+nella rosa attuale, poi nel listone (dove ogni nome è unico). Si accetta anche
+`rose.csv`, che ha l'Id. Controlli: 10 squadre da 25 (3/8/8/6), ruoli coerenti,
+nessun giocatore in due squadre. Serve `openpyxl` (`pip install openpyxl`), solo
+sul PC.
 
 La lega è privata: le rose richiedono il login, e Claude non fa accessi con la
 password dell'utente (nemmeno tramite uno script, nemmeno se cifrata). Se un

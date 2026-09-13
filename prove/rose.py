@@ -91,10 +91,55 @@ sconosciuto[0].update({'Fantacalcio_Id': '999998', 'Squadra_Appartenenza': 'XYZ'
 ok, msg = fallisce(sconosciuto, 'club sconosciuto')
 verifica('club che non si riesce a ricostruire', ok, msg)
 
-vero = os.path.join(os.path.expanduser('~'), 'Downloads', 'rose.csv')
-if os.path.exists(vero):
-    print('\n4. Il rose.csv vero nella cartella Download')
-    nuovo, _, aggiunti = mod.importa(mod.leggi_csv(vero), base, listone)
+print('\n4. File delle rose dell\'app (…rosters….xlsx)')
+import tempfile, openpyxl
+NOMI_APP = {'FC TETTENHAM': 'Dinastia Fontana', 'CF FRINGUELLI': 'FC FRINGUELLI', 'As Quel': 'AS Quell',
+            'Palle Sudate Fc': 'Palle Sudate', 'God Bless The Doc': 'GOD BLESS THE DOC', 'Saddam Hussein': 'saddam hussein'}
+def file_app(p_list, ordine, cartella, cambia=None):
+    """Un file come quello dell'app: blocchi «squadra / costo», 25 giocatori in ordine P, D, C, A, riga «totale»."""
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'ROSE'
+    for b, squadra in enumerate(ordine):
+        rosa = sorted((p for p in p_list if p[4] == squadra), key=lambda p: 'PDCA'.index(p[3]))
+        c = b * 3 + 1
+        ws.cell(1, c, NOMI_APP.get(squadra, squadra)); ws.cell(1, c + 1, 'costo')
+        for r, p in enumerate(rosa, start=2):
+            ws.cell(r, c, (cambia or {}).get(p[1], p[1])); ws.cell(r, c + 1, p[5])
+        ws.cell(len(rosa) + 2, c, 'totale'); ws.cell(len(rosa) + 2, c + 1, sum(p[5] for p in rosa))
+    percorso = os.path.join(cartella, 'rivoluzione-fantacalcio-rosters-1.xlsx')
+    wb.save(percorso)
+    return percorso
+squadre = list(dict.fromkeys(p[4] for p in base['p']))
+with tempfile.TemporaryDirectory() as d:
+    f = file_app(base['p'], list(reversed(squadre)), d)
+    blocchi = mod.leggi_rosters(f)
+    verifica('10 blocchi da 25, riga «totale» esclusa', len(blocchi) == 10 and all(len(g) == 25 for _, g in blocchi))
+    righe_app, diversi = mod.righe_da_blocchi(blocchi, base, listone)
+    nuovo, _, aggiunti = mod.importa(righe_app, base, listone)
+    verifica('stesse rose, nello stesso ordine di base.json', nuovo['p'] == base['p'] and not aggiunti)
+    attesi = sorted((v, k) for k, v in NOMI_APP.items() if mod.norm(v) != mod.norm(k))   # le maiuscole non contano
+    verifica('squadre riconosciute dai giocatori anche col nome diverso', sorted(diversi) == attesi, diversi)
+    # scambio: Wesley (BURKINA FASO) per Dimarco (OPENDA LEGS)
+    scambiato = copy.deepcopy(base['p'])
+    for p in scambiato:
+        if p[1] == 'Wesley': p[4] = 'OPENDA LEGS'
+        elif p[1] == 'Dimarco': p[4] = base['me']
+    righe_app, _ = mod.righe_da_blocchi(mod.leggi_rosters(file_app(scambiato, squadre, d)), base, listone)
+    cambi, entrati, usciti = mod.scambi(base, mod.importa(righe_app, base, listone)[0])
+    verifica('scambio riconosciuto', sorted(c[0] for c in cambi) == ['Dimarco', 'Wesley'] and not entrati and not usciti, cambi)
+    try:
+        mod.righe_da_blocchi(mod.leggi_rosters(file_app(base['p'], squadre, d, {'Kamara H.': 'Pinco Pallino'})), base, listone)
+        verifica('nome sconosciuto: deve fermarsi', False)
+    except ValueError as e:
+        verifica('nome sconosciuto: si ferma', 'non è nel listone' in str(e), str(e).splitlines()[0])
+
+vero = mod.trova_file(mod.DOWNLOAD) if os.path.isdir(mod.DOWNLOAD) and (
+    [x for x in os.listdir(mod.DOWNLOAD) if 'rosters' in x or x.startswith('rose')]) else None
+if vero:
+    print(f'\n5. Il file delle rose vero più recente: {os.path.basename(vero)}')
+    righe_vere = mod.righe_da_blocchi(mod.leggi_rosters(vero), base, listone)[0] if vero.endswith('.xlsx') else mod.leggi_csv(vero)
+    nuovo, _, _ = mod.importa(righe_vere, base, listone)
     diversi = [(a, b) for a, b in zip(nuovo['p'], base['p']) if a != b]
     verifica('ridà le rose di base.json (se non ci sono stati scambi)', not diversi and len(nuovo['p']) == len(base['p']),
              diversi[:2] or f'{len(nuovo["p"])} giocatori')
