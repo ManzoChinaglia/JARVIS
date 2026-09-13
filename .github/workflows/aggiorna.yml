@@ -29,6 +29,14 @@ jobs:
       - name: Scarica i dati e genera il calendario
         run: python scripts/aggiorna.py
 
+      # gli avvisi nuovi arrivano sull'iPhone con ntfy; l'argomento sta nei Secrets
+      # di GitHub (NTFY_ARGOMENTO), mai nel codice. Non fa mai fallire il giro.
+      - name: Manda le notifiche
+        if: always()
+        env:
+          NTFY_ARGOMENTO: ${{ secrets.NTFY_ARGOMENTO }}
+        run: node scripts/notifiche.js
+
       # si salva anche se una fonte è fallita: i dati buoni restano, ma il giro
       # risulta rosso su GitHub (che di norma avvisa per email)
       - name: Salva i dati aggiornati

@@ -47,6 +47,8 @@ dati/statistiche.json   aggiornato automaticamente: partite, MV, FM e quotazioni
 dati/listone.json       elenco ufficiale, usato dagli script
 scripts/aggiorna.py     scarica infortuni, probabili, orari, rendimento delle squadre e statistiche
 scripts/importa_rose.py aggiorna le rose di base.json dal file dell'app di Leghe, dopo scambi o mercato
+scripts/notifiche.js    manda sull'iPhone con ntfy gli avvisi nuovi (gira nel workflow)
+dati/notifiche.json     codici degli avvisi già inviati, per non mandarli due volte
 archivio/               file delle rose già importati e vecchi file del fantacalcio (solo sul PC, escluso da Git)
 prove/                  prove automatiche (vedi «Come si prova»)
 .github/workflows/aggiorna.yml   esegue lo script tre volte al giorno, dopo gli aggiornamenti
@@ -134,6 +136,24 @@ CRLF: `.gitattributes` impedisce a Git di convertirlo.
 - **Nessun volto di persone nel repository**, che è pubblico (scelta
   dell'utente del 13/09/2026): lo stemma originale con i ritratti e le foto
   restano solo sul PC.
+
+## Avvisi e notifiche
+
+La scheda «Avvisi» (campanella, pallino rosso con i nuovi) elenca, dal più
+urgente: scadenza (3 giorni prima, sotto le 24 ore, «ultima chiamata» sotto le
+3 ore), dati fermi, tuoi giocatori che saltano la giornata, probabili uscite,
+giocatori dell'undici in panchina o fuori nelle probabili, il martedì il
+promemoria per le rose (o le rose ferme da più di 3 settimane). Aperta la
+scheda, gli avvisi diventano letti (salvati nel telefono con localStorage).
+
+Le **stesse** notifiche arrivano sull'iPhone ad app chiusa con **ntfy** (open
+source, niente account; scelta dell'utente): `scripts/notifiche.js` gira nel
+workflow dopo lo script dei dati, esegue il codice dell'app sui dati appena
+scaricati e invia a ntfy.sh solo gli avvisi mai inviati (codici in
+`dati/notifiche.json`), al massimo 6 per giro. L'argomento ntfy è segreto: sta
+solo nei Secrets di GitHub come `NTFY_ARGOMENTO` (inserito dall'utente) e nell'app
+ntfy del telefono, **mai nel codice o nei file**. Senza argomento non invia e non
+segna niente. Un errore di ntfy non fa mai fallire il giro.
 
 ## Chiedi
 
@@ -247,6 +267,7 @@ node prove/app.js
 python prove/orari.py
 python prove/script.py
 python prove/rose.py
+node prove/notifiche.js
 ```
 
 `prove/app.js` segue il metodo usato finora, da mantenere: estrae il blocco

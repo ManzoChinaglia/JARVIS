@@ -140,6 +140,22 @@
   .esempi button{background:none; border:1px solid var(--line); color:var(--dim);
                  border-radius:16px; padding:7px 12px; font-size:13px;}
 
+  /* ---- avvisi ---- */
+  nav button .ic{position:relative;}
+  .badge{display:none; position:absolute; top:-5px; right:-11px; min-width:16px; height:16px; padding:0 4px;
+         border-radius:8px; background:var(--bf-rosso); color:#fff; font-size:10px; line-height:16px; font-weight:700;}
+  .badge.on{display:inline-block;}
+  .avviso{padding:12px 14px 12px 14px; margin-bottom:10px; border-radius:var(--r);
+          background:rgba(23,28,25,.82); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+          border:1px solid var(--line); border-left:4px solid var(--bf-verde);}
+  .avviso-attenzione{border-left-color:var(--bf-stella);}
+  .avviso-urgente{border-left-color:var(--bf-rosso);}
+  .avviso .ti{font-size:15px; font-weight:600;}
+  .avviso .te{font-size:13px; color:var(--dim); margin-top:3px; line-height:1.45;}
+  .avviso.nuovo .ti::after{content:'nuovo'; margin-left:8px; font-size:10px; font-weight:700;
+                           color:var(--bf-stella); vertical-align:2px;}
+  .nota-avvisi{font-size:12px; color:var(--dim); margin-top:18px; line-height:1.5;}
+
   /* ---- barra ---- */
   nav{position:fixed; left:0; right:0; bottom:0; display:flex;
       background:rgba(15,19,17,.94); backdrop-filter:blur(14px);
@@ -247,6 +263,12 @@
     <div class="esempi" id="esempi"></div>
     <div class="risposta" id="risposta">Tocca una domanda qui sopra, o scrivila: chi schierare, un confronto tra due giocatori, come sta qualcuno, chi affronti.</div>
   </section>
+
+  <section id="s-avvisi">
+    <h2>Avvisi</h2>
+    <div id="avvisi"></div>
+    <p class="nota-avvisi">Quelli importanti arrivano anche come notifica sull'iPhone, ad app chiusa, con l'app ntfy.</p>
+  </section>
 </main>
 
 <nav>
@@ -254,6 +276,7 @@
   <button data-s="rosa"><span class="ic">&#128100;</span>Rosa</button>
   <button data-s="lega"><span class="ic">&#127942;</span>Lega</button>
   <button data-s="chiedi"><span class="ic">&#128172;</span>Chiedi</button>
+  <button data-s="avvisi"><span class="ic">&#128276;<span class="badge" id="badge-avvisi"></span></span>Avvisi</button>
 </nav>
 
 <script>
@@ -390,6 +413,7 @@ function renderGiornata(){
 
   const sa = g[1], iso = g[2];
   disegnaCampo(g);
+  renderAvvisi();
 }
 
 /* difesa sempre a 4; reparti avanzati secondo il modulo scelto */
@@ -777,18 +801,89 @@ function rispondi(q){
          'il nome di un giocatore o «chi affronto?».';
 }
 
+/* ---------- avvisi ---------- */
+/* avvisi già letti, salvati sul telefono; se il browser non lo permette si riparte da zero */
+function letti(){
+  try{ return new Set(JSON.parse(localStorage.getItem('jarvis-letti') || '[]')); }catch(e){ return new Set(); }
+}
+function salvaLetti(s){
+  try{ localStorage.setItem('jarvis-letti', JSON.stringify([...s].slice(-300))); }catch(e){}
+}
+const ORDINE_AVVISI = {urgente:0, attenzione:1, info:2};
+/* cosa merita attenzione adesso, dal più urgente */
+function avvisi(g){
+  const out = [], ora = oggi(), sc = scadenza(g);
+  /* la scadenza in tre momenti: 3 giorni prima, sotto le 24 ore, sotto le 3 ore */
+  if(sc && sc>ora && sc-ora < 72*3600000){
+    const resta = sc-ora, livello = resta < 24*3600000 ? 'urgente' : 'attenzione', ultima = resta < 3*3600000;
+    out.push({id:'scadenza-'+g[0]+'-'+(ultima ? 'ultima' : livello), livello,
+              titolo:(ultima ? 'Ultima chiamata: formazione' : 'Formazione')+' entro '+quando(sc),
+              testo:'Mancano '+fmtDurata(resta)+'. Schierala su Leghe Fantacalcio prima della scadenza.'});
+  }
+  const vecchi = datiVecchi();
+  if(vecchi)
+    out.push({id:'dati-'+isoOggi(), livello:'urgente', titolo:'Dati fermi',
+              testo:vecchi.charAt(0).toUpperCase()+vecchi.slice(1)+'. Controlla su GitHub i giri dello script.'});
+  mia.filter(p=>!disponibile(p, g[2])).forEach(p=>
+    out.push({id:'fuori-'+p.id+'-'+g[1], livello:'attenzione', titolo:p.nome+' non gioca', testo:perche(p, g[2])+'.'}));
+  const pr = D.prob;
+  if(pr && pr.giornata===g[1] && (pr.squadre||[]).length){
+    const miei = mia.filter(p=>pr.squadre.includes(p.club));
+    const tit = miei.filter(p=>{ const t = titolarita(p, g); return t && t.stato==='t'; }).length;
+    out.push({id:'probabili-'+g[1]+'-'+pr.squadre.length, livello:'info', titolo:'Probabili uscite',
+              testo:pr.squadre.length+' squadre su 20. Dei tuoi giocatori già nelle probabili, '+tit+' su '+miei.length+' sono titolari.'});
+    [].concat(...Object.values(undici(g))).forEach(p=>{
+      const t = titolarita(p, g);
+      if(t && (t.stato==='c' || t.stato==='r'))
+        out.push({id:'dubbio-'+p.id+'-'+g[1], livello:'attenzione',
+                  titolo:p.nome+(t.stato==='c' ? ' in panchina' : ' fuori')+' nelle probabili',
+                  testo:'È nell\'undici consigliato: guarda le alternative in «Chiedi».'});
+    });
+  }
+  if(ora.getDay()===2)          // il martedì, a giornata finita
+    out.push({id:'rose-martedi-'+isoOggi(), livello:'info', titolo:'Scambi questa settimana?',
+              testo:'Se hai fatto scambi, scarica il file delle rose dall\'app di Leghe e scrivi a Claude «rose aggiornate».'});
+  else if(D.v && giorniDa(D.v) > 21)
+    out.push({id:'rose-'+D.v, livello:'info', titolo:'Rose del '+dataIt(D.v),
+              testo:'Se hai fatto scambi, scarica il file delle rose dall\'app di Leghe e scrivi a Claude «rose aggiornate».'});
+  return out.sort((a,b)=>ORDINE_AVVISI[a.livello]-ORDINE_AVVISI[b.livello]);
+}
+function renderAvvisi(){
+  const lista = avvisi(prossima()), visti = letti();
+  const nuovi = lista.filter(a=>!visti.has(a.id)).length;
+  const badge = document.getElementById('badge-avvisi');
+  badge.textContent = nuovi || '';
+  badge.classList.toggle('on', nuovi>0);
+  document.getElementById('avvisi').innerHTML = lista.length
+    ? lista.map(a=>'<div class="avviso avviso-'+a.livello+(visti.has(a.id) ? '' : ' nuovo')+'">'+
+                   '<div class="ti">'+a.titolo+'</div><div class="te">'+a.testo+'</div></div>').join('')
+    : '<div class="vuoto">Nessun avviso: tutto tranquillo.</div>';
+}
+/* aprendo la scheda gli avvisi diventano letti: «nuovo» resta visibile fino al prossimo aggiornamento */
+function apriAvvisi(){
+  const s = letti();
+  avvisi(prossima()).forEach(a=>s.add(a.id));
+  salvaLetti(s);
+  const badge = document.getElementById('badge-avvisi');
+  badge.textContent = '';
+  badge.classList.remove('on');
+}
+
 /* ---------- aggiornamento dati ---------- */
 /* se lo script non gira da giorni meglio saperlo: i consigli sarebbero su dati vecchi.
    orari.json si riscrive a ogni giro, quindi dice se lo script sta girando. */
 const GIORNI_VECCHI = 4;
 function giorniDa(iso){ return iso ? (oggi() - new Date(iso)) / 86400000 : 0; }
+function datiVecchi(){
+  const script = giorniDa(D.orari_v), inf = giorniDa(D.inf_t);
+  return script > GIORNI_VECCHI ? 'dati fermi da '+Math.floor(script)+' giorni: lo script non sta girando'
+       : inf > GIORNI_VECCHI ? 'infortuni fermi da '+Math.floor(inf)+' giorni' : '';
+}
 function mostraData(){
   const a = D.inf_v ? 'infortuni del '+dataIt(D.inf_v) : 'infortuni non disponibili';
   const b = D.prob && D.prob.giornata===prossima()[1] && (D.prob.squadre||[]).length
           ? 'probabili del '+dataIt(D.tit_v) : 'probabili non ancora uscite';
-  const script = giorniDa(D.orari_v), inf = giorniDa(D.inf_t);
-  const avviso = script > GIORNI_VECCHI ? 'dati fermi da '+Math.floor(script)+' giorni: lo script non sta girando'
-               : inf > GIORNI_VECCHI ? 'infortuni fermi da '+Math.floor(inf)+' giorni' : '';
+  const avviso = datiVecchi();
   const el = document.getElementById('stamp');
   el.textContent = avviso || a+' · '+b;
   el.classList.toggle('vecchio', !!avviso);
@@ -850,6 +945,7 @@ document.querySelectorAll('nav button').forEach(b=>{
     document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
     document.querySelectorAll('section').forEach(s=>
       s.classList.toggle('on', s.id==='s-'+b.dataset.s));
+    if(b.dataset.s==='avvisi') apriAvvisi();
     window.scrollTo(0,0);
   };
 });

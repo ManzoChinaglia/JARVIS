@@ -115,6 +115,22 @@ aggiorna da solo quando la Lega fissa nuovi orari.
 
 ---
 
+## Notifiche sull'iPhone
+
+Gli avvisi della scheda «Avvisi» arrivano anche come notifiche, ad app chiusa,
+con l'app gratuita **ntfy** (open source, niente account):
+
+1. Installa **ntfy** dall'App Store, tocca **+** e iscriviti all'argomento che ti
+   ha dato Claude (server predefinito, ntfy.sh). Consenti le notifiche.
+2. Su GitHub: repository → **Settings** → **Secrets and variables** → **Actions**
+   → **New repository secret**, nome `NTFY_ARGOMENTO`, valore l'argomento.
+
+L'argomento funziona come una password: non scriverlo in nessun file del
+progetto e non condividerlo. Arrivano al massimo 6 notifiche per giro, mai la
+stessa due volte.
+
+---
+
 ## Icona sulla Home
 
 L'icona è la bandiera del Burkina Faso con la stella. iOS non aggiorna le icone

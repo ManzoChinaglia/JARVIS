@@ -20,7 +20,8 @@ const AVV1 = BASE0.g[0][3].map(([a, b]) => a === BASE0.me ? b : b === BASE0.me ?
 // dati: file di dati/ da sostituire con un oggetto finto, o con null per "assente"
 // orari.json e infortuni.json veri vengono "aggiornati" al giorno simulato, così
 // l'avviso dei dati vecchi non dipende dal giorno in cui si lanciano le prove
-async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr }) {
+// memoria: il localStorage finto, da passare uguale per simulare la riapertura dell'app
+async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, memoria = {} }) {
   const RealDate = Date;
   const fisso = new RealDate(adesso).getTime();
   class FintaData extends RealDate {
@@ -38,6 +39,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   const ctx = {
     Date: FintaData, console, URLSearchParams, Promise, Object, String, Math, Set, JSON,
     setInterval() {}, setTimeout: () => 0, clearTimeout() {}, webkitSpeechRecognition: sr,
+    localStorage: { getItem: k => (k in memoria ? memoria[k] : null), setItem: (k, v) => { memoria[k] = String(v); } },
     location: { search, host: 'manzochinaglia.github.io', pathname: '/JARVIS/' },
     document: { getElementById: nodo, querySelector: () => nodo('_q'), querySelectorAll: () => [] },
     fetch: async url => {
@@ -62,7 +64,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   ctx.window = ctx;
   vm.createContext(ctx);
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
-    'get players(){return players},get STIME(){return STIME},' +
+    'get players(){return players},get STIME(){return STIME},avvisi,apriAvvisi,' +
     'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
@@ -393,6 +395,38 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   const stemma = path.join(REPO, 'img', 'stemma.jpg');
   verifica('sfondo velato leggero', fs.existsSync(stemma) && fs.statSync(stemma).size < 80000 && /url\("img\/stemma.jpg"\)/.test(html),
            fs.existsSync(stemma) ? Math.round(fs.statSync(stemma).size / 1024) + ' KB' : 'manca');
+
+  console.log('\n16. Avvisi');
+  // venerdì 18 settembre alle 10: scadenza alle 20:30 e un tuo difensore squalificato
+  const datiAvvisi = { 'titolari.json': indisp5, 'squadre.json': null, 'infortuni.json': null };
+  const memoria = {};
+  ({ t, el } = await avvia({ adesso: '2026-09-18T10:00:00+02:00', dati: datiAvvisi, memoria }));
+  g = t.prossima();
+  let lista = t.avvisi(g);
+  verifica('scadenza entro 24 ore: urgente', lista.some(a => a.id === 'scadenza-1-urgente' && a.livello === 'urgente'),
+           lista.map(a => a.titolo).join(' | '));
+  verifica('tuo giocatore squalificato', lista.some(a => a.id === 'fuori-' + d1 + '-5' && /Squalificato/.test(a.testo)));
+  verifica('urgenti per primi', lista[0].livello === 'urgente');
+  verifica('pallino con il numero dei nuovi', el['badge-avvisi'].textContent == lista.length && el['badge-avvisi'].classList.contains('on'),
+           el['badge-avvisi'].textContent);
+  t.apriAvvisi();
+  verifica('aperta la scheda, il pallino sparisce', !el['badge-avvisi'].classList.contains('on'));
+  ({ t, el } = await avvia({ adesso: '2026-09-18T10:05:00+02:00', dati: datiAvvisi, memoria }));
+  verifica('riaprendo l\'app restano letti', !el['badge-avvisi'].classList.contains('on') && !/ nuovo/.test(el.avvisi.innerHTML));
+  ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': prob5, 'squadre.json': null, 'infortuni.json': null } }));
+  verifica('probabili uscite', t.avvisi(t.prossima()).some(a => a.titolo === 'Probabili uscite'));
+  ({ t } = await avvia({ adesso: '2026-10-20T12:00:00+02:00', dati: { 'orari.json': { ...orariVeri, aggiornato: '2026-10-10T08:00:00+00:00' } } }));
+  lista = t.avvisi(t.prossima());
+  verifica('dati fermi tra gli avvisi', lista.some(a => a.titolo === 'Dati fermi' && a.livello === 'urgente'));
+  verifica('rose vecchie di 3 settimane: promemoria', lista.some(a => a.id.startsWith('rose-')));
+  ({ t, el } = await avvia({ adesso: '2026-09-13T12:00:00+02:00', dati: { 'titolari.json': null, 'infortuni.json': null } }));
+  ({ t } = await avvia({ adesso: '2026-09-18T18:00:00+02:00', dati: datiAvvisi }));
+  verifica('sotto le 3 ore: ultima chiamata', t.avvisi(t.prossima()).some(a => a.id === 'scadenza-1-ultima' && /^Ultima chiamata/.test(a.titolo)));
+  ({ t } = await avvia({ adesso: '2026-09-15T12:00:00+02:00', dati: { 'titolari.json': null, 'infortuni.json': null } }));
+  verifica('il martedì: promemoria per le rose', t.avvisi(t.prossima()).some(a => a.id === 'rose-martedi-2026-09-15'));
+  ({ t, el } = await avvia({ adesso: '2026-09-13T12:00:00+02:00', dati: { 'titolari.json': null, 'infortuni.json': null } }));
+  verifica('niente da segnalare: tutto tranquillo',/tutto tranquillo/.test(el.avvisi.innerHTML) && !el['badge-avvisi'].classList.contains('on'),
+           t.avvisi(t.prossima()).map(a => a.titolo).join(' | ') || 'nessun avviso');
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
