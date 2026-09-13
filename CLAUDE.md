@@ -37,6 +37,7 @@ font/                   Barlow Condensed in woff2 e la sua licenza (OFL): da Goo
                         sull'iPhone non si caricava, non reintrodurre dipendenze esterne
 img/                    icona per la Home (bandiera con la stella) e stemma per lo sfondo velato
 manifest.webmanifest    nome, colori e icone dell'app per iPhone e browser
+sw.js                   service worker: l'app funziona anche senza rete, con l'ultima copia
 dati/base.json          rose, calendario lega, calendario Serie A, statistiche
 dati/infortuni.json     aggiornato automaticamente
 dati/titolari.json      aggiornato automaticamente: probabili della prossima giornata, in percentuale
@@ -136,6 +137,21 @@ CRLF: `.gitattributes` impedisce a Git di convertirlo.
 - **Nessun volto di persone nel repository**, che è pubblico (scelta
   dell'utente del 13/09/2026): lo stemma originale con i ritratti e le foto
   restano solo sul PC.
+
+## Movimento e senza rete
+
+Animazioni con solo CSS e JavaScript (scelta dell'utente, niente framework):
+maglie del campo che entrano dal portiere all'attacco (solo quando l'undici
+cambia, non a ogni aggiornamento del minuto), barra del tempo sotto il conto alla
+rovescia (verde, gialla nell'ultimo giorno, rossa nelle ultime 3 ore) con puntino
+che pulsa, barre della titolarità, passaggi morbidi tra le schede, «tira giù per
+aggiornare», segnaposto che luccicano durante il caricamento. Con «Riduci
+movimento» dell'iPhone si spengono tutte.
+
+`sw.js` è il service worker: **prima la rete, poi la copia salvata**. Con la rete
+pagina e dati sono sempre freschi (mai una versione vecchia); senza rete si usa
+l'ultima copia e l'intestazione scrive «senza rete». Se si cambia la lista dei
+file fissi, cambiare anche il nome della cache (`jarvis-1` → `jarvis-2`).
 
 ## Avvisi e notifiche
 
@@ -251,12 +267,10 @@ lato, e il risultato sarebbe una precisione finta.
    dell'avversario (`PESI`) sono stime ragionevoli, non tarate. Dopo una decina
    di giornate vanno confrontati con i fantavoti reali e corretti.
 
-2. **Parte grafica, in corso** (piano del 13/09/2026). Fatte: nomi delle squadre
+2. **Parte grafica.** Il piano del 13/09/2026 è completo: nomi delle squadre
    dell'app, titolo disegnato, versione visibile, archivio dei file, colori e
-   icona del Burkina Faso, sfondo velato. Da fare: scheda «Avvisi» con notifiche
-   tramite ntfy (argomento segreto nei Secrets di GitHub, lo inserisce l'utente),
-   poi animazioni e sensazione da app con HTML/CSS/JS (niente framework, scelta
-   dell'utente).
+   icona del Burkina Faso, sfondo velato, scheda «Avvisi» con ntfy, animazioni e
+   funzionamento senza rete. Altre migliorie si concordano con l'utente.
 
 ## Come si prova
 

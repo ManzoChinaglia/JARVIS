@@ -140,6 +140,44 @@
   .esempi button{background:none; border:1px solid var(--line); color:var(--dim);
                  border-radius:16px; padding:7px 12px; font-size:13px;}
 
+  /* ---- movimento ---- */
+  @keyframes entra{from{opacity:0; transform:translateY(10px) scale(.94);} to{opacity:1; transform:none;}}
+  @keyframes compari{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+  @keyframes pulsa{0%,100%{opacity:1;} 50%{opacity:.3;}}
+  @keyframes luccica{from{background-position:-300px 0;} to{background-position:300px 0;}}
+  section.on{animation:compari .22s ease-out;}
+  /* le maglie entrano dal portiere verso l'attacco, una dopo l'altra */
+  .reparto:nth-child(4){--d:0s;} .reparto:nth-child(3){--d:.09s;} .reparto:nth-child(2){--d:.18s;} .reparto:nth-child(1){--d:.27s;}
+  .gioc:nth-child(2){--k:.04s;} .gioc:nth-child(3){--k:.08s;} .gioc:nth-child(4){--k:.12s;} .gioc:nth-child(5){--k:.16s;}
+  .campo.entra .gioc{animation:entra .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--d,0s) + var(--k,0s));}
+  /* il tempo che resta: la barra si riempie verso la scadenza */
+  .barra-tempo{height:4px; margin-top:11px; border-radius:2px; background:var(--line); overflow:hidden;}
+  .barra-tempo i{display:block; height:100%; width:0; background:var(--bf-verde); transition:width .8s ease-out, background .8s;}
+  .barra-tempo.giorno i{background:var(--bf-stella);}
+  .barra-tempo.ore i{background:var(--bf-rosso);}
+  .countdown.urgente .t::before{content:''; display:inline-block; width:9px; height:9px; margin:0 9px 4px 0;
+                                border-radius:50%; background:var(--bf-rosso); vertical-align:middle; animation:pulsa 1.4s infinite;}
+  /* titolarità sotto ogni giocatore */
+  .barra{height:3px; width:120px; max-width:60%; margin-top:6px; border-radius:2px; background:var(--line); overflow:hidden;}
+  .barra i{display:block; height:100%; background:var(--bf-verde);}
+  .barra.b-s i, .barra.b-c i{background:var(--bf-stella);}
+  .barra.b-r i{background:var(--bf-rosso);}
+  button{transition:transform .1s;}
+  button:active{transform:scale(.95);}
+  /* mentre i dati arrivano: segnaposto che luccicano invece della pagina vuota */
+  .carica #campo, .carica #cdt{min-height:32px; border-radius:10px;
+    background:linear-gradient(90deg,var(--surface) 0,var(--surface2) 50%,var(--surface) 100%) 0 0/300px 100% repeat-x;
+    animation:luccica 1.2s linear infinite;}
+  .carica #campo{min-height:330px;}
+  /* tira giù per aggiornare */
+  .tira{position:fixed; left:50%; top:calc(env(safe-area-inset-top) + 6px); z-index:9; transform:translate(-50%,-60px);
+        padding:7px 14px; border-radius:16px; font-size:12px; color:var(--dim);
+        background:var(--surface2); border:1px solid var(--line); transition:transform .2s, color .2s;}
+  .tira.pronto{color:var(--accento); border-color:var(--accento);}
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{animation:none !important; transition:none !important;}
+  }
+
   /* ---- avvisi ---- */
   nav button .ic{position:relative;}
   .badge{display:none; position:absolute; top:-5px; right:-11px; min-width:16px; height:16px; padding:0 4px;
@@ -196,7 +234,8 @@
             overflow:hidden; text-overflow:ellipsis;}
 </style>
 </head>
-<body>
+<body class="carica">
+<div class="tira" id="tira">Tira giù per aggiornare</div>
 <header>
   <h1 class="titolo" aria-label="JARVIS"><svg viewBox="0 -10 2867 722" aria-hidden="true">
     <defs><linearGradient id="gradTitolo" x1="0" y1="0" x2="1" y2=".15">
@@ -224,6 +263,7 @@
       <div class="k" id="cdk">Schieri la formazione entro</div>
       <div class="t cond" id="cdt"></div>
       <div class="q" id="cdq"></div>
+      <div class="barra-tempo" id="barra-tempo"><i id="barra-tempo-i"></i></div>
       <a class="q ics" id="ics" href="#">Aggiungi le scadenze al calendario dell'iPhone</a>
     </div>
     <div class="modrow">
@@ -409,6 +449,13 @@ function renderGiornata(){
     cdq.textContent = D.orari ? 'La Lega Serie A non ha ancora fissato gli orari di questa giornata.'
                               : 'Non riesco a leggere dati/orari.json.';
   }
+  /* barra del tempo: una settimana che si riempie fino alla scadenza */
+  const barra = document.getElementById('barra-tempo');
+  barra.style.display = sc && ms>0 ? '' : 'none';
+  barra.classList.toggle('giorno', ms>0 && ms<86400000 && ms>=3*3600000);
+  barra.classList.toggle('ore', ms>0 && ms<3*3600000);
+  document.getElementById('barra-tempo-i').style.width =
+    (sc && ms>0 ? Math.min(100, Math.max(0, 100*(1 - ms/(7*86400000)))) : 0).toFixed(1)+'%';
   document.getElementById('cd').classList.toggle('urgente', ms>0 && ms<86400000);
 
   const sa = g[1], iso = g[2];
@@ -527,6 +574,12 @@ function disegnaCampo(g){
   campo.innerHTML = ['A','C','D','P'].map(r=>
     '<div class="reparto">' + u[r].map(p=>cella(p,g)).join('') + '</div>'
   ).join('');
+  /* le maglie entrano solo quando l'undici cambia, non a ogni aggiornamento del minuto */
+  const firma = [].concat(u.P,u.D,u.C,u.A).map(p=>p.id).join(',');
+  if(campo.dataset.firma !== firma){
+    campo.dataset.firma = firma;
+    campo.classList.remove('entra'); void campo.offsetWidth; campo.classList.add('entra');
+  }
 
   const numero = {};
   document.getElementById('panchina').innerHTML =
@@ -591,7 +644,8 @@ function riga(p, g, ordine){
   return '<div class="riga'+(ko?' fuori':'')+'"><div class="ruolo '+p.ruolo+' cond">'+p.ruolo+
     (ordine ? '<small>'+ordine+'</small>' : '')+'</div>'+
     '<div class="chi"><div class="n">'+p.nome+'</div><div class="sotto">'+sotto+'</div>'+
-    (f && !ko ? '<div class="sotto">'+motivoAvv(f)+'</div>' : '')+'</div>'+
+    (f && !ko ? '<div class="sotto">'+motivoAvv(f)+'</div>' : '')+
+    (t && !ko ? '<div class="barra b-'+t.stato+'"><i style="width:'+t.perc+'%"></i></div>' : '')+'</div>'+
     '<div class="fm '+(p.pgv?'':'nodata')+'">'+fm+'<small>'+(p.pgv||0)+' gare</small></div></div>';
 }
 
@@ -874,6 +928,7 @@ function apriAvvisi(){
    orari.json si riscrive a ogni giro, quindi dice se lo script sta girando. */
 const GIORNI_VECCHI = 4;
 function giorniDa(iso){ return iso ? (oggi() - new Date(iso)) / 86400000 : 0; }
+function senzaRete(){ return typeof navigator!=='undefined' && navigator.onLine===false; }
 function datiVecchi(){
   const script = giorniDa(D.orari_v), inf = giorniDa(D.inf_t);
   return script > GIORNI_VECCHI ? 'dati fermi da '+Math.floor(script)+' giorni: lo script non sta girando'
@@ -885,7 +940,7 @@ function mostraData(){
           ? 'probabili del '+dataIt(D.tit_v) : 'probabili non ancora uscite';
   const avviso = datiVecchi();
   const el = document.getElementById('stamp');
-  el.textContent = avviso || a+' · '+b;
+  el.textContent = (senzaRete() ? 'senza rete · ' : '') + (avviso || a+' · '+b);
   el.classList.toggle('vecchio', !!avviso);
 }
 async function aggiorna(silenzioso){
@@ -929,6 +984,7 @@ document.getElementById('modulo').onchange = e=>{ modulo = e.target.value; rende
 
 /* ---------- avvio ---------- */
 function avvia(){
+  if(document.body) document.body.classList.remove('carica');     // via i segnaposto
   /* data della versione: se sull'iPhone è vecchia, l'icona sulla Home tiene una copia vecchia */
   const pubblicata = document.lastModified ? new Date(document.lastModified) : null;
   if(pubblicata && !isNaN(pubblicata))
@@ -1026,6 +1082,31 @@ function domandaDaIndirizzo(){
   // ricaricando la pagina la domanda non si ripete
   if(window.history && history.replaceState) history.replaceState(null, '', location.pathname);
 }
+
+/* tira giù per aggiornare: dall'inizio della pagina, trascinando in giù di 70 px */
+if(typeof window.addEventListener==='function'){
+  const segno = document.getElementById('tira');
+  let da = null, dy = 0;
+  window.addEventListener('touchstart', e=>{ da = window.scrollY<=0 ? e.touches[0].clientY : null; dy = 0; }, {passive:true});
+  window.addEventListener('touchmove', e=>{
+    if(da===null) return;
+    dy = Math.max(0, e.touches[0].clientY - da);
+    segno.style.transform = 'translate(-50%,'+(Math.min(dy, 90) - 60)+'px)';
+    segno.classList.toggle('pronto', dy>70);
+    segno.textContent = dy>70 ? 'Rilascia per aggiornare' : 'Tira giù per aggiornare';
+  }, {passive:true});
+  window.addEventListener('touchend', ()=>{
+    if(da!==null && dy>70 && D) aggiorna(true);
+    da = null; dy = 0; segno.style.transform = ''; segno.classList.remove('pronto');
+  });
+  /* rete che va e viene: l'intestazione lo dice */
+  window.addEventListener('online', ()=>{ if(D) aggiorna(true); });
+  window.addEventListener('offline', ()=>{ if(D) mostraData(); });
+}
+
+/* senza rete: il service worker tiene l'ultima copia di pagina e dati (con la rete vince sempre la versione fresca) */
+if(typeof navigator!=='undefined' && 'serviceWorker' in navigator && location.protocol!=='file:')
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 carica()
   .then(()=>{ avvia(); domandaDaIndirizzo(); })

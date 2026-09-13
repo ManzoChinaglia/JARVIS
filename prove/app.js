@@ -64,7 +64,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   ctx.window = ctx;
   vm.createContext(ctx);
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
-    'get players(){return players},get STIME(){return STIME},avvisi,apriAvvisi,' +
+    'get players(){return players},get STIME(){return STIME},avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
@@ -427,6 +427,23 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   ({ t, el } = await avvia({ adesso: '2026-09-13T12:00:00+02:00', dati: { 'titolari.json': null, 'infortuni.json': null } }));
   verifica('niente da segnalare: tutto tranquillo',/tutto tranquillo/.test(el.avvisi.innerHTML) && !el['badge-avvisi'].classList.contains('on'),
            t.avvisi(t.prossima()).map(a => a.titolo).join(' | ') || 'nessun avviso');
+
+  console.log('\n17. Movimento e senza rete');
+  ({ t, el } = await avvia({ adesso: '2026-09-18T10:00:00+02:00', dati: { 'titolari.json': prob5, 'squadre.json': null, 'infortuni.json': null } }));
+  verifica('le maglie entrano al primo disegno', el.campo.classList.contains('entra'));
+  el.campo.classList.remove('entra');
+  t.renderGiornata();
+  verifica('non rientrano a ogni aggiornamento del minuto', !el.campo.classList.contains('entra'));
+  verifica('barra del tempo: 10 ore e mezza alla scadenza → 93,8% della settimana', el['barra-tempo-i'].style.width === '93.8%'
+           && el['barra-tempo'].classList.contains('giorno'), el['barra-tempo-i'].style.width);
+  verifica('barre della titolarità in rosa', el.rosa.innerHTML.includes('class="barra b-t"><i style="width:95%">'));
+  ({ el } = await avvia({ adesso: '2026-09-18T19:00:00+02:00' }));
+  verifica('ultime 3 ore: barra rossa', el['barra-tempo'].classList.contains('ore'));
+  const sw = fs.readFileSync(path.join(REPO, 'sw.js'), 'utf8');
+  verifica('senza rete: prima la rete, poi la copia salvata', /fetch\(r\)\.then/.test(sw) && /caches\.match\(chiave\)/.test(sw)
+           && /index\.html/.test(sw) && /barlow-condensed-700\.woff2/.test(sw));
+  verifica('service worker registrato solo se il browser lo supporta', /'serviceWorker' in navigator/.test(html));
+  verifica('rispetta «Riduci movimento» dell\'iPhone', /prefers-reduced-motion: reduce/.test(html));
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);

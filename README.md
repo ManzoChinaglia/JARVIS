@@ -131,6 +131,14 @@ stessa due volte.
 
 ---
 
+## Senza rete
+
+Jarvis si apre anche senza connessione, con gli ultimi dati visti: in quel caso
+la riga sotto il titolo comincia con «senza rete». Appena la rete torna, si
+aggiorna da solo. Per aggiornare a mano, tira giù la pagina dall'inizio.
+
+---
+
 ## Icona sulla Home
 
 L'icona è la bandiera del Burkina Faso con la stella. iOS non aggiorna le icone
