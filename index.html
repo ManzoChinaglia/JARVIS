@@ -79,6 +79,7 @@
   .ruolo{width:20px; text-align:center; font-family:"Barlow Condensed",sans-serif;
          font-weight:700; font-size:15px; flex-shrink:0;}
   .ruolo.P{color:#E4B451;} .ruolo.D{color:#7FB3D5;} .ruolo.C{color:#71C295;} .ruolo.A{color:#E0605C;}
+  .ruolo small{display:block; font-size:11px; color:var(--dim); font-weight:600;}
   .chi{flex:1; min-width:0;}
   .chi .n{font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .chi .sotto{font-size:12px; color:var(--dim); margin-top:2px;}
@@ -463,15 +464,23 @@ function disegnaCampo(g){
     '<div class="reparto">' + u[r].map(p=>cella(p,g)).join('') + '</div>'
   ).join('');
 
-  const scelti = new Set([].concat(u.P,u.D,u.C,u.A).map(p=>p.id));
-  const panca = mia.filter(p=>disponibile(p,g[2]) && !scelti.has(p.id))
-                   .sort((a,b)=>ORD[a.ruolo]-ORD[b.ruolo] || punteggio(b,g)-punteggio(a,g));
+  const numero = {};
   document.getElementById('panchina').innerHTML =
-    '<h2>In panchina</h2>' + panca.map(p=>riga(p,g)).join('');
+    '<h2>Panchina, in quest\'ordine</h2>' + panchina(g).map(p=>{
+      numero[p.ruolo] = (numero[p.ruolo]||0) + 1;
+      return riga(p, g, numero[p.ruolo]+'°');
+    }).join('');
 
   const ko = mia.filter(p=>!disponibile(p,g[2]));
   document.getElementById('kobox').innerHTML = ko.length
     ? '<h2>Non disponibili</h2>' + ko.map(p=>riga(p,g)).join('') : '';
+}
+/* panchina nell'ordine da inserire: nella lega entra il primo panchinaro dello
+   stesso ruolo, quindi per ogni ruolo prima chi rende di più */
+function panchina(g){
+  const u = undici(g), scelti = new Set([].concat(u.P,u.D,u.C,u.A).map(p=>p.id));
+  return mia.filter(p=>disponibile(p,g[2]) && !scelti.has(p.id))
+            .sort((a,b)=>ORD[a.ruolo]-ORD[b.ruolo] || punteggio(b,g)-punteggio(a,g));
 }
 function cella(p, g){
   const m = avversarioClub(p.club, g[1]);
@@ -502,7 +511,7 @@ function disponibile(p, isoData){
   const [g,m,a] = p.out.split('/');
   return (a+'-'+m+'-'+g) <= isoData;   // rientra entro la giornata
 }
-function riga(p, g){
+function riga(p, g, ordine){
   const m = avversarioClub(p.club, g[1]);
   const ko = !disponibile(p, g[2]);
   const sfida = m ? (m.casa?'in casa con ':'a ') + m.avv : '';
@@ -515,7 +524,8 @@ function riga(p, g){
     ? '<span class="ko">'+perche(p, g[2])+'</span>'
     : p.club + (sfida?' · '+sfida:'') + (stato?' · '+stato:'');
   const fm = p.pgv>0 ? p.fm.toFixed(2) : '—';
-  return '<div class="riga'+(ko?' fuori':'')+'"><div class="ruolo '+p.ruolo+' cond">'+p.ruolo+'</div>'+
+  return '<div class="riga'+(ko?' fuori':'')+'"><div class="ruolo '+p.ruolo+' cond">'+p.ruolo+
+    (ordine ? '<small>'+ordine+'</small>' : '')+'</div>'+
     '<div class="chi"><div class="n">'+p.nome+'</div><div class="sotto">'+sotto+'</div>'+
     (f && !ko ? '<div class="sotto">'+motivoAvv(f)+'</div>' : '')+'</div>'+
     '<div class="fm '+(p.pgv?'':'nodata')+'">'+fm+'<small>'+(p.pgv||0)+' gare</small></div></div>';
@@ -647,8 +657,14 @@ function riassuntoUndici(g){
   });
   const ko = mia.filter(p=>!disponibile(p, g[2]));
   if(ko.length) dubbi.push('Fuori: '+ko.map(p=>p.nome).join(', '));
+  const pb = panchina(g);
+  const inPanchina = ['P','D','C','A'].map(r=>{
+    const l = pb.filter(p=>p.ruolo===r);
+    return l.length ? r+' '+l.map(cognome).join(', ') : '';
+  }).filter(Boolean).join(' · ');
   return 'Giornata '+g[0]+' contro '+av.nome+', '+modulo+(sc && sc>oggi() ? ', entro '+quando(sc) : '')+'\n'+
          ['P','D','C','A'].map(riga).join('\n')+
+         (inPanchina ? '\nPanchina, in ordine: '+inPanchina : '')+
          (dubbi.length ? '\n\nDa tenere d\'occhio:\n· '+dubbi.join('\n· ') : '');
 }
 /* domande pronte dai dati: una è il vero ballottaggio in difesa */

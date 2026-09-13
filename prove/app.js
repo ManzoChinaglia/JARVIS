@@ -60,7 +60,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   vm.createContext(ctx);
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},' +
-    'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile};', ctx);
+    'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -279,6 +279,20 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   verifica('infortuni fermi da 7 giorni', /infortuni fermi da 7 giorni/.test(el.stamp.textContent), el.stamp.textContent);
   ({ el } = await avvia({ adesso: '2026-09-20T12:00:00+02:00' }));
   verifica('dati freschi: nessun avviso', !el.stamp.classList.contains('vecchio'), el.stamp.textContent);
+
+  console.log('\n11quater. Ordine della panchina');
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': indisp5, 'squadre.json': null, 'infortuni.json': null } }));
+  g = t.prossima();
+  const banco = t.panchina(g), ordine = r => 'PDCA'.indexOf(r);
+  verifica('per ruolo e, dentro il ruolo, dal punteggio più alto', banco.every((p, i) => i === 0
+           || ordine(banco[i - 1].ruolo) < ordine(p.ruolo)
+           || (banco[i - 1].ruolo === p.ruolo && t.punteggio(banco[i - 1], g) >= t.punteggio(p, g))), banco.map(p => p.ruolo + ' ' + p.nome).join(', '));
+  const koN = t.mia.filter(p => !t.disponibile(p, g[2])).length;
+  verifica('tutti gli altri disponibili, nessun indisponibile', banco.length === 25 - 11 - koN && banco.every(p => t.disponibile(p, g[2])),
+           banco.length + ' in panchina, ' + koN + ' fuori');
+  verifica('numerata per ruolo', /<small>1°<\/small>/.test(el.panchina.innerHTML) && /<small>2°<\/small>/.test(el.panchina.innerHTML));
+  verifica('«chi schiero?» dice anche la panchina', /\nPanchina, in ordine: P /.test(t.rispondi('chi schiero')),
+           t.rispondi('chi schiero').split('\n').find(r => r.startsWith('Panchina')));
 
   console.log('\n12. Domanda dal Comando Rapido di Siri (?q=...)');
   ({ t, el } = await avvia({ adesso: '2026-09-13T12:00:00+02:00', search: '?q=chi%20affronto' }));

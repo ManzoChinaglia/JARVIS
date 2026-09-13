@@ -58,11 +58,11 @@ richiede il login alla lega e per questo non è automatizzabile in modo pulito.
 
 ## Le finestre di aggiornamento
 
-Impostate in `.github/workflows/aggiorna.yml`, ora italiana (con l'ora solare, un'ora prima):
-
-- **martedì 08:00** — dopo l'ultima partita della giornata appena conclusa
-- **venerdì 10:00** — prima degli anticipi del venerdì sera
-- **sabato 06:00** — prima delle partite del sabato pomeriggio
+Impostate in `.github/workflows/aggiorna.yml`: **tre giri al giorno**, alle 12:45,
+19:45 e 20:45 con l'ora legale (un'ora prima con l'ora solare). Arrivano dopo gli
+aggiornamenti delle probabili delle 11:30 e delle 19:30, così prima di ogni
+scadenza, anche nei turni infrasettimanali, i dati sono freschi. GitHub può far
+partire i giri con qualche minuto di ritardo.
 
 Si può lanciare anche a mano: scheda **Actions** del repository → *Aggiorna Jarvis* → *Run workflow*.
 
@@ -95,6 +95,9 @@ esordio non contano troppo) e tiene conto di:
 
 Sotto ogni giocatore l'app scrive il motivo. Il modulo abituale dell'avversario
 si vede, ma non entra nel punteggio.
+
+La panchina è già in ordine: nella lega entra il primo panchinaro dello stesso
+ruolo, quindi per ogni ruolo vengono prima quelli che rendono di più.
 
 ---
 

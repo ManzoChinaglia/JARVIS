@@ -44,8 +44,8 @@ dati/jarvis.ics         generato dallo script: calendario da sottoscrivere sull'
 dati/listone.json       elenco ufficiale, usato dagli script
 scripts/aggiorna.py     scarica infortuni, probabili, orari e rendimento delle squadre
 prove/                  prove automatiche (vedi «Come si prova»)
-.github/workflows/aggiorna.yml   esegue lo script martedì 08:00, venerdì 10:00 e sabato 06:00
-                                 (ora italiana legale; con l'ora solare un'ora prima)
+.github/workflows/aggiorna.yml   esegue lo script tre volte al giorno, dopo gli aggiornamenti
+                                 delle probabili delle 11:30 e delle 19:30 (orari nel file)
 ```
 
 Codice e dati sono separati di proposito. Non reincorporare i dati nell'HTML.
@@ -168,6 +168,11 @@ quella usata per il consiglio.
 
 Il modulo abituale dell'avversario si mostra, ma non entra nel punteggio.
 
+**Panchina:** nella lega, se un titolare non prende voto, entra il primo
+panchinaro dello stesso ruolo nell'ordine inserito (regola confermata
+dall'utente). `panchina(g)` ordina per ruolo e, dentro il ruolo, per punteggio;
+l'app la mostra numerata e «chi schiero?» la riassume.
+
 **Da NON fare:** punteggi basati sul duello individuale (tizio marca caio su
 quella fascia). Il dato pubblico non dice in modo affidabile chi occupa quale
 lato, e il risultato sarebbe una precisione finta.
@@ -179,15 +184,11 @@ lato, e il risultato sarebbe una precisione finta.
    strumento per farlo. Serve uno script che converta l'esportazione di Leghe
    Fantacalcio mantenendo gli Id del listone e il calendario già presente.
 
-2. **Probabili più fresche e panchina.** Giri in più dello script poco prima
-   delle scadenze del weekend (le probabili si aggiornano alle 11:30 e alle
-   19:30); suggerire l'ordine della panchina.
-
-3. **Verificare i pesi del consiglio.** I pesi della titolarità e
+2. **Verificare i pesi del consiglio.** I pesi della titolarità e
    dell'avversario (`PESI`) sono stime ragionevoli, non tarate. Dopo una decina
    di giornate vanno confrontati con i fantavoti reali e corretti.
 
-4. **Parte grafica.** Migliorie da concordare con l'utente, che ne ha già in
+3. **Parte grafica.** Migliorie da concordare con l'utente, che ne ha già in
    mente alcune. Il font ora è nel repository (`font/`): verificare sull'iPhone
    che il titolo usi davvero Barlow Condensed.
 

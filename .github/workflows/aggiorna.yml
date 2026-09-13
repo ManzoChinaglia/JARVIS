@@ -2,10 +2,13 @@ name: Aggiorna Jarvis
 
 on:
   schedule:
-    # orari in UTC: 08:00, 10:00 e 06:00 in Italia con l'ora legale, un'ora prima con l'ora solare
-    - cron: '0 6 * * 2'   # martedì, a giornata conclusa
-    - cron: '0 8 * * 5'   # venerdì, prima degli anticipi della sera
-    - cron: '0 4 * * 6'   # sabato, prima delle partite del pomeriggio
+    # ogni giorno, dopo gli aggiornamenti delle probabili (11:30 e 19:30 in Italia),
+    # così prima di qualunque scadenza, anche infrasettimanale, i dati sono freschi.
+    # Orari in UTC: il giro della sera è doppio perché con l'ora legale e con quella
+    # solare è un giro diverso a cadere dopo le 19:30 italiane.
+    - cron: '45 10 * * *'   # 12:45 con l'ora legale, 11:45 con la solare
+    - cron: '45 17 * * *'   # 19:45 con l'ora legale, 18:45 con la solare
+    - cron: '45 18 * * *'   # 20:45 con l'ora legale, 19:45 con la solare
   workflow_dispatch:
 
 jobs:

@@ -26,7 +26,7 @@ RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATI = os.path.join(RADICE, 'dati')
 LISTONE = os.path.join(DATI, 'listone.json')   # [{id, nome, squadra}, ...]
 
-UA = {'User-Agent': 'Jarvis/1.0 (uso personale; aggiornamento 3 volte a settimana)'}
+UA = {'User-Agent': 'Jarvis/1.0 (uso personale; aggiornamento 3 volte al giorno)'}
 TIMEOUT = 30
 
 URL_INFORTUNI = 'https://www.fantacalcio-online.com/it/infortunati-serie-a'
