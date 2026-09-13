@@ -66,6 +66,7 @@
   .countdown .k{font-size:13px; color:var(--dim);}
   .countdown .t{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:30px; margin-top:2px;}
   .countdown .q{font-size:12px; color:var(--dim); margin-top:4px;}
+  .countdown a.ics{display:inline-block; margin-top:10px; color:var(--rosa); text-decoration:none;}
   .countdown.urgente{border-color:var(--rosso);}
   .countdown.urgente .t{color:var(--rosso);}
 
@@ -179,6 +180,7 @@
       <div class="k" id="cdk">Schieri la formazione entro</div>
       <div class="t cond" id="cdt"></div>
       <div class="q" id="cdq"></div>
+      <a class="q ics" id="ics" href="#">Aggiungi le scadenze al calendario dell'iPhone</a>
     </div>
     <div class="modrow">
       <h2 style="margin:24px 0 0">Undici consigliato</h2>
@@ -596,6 +598,9 @@ document.getElementById('modulo').onchange = e=>{ modulo = e.target.value; rende
 
 /* ---------- avvio ---------- */
 function avvia(){
+  /* calendario da sottoscrivere: webcal apre l'iscrizione nel Calendario dell'iPhone */
+  document.getElementById('ics').href =
+    'webcal://'+location.host+location.pathname.replace(/[^/]*$/,'')+'dati/jarvis.ics';
   mostraData();
   renderGiornata(); renderRosa(); renderLega();
   setInterval(renderGiornata, 60000);

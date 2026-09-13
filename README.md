@@ -18,6 +18,7 @@ dati/
   titolari.json               probabili della giornata, in %     [automatico]
   orari.json                  orari delle giornate di Serie A    [automatico]
   squadre.json                rendimento in casa e fuori         [automatico]
+  jarvis.ics                  calendario delle scadenze          [automatico]
   listone.json                elenco ufficiale, serve agli script
 scripts/
   aggiorna.py                 scarica infortuni, probabili, orari e rendimento squadre
@@ -87,6 +88,18 @@ Il punteggio con cui Jarvis ordina i giocatori parte dalla fantamedia e tiene co
 
 Sotto ogni giocatore l'app scrive il motivo. Il modulo abituale dell'avversario
 si vede, ma non entra nel punteggio.
+
+---
+
+## Scadenze nel calendario dell'iPhone
+
+Nella schermata Giornata, sotto il conto alla rovescia, tocca «Aggiungi le
+scadenze al calendario dell'iPhone» e conferma l'iscrizione. Se compare l'opzione
+«Rimuovi avvisi», disattivala: altrimenti l'iPhone non ti avvisa 2 ore prima.
+
+Nel calendario trovi la scadenza di ogni giornata con orario ufficiale e, il
+martedì alle 9, il promemoria per esportare la lista calciatori. Si aggiorna da
+solo quando la Lega fissa nuovi orari.
 
 ---
 

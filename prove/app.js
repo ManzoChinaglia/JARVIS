@@ -32,7 +32,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {} }) {
   });
   const ctx = {
     Date: FintaData, console, URLSearchParams, Promise, Object, String, Math, Set, JSON,
-    setInterval() {}, location: { search: '' },
+    setInterval() {}, location: { search: '', host: 'manzochinaglia.github.io', pathname: '/JARVIS/' },
     document: { getElementById: nodo, querySelector: () => nodo('_q'), querySelectorAll: () => [] },
     fetch: async url => {
       const f = url.split('?')[0], nome = f.replace(/^dati\//, '');
@@ -72,6 +72,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {} }) {
   verifica('undici completo, difesa a 4', n === 11 && u.D.length === 4, n + ' giocatori, ' + u.D.length + ' difensori');
   verifica('risposta "chi affronto"', /Schieri entro ven 18 set/.test(t.rispondi('chi affronto')), t.rispondi('chi affronto').replace(/\n/g, ' / '));
   verifica('date dei dati leggibili in intestazione', !/Invalid/.test(el.stamp.textContent), el.stamp.textContent);
+  verifica('link per iscriversi al calendario', el.ics.href === 'webcal://manzochinaglia.github.io/JARVIS/dati/jarvis.ics', el.ics.href);
 
   console.log('\n2. Venerdì 18 settembre, 20:00 (mezz\'ora alla scadenza)');
   ({ t, el } = await avvia({ adesso: '2026-09-18T20:00:00+02:00' }));

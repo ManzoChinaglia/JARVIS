@@ -1,0 +1,2 @@
+# il calendario va servito con le righe CRLF (RFC 5545): Git non deve convertirle
+dati/*.ics -text

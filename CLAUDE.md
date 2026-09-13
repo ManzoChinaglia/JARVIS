@@ -40,6 +40,7 @@ dati/infortuni.json     aggiornato automaticamente
 dati/titolari.json      aggiornato automaticamente: probabili della prossima giornata, in percentuale
 dati/orari.json         aggiornato automaticamente: primo e ultimo calcio d'inizio di ogni giornata
 dati/squadre.json       aggiornato automaticamente: rendimento casa/fuori, quest'anno e l'anno scorso
+dati/jarvis.ics         generato dallo script: calendario da sottoscrivere sull'iPhone
 dati/listone.json       elenco ufficiale, usato dagli script
 scripts/aggiorna.py     scarica infortuni, probabili, orari e rendimento delle squadre
 prove/                  prove automatiche (vedi «Come si prova»)
@@ -70,6 +71,21 @@ pubblico di fixturedownload.com. La fonte mette a mezzanotte UTC le partite
 senza orario ufficiale: quelle giornate sono salvate come `"ufficiale": false`,
 senza orario, e l'app scrive «orario non ancora ufficiale» invece di stimare.
 La giornata mostrata passa alla successiva due ore dopo l'ultimo calcio d'inizio.
+
+## Calendario
+
+`dati/jarvis.ics` si sottoscrive dall'iPhone con il link nell'app (`webcal://`).
+Lo genera lo script a ogni giro:
+- una scadenza per ogni giornata di lega con orario ufficiale, 15 minuti prima
+  del primo anticipo, con un avviso 2 ore prima (scelta dell'utente)
+- il promemoria del martedì alle 9, ora italiana, per esportare la Lista
+  calciatori, solo nelle settimane in cui si è giocato
+
+Le giornate senza orario ufficiale non ci sono: arrivano da sole quando la Lega
+fissa gli orari. Gli UID sono stabili, così un orario cambiato aggiorna l'evento
+invece di duplicarlo. Se non c'è nessuna scadenza il file non si riscrive,
+altrimenti l'iPhone cancellerebbe gli eventi. Il file va servito con fine riga
+CRLF: `.gitattributes` impedisce a Git di convertirlo.
 
 ## Probabili formazioni
 
@@ -111,17 +127,21 @@ lato, e il risultato sarebbe una precisione finta.
 
 ## Lavori aperti, in ordine di priorità
 
-1. **Calendario sottoscrivibile (.ics)** con le scadenze di schieramento e il
-   promemoria di esportare la lista calciatori. Su iPhone le notifiche del
-   calendario di sistema sono più affidabili delle notifiche push da app web.
-
-2. **Comando Siri.** L'app accetta già una domanda dall'indirizzo
+1. **Comando Siri.** L'app accetta già una domanda dall'indirizzo
    (`?q=...`), ma la elabora prima che i dati siano caricati e la risposta
    fallisce: va sistemato. Poi manca la guida per creare il Comando Rapido.
 
-3. **Verificare i pesi del consiglio.** I pesi della titolarità e
+2. **Verificare i pesi del consiglio.** I pesi della titolarità e
    dell'avversario (`PESI`) sono stime ragionevoli, non tarate. Dopo una decina
    di giornate vanno confrontati con i fantavoti reali e corretti.
+
+3. **Pagina «Chiedi».** Dall'iPhone il microfono non funziona. La pagina va
+   snellita e resa utile e reattiva: risposte sulle cose che servono davvero
+   prima di schierare.
+
+4. **Parte grafica.** Migliorie da concordare con l'utente, che ne ha già in
+   mente alcune. Il font ora è nel repository (`font/`): verificare sull'iPhone
+   che il titolo usi davvero Barlow Condensed.
 
 ## Come si prova
 

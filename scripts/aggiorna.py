@@ -3,12 +3,13 @@
 Aggiorna i dati vivi di Jarvis: infortunati, probabili formazioni, orari e
 rendimento delle squadre.
 
-Scrive quattro file in dati/:
+Scrive cinque file in dati/:
   dati/infortuni.json   { "aggiornato": "...", "voci": { "<id>": {...} } }
   dati/titolari.json    { "aggiornato": "...", "giornata": 5, "squadre": [...],
                           "titolari": { "<id>": 97 }, "panchina": { "<id>": 30 } }
   dati/orari.json       { "aggiornato": "...", "giornate": { "<giornata Serie A>": {...} } }
   dati/squadre.json     { "aggiornato": "...", "squadre": { "<squadra>": {...} }, ... }
+  dati/jarvis.ics       calendario da sottoscrivere: scadenze e promemoria dell'esportazione
 
 Regole di sicurezza:
  - se una fonte non risponde o cambia struttura, il file esistente NON viene toccato
@@ -37,6 +38,9 @@ URL_PRECEDENTE = 'https://fixturedownload.com/feed/json/serie-a-2025'
 
 # nomi del feed delle partite che differiscono da quelli del listone
 SQUADRE = {'Internazionale': 'Inter'}
+
+URL_APP = 'https://manzochinaglia.github.io/JARVIS/'
+DOMINIO = 'manzochinaglia.github.io'
 
 
 def norm(s):
@@ -347,6 +351,95 @@ def squadre(abituali):
             'retrocesse': retrocesse}
 
 
+# definizione standard di Europe/Rome, per i client che non la conoscono gia'
+FUSO_ROMA = [
+    'BEGIN:VTIMEZONE', 'TZID:Europe/Rome',
+    'BEGIN:DAYLIGHT', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'TZNAME:CEST',
+    'DTSTART:19700329T020000', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
+    'BEGIN:STANDARD', 'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0100', 'TZNAME:CET',
+    'DTSTART:19701025T030000', 'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU', 'END:STANDARD',
+    'END:VTIMEZONE',
+]
+
+
+def testo_ics(s):
+    """Testo di una proprieta' iCalendar: barra rovescia, ; , e a capo vanno protetti."""
+    return str(s).replace('\\', '\\\\').replace(';', '\\;').replace(',', '\\,').replace('\n', '\\n')
+
+
+def piega(riga):
+    """Righe di al massimo 75 byte; le continuazioni iniziano con uno spazio (RFC 5545)."""
+    pezzi, corrente = [], ''
+    for c in riga:
+        if len((corrente + c).encode('utf-8')) > (74 if pezzi else 75):
+            pezzi.append(corrente)
+            corrente = c
+        else:
+            corrente += c
+    pezzi.append(corrente)
+    return '\r\n '.join(pezzi)
+
+
+def utc_ics(d):
+    return d.astimezone(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+
+
+def calendario(base, giornate, ora=None):
+    """Calendario da sottoscrivere sull'iPhone.
+
+    - una scadenza per ogni giornata di lega con orario ufficiale, 15 minuti prima
+      del primo anticipo, con un avviso 2 ore prima; le altre non ci sono, perche'
+      l'orario sarebbe inventato
+    - il promemoria del martedi' alle 9 per esportare la Lista calciatori, solo
+      nelle settimane in cui si e' giocato
+
+    Gli UID sono stabili: un orario cambiato aggiorna l'evento, non lo duplica.
+    Restituisce il testo e il numero di scadenze.
+    """
+    stamp = utc_ics(ora or datetime.now(timezone.utc))
+    me = base['me']
+    eventi, martedi, scadenze = [], [], 0
+    for n, sa, data, partite in (g[:4] for g in base['g']):
+        giorno = datetime.strptime(data, '%Y-%m-%d')
+        martedi_dopo = giorno + timedelta(days=(1 - giorno.weekday()) % 7 or 7)
+        if martedi_dopo not in martedi:
+            martedi.append(martedi_dopo)
+
+        o = giornate.get(str(sa)) or {}
+        if not o.get('ufficiale'):
+            continue
+        avv = next(((b, True) if a == me else (a, False) for a, b in partite if me in (a, b)), None)
+        inizio = datetime.fromisoformat(o['inizio'])
+        titolo = f'Schiera la formazione · G{n}' + (f' contro {avv[0]}' if avv else '')
+        nota = (f'Si chiude 15 minuti prima del primo anticipo, {o["prima"]}.'
+                + (f'\nGiochi {"in casa" if avv[1] else "in trasferta"}.' if avv else '')
+                + f'\nApri Jarvis: {URL_APP}')
+        eventi += ['BEGIN:VEVENT', f'UID:jarvis-scadenza-g{n}@{DOMINIO}', f'DTSTAMP:{stamp}',
+                   f'DTSTART:{utc_ics(inizio - timedelta(minutes=15))}', f'DTEND:{utc_ics(inizio)}',
+                   f'SUMMARY:{testo_ics(titolo)}', f'DESCRIPTION:{testo_ics(nota)}', f'URL:{URL_APP}',
+                   'BEGIN:VALARM', 'ACTION:DISPLAY', 'TRIGGER:-PT2H',
+                   f'DESCRIPTION:{testo_ics("Tra 2 ore si chiude la formazione")}', 'END:VALARM',
+                   'END:VEVENT']
+        scadenze += 1
+
+    for m in martedi:
+        g = m.strftime('%Y%m%d')
+        eventi += ['BEGIN:VEVENT', f'UID:jarvis-esporta-{g}@{DOMINIO}', f'DTSTAMP:{stamp}',
+                   f'DTSTART;TZID=Europe/Rome:{g}T090000', f'DTEND;TZID=Europe/Rome:{g}T091500',
+                   f'SUMMARY:{testo_ics("Esporta la Lista calciatori")}',
+                   'DESCRIPTION:' + testo_ics('Leghe Fantacalcio → Menu → Lista calciatori → Scarica, '
+                                              'con tutte e 10 le squadre. Poi rigenera dati/base.json.'),
+                   'BEGIN:VALARM', 'ACTION:DISPLAY', 'TRIGGER:PT0M',
+                   f'DESCRIPTION:{testo_ics("Esporta la Lista calciatori")}', 'END:VALARM',
+                   'END:VEVENT']
+
+    righe = (['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Jarvis//Fantacalcio//IT', 'CALSCALE:GREGORIAN',
+              'METHOD:PUBLISH', f'X-WR-CALNAME:{testo_ics("Jarvis · fantacalcio")}', 'X-WR-TIMEZONE:Europe/Rome',
+              'REFRESH-INTERVAL;VALUE=DURATION:PT6H', 'X-PUBLISHED-TTL:PT6H']
+             + FUSO_ROMA + eventi + ['END:VCALENDAR'])
+    return '\r\n'.join(piega(r) for r in righe) + '\r\n', scadenze
+
+
 def main():
     listone = carica_listone()
     print(f'listone: {len(listone)} calciatori')
@@ -376,6 +469,20 @@ def main():
             scrivi(os.path.join(DATI, 'titolari.json'), titolari(listone, n), 11, 'titolari')
     except Exception as e:
         print('[titolari] fallito:', e)
+        uscita = 1
+
+    # senza nessuna scadenza il file non si riscrive: l'iPhone cancellerebbe gli eventi
+    try:
+        with open(os.path.join(DATI, 'base.json'), encoding='utf-8') as f:
+            testo, scadenze = calendario(json.load(f), precedenti(percorso, 'giornate'))
+        if scadenze == 0:
+            print('[calendario] nessuna scadenza con orario ufficiale: non aggiorno, tengo il file precedente.')
+        else:
+            with open(os.path.join(DATI, 'jarvis.ics'), 'w', encoding='utf-8', newline='') as f:
+                f.write(testo)
+            print(f'[calendario] scritte {scadenze} scadenze.')
+    except Exception as e:
+        print('[calendario] fallito:', e)
         uscita = 1
 
     try:

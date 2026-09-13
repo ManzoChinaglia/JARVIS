@@ -167,5 +167,47 @@ servi({mod.URL_SQUADRE_TIPO: Risposta(html)})
 m = mod.moduli()
 verifica('solo dalla tabella delle formazioni', m == {'Atalanta': '4-3-3', 'Genoa': '3-4-1-2'}, m)
 
+print('\n7. Calendario')
+base_finta = {'me': 'BURKINA FASO', 'g': [
+    [1, 5, '2026-09-20', [['CF FRINGUELLI', 'As Quel'], ['God Bless The Doc', 'BURKINA FASO']]],
+    [2, 6, '2026-10-11', [['BURKINA FASO', 'OPENDA LEGS']]],
+    [3, 7, '2026-10-14', [['FC TETTENHAM', 'BURKINA FASO']]],     # turno infrasettimanale
+    [4, 8, '2026-10-18', [['BURKINA FASO', 'Dua Lipsia']]]]}
+orari_finti = {'5': {'ufficiale': True, 'inizio': '2026-09-18T18:45:00+00:00', 'fine': '2026-09-20T18:45:00+00:00',
+                     'prima': 'Monza-Sassuolo'},
+               '6': {'ufficiale': True, 'inizio': '2026-10-10T13:00:00+00:00', 'fine': '2026-10-12T18:45:00+00:00',
+                     'prima': 'Genoa-Fiorentina'},
+               '7': {'ufficiale': False}, '8': {'ufficiale': False}}
+testo, scad = mod.calendario(base_finta, orari_finti, datetime(2026, 9, 13, 12, tzinfo=timezone.utc))
+righe = testo.split('\r\n')
+verifica('2 scadenze: solo le giornate con orario ufficiale', scad == 2 and 'jarvis-scadenza-g3' not in testo, scad)
+verifica('G1: dalle 18:30 alle 18:45 UTC, 15 minuti prima del primo anticipo',
+         'DTSTART:20260918T183000Z' in testo and 'DTEND:20260918T184500Z' in testo)
+verifica('titolo con l\'avversario', 'SUMMARY:Schiera la formazione · G1 contro God Bless The Doc' in righe)
+verifica('un avviso 2 ore prima per ogni scadenza', testo.count('TRIGGER:-PT2H') == 2)
+martedi = [r for r in righe if r.startswith('DTSTART;TZID=Europe/Rome:')]
+verifica('esportazione il martedì alle 9, una volta anche con due giornate in settimana',
+         martedi == ['DTSTART;TZID=Europe/Rome:20260922T090000', 'DTSTART;TZID=Europe/Rome:20261013T090000',
+                     'DTSTART;TZID=Europe/Rome:20261020T090000'], martedi)
+verifica('fuso orario Europe/Rome dichiarato', 'BEGIN:VTIMEZONE' in righe and 'TZID:Europe/Rome' in righe)
+verifica('righe CRLF di al massimo 75 byte', all(len(r.encode('utf-8')) <= 75 for r in righe)
+         and '\n' not in testo.replace('\r\n', ''))
+verifica('testo protetto', mod.testo_ics('a,b;c\nd\\') == 'a\\,b\\;c\\nd\\\\', mod.testo_ics('a,b;c\nd\\'))
+lunga = mod.piega('DESCRIPTION:' + 'è' * 60)
+verifica('le righe lunghe si ripiegano senza spezzare le lettere',
+         lunga.replace('\r\n ', '') == 'DESCRIPTION:' + 'è' * 60
+         and all(len(x.encode('utf-8')) <= 75 for x in lunga.split('\r\n')))
+_, zero = mod.calendario(base_finta, {'5': {'ufficiale': False}})
+verifica('senza orari ufficiali: zero scadenze, e il file non si riscrive', zero == 0)
+try:
+    import icalendar
+    cal = icalendar.Calendar.from_ical(testo)
+    ev = [e for e in cal.walk('VEVENT')]
+    prima = next(e for e in ev if 'scadenza-g1' in str(e['UID']))
+    verifica('letto da icalendar: 5 eventi, G1 alle 18:30 UTC', len(ev) == 5 and prima.decoded('DTSTART')
+             == datetime(2026, 9, 18, 18, 30, tzinfo=timezone.utc), len(ev))
+except ImportError:
+    print('  (icalendar non installato: salto la lettura con una libreria esterna)')
+
 print(f'\n{esiti - falliti}/{esiti} verifiche superate')
 sys.exit(1 if falliti else 0)
