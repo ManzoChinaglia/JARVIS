@@ -15,11 +15,15 @@ dati/
   base.json                   rose, calendario lega, calendario Serie A, statistiche
   infortuni.json              chi è fuori e fino a quando        [automatico]
   titolari.json               chi è dato titolare                [automatico]
+  orari.json                  orari delle giornate di Serie A    [automatico]
   listone.json                elenco ufficiale, serve agli script
 scripts/
-  aggiorna.py                 scarica infortuni e probabili formazioni
+  aggiorna.py                 scarica infortuni, probabili formazioni e orari
 .github/workflows/
-  aggiorna.yml                esegue lo script due volte a settimana
+  aggiorna.yml                esegue lo script tre volte a settimana
+prove/
+  app.js                      prova l'app in Node:     node prove/app.js
+  orari.py                    prova la logica orari:   python prove/orari.py
 ```
 
 Il codice e i dati sono separati di proposito: si aggiorna l'uno senza toccare l'altro.
@@ -36,18 +40,24 @@ Il codice e i dati sono separati di proposito: si aggiorna l'uno senza toccare l
 | Statistiche giocatori (PGv, MV, FM) | esportazione «Lista calciatori» | **manuale, 1 volta a settimana** |
 | Infortunati con data di rientro | pagina pubblica | automatico |
 | Probabili formazioni | pagina pubblica | automatico |
+| Orari delle partite di Serie A | feed pubblico fixturedownload.com | automatico |
+
+La scadenza per schierare la formazione è un quarto d'ora prima del primo anticipo
+della giornata. Finché la Lega Serie A non fissa gli orari di una giornata, Jarvis
+scrive «orario non ancora ufficiale» invece di stimarla.
 
 L'unico passaggio manuale è l'esportazione settimanale della lista calciatori:
 richiede il login alla lega e per questo non è automatizzabile in modo pulito.
 
 ---
 
-## Le due finestre di aggiornamento
+## Le finestre di aggiornamento
 
-Impostate in `.github/workflows/aggiorna.yml`, ora italiana:
+Impostate in `.github/workflows/aggiorna.yml`, ora italiana (con l'ora solare, un'ora prima):
 
 - **martedì 08:00** — dopo l'ultima partita della giornata appena conclusa
-- **sabato 06:00** — poche ore prima della prima partita della giornata successiva
+- **venerdì 10:00** — prima degli anticipi del venerdì sera
+- **sabato 06:00** — prima delle partite del sabato pomeriggio
 
 Si può lanciare anche a mano: scheda **Actions** del repository → *Aggiorna Jarvis* → *Run workflow*.
 

@@ -2,8 +2,10 @@ name: Aggiorna Jarvis
 
 on:
   schedule:
-    - cron: '0 6 * * 2'
-    - cron: '0 4 * * 6'
+    # orari in UTC: 08:00, 10:00 e 06:00 in Italia con l'ora legale, un'ora prima con l'ora solare
+    - cron: '0 6 * * 2'   # martedì, a giornata conclusa
+    - cron: '0 8 * * 5'   # venerdì, prima degli anticipi della sera
+    - cron: '0 4 * * 6'   # sabato, prima delle partite del pomeriggio
   workflow_dispatch:
 
 jobs:
@@ -12,11 +14,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          python-version: '3.14'
 
       - name: Installa dipendenze
         run: pip install requests beautifulsoup4 lxml

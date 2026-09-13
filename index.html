@@ -59,6 +59,7 @@
              border:1px solid var(--line); border-radius:var(--r);}
   .countdown .k{font-size:13px; color:var(--dim);}
   .countdown .t{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:30px; margin-top:2px;}
+  .countdown .q{font-size:12px; color:var(--dim); margin-top:4px;}
   .countdown.urgente{border-color:var(--rosso);}
   .countdown.urgente .t{color:var(--rosso);}
 
@@ -169,8 +170,9 @@
       </div>
     </div>
     <div class="countdown" id="cd">
-      <div class="k">Schieri la formazione entro</div>
+      <div class="k" id="cdk">Schieri la formazione entro</div>
       <div class="t cond" id="cdt"></div>
+      <div class="q" id="cdq"></div>
     </div>
     <div class="modrow">
       <h2 style="margin:24px 0 0">Undici consigliato</h2>
@@ -235,11 +237,13 @@ async function carica(){
   const base = await leggi('base.json', true);
   const inf  = await leggi('infortuni.json', false);
   const tit  = await leggi('titolari.json', false);
+  const ora  = await leggi('orari.json', false);
 
   D = base;
   ME = D.me;
-  D.inf_v = inf ? inf.aggiornato : null;
-  D.tit_v = tit ? tit.aggiornato : null;
+  D.orari = ora && ora.giornate ? ora.giornate : null;
+  D.inf_v = inf && inf.aggiornato ? inf.aggiornato.slice(0,10) : null;
+  D.tit_v = tit && tit.aggiornato ? tit.aggiornato.slice(0,10) : null;
   players = D.p.map(a=>({id:a[0],nome:a[1],club:a[2],ruolo:a[3],team:a[4],
                          costo:a[5],quot:a[6],pgv:a[7],mv:a[8],fm:a[9],
                          out:null,motivo:null,tit:'r'}));
@@ -250,18 +254,33 @@ async function carica(){
 }
 
 function oggi(){ return new Date(); }
-function prossima(){
-  const t = oggi().toISOString().slice(0,10);
-  return D.g.find(g=>g[2]>=t) || D.g[D.g.length-1];
+/* data locale: toISOString darebbe la data UTC, sbagliata dopo mezzanotte */
+function isoOggi(){
+  const d = oggi();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
-/* prima partita della giornata: sabato pomeriggio prima della domenica canonica */
+/* orari della giornata di Serie A, solo se ufficiali */
+function orario(g){
+  const o = D.orari && D.orari[String(g[1])];
+  return o && o.ufficiale ? o : null;
+}
+/* la giornata resta quella in corso fino a due ore dopo l'ultimo calcio d'inizio */
+function prossima(){
+  const ora = oggi().getTime(), t = isoOggi();
+  return D.g.find(g=>{
+    const o = orario(g);
+    return o ? new Date(o.fine).getTime()+2*3600000 > ora : g[2]>=t;
+  }) || D.g[D.g.length-1];
+}
+/* regola della lega: un quarto d'ora prima del primo anticipo di Serie A.
+   Senza orario ufficiale non c'è scadenza: meglio dirlo che stimarla. */
 function scadenza(g){
-  const dom = new Date(g[2]+'T12:00:00');
-  const gs = dom.getDay();            // 0 dom, 3 mer
-  const d = new Date(dom);
-  if(gs===0) d.setDate(d.getDate()-1); // sabato
-  d.setHours(15,0,0,0);
-  return d;
+  const o = orario(g);
+  return o ? new Date(new Date(o.inizio).getTime() - 15*60000) : null;
+}
+function quando(d){
+  return d.toLocaleString('it-IT',{weekday:'short',day:'numeric',month:'short',
+                                   hour:'2-digit',minute:'2-digit',timeZone:'Europe/Rome'});
 }
 function avversarioLega(g){
   for(const [a,b] of g[3]){
@@ -297,8 +316,19 @@ function renderGiornata(){
     'Giornata '+g[0]+' · '+dataIt(g[2])+' · '+(av.casa?'in casa':'in trasferta');
   document.getElementById('avv').textContent = av.nome.toUpperCase();
 
-  const sc = scadenza(g), ms = sc-oggi();
-  document.getElementById('cdt').textContent = fmtDurata(ms);
+  const sc = scadenza(g), ms = sc ? sc-oggi() : 0;
+  const cdk = document.getElementById('cdk'), cdt = document.getElementById('cdt'),
+        cdq = document.getElementById('cdq');
+  if(sc){
+    cdk.textContent = ms>0 ? 'Schieri la formazione entro' : 'Formazione chiusa';
+    cdt.textContent = fmtDurata(ms);
+    cdq.textContent = quando(sc)+' · 15 minuti prima di '+orario(g).prima;
+  } else {
+    cdk.textContent = 'Scadenza formazione';
+    cdt.textContent = D.orari ? 'orario non ancora ufficiale' : 'orari non disponibili';
+    cdq.textContent = D.orari ? 'La Lega Serie A non ha ancora fissato gli orari di questa giornata.'
+                              : 'Non riesco a leggere dati/orari.json.';
+  }
   document.getElementById('cd').classList.toggle('urgente', ms>0 && ms<86400000);
 
   const sa = g[1], iso = g[2];
@@ -393,11 +423,10 @@ function renderLega(){
     '<div class="team'+(x.t===ME?' io':'')+'"><span class="nome">'+x.t+'</span>'+
     '<span class="val cond">'+x.fm.toFixed(2)+'</span></div>').join('');
 
-  const t = oggi().toISOString().slice(0,10);
+  const pr = prossima();
   document.getElementById('calendario').innerHTML = D.g.map(g=>{
     const av = avversarioLega(g);
-    const futura = g[2]>=t;
-    return '<div class="cal'+(futura&&g===prossima()?' io':'')+'">'+
+    return '<div class="cal'+(g===pr?' io':'')+'">'+
       '<span class="d">G'+g[0]+' · '+dataIt(g[2]).replace(/^\w+\s/,'')+'</span>'+
       '<span class="m">'+(av.casa?'':'a ')+av.nome+'</span></div>';
   }).join('');
@@ -415,9 +444,14 @@ function rispondi(q){
     aggiorna(false);
     return 'Sto cercando dati nuovi…';
   }
-  if(/chi affront|avversar|contro chi/.test(s))
+  if(/chi affront|avversar|contro chi/.test(s)){
+    const sc = scadenza(g);
     return 'Giornata '+g[0]+', '+dataIt(g[2])+': affronti '+av.nome+' '+
-           (av.casa?'in casa':'in trasferta')+'.\nSchieri entro '+fmtDurata(scadenza(g)-oggi())+'.';
+           (av.casa?'in casa':'in trasferta')+'.\n'+
+           (!sc ? 'L\'orario della prima partita non è ancora ufficiale.'
+            : sc>oggi() ? 'Schieri entro '+quando(sc)+', tra '+fmtDurata(sc-oggi())+'.'
+            : 'Formazione chiusa alle '+quando(sc)+'.');
+  }
 
   if(/infortun|fuori|indisponib/.test(s)){
     const ko = mia.filter(p=>!disponibile(p,g[2]));
@@ -463,10 +497,12 @@ async function aggiorna(silenzioso){
   b.classList.add('attivo'); b.textContent = 'cerco…';
   let cambiato = false;
   try{
-    const [i,t] = await Promise.all([
+    const [i,t,o] = await Promise.all([
       fetch('dati/infortuni.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
-      fetch('dati/titolari.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)
+      fetch('dati/titolari.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
+      fetch('dati/orari.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)
     ]);
+    if(o && o.giornate && Object.keys(o.giornate).length>=38) D.orari = o.giornate;
     if(i && i.voci && Object.keys(i.voci).length>=5){
       players.forEach(p=>{ const v=i.voci[String(p.id)];
         p.out = v?v.rientro:null; p.motivo = v?v.motivo:null; });

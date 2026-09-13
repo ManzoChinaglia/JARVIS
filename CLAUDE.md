@@ -36,9 +36,12 @@ index.html              app completa (HTML, CSS, JS in un file solo)
 dati/base.json          rose, calendario lega, calendario Serie A, statistiche
 dati/infortuni.json     aggiornato automaticamente
 dati/titolari.json      aggiornato automaticamente
+dati/orari.json         aggiornato automaticamente: primo e ultimo calcio d'inizio di ogni giornata
 dati/listone.json       elenco ufficiale, usato dagli script
-scripts/aggiorna.py     scarica infortuni e probabili formazioni
-.github/workflows/aggiorna.yml   esegue lo script martedì 08:00 e sabato 06:00 (ora italiana)
+scripts/aggiorna.py     scarica infortuni, probabili formazioni e orari
+prove/                  prove automatiche (vedi «Come si prova»)
+.github/workflows/aggiorna.yml   esegue lo script martedì 08:00, venerdì 10:00 e sabato 06:00
+                                 (ora italiana legale; con l'ora solare un'ora prima)
 ```
 
 Codice e dati sono separati di proposito. Non reincorporare i dati nell'HTML.
@@ -56,14 +59,18 @@ Una volta a settimana l'utente esporta la «Lista calciatori» da Leghe
 Fantacalcio (richiede login, non automatizzabile in modo pulito) e da quella si
 rigenera `dati/base.json`. Tutto il resto è automatico.
 
+## Scadenza formazione
+
+Regola della lega: **un quarto d'ora prima del primo anticipo della giornata di
+Serie A**. Gli orari vengono da `dati/orari.json`, che lo script popola dal feed
+pubblico di fixturedownload.com. La fonte mette a mezzanotte UTC le partite
+senza orario ufficiale: quelle giornate sono salvate come `"ufficiale": false`,
+senza orario, e l'app scrive «orario non ancora ufficiale» invece di stimare.
+La giornata mostrata passa alla successiva due ore dopo l'ultimo calcio d'inizio.
+
 ## Lavori aperti, in ordine di priorità
 
-1. **Scadenza formazione.** Oggi è stimata al sabato alle 15. La regola vera è:
-   **un quarto d'ora prima del primo anticipo della giornata di Serie A**.
-   Serve un `dati/orari.json` con l'orario di inizio della prima partita di ogni
-   giornata, popolato dallo script, e il conto alla rovescia va calcolato su quello.
-
-2. **Arricchire il consiglio di formazione.** Oggi pesa solo: disponibilità,
+1. **Arricchire il consiglio di formazione.** Oggi pesa solo: disponibilità,
    titolarità, fantamedia, piccolo malus trasferta. Va aggiunto:
    - forza difensiva dell'avversario (gol subiti, porte inviolate) — pesa molto
      per i difensori, vista la presenza del modificatore difesa
@@ -81,20 +88,40 @@ rigenera `dati/base.json`. Tutto il resto è automatico.
    quella fascia). Il dato pubblico non dice in modo affidabile chi occupa quale
    lato, e il risultato sarebbe una precisione finta.
 
-3. **Font.** `Barlow Condensed` da Google Fonts non si carica sul sito
+2. **Font.** `Barlow Condensed` da Google Fonts non si carica sul sito
    pubblicato e i titoli ricadono sul carattere di sistema. Capire perché.
 
-4. **Calendario sottoscrivibile (.ics)** con le scadenze di schieramento e il
+3. **Calendario sottoscrivibile (.ics)** con le scadenze di schieramento e il
    promemoria di esportare la lista calciatori. Su iPhone le notifiche del
    calendario di sistema sono più affidabili delle notifiche push da app web.
 
-5. **Comando Siri.** L'app accetta già una domanda dall'indirizzo
-   (`?q=...`): manca solo la guida per creare il Comando Rapido.
+4. **Comando Siri.** L'app accetta già una domanda dall'indirizzo
+   (`?q=...`), ma la elabora prima che i dati siano caricati e la risposta
+   fallisce: va sistemato. Poi manca la guida per creare il Comando Rapido.
 
 ## Come si prova
 
-Non c'è una suite di test. Il metodo usato finora, da mantenere:
-estrarre il blocco `<script>` da `index.html`, eseguirlo in Node con un
-finto DOM e una `fetch` che legge i file da disco, e verificare i risultati
-reali (undici generato, risposte alle domande, conteggi). Ha già intercettato
+Le prove sono in `prove/` e vanno lanciate prima di ogni consegna:
+
+```
+node prove/app.js
+python prove/orari.py
+```
+
+`prove/app.js` segue il metodo usato finora, da mantenere: estrae il blocco
+`<script>` da `index.html`, lo esegue in Node con un finto DOM e una `fetch`
+che legge i file da disco, e verifica i risultati reali (undici generato,
+risposte alle domande, conteggi, scadenze). Ogni nuova funzione aggiunge qui
+le sue verifiche. `prove/orari.py` prova lo script con una fonte finta. Ha già intercettato
 un errore sugli identificativi e una funzione cancellata per sbaglio.
+Per le date usare un orologio finto e `TZ=Europe/Rome`: la scadenza dipende
+dall'ora legale.
+
+Lo script si prova in locale con Python 3.14, la stessa versione del workflow.
+Sul PC dell'utente Norton Antivirus intercetta le connessioni HTTPS con un suo
+certificato, che Python non riconosce: si lancia con il pacchetto `truststore`,
+senza toccare lo script.
+
+```
+python -c "import truststore, runpy; truststore.inject_into_ssl(); runpy.run_path('scripts/aggiorna.py', run_name='__main__')"
+```
