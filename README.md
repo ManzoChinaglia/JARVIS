@@ -19,15 +19,18 @@ dati/
   orari.json                  orari delle giornate di Serie A    [automatico]
   squadre.json                rendimento in casa e fuori         [automatico]
   jarvis.ics                  calendario delle scadenze          [automatico]
+  statistiche.json            partite, MV, FM, quotazioni        [automatico]
   listone.json                elenco ufficiale, serve agli script
 scripts/
-  aggiorna.py                 scarica infortuni, probabili, orari e rendimento squadre
+  aggiorna.py                 scarica infortuni, probabili, orari, squadre e statistiche
+  importa_rose.py             aggiorna le rose da rose.csv, dopo uno scambio
 .github/workflows/
   aggiorna.yml                esegue lo script tre volte a settimana
 prove/
   app.js                      prova l'app in Node:     node prove/app.js
   orari.py                    prova la logica orari:   python prove/orari.py
   script.py                   prova lo script:         python prove/script.py
+  rose.py                     prova l'import delle rose: python prove/rose.py
 ```
 
 Il codice e i dati sono separati di proposito: si aggiorna l'uno senza toccare l'altro.
@@ -38,10 +41,10 @@ Il codice e i dati sono separati di proposito: si aggiorna l'uno senza toccare l
 
 | Dato | Fonte | Aggiornamento |
 |---|---|---|
-| Rose delle 10 squadre | esportazione da Leghe Fantacalcio | a ogni scambio |
+| Rose delle 10 squadre | `rose.csv` da Leghe Fantacalcio | a ogni scambio |
 | Calendario della lega | esportazione da Fantalab | una volta |
 | Calendario Serie A | date ufficiali | una volta |
-| Statistiche giocatori (PGv, MV, FM) | esportazione «Lista calciatori» | **manuale, 1 volta a settimana** |
+| Statistiche giocatori (PGv, MV, FM) e quotazioni | pagine pubbliche di fantacalcio.it | automatico, 1 volta al giorno |
 | Infortunati con data di rientro | pagina pubblica | automatico |
 | Probabili formazioni della giornata | pagina pubblica, media di 4 redazioni | automatico |
 | Rendimento delle squadre | risultati dal feed fixturedownload.com | automatico |
@@ -51,8 +54,8 @@ La scadenza per schierare la formazione è un quarto d'ora prima del primo antic
 della giornata. Finché la Lega Serie A non fissa gli orari di una giornata, Jarvis
 scrive «orario non ancora ufficiale» invece di stimarla.
 
-L'unico passaggio manuale è l'esportazione settimanale della lista calciatori:
-richiede il login alla lega e per questo non è automatizzabile in modo pulito.
+L'unico passaggio manuale è scaricare `rose.csv` dopo uno scambio o durante il
+mercato: la lega è privata e richiede il login.
 
 ---
 
@@ -107,9 +110,8 @@ Nella schermata Giornata, sotto il conto alla rovescia, tocca «Aggiungi le
 scadenze al calendario dell'iPhone» e conferma l'iscrizione. Se compare l'opzione
 «Rimuovi avvisi», disattivala: altrimenti l'iPhone non ti avvisa 2 ore prima.
 
-Nel calendario trovi la scadenza di ogni giornata con orario ufficiale e, il
-martedì alle 9, il promemoria per esportare la lista calciatori. Si aggiorna da
-solo quando la Lega fissa nuovi orari.
+Nel calendario trovi la scadenza di ogni giornata con orario ufficiale. Si
+aggiorna da solo quando la Lega fissa nuovi orari.
 
 ---
 
@@ -148,11 +150,13 @@ nell'icona sulla Home: i dati sono gli stessi.
 
 ---
 
-## Manutenzione settimanale
+## Dopo uno scambio
 
-1. Da Leghe Fantacalcio → Menu → Lista calciatori → **Scarica**
-   (verificare che il filtro includa tutte e 10 le squadre)
-2. Rigenerare `dati/base.json` dal file scaricato
-3. Caricare su GitHub
+1. Da Leghe Fantacalcio scarica il file delle rose (`rose.csv`): finisce nella
+   cartella Download, non serve spostarlo.
+2. Scrivi a Claude «rose aggiornate». Lancia `python scripts/importa_rose.py`,
+   che controlla il file (10 squadre da 25, ruoli giusti), aggiorna le rose,
+   elenca gli scambi trovati; poi prove e pubblicazione.
 
-Il resto va da sé.
+Statistiche e quotazioni si aggiornano da sole ogni giorno: niente più
+esportazione settimanale.

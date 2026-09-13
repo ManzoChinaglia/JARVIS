@@ -10,7 +10,8 @@ Scrive cinque file in dati/:
                           "indisponibili": { "<id>": { "motivo": "Squalificato", "fino": "28/10" } } }
   dati/orari.json       { "aggiornato": "...", "giornate": { "<giornata Serie A>": {...} } }
   dati/squadre.json     { "aggiornato": "...", "squadre": { "<squadra>": {...} }, ... }
-  dati/jarvis.ics       calendario da sottoscrivere: scadenze e promemoria dell'esportazione
+  dati/jarvis.ics       calendario da sottoscrivere: scadenze di schieramento
+  dati/statistiche.json { "aggiornato": "...", "giocatori": { "<id>": [partite, MV, FM, quotazione] } }
 
 Regole di sicurezza:
  - se una fonte non risponde o cambia struttura, il file esistente NON viene toccato
@@ -35,6 +36,10 @@ URL_GIORNATA = 'https://www.fantacalcio-online.com/it/serie-a/2026-2027/probabil
 # formazioni tipo di stagione: servono solo per il modulo abituale, mai per la titolarita'
 URL_SQUADRE_TIPO = 'https://www.fantacalcio-online.com/it/consigli-fantacalcio/probabili-formazioni-serie-a'
 URL_ORARI = 'https://fixturedownload.com/feed/json/serie-a-2026'
+# statistiche e quotazioni pubbliche di fantacalcio.it (senza login), con l'Id del listone nei link
+URL_STATISTICHE = 'https://www.fantacalcio.it/statistiche-serie-a/2026-27/fantacalcio/riepilogo'
+URL_QUOTAZIONI = 'https://www.fantacalcio.it/quotazioni-fantacalcio'
+ORE_STATISTICHE = 20   # cambiano solo dopo le partite: basta un giro al giorno
 URL_PRECEDENTE = 'https://fixturedownload.com/feed/json/serie-a-2025'
 
 # nomi del feed delle partite che differiscono da quelli del listone
@@ -307,6 +312,56 @@ def orari(vecchie):
     return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'giornate': giornate}
 
 
+def righe_con_id(url):
+    """Righe della tabella principale di una pagina di fantacalcio.it: l'Id del
+    listone viene dal link del giocatore (…/roma/svilar/5841), non dal nome."""
+    r = requests.get(url, headers=UA, timeout=TIMEOUT)
+    r.raise_for_status()
+    tabella = BeautifulSoup(r.text, 'lxml').find('table')
+    if not tabella:
+        raise ValueError(f'nessuna tabella in {url}: la fonte ha cambiato struttura')
+    intestazione = [c.get_text(' ', strip=True) for c in tabella.find_all('th')]
+    righe = {}
+    for tr in tabella.find_all('tr'):
+        a = tr.find('a', href=re.compile(r'/\d+/?$'))
+        if a:
+            righe[int(a['href'].rstrip('/').rsplit('/', 1)[1])] = [c.get_text(' ', strip=True) for c in tr.find_all(['td', 'th'])]
+    return intestazione, righe
+
+
+def numero(testo):
+    t = (testo or '').replace(',', '.').strip()
+    return float(t) if re.fullmatch(r'-?\d+(\.\d+)?', t) else 0.0
+
+
+def statistiche():
+    """Partite a voto, media voto, fantamedia e quotazione di ogni giocatore, dalle
+    pagine pubbliche: sostituiscono l'esportazione settimanale per le statistiche."""
+    testa, stat = righe_con_id(URL_STATISTICHE)
+    if testa[5:8] != ['PV', 'MV', 'FM']:
+        raise ValueError(f'colonne delle statistiche inattese: {testa[5:8]}')
+    testaq, quot = righe_con_id(URL_QUOTAZIONI)
+    if testaq[5:7] != ['QI', 'QA']:
+        raise ValueError(f'colonne delle quotazioni inattese: {testaq[5:7]}')
+    giocatori = {}
+    for i in set(stat) | set(quot):
+        s, q = stat.get(i), quot.get(i)
+        giocatori[str(i)] = [int(numero(s[5])) if s else 0, round(numero(s[6]), 2) if s else 0.0,
+                             round(numero(s[7]), 2) if s else 0.0, int(numero(q[6])) if q else 0]
+    print(f'[statistiche] {len(stat)} giocatori con statistiche, {len(quot)} con quotazione.')
+    return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'giocatori': giocatori}
+
+
+def recente(percorso, ore, ora=None):
+    """Vero se il file è stato scritto da meno di `ore` ore."""
+    try:
+        with open(percorso, encoding='utf-8') as f:
+            quando = datetime.fromisoformat(json.load(f)['aggiornato'])
+    except (OSError, ValueError, KeyError):
+        return False
+    return (ora or datetime.now(timezone.utc)) - quando < timedelta(hours=ore)
+
+
 def rendimento(partite):
     """Per squadra e per campo: [partite, gol fatti, gol subiti, porte inviolate]."""
     tab = {}
@@ -416,24 +471,18 @@ def utc_ics(d):
 def calendario(base, giornate, ora=None):
     """Calendario da sottoscrivere sull'iPhone.
 
-    - una scadenza per ogni giornata di lega con orario ufficiale, 15 minuti prima
-      del primo anticipo, con un avviso 2 ore prima; le altre non ci sono, perche'
-      l'orario sarebbe inventato
-    - il promemoria del martedi' alle 9 per esportare la Lista calciatori, solo
-      nelle settimane in cui si e' giocato
+    Una scadenza per ogni giornata di lega con orario ufficiale, 15 minuti prima
+    del primo anticipo, con un avviso 2 ore prima; le altre non ci sono, perche'
+    l'orario sarebbe inventato. (Il promemoria del martedi' per esportare la Lista
+    calciatori e' stato tolto: le statistiche ora sono automatiche.)
 
     Gli UID sono stabili: un orario cambiato aggiorna l'evento, non lo duplica.
     Restituisce il testo e il numero di scadenze.
     """
     stamp = utc_ics(ora or datetime.now(timezone.utc))
     me = base['me']
-    eventi, martedi, scadenze = [], [], 0
-    for n, sa, data, partite in (g[:4] for g in base['g']):
-        giorno = datetime.strptime(data, '%Y-%m-%d')
-        martedi_dopo = giorno + timedelta(days=(1 - giorno.weekday()) % 7 or 7)
-        if martedi_dopo not in martedi:
-            martedi.append(martedi_dopo)
-
+    eventi, scadenze = [], 0
+    for n, sa, _, partite in (g[:4] for g in base['g']):
         o = giornate.get(str(sa)) or {}
         if not o.get('ufficiale'):
             continue
@@ -450,17 +499,6 @@ def calendario(base, giornate, ora=None):
                    f'DESCRIPTION:{testo_ics("Tra 2 ore si chiude la formazione")}', 'END:VALARM',
                    'END:VEVENT']
         scadenze += 1
-
-    for m in martedi:
-        g = m.strftime('%Y%m%d')
-        eventi += ['BEGIN:VEVENT', f'UID:jarvis-esporta-{g}@{DOMINIO}', f'DTSTAMP:{stamp}',
-                   f'DTSTART;TZID=Europe/Rome:{g}T090000', f'DTEND;TZID=Europe/Rome:{g}T091500',
-                   f'SUMMARY:{testo_ics("Esporta la Lista calciatori")}',
-                   'DESCRIPTION:' + testo_ics('Leghe Fantacalcio → Menu → Lista calciatori → Scarica, '
-                                              'con tutte e 10 le squadre. Poi rigenera dati/base.json.'),
-                   'BEGIN:VALARM', 'ACTION:DISPLAY', 'TRIGGER:PT0M',
-                   f'DESCRIPTION:{testo_ics("Esporta la Lista calciatori")}', 'END:VALARM',
-                   'END:VEVENT']
 
     righe = (['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Jarvis//Fantacalcio//IT', 'CALSCALE:GREGORIAN',
               'METHOD:PUBLISH', f'X-WR-CALNAME:{testo_ics("Jarvis · fantacalcio")}', 'X-WR-TIMEZONE:Europe/Rome',
@@ -503,6 +541,17 @@ def main():
                 print('[titolari] né probabili né indisponibili per questa giornata: tengo il file precedente.')
     except Exception as e:
         print('[titolari] fallito:', e)
+        uscita = 1
+
+    percorso_st = os.path.join(DATI, 'statistiche.json')
+    try:
+        if recente(percorso_st, ORE_STATISTICHE):
+            print(f'[statistiche] aggiornate da meno di {ORE_STATISTICHE} ore: salto.')
+        else:
+            st = statistiche()
+            scrivi(percorso_st, st, 400, 'statistiche', n=len(st['giocatori']))
+    except Exception as e:
+        print('[statistiche] fallito:', e)
         uscita = 1
 
     # senza nessuna scadenza il file non si riscrive: l'iPhone cancellerebbe gli eventi

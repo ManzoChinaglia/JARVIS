@@ -231,7 +231,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   verifica('undici completo lo stesso', Object.values(t.undici(g)).flat().length === 11);
 
   console.log('\n11bis. Fantamedia stimata con poche partite');
-  ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'squadre.json': null } }));
+  // sui dati di base.json: le statistiche del giorno si provano a parte (11quinquies)
+  ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'squadre.json': null, 'statistiche.json': null } }));
   // retta fantamedia ~ quotazione per ruolo, pesata per partite: ricalcolata qui da zero
   const retta = r => {
     const gg = base.p.filter(a => a[3] === r && a[7] > 0), W = gg.reduce((s, a) => s + a[7], 0);
@@ -293,6 +294,20 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   verifica('numerata per ruolo', /<small>1°<\/small>/.test(el.panchina.innerHTML) && /<small>2°<\/small>/.test(el.panchina.innerHTML));
   verifica('«chi schiero?» dice anche la panchina', /\nPanchina, in ordine: P /.test(t.rispondi('chi schiero')),
            t.rispondi('chi schiero').split('\n').find(r => r.startsWith('Panchina')));
+
+  console.log('\n11quinquies. Statistiche del giorno dalle pagine pubbliche');
+  const stat = {};
+  base.p.forEach(a => { stat[a[0]] = [a[7], a[8], a[9], a[6]]; });
+  stat[d1] = [5, 6.5, 7.25, 21];
+  for (let k = 0; k < 200; k++) stat[900000 + k] = [0, 0, 0, 1];   // il file vero ha tutta la Serie A
+  ({ t } = await avvia({ adesso: giovedi, dati: { 'statistiche.json': { aggiornato: '2026-09-17T08:00:00+00:00', giocatori: stat },
+                                                   'titolari.json': null, 'squadre.json': null } }));
+  verifica('sostituiscono quelle di base.json', P(d1).pgv === 5 && P(d1).fm === 7.25 && P(d1).quot === 21,
+           `${P(d1).nome}: ${P(d1).pgv} partite, FM ${P(d1).fm}, quotazione ${P(d1).quot}`);
+  verifica('entrano nella fantamedia stimata', circa(t.fmStimata(P(d1)), (5 * 7.25 + 5 * (t.STIME.D.a + t.STIME.D.b * 21)) / 10));
+  ({ t } = await avvia({ adesso: giovedi, dati: { 'statistiche.json': { aggiornato: 'x', giocatori: { [d1]: [9, 9, 9, 9] } },
+                                                   'titolari.json': null, 'squadre.json': null } }));
+  verifica('file sospetto (meno di 400 giocatori): restano quelle di base.json', P(d1).pgv === base.p.find(a => a[0] === d1)[7]);
 
   console.log('\n12. Domanda dal Comando Rapido di Siri (?q=...)');
   ({ t, el } = await avvia({ adesso: '2026-09-13T12:00:00+02:00', search: '?q=chi%20affronto' }));

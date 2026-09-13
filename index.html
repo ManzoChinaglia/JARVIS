@@ -251,6 +251,7 @@ async function carica(){
   const tit  = await leggi('titolari.json', false);
   const ora  = await leggi('orari.json', false);
   const sq   = await leggi('squadre.json', false);
+  const st   = await leggi('statistiche.json', false);
 
   D = base;
   ME = D.me;
@@ -266,10 +267,22 @@ async function carica(){
                          out:null,motivo:null}));
   if(inf && inf.voci) players.forEach(p=>{ const v=inf.voci[String(p.id)];
     if(v){ p.out=v.rientro; p.motivo=v.motivo; } });
+  applicaStatistiche(st);
   mia = players.filter(p=>p.team===ME);
   stimaQuotazioni();
 }
 
+/* statistiche del giorno dalle pagine pubbliche (partite, MV, FM, quotazione):
+   più fresche dell'ultima esportazione in base.json, che resta il ripiego */
+function applicaStatistiche(st){
+  if(!st || !st.giocatori || Object.keys(st.giocatori).length<400) return false;
+  players.forEach(p=>{
+    const v = st.giocatori[String(p.id)];
+    if(v){ p.pgv = v[0]; p.mv = v[1]; p.fm = v[2]; if(v[3]) p.quot = v[3]; }
+  });
+  D.st_v = st.aggiornato || null;
+  return true;
+}
 function oggi(){ return new Date(); }
 /* data locale: toISOString darebbe la data UTC, sbagliata dopo mezzanotte */
 function isoOggi(){
@@ -758,12 +771,14 @@ async function aggiorna(silenzioso){
   b.classList.add('attivo'); b.textContent = 'cerco…';
   let cambiato = false;
   try{
-    const [i,t,o,s] = await Promise.all([
+    const [i,t,o,s,st] = await Promise.all([
       fetch('dati/infortuni.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
       fetch('dati/titolari.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
       fetch('dati/orari.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
-      fetch('dati/squadre.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)
+      fetch('dati/squadre.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
+      fetch('dati/statistiche.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)
     ]);
+    if(applicaStatistiche(st)) stimaQuotazioni();
     if(o && o.giornate && Object.keys(o.giornate).length>=38){ D.orari = o.giornate; D.orari_v = o.aggiornato || D.orari_v; }
     if(s && s.squadre && Object.keys(s.squadre).length>=20) D.sq = s;
     if(i && i.voci && Object.keys(i.voci).length>=5){

@@ -185,6 +185,39 @@ servi({mod.URL_SQUADRE_TIPO: Risposta(html)})
 m = mod.moduli()
 verifica('solo dalla tabella delle formazioni', m == {'Atalanta': '4-3-3', 'Genoa': '3-4-1-2'}, m)
 
+print('\n6bis. Statistiche e quotazioni pubbliche')
+def tabella(intestazione, righe):
+    """Pagina finta di fantacalcio.it: tabella con l'Id nel link del giocatore."""
+    th = ''.join(f'<th>{h}</th>' for h in intestazione)
+    tr = ''.join(f'<tr><td></td><td></td><td></td><th><a href="https://www.fantacalcio.it/serie-a/squadre/x/{n.lower()}/{i}">{n}</a></th>'
+                 + ''.join(f'<td>{c}</td>' for c in celle) + '</tr>' for i, n, celle in righe)
+    return Risposta(f'<table><thead><tr>{th}</tr></thead><tbody>{tr}</tbody></table>')
+TESTA_ST = ['Calciatore', '', '', '', 'Sq', 'PV', 'MV', 'FM', 'Gol']
+TESTA_QU = ['Calciatore', '', '', '', 'Sq', 'QI', 'QA', 'FVM / 1000']
+servi({mod.URL_STATISTICHE: tabella(TESTA_ST, [(5841, 'Svilar', ['ROM', '3', '6,5', '7,17', '0']),
+                                                (5585, 'Malen', ['ROM', '4', '7,0', '12,33', '5'])]),
+       mod.URL_QUOTAZIONI: tabella(TESTA_QU, [(5841, 'Svilar', ['ROM', '18', '18', '83']),
+                                               (5585, 'Malen', ['ROM', '34', '37', '445']),
+                                               (9999, 'Nuovo', ['ROM', '5', '6', '10'])])})
+st = mod.statistiche()['giocatori']
+verifica('partite, media voto, fantamedia e quotazione per Id', st['5841'] == [3, 6.5, 7.17, 18] and st['5585'] == [4, 7.0, 12.33, 37], st)
+verifica('chi ha solo la quotazione (nuovo arrivo) c\'è con 0 partite', st['9999'] == [0, 0.0, 0.0, 6], st.get('9999'))
+servi({mod.URL_STATISTICHE: tabella(['Calciatore', '', '', '', 'Sq', 'Pres', 'MV', 'FM'], [(5841, 'Svilar', ['ROM', '3', '6,5', '7,17'])]),
+       mod.URL_QUOTAZIONI: tabella(TESTA_QU, [])})
+try:
+    mod.statistiche()
+    verifica('colonne cambiate: deve fermarsi', False)
+except ValueError as e:
+    verifica('colonne cambiate: si ferma', True, e)
+with tempfile.TemporaryDirectory() as d:
+    p = os.path.join(d, 'statistiche.json')
+    ora = datetime(2026, 9, 14, 12, tzinfo=timezone.utc)
+    verifica('file assente: da aggiornare', not mod.recente(p, 20, ora))
+    with open(p, 'w', encoding='utf-8') as f:
+        json.dump({'aggiornato': '2026-09-14T00:00:00+00:00'}, f)
+    verifica('scritto 12 ore fa: si salta', mod.recente(p, 20, ora))
+    verifica('scritto 21 ore fa: si aggiorna', not mod.recente(p, 20, ora + timedelta(hours=9)))
+
 print('\n7. Calendario')
 base_finta = {'me': 'BURKINA FASO', 'g': [
     [1, 5, '2026-09-20', [['CF FRINGUELLI', 'As Quel'], ['God Bless The Doc', 'BURKINA FASO']]],
@@ -203,10 +236,8 @@ verifica('G1: dalle 18:30 alle 18:45 UTC, 15 minuti prima del primo anticipo',
          'DTSTART:20260918T183000Z' in testo and 'DTEND:20260918T184500Z' in testo)
 verifica('titolo con l\'avversario', 'SUMMARY:Schiera la formazione · G1 contro God Bless The Doc' in righe)
 verifica('un avviso 2 ore prima per ogni scadenza', testo.count('TRIGGER:-PT2H') == 2)
-martedi = [r for r in righe if r.startswith('DTSTART;TZID=Europe/Rome:')]
-verifica('esportazione il martedì alle 9, una volta anche con due giornate in settimana',
-         martedi == ['DTSTART;TZID=Europe/Rome:20260922T090000', 'DTSTART;TZID=Europe/Rome:20261013T090000',
-                     'DTSTART;TZID=Europe/Rome:20261020T090000'], martedi)
+verifica('niente più promemoria di esportazione', 'jarvis-esporta' not in testo and 'Lista calciatori' not in testo
+         and testo.count('BEGIN:VEVENT') == 2)
 verifica('fuso orario Europe/Rome dichiarato', 'BEGIN:VTIMEZONE' in righe and 'TZID:Europe/Rome' in righe)
 verifica('righe CRLF di al massimo 75 byte', all(len(r.encode('utf-8')) <= 75 for r in righe)
          and '\n' not in testo.replace('\r\n', ''))
@@ -222,7 +253,7 @@ try:
     cal = icalendar.Calendar.from_ical(testo)
     ev = [e for e in cal.walk('VEVENT')]
     prima = next(e for e in ev if 'scadenza-g1' in str(e['UID']))
-    verifica('letto da icalendar: 5 eventi, G1 alle 18:30 UTC', len(ev) == 5 and prima.decoded('DTSTART')
+    verifica('letto da icalendar: 2 eventi, G1 alle 18:30 UTC', len(ev) == 2 and prima.decoded('DTSTART')
              == datetime(2026, 9, 18, 18, 30, tzinfo=timezone.utc), len(ev))
 except ImportError:
     print('  (icalendar non installato: salto la lettura con una libreria esterna)')

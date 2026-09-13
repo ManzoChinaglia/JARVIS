@@ -41,8 +41,10 @@ dati/titolari.json      aggiornato automaticamente: probabili della prossima gio
 dati/orari.json         aggiornato automaticamente: primo e ultimo calcio d'inizio di ogni giornata
 dati/squadre.json       aggiornato automaticamente: rendimento casa/fuori, quest'anno e l'anno scorso
 dati/jarvis.ics         generato dallo script: calendario da sottoscrivere sull'iPhone
+dati/statistiche.json   aggiornato automaticamente: partite, MV, FM e quotazioni dalle pagine pubbliche
 dati/listone.json       elenco ufficiale, usato dagli script
-scripts/aggiorna.py     scarica infortuni, probabili, orari e rendimento delle squadre
+scripts/aggiorna.py     scarica infortuni, probabili, orari, rendimento delle squadre e statistiche
+scripts/importa_rose.py aggiorna le rose di base.json da rose.csv, dopo scambi o mercato
 prove/                  prove automatiche (vedi «Come si prova»)
 .github/workflows/aggiorna.yml   esegue lo script tre volte al giorno, dopo gli aggiornamenti
                                  delle probabili delle 11:30 e delle 19:30 (orari nel file)
@@ -59,9 +61,22 @@ qui ha già rotto un'app precedente in modo silenzioso.
 
 ## Dati che si aggiornano a mano
 
-Una volta a settimana l'utente esporta la «Lista calciatori» da Leghe
-Fantacalcio (richiede login, non automatizzabile in modo pulito) e da quella si
-rigenera `dati/base.json`. Tutto il resto è automatico.
+Solo le **rose**, che cambiano con scambi e mercato (soste per le nazionali,
+gennaio). Dopo uno scambio l'utente scarica `rose.csv` da Leghe Fantacalcio e
+dice «rose aggiornate»; si lancia `python scripts/importa_rose.py`, che prende il
+`rose*.csv` più recente nella cartella Download, controlla 10 squadre da 25
+(3/8/8/6) con i nomi del calendario, aggiorna `base.json`, aggiunge al listone i
+giocatori nuovi ed elenca gli scambi. Poi prove, commit e push come sempre.
+
+La lega è privata: le rose richiedono il login, e Claude non fa accessi con la
+password dell'utente (nemmeno tramite uno script, nemmeno se cifrata). Se un
+giorno la lega diventa visibile a tutti, le rose si possono leggere senza login.
+
+**Statistiche e quotazioni non si aggiornano più a mano**: lo script le prende
+una volta al giorno dalle pagine pubbliche di fantacalcio.it
+(`dati/statistiche.json`, abbinate per Id dal link del giocatore, almeno 400
+giocatori per scrivere) e l'app le applica sopra `base.json`. L'esportazione
+«Lista calciatori» non serve più (quella del 12/09 era filtrata su 5 squadre).
 
 ## Scadenza formazione
 
@@ -75,11 +90,11 @@ La giornata mostrata passa alla successiva due ore dopo l'ultimo calcio d'inizio
 ## Calendario
 
 `dati/jarvis.ics` si sottoscrive dall'iPhone con il link nell'app (`webcal://`).
-Lo genera lo script a ogni giro:
-- una scadenza per ogni giornata di lega con orario ufficiale, 15 minuti prima
-  del primo anticipo, con un avviso 2 ore prima (scelta dell'utente)
-- il promemoria del martedì alle 9, ora italiana, per esportare la Lista
-  calciatori, solo nelle settimane in cui si è giocato
+Lo genera lo script a ogni giro: una scadenza per ogni giornata di lega con
+orario ufficiale, 15 minuti prima del primo anticipo, con un avviso 2 ore prima
+(scelta dell'utente). Il promemoria settimanale per esportare la Lista calciatori
+è stato tolto il 13/09/2026, su richiesta dell'utente: le statistiche ora sono
+automatiche.
 
 Le giornate senza orario ufficiale non ci sono: arrivano da sole quando la Lega
 fissa gli orari. Gli UID sono stabili, così un orario cambiato aggiorna l'evento
@@ -179,16 +194,11 @@ lato, e il risultato sarebbe una precisione finta.
 
 ## Lavori aperti, in ordine di priorità
 
-1. **Importare la «Lista calciatori».** Il README chiede di rigenerare
-   `dati/base.json` dal file esportato ogni settimana, ma non esiste uno
-   strumento per farlo. Serve uno script che converta l'esportazione di Leghe
-   Fantacalcio mantenendo gli Id del listone e il calendario già presente.
-
-2. **Verificare i pesi del consiglio.** I pesi della titolarità e
+1. **Verificare i pesi del consiglio.** I pesi della titolarità e
    dell'avversario (`PESI`) sono stime ragionevoli, non tarate. Dopo una decina
    di giornate vanno confrontati con i fantavoti reali e corretti.
 
-3. **Parte grafica.** Migliorie da concordare con l'utente, che ne ha già in
+2. **Parte grafica.** Migliorie da concordare con l'utente, che ne ha già in
    mente alcune. Il font ora è nel repository (`font/`): verificare sull'iPhone
    che il titolo usi davvero Barlow Condensed.
 
@@ -200,6 +210,7 @@ Le prove sono in `prove/` e vanno lanciate prima di ogni consegna:
 node prove/app.js
 python prove/orari.py
 python prove/script.py
+python prove/rose.py
 ```
 
 `prove/app.js` segue il metodo usato finora, da mantenere: estrae il blocco
