@@ -35,7 +35,7 @@ Indirizzo: https://manzochinaglia.github.io/JARVIS/
 index.html              app completa (HTML, CSS, JS in un file solo)
 font/                   Barlow Condensed in woff2 e la sua licenza (OFL): da Google Fonts
                         sull'iPhone non si caricava, non reintrodurre dipendenze esterne
-img/                    icona per la Home (bandiera con la stella) e stemma per lo sfondo velato
+img/                    icona per la Home (Re Guyzo, dallo stemma) e sfondo (lo stemma intero)
 manifest.webmanifest    nome, colori e icone dell'app per iPhone e browser
 sw.js                   service worker: l'app funziona anche senza rete, con l'ultima copia
 dati/base.json          rose, calendario lega, calendario Serie A, statistiche
@@ -130,37 +130,65 @@ CRLF: `.gitattributes` impedisce a Git di convertirlo.
   fonttools, così si vede uguale anche se il font non si carica.
 - In fondo alla schermata Giornata «versione del …» (da `document.lastModified`):
   dice se l'iPhone ha l'ultima versione o una copia vecchia.
-- Icona per la Home: `img/icona-180.png` e `manifest.webmanifest`. iOS non
+- Icona per la Home: **Re Guyzo**, il busto dorato in basso nello stemma
+  (`img/icona-180.png`, `img/icona-512.png`, `manifest.webmanifest`). La stessa
+  immagine è lo stemmino accanto a BURKINA FASO e l'avatar di «Chiedi». iOS non
   aggiorna l'icona da solo: bisogna togliere Jarvis dalla Home e rimetterlo.
-- Sfondo velato: `img/stemma.jpg`, solo la parte centrale dello stemma della
-  squadra (mappa dorata e stella), sfocata e molto trasparente.
-- **Nessun volto di persone nel repository**, che è pubblico (scelta
-  dell'utente del 13/09/2026): lo stemma originale con i ritratti e le foto
-  restano solo sul PC.
+- Sfondo: `img/sfondo.jpg`, lo stemma intero adattato allo schermo dell'iPhone
+  (1080 × 2340, sopra e sotto la tinta scura della foto). Un velo scuro in CSS
+  tiene leggibile il testo; lo sfondo si muove lentissimo.
+- **Volti nel repository, che è pubblico** (scelta dell'utente del 14/09/2026,
+  che sostituisce quella del 13/09): Re Guyzo si vede, i due ritratti dello
+  stemma sono sfocati. La foto originale e l'altra foto restano solo sul PC.
+- Le schede sono «vetro» (`--vetro`, con la sfocatura di ciò che sta dietro)
+  sopra lo stemma.
+
+## Campo, maglie e schede
+
+Il campo ha le proporzioni di uno vero (68 × 100, `LINEE_CAMPO`) e l'erba a
+strisce; i giocatori sono posizionati in percentuale da `posizione()`: portiere
+in basso, attacco in alto, terzini, mezzali ed esterni un po' più avanti. Ogni
+giocatore è una maglia disegnata in SVG con i colori di casa del suo club
+(`MAGLIE` in `index.html`: tinta unita, righe, metà o croce), la fantamedia in
+un'etichetta dorata, un pallino (verde titolare, giallo in dubbio, rosso fuori
+dalle probabili) e un anello rosso che pulsa per chi rischia. Un club che non è
+in `MAGLIE` ha la maglia grigia: quando sale una neopromossa va aggiunto (una
+prova lo controlla sui club del calendario).
+
+Toccando un giocatore, in campo o in una lista, sale la sua scheda
+(`apriGiocatore`): fantamedia, media voto, gare, quotazione, punteggio del
+consiglio, titolarità, partita e avversario. Il modulo si sceglie con tre
+pulsanti sopra il campo.
 
 ## Movimento e senza rete
 
 Animazioni con solo CSS e JavaScript (scelta dell'utente, niente framework):
-maglie del campo che entrano dal portiere all'attacco (solo quando l'undici
-cambia, non a ogni aggiornamento del minuto), barra del tempo sotto il conto alla
-rovescia (verde, gialla nell'ultimo giorno, rossa nelle ultime 3 ore) con puntino
-che pulsa, barre della titolarità, passaggi morbidi tra le schede, «tira giù per
-aggiornare», segnaposto che luccicano durante il caricamento. Con «Riduci
-movimento» dell'iPhone si spengono tutte.
+le linee del campo si tracciano e le maglie cadono in campo dal portiere
+all'attacco (solo quando l'undici cambia: il campo si ridisegna solo se qualcosa
+è cambiato e, finita l'entrata, la classe `entra` si toglie), barra del tempo
+sotto il conto alla rovescia (verde, gialla nell'ultimo giorno, rossa nelle
+ultime 3 ore) con un riflesso che scorre, il numero che scatta quando cambia,
+stella che brilla, sfondo che respira, campanella che suona con avvisi nuovi,
+cursori che scorrono (barra in basso e modulo), pannelli che salgono dal basso,
+blocchi che salgono uno dopo l'altro cambiando scheda, barre che crescono, «tira
+giù per aggiornare» con un messaggio in alto, segnaposto che luccicano durante il
+caricamento. Con «Riduci movimento» dell'iPhone si spengono tutte.
 
 `sw.js` è il service worker: **prima la rete, poi la copia salvata**. Con la rete
 pagina e dati sono sempre freschi (mai una versione vecchia); senza rete si usa
 l'ultima copia e l'intestazione scrive «senza rete». Se si cambia la lista dei
-file fissi, cambiare anche il nome della cache (`jarvis-1` → `jarvis-2`).
+file fissi, cambiare anche il nome della cache (ora `jarvis-2`, poi `jarvis-3`).
 
 ## Avvisi e notifiche
 
-La scheda «Avvisi» (campanella, pallino rosso con i nuovi) elenca, dal più
-urgente: scadenza (3 giorni prima, sotto le 24 ore, «ultima chiamata» sotto le
+Gli avvisi si aprono dalla **campanella in alto a destra**, con il pallino rosso
+dei nuovi (fino al 14/09/2026 erano la quinta scheda in basso, che sull'iPhone
+finiva fuori schermo). Sale un pannello: in cima lo stato dei dati e il pulsante
+«Aggiorna i dati», poi l'elenco, dal più urgente: scadenza (3 giorni prima, sotto le 24 ore, «ultima chiamata» sotto le
 3 ore), dati fermi, tuoi giocatori che saltano la giornata, probabili uscite,
 giocatori dell'undici in panchina o fuori nelle probabili, il martedì il
-promemoria per le rose (o le rose ferme da più di 3 settimane). Aperta la
-scheda, gli avvisi diventano letti (salvati nel telefono con localStorage).
+promemoria per le rose (o le rose ferme da più di 3 settimane). Aperto il
+pannello, gli avvisi diventano letti (salvati nel telefono con localStorage).
 
 Le **stesse** notifiche arrivano sull'iPhone ad app chiusa con **ntfy** (open
 source, niente account; scelta dell'utente): `scripts/notifiche.js` gira nel
@@ -270,7 +298,10 @@ lato, e il risultato sarebbe una precisione finta.
 2. **Parte grafica.** Il piano del 13/09/2026 è completo: nomi delle squadre
    dell'app, titolo disegnato, versione visibile, archivio dei file, colori e
    icona del Burkina Faso, sfondo velato, scheda «Avvisi» con ntfy, animazioni e
-   funzionamento senza rete. Altre migliorie si concordano con l'utente.
+   funzionamento senza rete. Il 14/09 il rifacimento chiesto dall'utente: icona
+   Re Guyzo, stemma intero sullo sfondo, campanella al posto della quinta scheda,
+   campo con le maglie dei club, schede dei giocatori, vetro e animazioni. Altre
+   migliorie si concordano con l'utente.
 
 ## Come si prova
 

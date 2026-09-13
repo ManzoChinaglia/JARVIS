@@ -25,7 +25,7 @@ scripts/
   aggiorna.py                 scarica infortuni, probabili, orari, squadre e statistiche
   importa_rose.py             aggiorna le rose da rose.csv, dopo uno scambio
 .github/workflows/
-  aggiorna.yml                esegue lo script tre volte a settimana
+  aggiorna.yml                esegue lo script tre volte al giorno
 prove/
   app.js                      prova l'app in Node:     node prove/app.js
   orari.py                    prova la logica orari:   python prove/orari.py
@@ -102,6 +102,10 @@ si vede, ma non entra nel punteggio.
 La panchina è già in ordine: nella lega entra il primo panchinaro dello stesso
 ruolo, quindi per ogni ruolo vengono prima quelli che rendono di più.
 
+Nel campo ogni giocatore ha la maglia del suo club e la fantamedia; il pallino
+dice se è titolare (verde), in dubbio (giallo) o fuori dalle probabili (rosso).
+Toccalo, in campo o in una lista, per la sua scheda.
+
 ---
 
 ## Scadenze nel calendario dell'iPhone
@@ -117,7 +121,7 @@ aggiorna da solo quando la Lega fissa nuovi orari.
 
 ## Notifiche sull'iPhone
 
-Gli avvisi della scheda «Avvisi» arrivano anche come notifiche, ad app chiusa,
+Gli avvisi (campanella in alto a destra) arrivano anche come notifiche, ad app chiusa,
 con l'app gratuita **ntfy** (open source, niente account):
 
 1. Installa **ntfy** dall'App Store, tocca **+** e iscriviti all'argomento che ti
@@ -135,13 +139,14 @@ stessa due volte.
 
 Jarvis si apre anche senza connessione, con gli ultimi dati visti: in quel caso
 la riga sotto il titolo comincia con «senza rete». Appena la rete torna, si
-aggiorna da solo. Per aggiornare a mano, tira giù la pagina dall'inizio.
+aggiorna da solo. Per aggiornare a mano, tira giù la pagina dall'inizio, oppure
+campanella → «Aggiorna i dati».
 
 ---
 
 ## Icona sulla Home
 
-L'icona è la bandiera del Burkina Faso con la stella. iOS non aggiorna le icone
+L'icona è Re Guyzo, il busto dorato dello stemma. iOS non aggiorna le icone
 da solo: per vederla, tieni premuto Jarvis sulla Home → Rimuovi app → Rimuovi
 dalla schermata Home, poi da Safari apri il sito → Condividi → Aggiungi alla
 schermata Home. In fondo alla schermata Giornata la riga «versione del …» dice

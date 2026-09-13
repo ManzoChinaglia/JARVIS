@@ -65,7 +65,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.createContext(ctx);
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},avvisi,apriAvvisi,renderGiornata,' +
-    'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina};', ctx);
+    'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -392,9 +393,10 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            && manifesto.icons.every(i => png(path.join(REPO, i.src))), manifesto.icons.map(i => i.src).join(', '));
   verifica('colori della bandiera', /--bf-rosso:#EF2B2D/.test(html) && /--bf-verde:#009E49/.test(html) && /--bf-stella:#FCD116/.test(html)
            && !/var\(--rosa\)/.test(html));
-  const stemma = path.join(REPO, 'img', 'stemma.jpg');
-  verifica('sfondo velato leggero', fs.existsSync(stemma) && fs.statSync(stemma).size < 80000 && /url\("img\/stemma.jpg"\)/.test(html),
-           fs.existsSync(stemma) ? Math.round(fs.statSync(stemma).size / 1024) + ' KB' : 'manca');
+  const sfondo = path.join(REPO, 'img', 'sfondo.jpg');
+  verifica('sfondo: lo stemma intero, leggero per l\'iPhone', fs.existsSync(sfondo) && fs.statSync(sfondo).size < 400000
+           && /url\("img\/sfondo.jpg"\)/.test(html), fs.existsSync(sfondo) ? Math.round(fs.statSync(sfondo).size / 1024) + ' KB' : 'manca');
+  verifica('Re Guyzo anche dentro l\'app (stemmino e Chiedi)', (html.match(/src="img\/icona-180.png"/g) || []).length >= 2);
 
   console.log('\n16. Avvisi');
   // venerdì 18 settembre alle 10: scadenza alle 20:30 e un tuo difensore squalificato
@@ -444,6 +446,38 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            && /index\.html/.test(sw) && /barlow-condensed-700\.woff2/.test(sw));
   verifica('service worker registrato solo se il browser lo supporta', /'serviceWorker' in navigator/.test(html));
   verifica('rispetta «Riduci movimento» dell\'iPhone', /prefers-reduced-motion: reduce/.test(html));
+  verifica('cache nuova per i file fissi cambiati', /jarvis-2/.test(sw) && /img\/sfondo\.jpg/.test(sw) && !/stemma\.jpg/.test(sw));
+
+  console.log('\n18. Campo, maglie e schede');
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': prob5, 'squadre.json': null, 'infortuni.json': null } }));
+  g = t.prossima();
+  const clubSA = [...new Set(Object.values(base.f).flat(2))];
+  verifica('ogni club di Serie A ha la sua maglia', clubSA.every(c => t.MAGLIE[c]),
+           clubSA.filter(c => !t.MAGLIE[c]).join(', ') || clubSA.length + ' club');
+  const celle = el.campo.innerHTML.match(/class="gioc[^"]*" data-id="\d+"/g) || [];
+  verifica('in campo 11 maglie, ognuna tocca e apre la scheda', celle.length === 11, celle.length);
+  verifica('linee del campo disegnate', /class="linee"/.test(el.campo.innerHTML));
+  const quota = ['P', 'D', 'C', 'A'].map(r => t.posizione(r, 0, 1).y);
+  verifica('dal portiere in basso all\'attacco in alto', quota.every((y, i) => i === 0 || y < quota[i - 1]), quota.join(' > '));
+  for (const [r, n] of [['D', 4], ['C', 5], ['A', 3]]) {
+    const pp = [...Array(n).keys()].map(k => t.posizione(r, k, n));
+    verifica(r + ' a ' + n + ': dentro il campo e senza sovrapposizioni', pp.every(p => p.x >= 10 && p.x <= 90)
+             && pp.every((p, k) => k === 0 || p.x - pp[k - 1].x >= 18), pp.map(p => p.x + '/' + p.y).join(' '));
+  }
+  t.apriGiocatore(P(d1).id);
+  verifica('scheda del giocatore: nome, fantamedia e titolarità', el['foglio-corpo'].innerHTML.includes(P(d1).nome)
+           && /fantamedia/.test(el['foglio-corpo'].innerHTML) && /Titolare al 95%/.test(el['foglio-corpo'].innerHTML)
+           && el.foglio.classList.contains('aperto') && el.velo.classList.contains('aperto'));
+  t.chiudiFogli();
+  verifica('la scheda si chiude', !el.foglio.classList.contains('aperto') && !el.velo.classList.contains('aperto'));
+  const barraSotto = (html.match(/<nav>[\s\S]*?<\/nav>/) || [''])[0];
+  verifica('avvisi dalla campanella in alto: in basso restano 4 schede', /id="campanella"/.test(html)
+           && (barraSotto.match(/data-s="/g) || []).length === 4 && !/data-s="avvisi"/.test(html));
+  verifica('«aggiorna» dentro il pannello degli avvisi, non nell\'intestazione',
+           /<aside class="foglio" id="pannello"[\s\S]*id="refresh"[\s\S]*?<\/aside>/.test(html)
+           && !/id="refresh"/.test((html.match(/<header>[\s\S]*?<\/header>/) || [''])[0]));
+  verifica('nel pannello il dettaglio dei dati', /probabili del/.test(el['stamp-dett'].textContent), el['stamp-dett'].textContent);
+  verifica('sigla dell\'avversario nello stemmino', /^[A-Z0-9]{1,2}$/.test(el['avv-sigla'].textContent), el['avv-sigla'].textContent);
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
