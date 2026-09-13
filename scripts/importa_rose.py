@@ -6,9 +6,12 @@ Fantacalcio, dopo uno scambio o durante il mercato. Accetta:
   squadra (nome, «costo»), 25 giocatori in ordine P, D, C, A, riga «totale»
 - rose.csv, con l'Id del listone per ogni giocatore
 
-Uso: python scripts/importa_rose.py [percorso] [--prova]
+Uso: python scripts/importa_rose.py [percorso] [--prova] [--nomi-app]
 Senza percorso prende il file delle rose più recente nella cartella Download.
 Con --prova mostra cosa cambierebbe, senza scrivere niente.
+Con --nomi-app adotta in tutto base.json i nomi di squadra del file dell'app.
+Dopo l'importazione il file usato passa dalla cartella Download a archivio/rose
+(fuori da Git): la cartella Download resta pulita e non si cancella niente.
 
 - tocca solo le rose (squadra, prezzo, ruolo, nome, quotazione) e la data "v":
   calendario e sfide restano quelli di base.json
@@ -19,13 +22,14 @@ Con --prova mostra cosa cambierebbe, senza scrivere niente.
 - aggiunge al listone i giocatori nuovi, così lo script li riconosce nelle
   probabili e negli infortuni
 """
-import csv, glob, json, os, re, sys, unicodedata
+import csv, glob, json, os, re, shutil, sys, unicodedata
 from collections import Counter
 from datetime import date
 
 RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATI = os.path.join(RADICE, 'dati')
 DOWNLOAD = os.path.join(os.path.expanduser('~'), 'Downloads')
+ARCHIVIO = os.path.join(RADICE, 'archivio', 'rose')     # file già importati, esclusi da Git
 RUOLI = {'P': 3, 'D': 8, 'C': 8, 'A': 6}
 RUOLI_IN_ORDINE = ['P'] * 3 + ['D'] * 8 + ['C'] * 8 + ['A'] * 6   # come nei blocchi dell'app
 
@@ -106,7 +110,7 @@ def righe_da_blocchi(blocchi, base, listone):
             errori.append(f'squadra «{nome_file}» non riconosciuta')
             continue
         usate.add(squadra)
-        if norm(squadra) != norm(nome_file):
+        if squadra != nome_file:
             diversi.append((nome_file, squadra))
         for k, (nome, costo) in enumerate(giocatori):
             ruolo, noto = RUOLI_IN_ORDINE[k], attuali[squadra].get(norm(nome))
@@ -201,6 +205,31 @@ def scambi(prima, dopo):
     return cambi, entrati, usciti
 
 
+def rinomina(base, coppie):
+    """Un base.json nuovo con i nomi di squadra del file dell'app, nel calendario e
+    nelle rose. coppie: [(nome nel file, nome attuale)]. Il base.json dato non cambia."""
+    mappa = {attuale: nuovo for nuovo, attuale in coppie}
+    nuovo = dict(base)
+    nuovo['g'] = [g[:3] + [[[mappa.get(a, a), mappa.get(b, b)] for a, b in g[3]]] + g[4:] for g in base['g']]
+    nuovo['p'] = [p[:4] + [mappa.get(p[4], p[4])] + p[5:] for p in base['p']]
+    nuovo['me'] = mappa.get(base['me'], base['me'])
+    return nuovo
+
+
+def archivia(percorso):
+    """Sposta il file usato dalla cartella Download all'archivio. Solo i file che
+    stanno in Download; se il nome c'è già, aggiunge un numero. Non cancella niente."""
+    if os.path.dirname(os.path.abspath(percorso)) != os.path.abspath(DOWNLOAD):
+        return None
+    os.makedirs(ARCHIVIO, exist_ok=True)
+    nome, est = os.path.splitext(os.path.basename(percorso))
+    destinazione, k = os.path.join(ARCHIVIO, nome + est), 1
+    while os.path.exists(destinazione):
+        destinazione, k = os.path.join(ARCHIVIO, f'{nome}-{k}{est}'), k + 1
+    shutil.move(percorso, destinazione)
+    return destinazione
+
+
 def main():
     argomenti = [a for a in sys.argv[1:] if not a.startswith('--')]
     prova = '--prova' in sys.argv
@@ -216,6 +245,12 @@ def main():
             righe, diversi = righe_da_blocchi(leggi_rosters(percorso), base, listone)
             for dal_file, nel_calendario in diversi:
                 print(f'  nel file «{dal_file}» è «{nel_calendario}» del calendario')
+            if diversi and '--nomi-app' in sys.argv:
+                base = rinomina(base, diversi)
+                mappa = {attuale: nuovo for nuovo, attuale in diversi}
+                for r in righe:
+                    r['Squadra'] = mappa.get(r['Squadra'], r['Squadra'])
+                print(f'  adotto i nomi dell\'app per {len(diversi)} squadre')
         else:
             righe = leggi_csv(percorso)
         nuovo, nuovo_listone, aggiunti = importa(righe, base, listone, stat)
@@ -244,6 +279,9 @@ def main():
         with open(os.path.join(DATI, 'listone.json'), 'w', encoding='utf-8') as f:
             f.write(testo_json(nuovo_listone))
     print(f'rose aggiornate: {len(nuovo["p"])} giocatori, 10 squadre.')
+    spostato = archivia(percorso)
+    if spostato:
+        print(f'file spostato nell\'archivio: {spostato}')
 
 
 if __name__ == '__main__':

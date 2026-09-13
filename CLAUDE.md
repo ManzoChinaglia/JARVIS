@@ -44,7 +44,8 @@ dati/jarvis.ics         generato dallo script: calendario da sottoscrivere sull'
 dati/statistiche.json   aggiornato automaticamente: partite, MV, FM e quotazioni dalle pagine pubbliche
 dati/listone.json       elenco ufficiale, usato dagli script
 scripts/aggiorna.py     scarica infortuni, probabili, orari, rendimento delle squadre e statistiche
-scripts/importa_rose.py aggiorna le rose di base.json da rose.csv, dopo scambi o mercato
+scripts/importa_rose.py aggiorna le rose di base.json dal file dell'app di Leghe, dopo scambi o mercato
+archivio/               file delle rose già importati e vecchi file del fantacalcio (solo sul PC, escluso da Git)
 prove/                  prove automatiche (vedi «Come si prova»)
 .github/workflows/aggiorna.yml   esegue lo script tre volte al giorno, dopo gli aggiornamenti
                                  delle probabili delle 11:30 e delle 19:30 (orari nel file)
@@ -66,13 +67,16 @@ gennaio). Dopo uno scambio l'utente scarica il file delle rose dall'app di Leghe
 Fantacalcio («rivoluzione-fantacalcio-rosters-<numero>.xlsx», finisce nella
 cartella Download) e dice «rose aggiornate». Si lancia prima
 `python scripts/importa_rose.py --prova` (mostra gli scambi senza scrivere),
-poi senza `--prova`; poi prove, commit e push come sempre.
+poi senza `--prova`; poi prove, commit e push come sempre. Il file usato passa
+da Download a `archivio/rose` (escluso da Git): la cartella resta pulita e non si
+cancella niente. I vecchi file del fantacalcio sono in `archivio/vecchi`.
 
 Il file dell'app ha un blocco per squadra (nome, «costo», 25 giocatori in ordine
 P, D, C, A, riga «totale») e **niente Id**: le squadre si riconoscono dai
-giocatori in comune con la rosa attuale (almeno 13), perché nell'app quattro
-squadre hanno un nome diverso dal calendario (AS Quell, Palle Sudate,
-FC FRINGUELLI, Dinastia Fontana = FC TETTENHAM); i giocatori dal nome, prima
+giocatori in comune con la rosa attuale (almeno 13), perché i nomi possono
+cambiare: il 13/09/2026 quattro erano diversi dal calendario di settembre e, su
+scelta dell'utente, da allora Jarvis usa i nomi dell'app (`--nomi-app`, per
+esempio Dinastia Fontana = ex FC TETTENHAM); i giocatori dal nome, prima
 nella rosa attuale, poi nel listone (dove ogni nome è unico). Si accetta anche
 `rose.csv`, che ha l'Id. Controlli: 10 squadre da 25 (3/8/8/6), ruoli coerenti,
 nessun giocatore in due squadre. Serve `openpyxl` (`pip install openpyxl`), solo

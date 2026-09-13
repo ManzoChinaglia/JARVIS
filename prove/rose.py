@@ -93,8 +93,6 @@ verifica('club che non si riesce a ricostruire', ok, msg)
 
 print('\n4. File delle rose dell\'app (…rosters….xlsx)')
 import tempfile, openpyxl
-NOMI_APP = {'FC TETTENHAM': 'Dinastia Fontana', 'CF FRINGUELLI': 'FC FRINGUELLI', 'As Quel': 'AS Quell',
-            'Palle Sudate Fc': 'Palle Sudate', 'God Bless The Doc': 'GOD BLESS THE DOC', 'Saddam Hussein': 'saddam hussein'}
 def file_app(p_list, ordine, cartella, cambia=None):
     """Un file come quello dell'app: blocchi «squadra / costo», 25 giocatori in ordine P, D, C, A, riga «totale»."""
     wb = openpyxl.Workbook()
@@ -111,6 +109,9 @@ def file_app(p_list, ordine, cartella, cambia=None):
     wb.save(percorso)
     return percorso
 squadre = list(dict.fromkeys(p[4] for p in base['p']))
+# nell'app due squadre hanno un nome diverso: una rinominata, una con le maiuscole cambiate
+altre = [s for s in squadre if s != base['me']]
+NOMI_APP = {altre[0]: altre[0] + ' Nuova', altre[1]: altre[1].swapcase()}
 with tempfile.TemporaryDirectory() as d:
     f = file_app(base['p'], list(reversed(squadre)), d)
     blocchi = mod.leggi_rosters(f)
@@ -118,7 +119,7 @@ with tempfile.TemporaryDirectory() as d:
     righe_app, diversi = mod.righe_da_blocchi(blocchi, base, listone)
     nuovo, _, aggiunti = mod.importa(righe_app, base, listone)
     verifica('stesse rose, nello stesso ordine di base.json', nuovo['p'] == base['p'] and not aggiunti)
-    attesi = sorted((v, k) for k, v in NOMI_APP.items() if mod.norm(v) != mod.norm(k))   # le maiuscole non contano
+    attesi = sorted((v, k) for k, v in NOMI_APP.items())
     verifica('squadre riconosciute dai giocatori anche col nome diverso', sorted(diversi) == attesi, diversi)
     # scambio: Wesley (BURKINA FASO) per Dimarco (OPENDA LEGS)
     scambiato = copy.deepcopy(base['p'])
@@ -143,6 +144,31 @@ if vero:
     diversi = [(a, b) for a, b in zip(nuovo['p'], base['p']) if a != b]
     verifica('ridà le rose di base.json (se non ci sono stati scambi)', not diversi and len(nuovo['p']) == len(base['p']),
              diversi[:2] or f'{len(nuovo["p"])} giocatori')
+
+print('\n6. Nomi dell\'app e archivio')
+t0 = altre[0]
+rin = mod.rinomina(base, [(t0 + ' Nuova', t0)])
+nomi_cal = {s for g in rin['g'] for m in g[3] for s in m}
+verifica('squadra rinominata nel calendario e nelle rose', t0 + ' Nuova' in nomi_cal and t0 not in nomi_cal
+         and sum(p[4] == t0 + ' Nuova' for p in rin['p']) == 25 and all(p[4] != t0 for p in rin['p']))
+verifica('il base.json di partenza resta intatto', t0 in {p[4] for p in base['p']})
+with tempfile.TemporaryDirectory() as d:
+    dl, ar = os.path.join(d, 'Download'), os.path.join(d, 'archivio')
+    os.makedirs(dl)
+    vecchi = mod.DOWNLOAD, mod.ARCHIVIO
+    mod.DOWNLOAD, mod.ARCHIVIO = dl, ar
+    try:
+        for k in range(2):
+            f = os.path.join(dl, 'rivoluzione-fantacalcio-rosters-1.xlsx')
+            open(f, 'w').close()
+            dest = mod.archivia(f)
+            verifica(f'file usato spostato nell\'archivio ({k + 1}ª volta)', bool(dest) and os.path.exists(dest)
+                     and not os.path.exists(f), os.path.basename(dest or ''))
+        fuori = os.path.join(d, 'altrove.xlsx')
+        open(fuori, 'w').close()
+        verifica('un file fuori da Download non si sposta', mod.archivia(fuori) is None and os.path.exists(fuori))
+    finally:
+        mod.DOWNLOAD, mod.ARCHIVIO = vecchi
 
 print(f'\n{esiti - falliti}/{esiti} verifiche superate')
 sys.exit(1 if falliti else 0)

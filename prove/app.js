@@ -13,6 +13,9 @@ function verifica(nome, cond, dettaglio) {
   console.log((cond ? '  ok   ' : '  NO   ') + nome + (dettaglio !== undefined ? '  →  ' + dettaglio : ''));
 }
 const circa = (a, b) => Math.abs(a - b) < 1e-9;
+// avversario della giornata 1 preso dai dati: i nomi delle squadre possono cambiare
+const BASE0 = JSON.parse(fs.readFileSync(path.join(REPO, 'dati', 'base.json'), 'utf8'));
+const AVV1 = BASE0.g[0][3].map(([a, b]) => a === BASE0.me ? b : b === BASE0.me ? a : null).find(Boolean);
 
 // dati: file di dati/ da sostituire con un oggetto finto, o con null per "assente"
 // orari.json e infortuni.json veri vengono "aggiornati" al giorno simulato, così
@@ -311,7 +314,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
 
   console.log('\n12. Domanda dal Comando Rapido di Siri (?q=...)');
   ({ t, el } = await avvia({ adesso: '2026-09-13T12:00:00+02:00', search: '?q=chi%20affronto' }));
-  verifica('risponde a dati caricati', /affronti God Bless The Doc/.test(el.risposta.textContent), el.risposta.textContent.replace(/\n/g, ' / '));
+  verifica('risponde a dati caricati', new RegExp('affronti ' + AVV1).test(el.risposta.textContent), el.risposta.textContent.replace(/\n/g, ' / '));
   verifica('la domanda resta nel campo', el.q.value === 'chi affronto', el.q.value);
   ({ t, el } = await avvia({ adesso: '2026-09-13T12:00:00+02:00', search: '?q=come%20sta%20Baturina' }));
   verifica('domanda su un giocatore', /Baturina/.test(el.risposta.textContent), el.risposta.textContent.split('\n')[0]);
@@ -321,7 +324,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   g = t.prossima();
   let r = t.rispondi('Chi schiero?');
   const scelti = Object.values(t.undici(g)).flat();
-  verifica('«chi schiero?»: tutto l\'undici in poche righe', r.startsWith('Giornata 1 contro God Bless The Doc')
+  verifica('«chi schiero?»: tutto l\'undici in poche righe', r.startsWith('Giornata 1 contro ' + AVV1)
            && scelti.every(p => r.includes(p.nome)) && r.split('\n').length <= 14, r.split('\n').length + ' righe');
   verifica('dice che le probabili non sono uscite', /non sono ancora uscite/.test(r));
   r = t.rispondi('chi schiero in difesa');
@@ -330,7 +333,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   verifica('domande pronte con un confronto vero', /Chi schiero\?/.test(el.esempi.innerHTML) && / o [^<]+\?/.test(el.esempi.innerHTML),
            el.esempi.innerHTML.replace(/<\/?button>/g, ' ').trim());
   el.esempi.onclick({ target: { closest: () => ({ textContent: 'Chi affronto?' }) } });
-  verifica('toccare una domanda pronta risponde', /affronti God Bless The Doc/.test(el.risposta.textContent));
+  verifica('toccare una domanda pronta risponde', new RegExp('affronti ' + AVV1).test(el.risposta.textContent));
 
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': prob5, 'squadre.json': null, 'infortuni.json': null } }));
   g = t.prossima();
@@ -362,7 +365,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   class VoceOk { start() { this.onresult({ results: [[{ transcript: 'chi affronto' }]] }); this.onend(); } stop() {} }
   ({ t, el } = await avvia({ adesso: giovedi, sr: VoceOk }));
   el.mic.onclick();
-  verifica('microfono: la frase dettata riceve risposta', /affronti God Bless The Doc/.test(el.risposta.textContent), el.risposta.textContent.split('\n')[0]);
+  verifica('microfono: la frase dettata riceve risposta', new RegExp('affronti ' + AVV1).test(el.risposta.textContent), el.risposta.textContent.split('\n')[0]);
   class VoceNo { start() { this.onerror({ error: 'service-not-allowed' }); this.onend(); } stop() {} }
   ({ t, el } = await avvia({ adesso: giovedi, sr: VoceNo }));
   el.mic.onclick();
@@ -376,6 +379,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr })
   verifica('i file esistono e sono woff2', fonti.every(f => fs.existsSync(path.join(REPO, f)) &&
            fs.readFileSync(path.join(REPO, f)).subarray(0, 4).toString() === 'wOF2'));
   verifica('licenza inclusa', fs.existsSync(path.join(REPO, 'font', 'OFL.txt')));
+  verifica('titolo disegnato: si vede uguale anche senza font', /<h1 class="titolo" aria-label="JARVIS"><svg viewBox="0 -10 2867 722"/.test(html)
+           && /<path fill="url\(#gradTitolo\)" d="M14 520V451/.test(html));
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);

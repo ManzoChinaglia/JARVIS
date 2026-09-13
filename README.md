@@ -159,6 +159,8 @@ nell'icona sulla Home: i dati sono gli stessi.
    che riconosce le squadre anche se nell'app hanno un nome diverso, controlla il
    file (10 squadre da 25, ruoli giusti), aggiorna le rose ed elenca gli scambi
    trovati; poi prove e pubblicazione.
+3. Il file usato viene spostato in `archivio/rose`, dentro la cartella del
+   progetto: la cartella Download resta pulita.
 
 Statistiche e quotazioni si aggiornano da sole ogni giorno: niente più
 esportazione settimanale.
