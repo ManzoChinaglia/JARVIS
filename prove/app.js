@@ -67,7 +67,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -397,7 +397,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const sfondo = path.join(REPO, 'img', 'sfondo.jpg');
   verifica('sfondo: lo stemma intero, leggero per l\'iPhone', fs.existsSync(sfondo) && fs.statSync(sfondo).size < 400000
            && /url\("img\/sfondo.jpg"\)/.test(html), fs.existsSync(sfondo) ? Math.round(fs.statSync(sfondo).size / 1024) + ' KB' : 'manca');
-  verifica('Re Guyzo anche dentro l\'app (stemmino e Chiedi)', (html.match(/src="img\/icona-180.png"/g) || []).length >= 2);
+  verifica('Re Guyzo anche dentro l\'app (stemma e Chiedi)', /<img class="avatar" src="img\/icona-180.png"/.test(html)
+           && /<image href="img\/icona-180.png"/.test(html));
 
   console.log('\n16. Avvisi');
   // venerdì 18 settembre alle 10: scadenza alle 20:30 e un tuo difensore squalificato
@@ -478,7 +479,9 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            /<aside class="foglio" id="pannello"[\s\S]*id="refresh"[\s\S]*?<\/aside>/.test(html)
            && !/id="refresh"/.test((html.match(/<header>[\s\S]*?<\/header>/) || [''])[0]));
   verifica('nel pannello il dettaglio dei dati', /probabili del/.test(el['stamp-dett'].textContent), el['stamp-dett'].textContent);
-  verifica('sigla dell\'avversario nello stemmino', /^[A-Z0-9]{1,2}$/.test(el['avv-sigla'].textContent), el['avv-sigla'].textContent);
+  const sig = (el['avv-stemma'].innerHTML.match(/>([^<>]*)<\/text>/) || [])[1];
+  verifica('stemma dell\'avversario con le sue iniziali', /^[A-Z0-9]{1,2}$/.test(sig || ''), sig);
+  verifica('il tuo stemma è Re Guyzo', /img\/icona-180\.png/.test(el['mio-stemma'].innerHTML));
 
   console.log('\n19. Notifiche di Jarvis');
   verifica('chiave pubblica delle notifiche nell\'app, una sola', (html.match(/const CHIAVE_PUSH = 'B[A-Za-z0-9_-]{86}'/g) || []).length === 1);
@@ -534,6 +537,32 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'infortuni.json': null, 'squadre.json': null, 'statistiche.json': null } }));
   t.apriGiocatore(P(d1).id);
   verifica('senza i bonus della fonte un trattino, nessun numero inventato', el['foglio-corpo'].innerHTML.includes('<b class="cond">—</b><span>gol</span>'));
+
+  console.log('\n22. La sfida della giornata e gli stemmi');
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': prob5, 'infortuni.json': null, 'squadre.json': sq2 } }));
+  g = t.prossima();
+  const sf = t.sfidaDati(g);
+  const tutti = u => [].concat(u.P, u.D, u.C, u.A);
+  verifica('avversario della giornata, undici completi da entrambe le parti', sf.avv === AVV1
+           && tutti(sf.mio.u).length === 11 && tutti(sf.loro.u).length === 11, sf.avv);
+  verifica('tuo undici uguale a quello consigliato', tutti(sf.mio.u).map(p => p.id).join() === tutti(t.undici(g)).map(p => p.id).join());
+  verifica('il loro è il migliore dei tre moduli, sempre con la difesa a quattro', sf.loro.u.D.length === 4
+           && ['4-3-3', '4-4-2', '4-5-1'].every(m => tutti(t.undiciDi(t.players.filter(p => p.team === AVV1), g, m))
+                .reduce((s, p) => s + t.punteggio(p, g), 0) <= sf.loro.tot + 1e-9), sf.loro.modulo);
+  verifica('solo giocatori loro e disponibili', tutti(sf.loro.u).every(p => p.team === AVV1 && t.disponibile(p, g[2])));
+  const cartaSfida = el.sfida.innerHTML;
+  verifica('scheda della sfida: totali, verdetto, 22 giocatori da toccare', /Sulla carta/.test(cartaSfida)
+           && (cartaSfida.match(/data-id="\d+"/g) || []).length === 22 && cartaSfida.includes(AVV1), (cartaSfida.match(/data-id/g) || []).length);
+  verifica('detto chiaramente che è una stima', /una stima di Jarvis/.test(cartaSfida) && /modificatore difesa non è compreso/.test(cartaSfida));
+  const altre = [...new Set(t.players.map(p => p.team))].filter(x => x !== t.ME);
+  verifica('nove avversari, nove colori diversi', new Set(altre.map(t.coloreSquadra)).size === altre.length, altre.length + ' squadre');
+  verifica('stemmi in classifica e nel calendario', (el.squadre.innerHTML.match(/class="stemma"/g) || []).length === 10
+           && /class="stemma"/.test(el.calendario.innerHTML));
+  ({ t } = await avvia({ adesso: '2026-09-22T12:00:00+02:00', dati: { 'titolari.json': null, 'infortuni.json': null } }));
+  const mar = t.avvisi(t.prossima()).find(a => a.id === 'rose-martedi-2026-09-22');
+  verifica('dopo la prima giornata il martedì chiede anche il calendario con i risultati, dal sito sul PC',
+           mar && mar.titolo === 'Dati della lega da aggiornare' && /calendario con i risultati/.test(mar.testo) && /sul PC/.test(mar.testo),
+           mar && mar.titolo);
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);

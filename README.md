@@ -107,6 +107,10 @@ dice se è titolare (verde), in dubbio (giallo) o fuori dalle probabili (rosso).
 Toccalo, in campo o in una lista, per la sua scheda: fantamedia, partite giocate
 su quelle della squadra, gol, assist e il resto.
 
+Sotto il campo, **«La sfida, sulla carta»**: il tuo undici contro il migliore del
+tuo avversario, reparto per reparto, con la somma dei punteggi di Jarvis. È una
+stima fatta sulle rose, non il risultato.
+
 ---
 
 ## Scadenze nel calendario dell'iPhone
@@ -186,7 +190,7 @@ perché. Il microfono della tastiera funziona sempre.
 
 ## Dopo uno scambio
 
-1. Dall'app di Leghe Fantacalcio scarica il file delle rose
+1. Dal sito di Leghe Fantacalcio, sul PC (dall'app dell'iPhone non si può), scarica il file delle rose
    («rivoluzione-fantacalcio-rosters-….xlsx»): finisce nella cartella Download,
    non serve spostarlo né rinominarlo.
 2. Scrivi a Claude «rose aggiornate». Lancia `python scripts/importa_rose.py`,

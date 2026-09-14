@@ -107,10 +107,11 @@
   .squadra{display:flex; align-items:center; gap:12px;}
   .sfida .squadra:nth-of-type(1){animation:daSinistra .7s var(--morbida) both .1s;}
   .sfida .squadra:nth-of-type(2){animation:daDestra .7s var(--morbida) both .25s;}
-  .stemmino{width:48px; height:48px; flex-shrink:0; border-radius:50%; object-fit:cover;
-            border:2px solid var(--oro); box-shadow:0 0 0 4px rgba(228,180,81,.14), 0 6px 16px rgba(0,0,0,.45);}
-  .sigla{display:grid; place-items:center; font-size:19px; font-weight:700; color:var(--ink);
-         background:linear-gradient(145deg,#2C332E,#121613); border-color:rgba(255,255,255,.28);}
+  /* stemmi: uno scudo per squadra (Re Guyzo per BURKINA FASO, iniziali e colore per le altre) */
+  .stemma{display:inline-block; flex-shrink:0; width:26px; height:30px; filter:drop-shadow(0 3px 5px rgba(0,0,0,.45));}
+  .stemma svg{display:block; width:100%; height:100%;}
+  .stemmino{width:48px; height:55px; flex-shrink:0;}
+  .stemmino .stemma{width:100%; height:100%; filter:drop-shadow(0 6px 12px rgba(0,0,0,.55));}
   .mia, .loro{font-family:"Barlow Condensed",sans-serif; font-weight:700; line-height:.95;}
   /* la tua squadra nei colori della bandiera: rosso sopra, verde sotto, stella gialla */
   .mia{font-size:38px; color:var(--bf-rosso);
@@ -202,6 +203,27 @@
   .legenda{display:flex; flex-wrap:wrap; gap:6px 14px; padding:2px 4px; font-size:11px; color:var(--dim);}
   .legenda span{display:inline-flex; align-items:center; gap:5px;}
   .legenda .pallino{position:static; width:9px; height:9px; border-width:0;}
+
+  /* ---- la sfida, sulla carta ---- */
+  .sfida-carta{padding:16px 14px 12px;}
+  .sf-testa{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px;}
+  .sf-sq{display:flex; flex-direction:column; align-items:center; gap:5px; min-width:0; text-align:center;}
+  .sf-sq .stemma{width:36px; height:41px;}
+  .sf-sq b{max-width:100%; font-size:14px; line-height:1.05; font-weight:700; text-transform:uppercase; overflow-wrap:anywhere;}
+  .sf-tot{font-size:27px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
+  .sf-vs{font-size:13px; letter-spacing:.2em; color:var(--oro);}
+  .sf-barra{height:8px; margin:13px 0 8px; border-radius:4px; background:rgba(255,255,255,.12); overflow:hidden;}
+  .sf-barra i{display:block; height:100%; border-radius:4px; transform-origin:left; animation:cresce 1s var(--morbida) both;
+              background:linear-gradient(90deg,var(--bf-rosso),var(--bf-verde));}
+  .sf-verdetto{margin:0 0 10px; text-align:center; font-size:13.5px;}
+  .sf-riga{display:grid; grid-template-columns:1fr 26px 1fr; gap:8px; align-items:start; padding:9px 0; border-top:1px solid var(--line);}
+  .sf-nomi{font-size:12.5px; line-height:1.4; text-align:right;}
+  .sf-nomi.sf-destra{text-align:left;}
+  .sf-nomi span{cursor:pointer;}
+  .sf-nomi small{display:block; margin-top:2px; font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:14px; color:var(--dim);}
+  .sf-nomi small.meglio{color:#43E08F;}
+  .sf-ruolo{width:26px; height:26px; border-radius:8px; display:grid; place-items:center; background:rgba(255,255,255,.06); font-size:14px;}
+  .sf-nota{margin:10px 0 0; font-size:11px; line-height:1.45; color:var(--dim);}
 
   /* ---- righe giocatore ---- */
   .lista{padding:2px 14px;}
@@ -413,6 +435,7 @@
 <body class="carica">
 <!-- sagoma della maglia e riflesso di luce: li usano tutte le maglie disegnate dal codice -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <clipPath id="scudo"><path d="M20 1.5 37.5 7v15c0 11.5-7.5 18.5-17.5 22.5C10 40.5 2.5 33.5 2.5 22V7Z"/></clipPath>
   <clipPath id="sagoma"><path d="M13 4 8 6 2 12 6 18 10 15V37H30V15L34 18 38 12 32 6 27 4Q20 9 13 4Z"/></clipPath>
   <linearGradient id="luce" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0" stop-color="#fff" stop-opacity=".32"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/>
@@ -440,12 +463,12 @@
     <div class="sfida">
       <div class="gg" id="gg"></div>
       <div class="squadra">
-        <img class="stemmino" src="img/icona-180.png" alt="">
+        <span class="stemmino" id="mio-stemma"></span>
         <div class="mia cond">BURKINA FASO<span class="stella" aria-hidden="true">★</span></div>
       </div>
       <div class="vs-riga"><span class="vs cond">VS</span><span class="vs-linea"></span></div>
       <div class="squadra">
-        <span class="stemmino sigla cond" id="avv-sigla"></span>
+        <span class="stemmino" id="avv-stemma"></span>
         <div class="loro cond" id="avv"></div>
       </div>
     </div>
@@ -468,6 +491,7 @@
       <span><i class="pallino si"></i>titolare</span><span><i class="pallino forse"></i>in dubbio</span>
       <span><i class="pallino no"></i>fuori</span>
     </div>
+    <div id="sfida"></div>
     <div id="panchina"></div>
     <div id="kobox"></div>
     <div class="versione" id="versione"></div>
@@ -663,7 +687,8 @@ function renderGiornata(){
   document.getElementById('gg').textContent =
     'Giornata '+g[0]+' · '+dataIt(g[2])+' · '+(av.casa?'in casa':'in trasferta');
   document.getElementById('avv').textContent = av.nome.toUpperCase();
-  document.getElementById('avv-sigla').textContent = sigla(av.nome);
+  document.getElementById('mio-stemma').innerHTML = stemma(ME);
+  document.getElementById('avv-stemma').innerHTML = stemma(av.nome);
 
   const sc = scadenza(g), ms = sc ? sc-oggi() : 0;
   const cdk = document.getElementById('cdk'), cdt = document.getElementById('cdt'),
@@ -694,6 +719,7 @@ function renderGiornata(){
 
   const sa = g[1], iso = g[2];
   disegnaCampo(g);
+  renderSfida(g);
   renderAvvisi();
 }
 
@@ -791,10 +817,12 @@ function punteggio(p, g){
   if(f) v += PESI[p.ruolo]*f.delta;
   return v;
 }
-function undici(g){
+function undici(g){ return undiciDi(mia, g, modulo); }
+/* l'undici migliore di una rosa per un modulo: la difesa resta sempre a quattro */
+function undiciDi(rosa, g, mod){
   const iso = g[2];
-  const q = Object.assign({P:1}, MODULI[modulo]);
-  const disp = mia.filter(p=>disponibile(p,iso));
+  const q = Object.assign({P:1}, MODULI[mod]);
+  const disp = rosa.filter(p=>disponibile(p,iso));
   const out = {P:[],D:[],C:[],A:[]};
   ['P','D','C','A'].forEach(r=>{
     out[r] = disp.filter(p=>p.ruolo===r)
@@ -946,6 +974,65 @@ function sigla(nome){
 }
 const PLURALI = {P:'Portieri', D:'Difensori', C:'Centrocampisti', A:'Attaccanti'};
 
+/* ---------- stemmi ---------- */
+/* uno scudo per squadra: Re Guyzo per BURKINA FASO; per le altre le iniziali su un colore
+   tutto suo, assegnato in ordine alfabetico (dieci squadre, dieci colori diversi) */
+const SCUDO = 'M20 1.5 37.5 7v15c0 11.5-7.5 18.5-17.5 22.5C10 40.5 2.5 33.5 2.5 22V7Z';
+const COLORI_SQUADRE = ['#2F6FDB','#8E3FD1','#E07B24','#12A38A','#D2314B','#1F9BD1','#C79A1E','#6D5BD0','#E0569B','#5E7D8C'];
+function coloreSquadra(nome){
+  const altre = [...new Set(players.map(p=>p.team))].filter(t=>t!==ME).sort();
+  return COLORI_SQUADRE[Math.max(0, altre.indexOf(nome)) % COLORI_SQUADRE.length];
+}
+function stemma(nome){
+  const dentro = nome===ME
+    ? '<image href="img/icona-180.png" x="-3" y="0" width="46" height="46" preserveAspectRatio="xMidYMid slice" clip-path="url(#scudo)"/>'
+    : '<path d="'+SCUDO+'" fill="'+coloreSquadra(nome)+'"/><path d="'+SCUDO+'" fill="url(#luce)"/>'+
+      '<text x="20" y="28" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="15" fill="#fff">'+
+      sigla(nome)+'</text>';
+  return '<span class="stemma" aria-hidden="true"><svg viewBox="0 0 40 46">'+dentro+
+         '<path d="'+SCUDO+'" fill="none" stroke="#E4B451" stroke-width="1.6"/></svg></span>';
+}
+
+/* ---------- la sfida della giornata ---------- */
+/* il tuo undici contro il migliore dell'avversario per la stessa giornata, con la somma dei
+   punteggi del consiglio: una stima di Jarvis sulle rose, non un pronostico del risultato.
+   Per loro vale il modulo che rende di più, sempre con la difesa a quattro. */
+function sfidaDati(g){
+  const av = avversarioLega(g);
+  const somma = u => [].concat(u.P,u.D,u.C,u.A).reduce((s,p)=>s+punteggio(p,g), 0);
+  const mio = undiciDi(mia, g, modulo);
+  const rosaLoro = players.filter(p=>p.team===av.nome);
+  const loro = Object.keys(MODULI).map(m=>{ const u = undiciDi(rosaLoro, g, m); return {modulo:m, u, tot:somma(u)}; })
+                     .sort((a,b)=>b.tot-a.tot)[0];
+  return {avv:av.nome, mio:{modulo, u:mio, tot:somma(mio)}, loro};
+}
+let sfidaDisegnata = '';
+function renderSfida(g){
+  const s = sfidaDati(g), diff = s.mio.tot - s.loro.tot;
+  const lista = l => l.map(p=>'<span data-id="'+p.id+'">'+p.nome+'</span>').join(', ') || '—';
+  const reparto = r => {
+    const a = s.mio.u[r], b = s.loro.u[r];
+    const sa = a.reduce((x,p)=>x+punteggio(p,g), 0), sb = b.reduce((x,p)=>x+punteggio(p,g), 0);
+    return '<div class="sf-riga"><div class="sf-nomi">'+lista(a)+'<small'+(sa>sb+0.05 ? ' class="meglio"' : '')+'>'+num(sa,1)+'</small></div>'+
+      '<span class="sf-ruolo ruolo '+r+' cond">'+r+'</span>'+
+      '<div class="sf-nomi sf-destra">'+lista(b)+'<small'+(sb>sa+0.05 ? ' class="meglio"' : '')+'>'+num(sb,1)+'</small></div></div>';
+  };
+  const verdetto = Math.abs(diff) < 1 ? 'Sulla carta è una sfida alla pari.'
+    : diff > 0 ? 'Sulla carta sei avanti di '+num(diff,1)+'.' : 'Sulla carta sono avanti loro di '+num(-diff,1)+'.';
+  const quota = Math.max(10, Math.min(90, 50 + diff*4));      // la barra esagera il vantaggio, per vederlo
+  const html = '<h2>La sfida, sulla carta</h2><div class="carta sfida-carta">'+
+    '<div class="sf-testa"><div class="sf-sq">'+stemma(ME)+'<b class="cond">'+ME+'</b><span class="sf-tot cond">'+num(s.mio.tot,1)+'</span></div>'+
+    '<span class="sf-vs cond">VS</span>'+
+    '<div class="sf-sq">'+stemma(s.avv)+'<b class="cond">'+s.avv+'</b><span class="sf-tot cond">'+num(s.loro.tot,1)+'</span></div></div>'+
+    '<div class="sf-barra"><i style="width:'+quota.toFixed(0)+'%"></i></div>'+
+    '<p class="sf-verdetto">'+verdetto+'</p>'+
+    ['P','D','C','A'].map(reparto).join('')+
+    '<p class="sf-nota">Somma dei punteggi del consiglio (fantamedia stimata, titolarità e avversario): una stima di Jarvis, '+
+    'non il risultato. Tu '+s.mio.modulo+', loro '+s.loro.modulo+', il modulo che per loro rende di più. '+
+    'Il modificatore difesa non è compreso.</p></div>';
+  if(html !== sfidaDisegnata){ sfidaDisegnata = html; document.getElementById('sfida').innerHTML = html; }
+}
+
 /* ---------- scheda del giocatore ---------- */
 function apriGiocatore(id){
   const p = players.find(x=>x.id===id);
@@ -999,7 +1086,7 @@ function renderLega(){
   /* barretta: la distanza dalla prima, così le differenze si vedono a colpo d'occhio */
   const max = teams[0].fm, min = teams[teams.length-1].fm;
   document.getElementById('squadre').innerHTML = '<div class="lista">'+teams.map((x,i)=>
-    '<div class="team'+(x.t===ME?' io':'')+'"><span class="pos cond">'+(i+1)+'</span>'+
+    '<div class="team'+(x.t===ME?' io':'')+'"><span class="pos cond">'+(i+1)+'</span>'+stemma(x.t)+
     '<span class="nome">'+x.t+'<span class="barretta"><i style="width:'+
       (max>min ? 15+85*(x.fm-min)/(max-min) : 100).toFixed(0)+'%"></i></span></span>'+
     '<span class="val cond">'+x.fm.toFixed(2)+'</span></div>').join('')+'</div>';
@@ -1009,7 +1096,7 @@ function renderLega(){
     const av = avversarioLega(g);
     return '<div class="cal'+(g===pr?' io':'')+(i<ip?' passata':'')+'">'+
       '<span class="d"><b class="cond">G'+g[0]+'</b>'+dataIt(g[2]).replace(/^\w+\s/,'')+'</span>'+
-      '<span class="m">'+av.nome+'</span><span class="dove">'+(av.casa?'casa':'fuori')+'</span></div>';
+      stemma(av.nome)+'<span class="m">'+av.nome+'</span><span class="dove">'+(av.casa?'casa':'fuori')+'</span></div>';
   }).join('')+'</div>';
 }
 
@@ -1231,12 +1318,20 @@ function avvisi(g){
                   testo:'È nell\'undici consigliato: guarda le alternative in «Chiedi».'});
     });
   }
-  if(ora.getDay()===2)          // il martedì, a giornata finita
-    out.push({id:'rose-martedi-'+isoOggi(), livello:'info', titolo:'Scambi questa settimana?',
-              testo:'Se hai fatto scambi, scarica il file delle rose dall\'app di Leghe e scrivi a Claude «rose aggiornate».'});
+  /* il martedì, a giornata finita. Dall'app di Leghe sull'iPhone non si esporta niente:
+     i file si scaricano dal sito, sul PC. Dopo la prima giornata giocata serve anche il
+     calendario con i risultati, per classifica e risultati della lega */
+  if(ora.getDay()===2){
+    const giocata = D.g.some(x=>x[2] < isoOggi());
+    out.push({id:'rose-martedi-'+isoOggi(), livello:'info',
+              titolo: giocata ? 'Dati della lega da aggiornare' : 'Scambi questa settimana?',
+              testo: giocata
+                ? 'Dal sito di Leghe Fantacalcio, sul PC, scarica il calendario con i risultati (e il file delle rose, se hai fatto scambi), poi scrivi a Claude «dati di lega».'
+                : 'Se hai fatto scambi, scarica il file delle rose dal sito di Leghe Fantacalcio, sul PC, e scrivi a Claude «rose aggiornate».'});
+  }
   else if(D.v && giorniDa(D.v) > 21)
     out.push({id:'rose-'+D.v, livello:'info', titolo:'Rose del '+dataIt(D.v),
-              testo:'Se hai fatto scambi, scarica il file delle rose dall\'app di Leghe e scrivi a Claude «rose aggiornate».'});
+              testo:'Se hai fatto scambi, scarica il file delle rose dal sito di Leghe Fantacalcio, sul PC, e scrivi a Claude «rose aggiornate».'});
   return out.sort((a,b)=>ORDINE_AVVISI[a.livello]-ORDINE_AVVISI[b.livello]);
 }
 function renderAvvisi(){
@@ -1468,7 +1563,7 @@ function toccaGiocatore(ev){
   const n = ev.target && ev.target.closest ? ev.target.closest('[data-id]') : null;
   if(n) apriGiocatore(+n.dataset.id);
 }
-['campo','panchina','kobox','rosa'].forEach(id=>{ document.getElementById(id).onclick = toccaGiocatore; });
+['campo','sfida','panchina','kobox','rosa'].forEach(id=>{ document.getElementById(id).onclick = toccaGiocatore; });
 /* domande pronte: toccarle equivale a scriverle */
 document.getElementById('esempi').onclick = ev=>{
   const b = ev.target.closest('button');

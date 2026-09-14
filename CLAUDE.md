@@ -68,8 +68,9 @@ qui ha già rotto un'app precedente in modo silenzioso.
 ## Dati che si aggiornano a mano
 
 Solo le **rose**, che cambiano con scambi e mercato (soste per le nazionali,
-gennaio). Dopo uno scambio l'utente scarica il file delle rose dall'app di Leghe
-Fantacalcio («rivoluzione-fantacalcio-rosters-<numero>.xlsx», finisce nella
+gennaio). Dopo uno scambio l'utente scarica il file delle rose dal sito di Leghe
+Fantacalcio, sul PC (dall'app dell'iPhone non si esporta niente;
+«rivoluzione-fantacalcio-rosters-<numero>.xlsx», finisce nella
 cartella Download) e dice «rose aggiornate». Si lancia prima
 `python scripts/importa_rose.py --prova` (mostra gli scambi senza scrivere),
 poi senza `--prova`; poi prove, commit e push come sempre. Il file usato passa
@@ -165,6 +166,21 @@ cartellini, punteggio del consiglio, titolarità, partita e avversario, e la dat
 delle statistiche. Senza i bonus della fonte compare un trattino. Sotto il campo
 nessuna scritta «tocca un giocatore»: per l'utente è intuitivo (15/09/2026). Il
 modulo si sceglie con tre pulsanti sopra il campo.
+
+## La sfida e gli stemmi
+
+Sotto il campo, «La sfida, sulla carta» (`sfidaDati`, `renderSfida`): il tuo
+undici contro il migliore dell'avversario della giornata, calcolato con lo stesso
+motore sulle rose (`undiciDi`; per loro il modulo che rende di più, sempre con la
+difesa a quattro), reparto per reparto, con la somma dei punteggi del consiglio e
+un verdetto «sulla carta». La scheda dice che è una stima di Jarvis, non il
+risultato, e che il modificatore difesa non è compreso. Toccando un nome si apre
+la scheda del giocatore.
+
+Stemmi (`stemma`): uno scudo per squadra, con Re Guyzo per BURKINA FASO e, per le
+altre, le iniziali su un colore tutto suo (`COLORI_SQUADRE`, assegnati in ordine
+alfabetico: dieci squadre, dieci colori). Sono nella testata della giornata, nella
+sfida, in classifica e nel calendario. Scelti dall'utente il 14/09/2026.
 
 ## Movimento e senza rete
 
@@ -337,6 +353,17 @@ lato, e il risultato sarebbe una precisione finta.
    Re Guyzo, stemma intero sullo sfondo, campanella al posto della quinta scheda,
    campo con le maglie dei club, schede dei giocatori, vetro e animazioni. Altre
    migliorie si concordano con l'utente.
+
+3. **Scheda Lega con classifica e risultati.** La lega è privata (per renderla
+   pubblica andrebbe rifatta) e dall'app di Leghe sull'iPhone non si esporta
+   niente: il calendario con i risultati si scarica dal sito, sul PC, insieme
+   alle rose. È un'azione dell'utente, ricordata dal promemoria del martedì dopo
+   la prima giornata giocata («dati di lega»). Il file (`Calendario_<lega>.xlsx`)
+   ha per ogni partita: squadra, due numeri, squadra, risultato; prima della
+   prima giornata (20/09/2026) sono solo 0 e «-», quindi l'import va scritto sul
+   primo file vero, senza indovinare le colonne. Può contenere nomi di persone
+   (una squadra si chiamava «Francesco e Fabrizio Fontana»): il file resta in
+   `archivio/`, nel repository vanno solo i dati, con i nomi dell'app.
 
 ## Come si prova
 
