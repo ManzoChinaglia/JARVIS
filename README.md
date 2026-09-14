@@ -203,5 +203,10 @@ Lega (`scripts/importa_lega.py`), fa le prove e ti chiede il via per pubblicare.
 I file usati finiscono in `archivio/`, dentro la cartella del progetto: la
 cartella Download resta pulita.
 
+**Dal telefono, senza PC:** in Chrome sull'iPhone apri Leghe → Classifica →
+«Scarica ora», poi in Jarvis scheda **Lega** → **Importa da Leghe** e scegli il
+file. La classifica si aggiorna sul telefono; le rose, se hai fatto scambi, le
+aggiorna Claude dal PC.
+
 Statistiche e quotazioni si aggiornano da sole ogni giorno: niente più
 esportazione settimanale.

@@ -450,6 +450,67 @@
   .gio-nota.buona{border-left-color:var(--bf-verde);}
   .gio-nota.dura{border-left-color:var(--bf-rosso);}
 
+  /* ---- Liquid Glass (iOS 26) su intestazione, modulo, pannelli e pulsanti ---- */
+  /* intestazione: in cima trasparente; scorrendo diventa una capsula di vetro sottile
+     con JARVIS più piccolo e la campanella. È fuori dal flusso, così restringendosi
+     non fa saltare la pagina */
+  header{position:fixed; top:0; left:0; right:0; z-index:5; padding:calc(14px + env(safe-area-inset-top)) 12px 2px;
+         transition:padding .35s var(--morbida);}
+  main{padding-top:calc(86px + env(safe-area-inset-top));}
+  .testa{padding:0 6px; border-radius:30px; border:1px solid transparent;
+         transition:background .35s, padding .35s var(--morbida), box-shadow .35s, border-color .35s;}
+  .titolo svg{transition:height .35s var(--morbida);}
+  .campanella{transition:width .35s var(--molla), height .35s var(--molla);}
+  .sottotitolo{padding:0 6px; max-height:40px; overflow:hidden; transition:max-height .3s, opacity .3s, margin .3s;}
+  .sottotitolo span{min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  body.scorso header{padding-top:calc(6px + env(safe-area-inset-top));}
+  body.scorso .testa{padding:5px 5px 5px 16px; border-color:rgba(255,255,255,.16);
+                     background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.03)), rgba(14,18,16,.5);
+                     box-shadow:inset 0 1px 0 rgba(255,255,255,.28), 0 12px 30px rgba(0,0,0,.45);
+                     -webkit-backdrop-filter:blur(22px) saturate(1.9); backdrop-filter:blur(22px) saturate(1.9);}
+  body.scorso .titolo svg{height:22px;}
+  body.scorso .campanella{width:38px; height:38px;}
+  body.scorso .sottotitolo{max-height:0; opacity:0; margin-top:0;}
+
+  /* modulo: la lente di vetro si trascina col dito, come nella barra in basso */
+  .moduli{touch-action:none; user-select:none; -webkit-user-select:none;}
+  .moduli-cursore{background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.06)), rgba(252,209,22,.18);
+                  border:1px solid rgba(255,255,255,.35);
+                  box-shadow:inset 0 1px 1px rgba(255,255,255,.55), inset 0 -2px 6px rgba(0,0,0,.2), 0 4px 12px rgba(0,0,0,.3);
+                  -webkit-backdrop-filter:blur(2px) saturate(2) brightness(1.25); backdrop-filter:blur(2px) saturate(2) brightness(1.25);
+                  transition:transform .45s var(--molla), scale .3s var(--molla);}
+  .moduli.trascina .moduli-cursore{scale:1.1 1.25;}
+  .moduli button.on{color:var(--accento); text-shadow:0 1px 6px rgba(0,0,0,.4);}
+
+  /* pannelli di vetro, staccati dai bordi come su iOS 26 */
+  .velo{background:rgba(0,0,0,.35); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);}
+  .foglio{left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom)); max-height:86vh;
+          padding:10px 16px 22px; border-radius:34px; border:1px solid rgba(255,255,255,.18);
+          background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.02) 30%), rgba(18,22,20,.72);
+          box-shadow:inset 0 1px 0 rgba(255,255,255,.32), 0 -10px 50px rgba(0,0,0,.55);
+          -webkit-backdrop-filter:blur(30px) saturate(1.8); backdrop-filter:blur(30px) saturate(1.8);
+          transform:translateY(calc(100% + 40px));}
+
+  /* pulsanti di vetro: pillole trasparenti con un filo di luce, che si illuminano dove li tocchi */
+  .aggiorna, .countdown a.ics, .esempi button, .mic, .chiudi{position:relative;
+     background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.03)), rgba(14,18,16,.4);
+     border:1px solid rgba(255,255,255,.18); color:var(--oro-chiaro);
+     box-shadow:inset 0 1px 0 rgba(255,255,255,.3), inset 0 -1px 2px rgba(0,0,0,.15), 0 6px 16px rgba(0,0,0,.3);
+     -webkit-backdrop-filter:blur(16px) saturate(1.8); backdrop-filter:blur(16px) saturate(1.8);}
+  .aggiorna{border-radius:22px;}
+  .aggiorna:not(.secondario){background:linear-gradient(180deg,rgba(255,240,190,.32),rgba(228,180,81,.12)), rgba(46,36,10,.45);
+     border-color:rgba(252,209,22,.45); box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 6px rgba(0,0,0,.2), 0 8px 20px rgba(0,0,0,.35);}
+  .aggiorna.fatto{background:linear-gradient(180deg,rgba(190,255,215,.3),rgba(0,158,73,.18)), rgba(8,40,22,.5);
+     border-color:rgba(67,224,143,.5); color:#8FF0B8;}
+  .countdown a.ics, .esempi button{border-radius:20px;}
+  .mic{border-radius:16px;}
+  #invia{background:linear-gradient(180deg,rgba(255,240,190,.32),rgba(228,180,81,.14)), rgba(46,36,10,.45); border-color:rgba(252,209,22,.45);}
+  .aggiorna::after, .countdown a.ics::after, .esempi button::after, .mic::after, .chiudi::after, .campanella::after{
+     content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none; opacity:0; transition:opacity .45s ease;
+     background:radial-gradient(circle at var(--gx,50%) var(--gy,50%), rgba(255,255,255,.45), transparent 60%);}
+  .luce::after{opacity:1; transition:none;}
+  .importa-lega{margin-top:12px;}
+
   /* ---- messaggi in alto ---- */
   .toast{position:fixed; left:50%; top:calc(env(safe-area-inset-top) + 8px); z-index:30;
                 padding:8px 15px; border-radius:18px; font-size:12.5px; color:var(--ink);
@@ -567,6 +628,11 @@
 
   <section id="s-lega">
     <div id="classifica"></div>
+    <div class="importa-lega">
+      <button class="aggiorna secondario" id="importa-lega"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M4 15v3.5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V15"/></svg><span>Importa da Leghe</span></button>
+      <input type="file" id="file-lega" accept=".xlsx" hidden>
+      <p class="nota-lega" id="esito-lega">Da Chrome sull'iPhone: Leghe → Classifica → «Scarica ora», poi tocca qui e scegli il file.</p>
+    </div>
     <h2>La forza delle rose, per fantamedia</h2>
     <div id="squadre"></div>
     <h2>Il tuo calendario</h2>
@@ -664,6 +730,11 @@ async function carica(){
   D.prob  = tit && tit.giornata && tit.titolari ? tit : null;
   D.sq    = sq && sq.squadre ? sq : null;
   D.lega  = lg && lg.classifica && lg.classifica.length===10 ? lg : null;
+  /* classifica importata sul telefono («Importa da Leghe»): vale la più recente delle due */
+  try{
+    const loc = JSON.parse(localStorage.getItem('jarvis-lega') || 'null');
+    if(loc && loc.classifica && loc.classifica.length===10 && (!D.lega || new Date(loc.aggiornato) > new Date(D.lega.aggiornato))) D.lega = loc;
+  }catch(e){}
   D.inf_v = inf && inf.aggiornato ? inf.aggiornato.slice(0,10) : null;
   D.tit_v = tit && tit.aggiornato ? tit.aggiornato.slice(0,10) : null;
   D.inf_t = inf && inf.aggiornato || null;
@@ -1133,6 +1204,92 @@ function renderQuando(g){
     righe+'</div><p class="nota-lega">In grassetto chi è nell\'undici consigliato.</p>';
 }
 
+/* ---------- importa da Leghe, sul telefono ---------- */
+/* Il file Excel che Leghe fa scaricare (anche da Chrome sull'iPhone) è uno zip di file
+   XML: Jarvis lo apre qui, senza librerie, con DecompressionStream. La classifica letta
+   resta sul telefono (localStorage) e vale la più recente tra questa e dati/lega.json. */
+async function leggiXlsx(buffer){
+  const u = new Uint8Array(buffer), dv = new DataView(u.buffer, u.byteOffset, u.byteLength);
+  let e = u.length - 22;
+  while(e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;           // fine dell'indice dello zip
+  if(e < 0) throw new Error('non è un file Excel (.xlsx)');
+  const file = {};
+  for(let k = 0, p = dv.getUint32(e + 16, true); k < dv.getUint16(e + 10, true); k++){
+    if(dv.getUint32(p, true) !== 0x02014b50) throw new Error('file Excel rovinato');
+    const ln = dv.getUint16(p + 28, true);
+    file[new TextDecoder().decode(u.subarray(p + 46, p + 46 + ln))] =
+      {metodo: dv.getUint16(p + 10, true), dim: dv.getUint32(p + 20, true), locale: dv.getUint32(p + 42, true)};
+    p += 46 + ln + dv.getUint16(p + 30, true) + dv.getUint16(p + 32, true);
+  }
+  const apri = async nome=>{
+    const f = file[nome];
+    if(!f) return null;
+    const inizio = f.locale + 30 + dv.getUint16(f.locale + 26, true) + dv.getUint16(f.locale + 28, true);
+    const dati = u.subarray(inizio, inizio + f.dim);
+    if(f.metodo === 0) return new TextDecoder().decode(dati);
+    if(f.metodo !== 8) throw new Error('compressione del file non supportata');
+    const flusso = new Blob([dati]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return new TextDecoder().decode(await new Response(flusso).arrayBuffer());
+  };
+  const foglio = file['xl/worksheets/sheet1.xml'] ? 'xl/worksheets/sheet1.xml'
+    : Object.keys(file).filter(x=>/^xl\/worksheets\/sheet\d+\.xml$/.test(x)).sort()[0];
+  if(!foglio) throw new Error('nel file non c\'è nessun foglio');
+  const testi = [], condivisi = await apri('xl/sharedStrings.xml');
+  if(condivisi) for(const m of condivisi.matchAll(/<si>([\s\S]*?)<\/si>/g))
+    testi.push([...m[1].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(t=>xmlTesto(t[1])).join(''));
+  const righe = [];
+  for(const r of (await apri(foglio)).matchAll(/<row\b[^>]*?(?:\/>|>([\s\S]*?)<\/row>)/g)){
+    const riga = [];
+    for(const c of (r[1] || '').matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)){
+      const rif = (c[1].match(/\br="([A-Z]+)\d+"/) || [])[1], tipo = (c[1].match(/\bt="(\w+)"/) || [])[1];
+      const col = rif ? [...rif].reduce((s,ch)=>s*26 + ch.charCodeAt(0) - 64, 0) - 1 : riga.length;
+      const v = c[2] ? (c[2].match(/<v>([\s\S]*?)<\/v>/) || [])[1] : undefined;
+      riga[col] = tipo==='s' ? testi[+v]
+        : tipo==='inlineStr' ? [...(c[2] || '').matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(t=>xmlTesto(t[1])).join('')
+        : tipo==='str' ? xmlTesto(v || '') : v===undefined ? '' : isNaN(+v) ? xmlTesto(v) : +v;
+    }
+    righe.push(Array.from(riga, x=>x===undefined ? '' : x));
+  }
+  return righe;
+}
+function xmlTesto(s){
+  return s.replace(/&(amp|lt|gt|quot|apos|#\d+|#x[0-9a-f]+);/gi, (m, e)=>
+    ({amp:'&', lt:'<', gt:'>', quot:'"', apos:"'"})[e] || String.fromCodePoint(/^#x/i.test(e) ? parseInt(e.slice(2), 16) : +e.slice(1)));
+}
+/* la classifica dalle righe del foglio, con gli stessi controlli di scripts/importa_lega.py */
+const TESTA_LEGA = ['Pos','Squadra','','G','V','N','P','Gf','Gs','Dr','Pt.','Pt. Totali'];
+function classificaDaRighe(righe){
+  const k = righe.findIndex(r=>TESTA_LEGA.every((h,i)=>String(r[i]===undefined ? '' : r[i]).trim()===h));
+  if(k < 0) throw new Error('non trovo la classifica: è il file giusto? (Leghe → Classifica → «Scarica ora»)');
+  const tab = [];
+  for(const r of righe.slice(k+1)){ if(!r.length || String(r[0]).trim()==='') break; tab.push(r); }
+  const numero = x=>{
+    const v = typeof x==='number' ? x : parseFloat(String(x).replace(',', '.'));
+    if(!isFinite(v)) throw new Error('valore non numerico: «'+x+'»');
+    return Math.round(v*100)/100;
+  };
+  const cl = tab.map(r=>[numero(r[0]), String(r[1]).trim()].concat(r.slice(3,12).map(numero)));
+  const squadre = new Set(D.g.flatMap(g=>g[3].flat())), errori = [];
+  if(cl.length !== 10) errori.push(cl.length+' squadre invece di 10');
+  const ignoti = cl.filter(r=>!squadre.has(r[1])), mancanti = [...squadre].filter(s=>!cl.some(r=>r[1]===s));
+  if(ignoti.length===1 && mancanti.length===1) ignoti[0][1] = mancanti[0];      // una squadra ha cambiato nome
+  else if(ignoti.length) errori.push('squadre non riconosciute: '+ignoti.map(r=>r[1]).join(', '));
+  if(cl.map(r=>r[0]).sort((a,b)=>a-b).join() !== cl.map((_,i)=>i+1).join()) errori.push('posizioni non da 1 a 10');
+  cl.forEach(r=>{
+    if(r[3]+r[4]+r[5] !== r[2]) errori.push(r[1]+': vinte + pari + perse diverso dalle partite');
+    if(Math.abs(r[6]-r[7]-r[8]) > 1e-9) errori.push(r[1]+': differenza reti sbagliata');
+  });
+  if(errori.length) throw new Error(errori.join('; '));
+  return cl.sort((a,b)=>a[0]-b[0]);
+}
+async function importaClassifica(buffer){
+  const dati = {aggiornato: oggi().toISOString(), origine: 'telefono', classifica: classificaDaRighe(await leggiXlsx(buffer))};
+  try{ localStorage.setItem('jarvis-lega', JSON.stringify(dati)); }catch(e){}
+  D.lega = dati;
+  renderLega();
+  return dati.classifica;
+}
+
 /* ---------- scheda del giocatore ---------- */
 function apriGiocatore(id){
   const p = players.find(x=>x.id===id);
@@ -1191,7 +1348,7 @@ function renderLega(){
       ' P · gol '+r[6]+'-'+r[7]+'</small></span>'+
       '<span class="val cond">'+n1(r[9])+'<small>'+n1(r[10])+' fantapunti</small></span></div>').join('')+'</div>'+
       '<p class="nota-lega">'+(iniziata ? '' : 'Si comincia '+dataIt(D.g[0][2])+': la classifica si riempie dopo. ')+
-      'Da Leghe Fantacalcio, aggiornata '+dataIt(D.lega.aggiornato.slice(0,10))+'.</p>';
+      (D.lega.origine==='telefono' ? 'Importata sul telefono ' : 'Da Leghe Fantacalcio, aggiornata ')+dataIt(D.lega.aggiornato.slice(0,10))+'.</p>';
   } else cl.innerHTML = '';
   const teams = [...new Set(players.map(p=>p.team))].map(t=>{
     const rosa = players.filter(p=>p.team===t && p.pgv>0);
@@ -1441,7 +1598,7 @@ function avvisi(g){
     out.push({id:'rose-martedi-'+isoOggi(), livello:'info',
               titolo: giocata ? 'Dati della lega da aggiornare' : 'Scambi questa settimana?',
               testo: giocata
-                ? 'Sul PC scrivi a Claude «dati di lega»: scarica lui classifica, calendario e rose dal tuo Chrome.'
+                ? 'Da Chrome sull\'iPhone scarica la classifica da Leghe e importala in Jarvis (Lega → Importa da Leghe), oppure sul PC scrivi a Claude «dati di lega».'
                 : 'Se hai fatto scambi, sul PC scrivi a Claude «dati di lega»: scarica lui le rose dal tuo Chrome.'});
   }
   else if(D.v && giorniDa(D.v) > 21)
@@ -1632,14 +1789,32 @@ async function aggiorna(silenzioso){
   return cambiato;
 }
 document.getElementById('refresh').onclick = ()=>aggiorna(true);
-/* modulo: tre pulsanti con un cursore che scorre; la difesa resta a quattro */
+/* modulo: tre pulsanti con una lente di vetro che scorre; la difesa resta a quattro */
+function scegliModulo(m){
+  if(!MODULI[m] || m===modulo) return;
+  modulo = m;
+  document.querySelectorAll('#modulo button').forEach(x=>x.classList.toggle('on', x.dataset.m===m));
+  document.getElementById('modulo').style.setProperty('--k', Object.keys(MODULI).indexOf(m));
+  renderGiornata(); disegnaEsempi();
+}
 document.getElementById('modulo').onclick = ev=>{
   const b = ev.target && ev.target.closest ? ev.target.closest('button') : null;
-  if(!b || b.dataset.m===modulo) return;
-  modulo = b.dataset.m;
-  document.querySelectorAll('#modulo button').forEach(x=>x.classList.toggle('on', x===b));
-  document.getElementById('modulo').style.setProperty('--k', Object.keys(MODULI).indexOf(modulo));
-  renderGiornata(); disegnaEsempi();
+  if(b) scegliModulo(b.dataset.m);
+};
+/* importa da Leghe: il file scelto sul telefono diventa la classifica della scheda Lega */
+document.getElementById('importa-lega').onclick = ()=>document.getElementById('file-lega').click();
+document.getElementById('file-lega').onchange = async ev=>{
+  const f = ev.target.files && ev.target.files[0], esito = document.getElementById('esito-lega');
+  if(!f) return;
+  try{
+    await importaClassifica(await f.arrayBuffer());
+    esito.textContent = 'Classifica importata da «'+f.name+'».';
+    toast('Classifica aggiornata');
+  }catch(e){
+    esito.textContent = 'Classifica non aggiornata: '+e.message;
+    toast('File non valido');
+  }
+  ev.target.value = '';
 };
 
 /* ---------- avvio ---------- */
@@ -1758,9 +1933,48 @@ if(typeof window.addEventListener==='function'){
     const qui = SCHEDE.indexOf(document.querySelector('section.on').id.slice(2));
     lente.style.transform = 'translateX('+qui*100+'%)';
   });
+  /* il selettore del modulo funziona allo stesso modo: lente da trascinare o tocco */
+  const selettore = document.getElementById('modulo'), lenteM = selettore.querySelector('.moduli-cursore'),
+        opzioni = [...selettore.querySelectorAll('button')];
+  let premutoM = false, mossoM = false, xM = 0;
+  const passoM = () => (selettore.clientWidth - 6) / opzioni.length;
+  const sottoM = x => Math.max(0, Math.min(opzioni.length - 1, Math.floor((x - selettore.getBoundingClientRect().left - 3) / passoM())));
+  selettore.addEventListener('pointerdown', e=>{
+    premutoM = true; mossoM = false; xM = e.clientX;
+    try{ selettore.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  selettore.addEventListener('pointermove', e=>{
+    if(!premutoM || (!mossoM && Math.abs(e.clientX - xM) < 6)) return;
+    mossoM = true;
+    selettore.classList.add('trascina');
+    const x = e.clientX - selettore.getBoundingClientRect().left - 3 - passoM()/2;
+    lenteM.style.transform = 'translateX('+Math.max(0, Math.min(passoM()*(opzioni.length - 1), x))+'px)';
+  });
+  selettore.addEventListener('pointerup', e=>{
+    if(!premutoM) return;
+    premutoM = false;
+    selettore.classList.remove('trascina');
+    lenteM.style.transform = '';
+    scegliModulo(opzioni[sottoM(e.clientX)].dataset.m);
+  });
+  selettore.addEventListener('pointercancel', ()=>{ premutoM = false; selettore.classList.remove('trascina'); lenteM.style.transform = ''; });
+
+  /* pulsanti di vetro: si illuminano nel punto in cui li tocchi */
+  const LUMINOSI = '.aggiorna, .countdown a.ics, .esempi button, .mic, .chiudi, .campanella';
+  document.addEventListener('pointerdown', e=>{
+    const b = e.target && e.target.closest ? e.target.closest(LUMINOSI) : null;
+    if(!b) return;
+    const r = b.getBoundingClientRect();
+    b.style.setProperty('--gx', (e.clientX - r.left)+'px');
+    b.style.setProperty('--gy', (e.clientY - r.top)+'px');
+    b.classList.add('luce');
+    setTimeout(()=>b.classList.remove('luce'), 180);           // poi la luce sfuma
+  });
+
   let ultimaY = 0;
   window.addEventListener('scroll', ()=>{
     const y = window.scrollY;
+    document.body.classList.toggle('scorso', y > 24);           // intestazione di vetro
     if(Math.abs(y - ultimaY) < 8) return;
     barra.classList.toggle('mini', y > ultimaY && y > 120);
     ultimaY = y;

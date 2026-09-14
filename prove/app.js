@@ -62,12 +62,13 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     }
   };
   if (nav) ctx.navigator = nav;          // un iPhone finto, per il numero sull'icona
+  Object.assign(ctx, { Blob, Response, DecompressionStream, TextDecoder });   // per leggere i file Excel
   ctx.window = ctx;
   vm.createContext(ctx);
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,oraPartita,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,oraPartita,leggiXlsx,classificaDaRighe,importaClassifica,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -604,6 +605,47 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   ({ el } = await avvia({ adesso: giovedi, dati: { ...senzaSorprese, 'orari.json': { ...orariVeri, aggiornato: '2026-09-17T08:00:00+00:00',
           giornate: { ...orariVeri.giornate, '5': { ...orariVeri.giornate['5'], partite: undefined } } } } }));
   verifica('senza gli orari delle partite nessun orario inventato', el.quando.innerHTML === '' && !/class="ora"/.test(el.campo.innerHTML));
+
+  console.log('\n25. Importa da Leghe sul telefono');
+  const esempioXlsx = fs.readFileSync(path.join(__dirname, 'dati', 'classifica-prova.xlsx'));
+  const buf = b => new Uint8Array(b).buffer;
+  const memLega = {};
+  ({ t, el } = await avvia({ adesso: giovedi, memoria: memLega }));
+  const righeX = await t.leggiXlsx(buf(esempioXlsx));
+  verifica('il file Excel si apre sul telefono, senza librerie', righeX.some(r => r[0] === 'Pos' && r[1] === 'Squadra'), righeX.length + ' righe');
+  const importata = await t.importaClassifica(buf(esempioXlsx));
+  verifica('classifica importata: 10 squadre in ordine, con i numeri del file', importata.length === 10
+           && importata[0].slice(2).join() === '2,2,0,0,5,1,4,6,150.5', importata[0].join(' '));
+  verifica('si vede subito nella scheda Lega, detto che viene dal telefono', el.classifica.innerHTML.includes('150,5 fantapunti')
+           && /Importata sul telefono/.test(el.classifica.innerHTML));
+  verifica('resta sul telefono', !!memLega['jarvis-lega'] && JSON.parse(memLega['jarvis-lega']).origine === 'telefono');
+  ({ el } = await avvia({ adesso: giovedi, memoria: memLega }));
+  verifica('riaprendo l\'app vale la più recente: quella del telefono', el.classifica.innerHTML.includes('150,5 fantapunti'));
+  ({ el } = await avvia({ adesso: giovedi, memoria: memLega, dati: { 'lega.json': { aggiornato: '2026-09-30T10:00:00+00:00',
+          classifica: squadreLega.map((s, k) => [k + 1, s, 0, 0, 0, 0, 0, 0, 0, 0, 0]) } } }));
+  verifica('se quella del PC è più nuova vale quella', !el.classifica.innerHTML.includes('150,5'));
+  const primaDelFileSbagliato = memLega['jarvis-lega'];
+  let rifiuto = '';
+  try { await t.importaClassifica(buf(Buffer.from('non sono un file Excel'))); } catch (e) { rifiuto = e.message; }
+  verifica('file sbagliato: lo dice e non tocca niente', /non è un file Excel/.test(rifiuto) && memLega['jarvis-lega'] === primaDelFileSbagliato, rifiuto);
+  const righeRotte = righeX.map(r => [...r]);
+  righeRotte[righeRotte.findIndex(r => r[0] === 1)][4] = 7;
+  try { t.classificaDaRighe(righeRotte); rifiuto = ''; } catch (e) { rifiuto = e.message; }
+  verifica('numeri che non tornano: si ferma', /vinte \+ pari \+ perse/.test(rifiuto), rifiuto);
+  try { t.classificaDaRighe([['Pos', 'Team']]); rifiuto = ''; } catch (e) { rifiuto = e.message; }
+  verifica('file di un\'altra pagina: dice quale serve', /Classifica/.test(rifiuto), rifiuto);
+  const veri = fs.existsSync(path.join(REPO, 'archivio', 'lega')) ?
+    fs.readdirSync(path.join(REPO, 'archivio', 'lega')).filter(f => /^Classifica_.*\.xlsx$/.test(f)).sort() : [];
+  if (veri.length) {
+    const cv = t.classificaDaRighe(await t.leggiXlsx(buf(fs.readFileSync(path.join(REPO, 'archivio', 'lega', veri[veri.length - 1])))));
+    verifica('il file vero di Leghe si legge uguale (solo sul PC)', cv.length === 10 && cv.every(r => squadreLega.includes(r[1])), veri[veri.length - 1]);
+  }
+
+  console.log('\n26. Liquid Glass');
+  verifica('intestazione di vetro che si stringe scorrendo', /body\.scorso \.testa/.test(html) && /classList\.toggle\('scorso'/.test(html));
+  verifica('modulo con la lente da trascinare', /selettore\.addEventListener\('pointermove'/.test(html) && /function scegliModulo/.test(html));
+  verifica('pannelli di vetro staccati dai bordi', /\.foglio\{left:8px; right:8px/.test(html));
+  verifica('pulsanti di vetro che si illuminano al tocco', /\.luce::after/.test(html) && /--gx/.test(html));
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);

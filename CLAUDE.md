@@ -115,6 +115,15 @@ mostrata nella scheda Lega; il file e il calendario scaricato insieme passano in
 `archivio/lega`, con la data nel nome. I crediti rimasti (500 − totale nel file
 delle rose) all'utente non interessano: non si mostrano (scelta del 14/09/2026).
 
+**Dal telefono, senza PC (dal 14/09/2026):** Chrome sull'iPhone scarica i file di
+Leghe (l'app di Leghe no). In Jarvis, scheda Lega → «Importa da Leghe»:
+`leggiXlsx` apre lo .xlsx (è uno zip di XML) con `DecompressionStream`, senza
+librerie; `classificaDaRighe` fa gli stessi controlli di `importa_lega.py`;
+`importaClassifica` salva sul telefono (localStorage `jarvis-lega`, origine
+«telefono»). Vale la più recente tra quella del telefono e `dati/lega.json`. Le
+rose restano col PC: servono anche alle notifiche, che girano su GitHub. File di
+prova con numeri inventati: `prove/dati/classifica-prova.xlsx`.
+
 **Statistiche e quotazioni non si aggiornano più a mano**: lo script le prende
 una volta al giorno dalle pagine pubbliche di fantacalcio.it
 (`dati/statistiche.json`, abbinate per Id dal link del giocatore, almeno 400
@@ -250,6 +259,13 @@ o con un tocco semplice, si va alla scheda sotto il dito. Scorrendo la pagina in
 giù la barra si stringe e perde le scritte (`mini`), in su torna. La rifrazione
 vera del vetro sul web non si può fare (Safari non applica filtri SVG allo sfondo):
 la lente la imita con sfocatura, saturazione, luminosità e riflessi.
+
+Stesso stile, scelto dall'utente per il resto dell'app: intestazione fissa che
+scorrendo diventa una capsula di vetro (`body.scorso`: JARVIS più piccolo, riga
+dei dati nascosta; è fuori dal flusso, così non fa saltare la pagina), selettore
+del modulo con la lente da trascinare (`scegliModulo`), pannelli di vetro staccati
+dai bordi, pulsanti di vetro che si illuminano nel punto toccato (`.luce`,
+`--gx`/`--gy`). Il vetro va sui controlli che galleggiano, non sui contenuti.
 
 `sw.js` è il service worker: **prima la rete, poi la copia salvata**. Con la rete
 pagina e dati sono sempre freschi (mai una versione vecchia); senza rete si usa
