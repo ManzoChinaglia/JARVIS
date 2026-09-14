@@ -190,6 +190,12 @@ giocatori dell'undici in panchina o fuori nelle probabili, il martedì il
 promemoria per le rose (o le rose ferme da più di 3 settimane). Aperto il
 pannello, gli avvisi diventano letti (salvati nel telefono con localStorage).
 
+**Numero sull'icona** (Badging API, per le app della Home con il permesso delle
+notifiche): l'app lo imposta al numero di avvisi non letti (`numeroIcona`) e lo
+azzera aprendo il pannello; ad app chiusa `sw.js` lo aumenta di uno a ogni
+notifica. Il numero condiviso sta nella cache `jarvis-numero`, che il service
+worker non cancella quando cambia `CACHE`.
+
 Le **stesse** notifiche arrivano sull'iPhone ad app chiusa: `scripts/notifiche.js`
 gira nel workflow dopo lo script dei dati, esegue il codice dell'app sui dati
 appena scaricati e invia solo gli avvisi mai inviati (codici in
@@ -200,7 +206,9 @@ appena scaricati e invia solo gli avvisi mai inviati (codici in
   anche da ntfy, l'iPhone apre sempre Safari: un'app della Home si apre solo dalle
   sue notifiche. Si attivano una volta dal pannello Avvisi («Attiva le notifiche»,
   solo dall'icona sulla Home, iOS 16.4 o più recente): l'iPhone dà un'iscrizione
-  che l'utente copia nel Secret `PUSH_ISCRIZIONE`. La chiave privata VAPID sta solo
+  che l'utente copia nel Secret `PUSH_ISCRIZIONE`. Con le notifiche attive il
+  riquadro si nasconde (pannello pulito, scelta dell'utente del 15/09): resta in
+  fondo la riga «Non arrivano più?», che lo riapre. La chiave privata VAPID sta solo
   nel Secret `PUSH_CHIAVE` (generata da Claude e data in chat, mai scritta in un
   file); la pubblica è `CHIAVE_PUSH` in `index.html`. Se si rigenerano le chiavi
   cambiano tutte e due e va rifatta l'iscrizione. Il workflow installa `web-push`

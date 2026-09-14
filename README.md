@@ -138,6 +138,11 @@ notifiche di Jarvis non funzionano, gli avvisi arrivano lì. Per attivarla:
 installa ntfy, tocca **+** e iscriviti all'argomento che ti ha dato Claude; su
 GitHub crea il Secret `NTFY_ARGOMENTO` con lo stesso argomento.
 
+Con le notifiche attive, l'icona di Jarvis sulla Home mostra il numero degli
+avvisi non ancora letti; aprendo la campanella si azzera. Il riquadro per
+attivarle si nasconde: se un giorno non arrivano più, in fondo al pannello tocca
+«Non arrivano più?».
+
 Argomento, codice e chiave funzionano come password: non scriverli in nessun file
 del progetto e non condividerli. Arrivano al massimo 6 notifiche per giro, mai la
 stessa due volte.

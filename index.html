@@ -342,6 +342,7 @@
               border:1px solid var(--bordo); background:rgba(0,0,0,.35); color:var(--dim);
               font:11px/1.4 ui-monospace,Menlo,monospace;}
   #push-codice .nota-avvisi{margin-top:10px;}
+  .collegamento{padding:0; border:0; background:none; font-size:inherit; color:var(--oro-chiaro); text-decoration:underline;}
   /* scheda del giocatore */
   .gio-testa{display:flex; align-items:center; gap:14px; margin:0 0 16px;}
   .gio-testa .maglia{width:76px; height:76px; flex-shrink:0; filter:drop-shadow(0 8px 10px rgba(0,0,0,.5));}
@@ -522,7 +523,7 @@
     <span id="stamp-dett"></span>
     <button class="aggiorna" id="refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg><span id="refresh-t">Aggiorna i dati</span></button>
   </div>
-  <div class="dati-carta">
+  <div class="dati-carta" id="push-carta" hidden>
     <span class="k">Notifiche di Jarvis</span>
     <span class="push-stato" id="push-stato"></span>
     <button class="aggiorna secondario" id="push-attiva"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span id="push-attiva-t">Attiva le notifiche</span></button>
@@ -534,7 +535,7 @@
     </div>
   </div>
   <div id="avvisi"></div>
-  <p class="nota-avvisi">Gli avvisi nuovi arrivano anche come notifica, ad app chiusa: da Jarvis se le hai attivate qui sopra, altrimenti con l'app ntfy.</p>
+  <p class="nota-avvisi" id="push-nota" hidden>Notifiche di Jarvis attive su questo iPhone. <button class="collegamento" id="push-mostra">Non arrivano più?</button></p>
 </aside>
 <aside class="foglio" id="foglio" aria-label="Scheda del giocatore">
   <div class="maniglia"></div>
@@ -1235,6 +1236,7 @@ function renderAvvisi(){
   const c = document.getElementById('campanella');
   if(nuovi > (+c.dataset.nuovi || 0)){ c.classList.remove('suona'); void c.offsetWidth; c.classList.add('suona'); }
   c.dataset.nuovi = nuovi;
+  numeroIcona(nuovi);
   document.getElementById('avvisi').innerHTML = lista.length
     ? lista.map(a=>'<div class="avviso avviso-'+a.livello+(visti.has(a.id) ? '' : ' nuovo')+'">'+
                    '<div class="ti">'+a.titolo+'</div><div class="te">'+a.testo+'</div></div>').join('')
@@ -1248,6 +1250,7 @@ function apriAvvisi(){
   const badge = document.getElementById('badge-avvisi');
   badge.textContent = '';
   badge.classList.remove('on');
+  numeroIcona(0);
 }
 /* pannelli che salgono dal basso: gli avvisi (dalla campanella) e la scheda del giocatore */
 function apriFoglio(id){
@@ -1260,7 +1263,7 @@ function chiudiFogli(){
   document.getElementById('velo').classList.remove('aperto');
   if(document.body) document.body.classList.remove('bloccato');
 }
-function apriPannello(){ apriFoglio('pannello'); apriAvvisi(); statoPush(); }
+function apriPannello(){ cartaAperta = false; apriFoglio('pannello'); apriAvvisi(); statoPush(); }
 /* messaggio breve in alto, per esempio dopo «tira giù per aggiornare» */
 function toast(t){
   const el = document.getElementById('toast');
@@ -1275,7 +1278,7 @@ function toast(t){
    si incolla nei Secrets di GitHub come PUSH_ISCRIZIONE; il workflow la usa con la
    chiave privata PUSH_CHIAVE. Questa è la chiave pubblica: pubblica per definizione. */
 const CHIAVE_PUSH = 'BPuKLm5ur1Hqp3KwNo3povQ6Jh2-kYJPVLMrzq4m9hSHoPb5a652Q9gnh-N4GjqWZ7finUr7EKI34psZZEP7Y9s';
-let registrazione = null;
+let registrazione = null, cartaAperta = false;
 function daBase64url(s){
   const b = atob(s.replace(/-/g,'+').replace(/_/g,'/') + '='.repeat((4 - s.length%4)%4));
   return Uint8Array.from(b, c=>c.charCodeAt(0));
@@ -1286,23 +1289,30 @@ function pushPossibile(){
 }
 async function statoPush(){
   const st = document.getElementById('push-stato'), b = document.getElementById('push-attiva');
+  /* con le notifiche già attive il riquadro non serve: resta una riga in fondo, per riattivarle */
+  const mostra = attive => {
+    document.getElementById('push-carta').hidden = attive && !cartaAperta;
+    document.getElementById('push-nota').hidden = !attive || cartaAperta;
+  };
   if(!pushPossibile()){
     st.textContent = typeof navigator!=='undefined' && navigator.standalone===false
       ? 'Si attivano dall\'icona di Jarvis sulla Home, non da Safari.'
       : 'Qui non sono disponibili: servono l\'icona sulla Home e iOS 16.4 o più recente.';
-    b.hidden = true; return;
+    b.hidden = true; mostra(false); return;
   }
   b.hidden = false;
   if(Notification.permission==='denied'){
     st.textContent = 'Bloccate: Impostazioni › Notifiche › Jarvis › Consenti notifiche.';
-    b.hidden = true; return;
+    b.hidden = true; mostra(false); return;
   }
   let sub = null;
   try{ sub = await (registrazione || await navigator.serviceWorker.ready).pushManager.getSubscription(); }catch(e){}
-  st.textContent = sub && Notification.permission==='granted'
-    ? 'Attive su questo iPhone. Se su GitHub hai incollato un codice diverso, copia di nuovo questo.'
+  const attive = !!sub && Notification.permission==='granted';
+  st.textContent = attive
+    ? 'Attive su questo iPhone. Se non arrivano più, attivale di nuovo e ricopia il codice su GitHub (Secret PUSH_ISCRIZIONE).'
     : 'Arrivano con l\'icona di Jarvis e toccandole si apre l\'app. Si attivano una volta sola.';
-  document.getElementById('push-attiva-t').textContent = sub ? 'Mostra il codice' : 'Attiva le notifiche';
+  document.getElementById('push-attiva-t').textContent = attive ? 'Attiva di nuovo e mostra il codice' : 'Attiva le notifiche';
+  mostra(attive);
 }
 async function attivaPush(){
   try{
@@ -1311,6 +1321,7 @@ async function attivaPush(){
     const sub = await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:daBase64url(CHIAVE_PUSH)});
     document.getElementById('push-testo').value = JSON.stringify(sub);
     document.getElementById('push-codice').hidden = false;
+    cartaAperta = true;              // il codice appena comparso resta in vista
   }catch(e){
     document.getElementById('push-stato').textContent =
       'Non si sono attivate ('+(e.message||e)+'). Controlla Impostazioni › Notifiche › Jarvis e riprova.';
@@ -1322,6 +1333,16 @@ async function copiaCodice(){
   const t = document.getElementById('push-testo');
   try{ await navigator.clipboard.writeText(t.value); toast('Codice copiato: ora incollalo su GitHub'); }
   catch(e){ t.focus(); t.select(); toast('Tieni premuto sul codice e scegli Copia'); }
+}
+
+/* numero sull'icona di Jarvis nella Home: gli avvisi non ancora letti. L'iPhone lo
+   mostra alle app della Home con il permesso delle notifiche. Il numero si salva anche
+   per il service worker, che lo aumenta a ogni notifica che arriva ad app chiusa. */
+function numeroIcona(n){
+  if(typeof navigator==='undefined' || !('setAppBadge' in navigator)) return;
+  (n>0 ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(()=>{});
+  if(typeof caches!=='undefined')
+    caches.open('jarvis-numero').then(c=>c.put('numero', new Response(String(n)))).catch(()=>{});
 }
 
 /* ---------- aggiornamento dati ---------- */
@@ -1426,6 +1447,7 @@ document.getElementById('chiudi-foglio').onclick = chiudiFogli;
 document.getElementById('velo').onclick = chiudiFogli;
 document.getElementById('push-attiva').onclick = attivaPush;
 document.getElementById('push-copia').onclick = copiaCodice;
+document.getElementById('push-mostra').onclick = ()=>{ cartaAperta = true; statoPush(); };
 /* toccare un giocatore, in campo o in una lista, apre la sua scheda */
 function toccaGiocatore(ev){
   const n = ev.target && ev.target.closest ? ev.target.closest('[data-id]') : null;

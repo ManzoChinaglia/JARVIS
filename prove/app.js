@@ -21,7 +21,7 @@ const AVV1 = BASE0.g[0][3].map(([a, b]) => a === BASE0.me ? b : b === BASE0.me ?
 // orari.json e infortuni.json veri vengono "aggiornati" al giorno simulato, così
 // l'avviso dei dati vecchi non dipende dal giorno in cui si lanciano le prove
 // memoria: il localStorage finto, da passare uguale per simulare la riapertura dell'app
-async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, memoria = {} }) {
+async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, memoria = {}, nav }) {
   const RealDate = Date;
   const fisso = new RealDate(adesso).getTime();
   class FintaData extends RealDate {
@@ -61,6 +61,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
       return { ok: true, status: 200, json: async () => JSON.parse(testo) };
     }
   };
+  if (nav) ctx.navigator = nav;          // un iPhone finto, per il numero sull'icona
   ctx.window = ctx;
   vm.createContext(ctx);
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
@@ -488,6 +489,20 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const wf = fs.readFileSync(path.join(REPO, '.github', 'workflows', 'aggiorna.yml'), 'utf8');
   verifica('workflow: iscrizione e chiave dai Secrets, notifica di prova a richiesta', /secrets\.PUSH_ISCRIZIONE/.test(wf)
            && /secrets\.PUSH_CHIAVE/.test(wf) && /inputs\.prova/.test(wf) && /web-push@\d+\.\d+\.\d+/.test(wf));
+  verifica('pannello pulito: il riquadro per attivarle è nascosto finché serve', /id="push-carta" hidden/.test(html)
+           && /id="push-nota" hidden/.test(html) && /id="push-mostra"/.test(html));
+
+  console.log('\n20. Numero sull\'icona di Jarvis');
+  const numeri = [];
+  const iphone = { setAppBadge: async n => { numeri.push(n); }, clearAppBadge: async () => { numeri.push(0); } };
+  ({ t, el } = await avvia({ adesso: '2026-09-18T10:00:00+02:00', dati: datiAvvisi, memoria: {}, nav: iphone }));
+  const daLeggere = t.avvisi(t.prossima()).length;
+  verifica('l\'icona mostra quanti avvisi non hai letto', daLeggere > 0 && numeri[numeri.length - 1] === daLeggere, numeri.join(', '));
+  t.apriAvvisi();
+  verifica('aperti gli avvisi, il numero sparisce', numeri[numeri.length - 1] === 0);
+  verifica('senza il supporto dell\'iPhone non succede niente', (await avvia({ adesso: giovedi, nav: {} })).t.avvisi !== undefined);
+  verifica('service worker: ogni notifica aumenta il numero, che sopravvive alle copie vecchie',
+           /setAppBadge/.test(sw) && /aumentaNumero\(\)/.test(sw) && /n !== CACHE && n !== NUMERO/.test(sw));
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
