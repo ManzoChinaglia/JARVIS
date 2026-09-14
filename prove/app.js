@@ -504,6 +504,37 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('service worker: ogni notifica aumenta il numero, che sopravvive alle copie vecchie',
            /setAppBadge/.test(sw) && /aumentaNumero\(\)/.test(sw) && /n !== CACHE && n !== NUMERO/.test(sw));
 
+  console.log('\n21. Pulizia e statistiche nella scheda');
+  verifica('niente più «tira giù per aggiornare»', !/id="tira"/.test(html) && !/touchmove/.test(html));
+  verifica('niente più «tocca un giocatore» sotto il campo', !/tocca un giocatore/.test(html));
+  verifica('tornando nell\'app dopo mezz\'ora i dati si aggiornano da soli', /visibilitychange/.test(html) && /30\*60000/.test(html));
+  const statB = {};
+  base.p.forEach(a => { statB[a[0]] = [a[7], a[8], a[9], a[6], 0, 0, 0, 0, 0, 0]; });
+  statB[d1] = [3, 6.5, 7.25, 21, 2, 0, 0, 3, 1, 0];
+  for (let k = 0; k < 200; k++) statB[900000 + k] = [0, 0, 0, 1];
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'statistiche.json': { aggiornato: '2026-09-17T08:00:00+00:00', giocatori: statB },
+                                                     'titolari.json': null, 'infortuni.json': null, 'squadre.json': sq2 } }));
+  t.apriGiocatore(P(d1).id);
+  let sch = el['foglio-corpo'].innerHTML;
+  verifica('scheda: partite a voto su quelle della squadra, gol e assist', sch.includes('<b class="cond">3/4</b><span>partite a voto</span>')
+           && sch.includes('<b class="cond">2</b><span>gol</span>') && sch.includes('<b class="cond">3</b><span>assist</span>'), P(d1).nome);
+  verifica('cartellini e data delle statistiche', /1 ammonizione/.test(sch) && /Statistiche di fantacalcio\.it del/.test(sch));
+  statB[d1] = [5, 6.5, 7.25, 21, 2, 0, 0, 3, 1, 0];            // statistiche più fresche dei risultati
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'statistiche.json': { aggiornato: '2026-09-17T08:00:00+00:00', giocatori: statB },
+                                                     'titolari.json': null, 'infortuni.json': null, 'squadre.json': sq2 } }));
+  t.apriGiocatore(P(d1).id);
+  verifica('fonti non allineate: mai più partite a voto che partite della squadra',
+           el['foglio-corpo'].innerHTML.includes('<b class="cond">5/5</b><span>partite a voto</span>'));
+  statB[d1] = [3, 6.5, 7.25, 21, 2, 0, 0, 3, 1, 0];
+  const portiere = t.mia.find(p => p.ruolo === 'P');
+  t.apriGiocatore(portiere.id);
+  sch = el['foglio-corpo'].innerHTML;
+  verifica('per il portiere gol subiti e rigori parati', /<span>gol subiti<\/span>/.test(sch) && /<span>rigori parati<\/span>/.test(sch)
+           && !/<span>assist<\/span>/.test(sch), portiere.nome);
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'infortuni.json': null, 'squadre.json': null, 'statistiche.json': null } }));
+  t.apriGiocatore(P(d1).id);
+  verifica('senza i bonus della fonte un trattino, nessun numero inventato', el['foglio-corpo'].innerHTML.includes('<b class="cond">—</b><span>gol</span>'));
+
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
 })().catch(e => { console.error('ERRORE', e); process.exit(2); });

@@ -44,7 +44,7 @@ Il codice e i dati sono separati di proposito: si aggiorna l'uno senza toccare l
 | Rose delle 10 squadre | file delle rose dall'app di Leghe Fantacalcio | a ogni scambio |
 | Calendario della lega | esportazione da Fantalab | una volta |
 | Calendario Serie A | date ufficiali | una volta |
-| Statistiche giocatori (PGv, MV, FM) e quotazioni | pagine pubbliche di fantacalcio.it | automatico, 1 volta al giorno |
+| Statistiche giocatori (partite, MV, FM, gol, assist, cartellini) e quotazioni | pagine pubbliche di fantacalcio.it | automatico, 1 volta al giorno |
 | Infortunati con data di rientro | pagina pubblica | automatico |
 | Probabili formazioni della giornata | pagina pubblica, media di 4 redazioni | automatico |
 | Rendimento delle squadre | risultati dal feed fixturedownload.com | automatico |
@@ -104,7 +104,8 @@ ruolo, quindi per ogni ruolo vengono prima quelli che rendono di più.
 
 Nel campo ogni giocatore ha la maglia del suo club e la fantamedia; il pallino
 dice se è titolare (verde), in dubbio (giallo) o fuori dalle probabili (rosso).
-Toccalo, in campo o in una lista, per la sua scheda.
+Toccalo, in campo o in una lista, per la sua scheda: fantamedia, partite giocate
+su quelle della squadra, gol, assist e il resto.
 
 ---
 
@@ -153,8 +154,8 @@ stessa due volte.
 
 Jarvis si apre anche senza connessione, con gli ultimi dati visti: in quel caso
 la riga sotto il titolo comincia con «senza rete». Appena la rete torna, si
-aggiorna da solo. Per aggiornare a mano, tira giù la pagina dall'inizio, oppure
-campanella → «Aggiorna i dati».
+aggiorna da solo. I dati si aggiornano anche riaprendo Jarvis dopo mezz'ora; per
+aggiornarli a mano: campanella → «Aggiorna i dati».
 
 ---
 
@@ -180,26 +181,6 @@ Tocca una delle domande pronte o scrivi, per esempio:
 
 Il microfono dell'app su iPhone può non funzionare: se succede, Jarvis dice il
 perché. Il microfono della tastiera funziona sempre.
-
----
-
-## Chiedere a Jarvis con Siri
-
-Jarvis risponde a una domanda passata nell'indirizzo, per esempio
-`https://manzochinaglia.github.io/JARVIS/?q=chi affronto`. Con un Comando Rapido
-basta dire «Ehi Siri, Jarvis» e fare la domanda a voce.
-
-1. Apri l'app **Comandi** e tocca **+** in alto a destra.
-2. Cerca «detta» e aggiungi l'azione **Detta testo** (*Dictate Text*), lingua italiano.
-3. Cerca «codifica» e aggiungi **Codifica URL** (*URL Encode*): deve codificare il testo dettato.
-4. Aggiungi l'azione **URL** e scrivi `https://manzochinaglia.github.io/JARVIS/?q=`,
-   poi, subito dopo il segno `=`, inserisci la variabile del testo codificato.
-5. Aggiungi **Apri URL** (*Open URLs*).
-6. Tocca il nome del comando in alto e chiamalo **Jarvis**.
-
-Da quel momento: «Ehi Siri, Jarvis» → «chi schiero in difesa?» → si apre Jarvis
-con la risposta nella scheda Chiedi. Il comando apre Jarvis in Safari, non
-nell'icona sulla Home: i dati sono gli stessi.
 
 ---
 

@@ -202,6 +202,15 @@ servi({mod.URL_STATISTICHE: tabella(TESTA_ST, [(5841, 'Svilar', ['ROM', '3', '6,
 st = mod.statistiche()['giocatori']
 verifica('partite, media voto, fantamedia e quotazione per Id', st['5841'] == [3, 6.5, 7.17, 18] and st['5585'] == [4, 7.0, 12.33, 37], st)
 verifica('chi ha solo la quotazione (nuovo arrivo) c\'è con 0 partite', st['9999'] == [0, 0.0, 0.0, 6], st.get('9999'))
+verifica('colonne dei bonus diverse: restano le statistiche principali, senza bonus', all(len(v) == 4 for v in st.values()))
+TESTA_BONUS = ['Calciatore', '', '', '', 'Sq', 'PV', 'MV', 'FM', 'Gol', 'GS', 'Rig', 'RP', 'Ass', 'Amm', 'Esp']
+servi({mod.URL_STATISTICHE: tabella(TESTA_BONUS, [(5841, 'Svilar', ['ROM', '3', '6,5', '7,17', '0', '2', '0 / 0', '1', '0', '0', '0']),
+                                                   (5585, 'Malen', ['ROM', '4', '7,0', '12,33', '5', '0', '1 / 1', '0', '2', '1', '0'])]),
+       mod.URL_QUOTAZIONI: tabella(TESTA_QU, [(5841, 'Svilar', ['ROM', '18', '18', '83']),
+                                               (5585, 'Malen', ['ROM', '34', '37', '445'])])})
+st = mod.statistiche()['giocatori']
+verifica('bonus e malus: gol, gol subiti, rigori parati, assist, ammonizioni, espulsioni',
+         st['5841'] == [3, 6.5, 7.17, 18, 0, 2, 1, 0, 0, 0] and st['5585'] == [4, 7.0, 12.33, 37, 5, 0, 0, 2, 1, 0], st)
 servi({mod.URL_STATISTICHE: tabella(['Calciatore', '', '', '', 'Sq', 'Pres', 'MV', 'FM'], [(5841, 'Svilar', ['ROM', '3', '6,5', '7,17'])]),
        mod.URL_QUOTAZIONI: tabella(TESTA_QU, [])})
 try:

@@ -202,7 +202,6 @@
   .legenda{display:flex; flex-wrap:wrap; gap:6px 14px; padding:2px 4px; font-size:11px; color:var(--dim);}
   .legenda span{display:inline-flex; align-items:center; gap:5px;}
   .legenda .pallino{position:static; width:9px; height:9px; border-width:0;}
-  .legenda .tocca{margin-left:auto; color:var(--oro-chiaro);}
 
   /* ---- righe giocatore ---- */
   .lista{padding:2px 14px;}
@@ -349,7 +348,10 @@
   .foglio.aperto .gio-testa .maglia{animation:salta .6s var(--molla);}
   .gio-nome{font-size:30px; font-weight:700; line-height:1;}
   .gio-sub{font-size:13px; color:var(--dim); margin-top:5px;}
-  .tessere{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px;}
+  .tessere{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px;}
+  .cartellino{display:inline-block; width:9px; height:12px; margin:0 5px 0 10px; border-radius:2px; vertical-align:-1px;}
+  .cartellino.giallo{background:#F5C518;} .cartellino.rosso{background:var(--bf-rosso);}
+  .gio-fonte{margin:14px 2px 0; font-size:11px; color:var(--dim);}
   .tessera{padding:10px 4px 9px; border-radius:14px; text-align:center; background:rgba(255,255,255,.05); border:1px solid var(--bordo);}
   .tessera b{display:block; font-size:23px; font-weight:700; color:var(--oro-chiaro);}
   .tessera span{font-size:10.5px; color:var(--dim);}
@@ -367,12 +369,10 @@
   .gio-nota.dura{border-left-color:var(--bf-rosso);}
 
   /* ---- messaggi in alto ---- */
-  .tira, .toast{position:fixed; left:50%; top:calc(env(safe-area-inset-top) + 8px); z-index:30;
+  .toast{position:fixed; left:50%; top:calc(env(safe-area-inset-top) + 8px); z-index:30;
                 padding:8px 15px; border-radius:18px; font-size:12.5px; color:var(--ink);
                 background:rgba(20,26,22,.92); border:1px solid var(--bordo); box-shadow:0 8px 20px rgba(0,0,0,.4);
                 -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);}
-  .tira{transform:translate(-50%,-70px); transition:transform .2s, color .2s;}
-  .tira.pronto{color:var(--accento); border-color:rgba(252,209,22,.5);}
   .toast{transform:translate(-50%,-70px); opacity:0; transition:transform .45s var(--molla), opacity .3s;}
   .toast.on{transform:translate(-50%,0); opacity:1;}
 
@@ -418,7 +418,6 @@
     <stop offset="0" stop-color="#fff" stop-opacity=".32"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/>
     <stop offset="1" stop-color="#000" stop-opacity=".4"/></linearGradient>
 </defs></svg>
-<div class="tira" id="tira">Tira giù per aggiornare</div>
 <div class="toast" id="toast"></div>
 <header>
   <div class="testa">
@@ -467,7 +466,7 @@
     <div class="campo" id="campo"></div>
     <div class="legenda">
       <span><i class="pallino si"></i>titolare</span><span><i class="pallino forse"></i>in dubbio</span>
-      <span><i class="pallino no"></i>fuori</span><span class="tocca">tocca un giocatore</span>
+      <span><i class="pallino no"></i>fuori</span>
     </div>
     <div id="panchina"></div>
     <div id="kobox"></div>
@@ -595,7 +594,9 @@ function applicaStatistiche(st){
   if(!st || !st.giocatori || Object.keys(st.giocatori).length<400) return false;
   players.forEach(p=>{
     const v = st.giocatori[String(p.id)];
-    if(v){ p.pgv = v[0]; p.mv = v[1]; p.fm = v[2]; if(v[3]) p.quot = v[3]; }
+    if(v){ p.pgv = v[0]; p.mv = v[1]; p.fm = v[2]; if(v[3]) p.quot = v[3];
+      /* bonus e malus, se la fonte li ha dati: gol, gol subiti, rigori parati, assist, ammonizioni, espulsioni */
+      if(v.length>=10) [p.gol, p.gs, p.rp, p.ass, p.amm, p.esp] = v.slice(4, 10); }
   });
   D.st_v = st.aggiornato || null;
   return true;
@@ -952,6 +953,12 @@ function apriGiocatore(id){
   const g = prossima(), m = avversarioClub(p.club, g[1]), t = titolarita(p, g), f = forza(p, g);
   const ko = !disponibile(p, g[2]);
   const tessera = (k, v) => '<div class="tessera"><b class="cond">'+v+'</b><span>'+k+'</span></div>';
+  /* partite a voto su quelle giocate dalla sua squadra; i bonus solo se la fonte li ha dati.
+     Statistiche e risultati si aggiornano in momenti diversi: la squadra ha giocato almeno
+     le partite a voto del giocatore, mai «4/3» */
+  const sq = D.sq && D.sq.squadre[p.club];
+  const giocate = sq ? Math.max(sq.attuale.casa[0] + sq.attuale.fuori[0], p.pgv) : 0;
+  const b = x => x===undefined ? '—' : x;
   const stato = ko ? '<div class="stato ko">'+perche(p, g[2])+'</div>'
     : '<div class="stato">'+descriviTit(t).trim()+
       (t ? '<div class="barra b-'+t.stato+'"><i style="width:'+t.perc+'%"></i></div>' : '')+'</div>';
@@ -959,11 +966,17 @@ function apriGiocatore(id){
     '<div class="gio-testa">'+maglia(p.club)+'<div><div class="gio-nome cond">'+p.nome+'</div>'+
       '<div class="gio-sub">'+p.club+' · '+RUOLI[p.ruolo]+(p.team===ME ? '' : ' · rosa di '+p.team)+'</div></div></div>'+
     '<div class="tessere">'+tessera('fantamedia', p.pgv ? num(p.fm,2) : '—')+tessera('media voto', p.pgv ? num(p.mv,2) : '—')+
-      tessera(p.pgv===1 ? 'gara' : 'gare', p.pgv)+tessera('quotazione', p.quot)+'</div>'+
+      tessera('quotazione', p.quot)+tessera('partite a voto', giocate ? p.pgv+'/'+giocate : p.pgv)+
+      (p.ruolo==='P' ? tessera('gol subiti', b(p.gs))+tessera('rigori parati', b(p.rp))
+                     : tessera('gol', b(p.gol))+tessera('assist', b(p.ass)))+'</div>'+
+    (p.amm || p.esp ? '<div class="gio-riga"><span>Cartellini</span><b>'+
+      (p.amm ? '<span class="cartellino giallo"></span>'+p.amm+(p.amm===1 ? ' ammonizione' : ' ammonizioni') : '')+
+      (p.esp ? '<span class="cartellino rosso"></span>'+p.esp+(p.esp===1 ? ' espulsione' : ' espulsioni') : '')+'</b></div>' : '')+
     '<div class="gio-riga"><span>Punteggio per il consiglio</span><b class="cond">'+num(punteggio(p, g),2)+'</b></div>'+
     stato+
     (m ? '<div class="gio-riga"><span>Giornata '+g[0]+'</span><b>'+(m.casa ? 'in casa con ' : 'a ')+m.avv+'</b></div>' : '')+
-    (f ? '<div class="gio-nota'+(f.delta>=0.2 ? ' buona' : f.delta<=-0.2 ? ' dura' : '')+'">'+motivoAvv(f)+'</div>' : '');
+    (f ? '<div class="gio-nota'+(f.delta>=0.2 ? ' buona' : f.delta<=-0.2 ? ' dura' : '')+'">'+motivoAvv(f)+'</div>' : '')+
+    '<p class="gio-fonte">Statistiche di fantacalcio.it'+(typeof D.st_v==='string' ? ' del '+dataIt(D.st_v.slice(0,10)) : '')+'</p>';
   apriFoglio('foglio');
 }
 
@@ -1369,7 +1382,9 @@ function mostraData(){
   document.getElementById('stamp-dett').textContent = (senzaRete() ? 'Senza rete. ' : '') +
     (avviso ? avviso.charAt(0).toUpperCase()+avviso.slice(1)+'. ' : '') + a+' · '+b+' · '+st;
 }
+let ultimoAggiornamento = Date.now();
 async function aggiorna(silenzioso){
+  ultimoAggiornamento = Date.now();
   const b = document.getElementById('refresh'), bt = document.getElementById('refresh-t');
   b.classList.remove('fatto'); b.classList.add('attivo'); bt.textContent = 'Cerco dati nuovi…';
   let cambiato = false;
@@ -1532,21 +1547,11 @@ function domandaDaIndirizzo(){
   if(window.history && history.replaceState) history.replaceState(null, '', location.pathname);
 }
 
-/* tira giù per aggiornare: dall'inizio della pagina, trascinando in giù di 70 px */
+/* senza «tira giù per aggiornare» (tolto: all'utente disturbava) i dati si aggiornano
+   da soli: all'apertura, al ritorno della rete e tornando nell'app dopo mezz'ora */
 if(typeof window.addEventListener==='function'){
-  const segno = document.getElementById('tira');
-  let da = null, dy = 0;
-  window.addEventListener('touchstart', e=>{ da = window.scrollY<=0 ? e.touches[0].clientY : null; dy = 0; }, {passive:true});
-  window.addEventListener('touchmove', e=>{
-    if(da===null) return;
-    dy = Math.max(0, e.touches[0].clientY - da);
-    segno.style.transform = 'translate(-50%,'+(Math.min(dy, 90) - 60)+'px)';
-    segno.classList.toggle('pronto', dy>70);
-    segno.textContent = dy>70 ? 'Rilascia per aggiornare' : 'Tira giù per aggiornare';
-  }, {passive:true});
-  window.addEventListener('touchend', ()=>{
-    if(da!==null && dy>70 && D) aggiorna(true).then(c=>toast(c ? 'Dati aggiornati' : 'Nessun dato nuovo'));
-    da = null; dy = 0; segno.style.transform = ''; segno.classList.remove('pronto');
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState==='visible' && D && Date.now()-ultimoAggiornamento > 30*60000) aggiorna(true);
   });
   /* rete che va e viene: l'intestazione lo dice */
   window.addEventListener('online', ()=>{ if(D) aggiorna(true); });

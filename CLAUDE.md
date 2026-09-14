@@ -96,6 +96,9 @@ una volta al giorno dalle pagine pubbliche di fantacalcio.it
 (`dati/statistiche.json`, abbinate per Id dal link del giocatore, almeno 400
 giocatori per scrivere) e l'app le applica sopra `base.json`. L'esportazione
 «Lista calciatori» non serve più (quella del 12/09 era filtrata su 5 squadre).
+Dalla stessa pagina arrivano, dal 15/09/2026, gol, gol subiti, rigori parati,
+assist, ammonizioni ed espulsioni (in coda a ogni riga di `statistiche.json`):
+se cambiano solo quelle colonne si salvano le statistiche principali, senza bonus.
 
 ## Scadenza formazione
 
@@ -156,9 +159,12 @@ in `MAGLIE` ha la maglia grigia: quando sale una neopromossa va aggiunto (una
 prova lo controlla sui club del calendario).
 
 Toccando un giocatore, in campo o in una lista, sale la sua scheda
-(`apriGiocatore`): fantamedia, media voto, gare, quotazione, punteggio del
-consiglio, titolarità, partita e avversario. Il modulo si sceglie con tre
-pulsanti sopra il campo.
+(`apriGiocatore`): fantamedia, media voto, quotazione, partite a voto su quelle
+della sua squadra, gol e assist (per i portieri gol subiti e rigori parati),
+cartellini, punteggio del consiglio, titolarità, partita e avversario, e la data
+delle statistiche. Senza i bonus della fonte compare un trattino. Sotto il campo
+nessuna scritta «tocca un giocatore»: per l'utente è intuitivo (15/09/2026). Il
+modulo si sceglie con tre pulsanti sopra il campo.
 
 ## Movimento e senza rete
 
@@ -170,9 +176,11 @@ sotto il conto alla rovescia (verde, gialla nell'ultimo giorno, rossa nelle
 ultime 3 ore) con un riflesso che scorre, il numero che scatta quando cambia,
 stella che brilla, sfondo che respira, campanella che suona con avvisi nuovi,
 cursori che scorrono (barra in basso e modulo), pannelli che salgono dal basso,
-blocchi che salgono uno dopo l'altro cambiando scheda, barre che crescono, «tira
-giù per aggiornare» con un messaggio in alto, segnaposto che luccicano durante il
-caricamento. Con «Riduci movimento» dell'iPhone si spengono tutte.
+blocchi che salgono uno dopo l'altro cambiando scheda, barre che crescono,
+segnaposto che luccicano durante il caricamento. Con «Riduci movimento»
+dell'iPhone si spengono tutte. «Tira giù per aggiornare» è stato tolto il
+15/09/2026 (all'utente disturbava): i dati si aggiornano da soli all'apertura, al
+ritorno della rete e tornando nell'app dopo mezz'ora; a mano, dalla campanella.
 
 `sw.js` è il service worker: **prima la rete, poi la copia salvata**. Con la rete
 pagina e dati sono sempre freschi (mai una versione vecchia); senza rete si usa
@@ -250,9 +258,10 @@ Lo script può fallire senza che nessuno lo veda. Due difese:
 
 ## Siri
 
-Un Comando Rapido apre l'app con la domanda nell'indirizzo (`?q=...`). L'app
-risponde solo dopo aver caricato i dati, poi toglie `?q=` dall'indirizzo. La
-guida per creare il comando è nel README; `prove/app.js` verifica la risposta.
+Il 15/09/2026 l'utente ha deciso di non usare Siri («Jarvis ha tutto»): la guida
+è stata tolta dal README. Resta la risposta a una domanda nell'indirizzo
+(`?q=...`), innocua e provata da `prove/app.js`: l'app risponde solo dopo aver
+caricato i dati, poi toglie `?q=` dall'indirizzo.
 
 ## Probabili formazioni
 

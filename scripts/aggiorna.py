@@ -11,7 +11,8 @@ Scrive cinque file in dati/:
   dati/orari.json       { "aggiornato": "...", "giornate": { "<giornata Serie A>": {...} } }
   dati/squadre.json     { "aggiornato": "...", "squadre": { "<squadra>": {...} }, ... }
   dati/jarvis.ics       calendario da sottoscrivere: scadenze di schieramento
-  dati/statistiche.json { "aggiornato": "...", "giocatori": { "<id>": [partite, MV, FM, quotazione] } }
+  dati/statistiche.json { "aggiornato": "...", "giocatori": { "<id>": [partite, MV, FM, quotazione,
+                          gol, gol subiti, rigori parati, assist, ammonizioni, espulsioni] } }
 
 Regole di sicurezza:
  - se una fonte non risponde o cambia struttura, il file esistente NON viene toccato
@@ -334,20 +335,32 @@ def numero(testo):
     return float(t) if re.fullmatch(r'-?\d+(\.\d+)?', t) else 0.0
 
 
+BONUS = ['Gol', 'GS', 'Rig', 'RP', 'Ass', 'Amm', 'Esp']
+
+
 def statistiche():
     """Partite a voto, media voto, fantamedia e quotazione di ogni giocatore, dalle
-    pagine pubbliche: sostituiscono l'esportazione settimanale per le statistiche."""
+    pagine pubbliche: sostituiscono l'esportazione settimanale per le statistiche.
+    Dalla stessa pagina anche bonus e malus: gol, gol subiti, rigori parati, assist,
+    ammonizioni, espulsioni. Se cambiano solo quelle colonne si salvano le
+    statistiche principali, senza i bonus: meglio un trattino che un numero sbagliato."""
     testa, stat = righe_con_id(URL_STATISTICHE)
     if testa[5:8] != ['PV', 'MV', 'FM']:
         raise ValueError(f'colonne delle statistiche inattese: {testa[5:8]}')
+    bonus = testa[8:15] == BONUS
+    if not bonus:
+        print(f'[statistiche] colonne dei bonus inattese {testa[8:15]}: salvo senza gol e assist.')
     testaq, quot = righe_con_id(URL_QUOTAZIONI)
     if testaq[5:7] != ['QI', 'QA']:
         raise ValueError(f'colonne delle quotazioni inattese: {testaq[5:7]}')
     giocatori = {}
     for i in set(stat) | set(quot):
         s, q = stat.get(i), quot.get(i)
-        giocatori[str(i)] = [int(numero(s[5])) if s else 0, round(numero(s[6]), 2) if s else 0.0,
-                             round(numero(s[7]), 2) if s else 0.0, int(numero(q[6])) if q else 0]
+        riga = [int(numero(s[5])) if s else 0, round(numero(s[6]), 2) if s else 0.0,
+                round(numero(s[7]), 2) if s else 0.0, int(numero(q[6])) if q else 0]
+        if bonus:   # Gol, GS, RP, Ass, Amm, Esp (Rig, «segnati / calciati», non serve)
+            riga += [int(numero(s[k])) if s and len(s) > k else 0 for k in (8, 9, 11, 12, 13, 14)]
+        giocatori[str(i)] = riga
     print(f'[statistiche] {len(stat)} giocatori con statistiche, {len(quot)} con quotazione.')
     return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'giocatori': giocatori}
 
