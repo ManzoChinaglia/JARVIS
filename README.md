@@ -25,6 +25,8 @@ dati/
   jarvis.ics                  calendario delle scadenze            [automatico]
   notifiche.json              avvisi già inviati                   [automatico]
   lega.json                   classifica della lega                [«dati di lega»]
+  voti.json                   voto e fantavoto di ogni giornata    [automatico]
+  consigli.json               undici consigliato prima della scadenza [automatico]
   listone.json                elenco ufficiale, serve agli script
 scripts/
   aggiorna.py                 scarica infortuni, probabili, orari, squadre e statistiche
@@ -56,6 +58,7 @@ Il codice e i dati sono separati di proposito: si aggiorna l'uno senza toccare l
 | Calendario della lega | esportazione da Fantalab | una volta |
 | Calendario Serie A | date ufficiali | una volta |
 | Statistiche giocatori (partite, MV, FM, gol, assist, cartellini) e quotazioni | pagine pubbliche di fantacalcio.it | automatico, 1 volta al giorno |
+| Voti di ogni giornata | pagine pubbliche di fantacalcio.it | automatico, dopo ogni giornata |
 | Infortunati con data di rientro | pagina pubblica | automatico |
 | Probabili formazioni della giornata | pagina pubblica, media di 4 redazioni | automatico |
 | Rendimento delle squadre | risultati dal feed fixturedownload.com | automatico |
@@ -126,6 +129,13 @@ stima fatta sulle rose, non il risultato.
 **Quando giocano i tuoi** mette in ordine le
 partite della giornata con i tuoi giocatori, con la scadenza in cima; l'orario c'è
 anche sotto ogni maglia e nella scheda del giocatore.
+
+Dopo ogni giornata, fino alla scadenza della prossima, in cima alla Giornata c'è
+**Com'è andata**: quanto avrebbe fatto l'undici di Jarvis, il migliore possibile, i
+tuoi migliori e peggiori; toccala per tutti i voti. Nella scheda di ogni giocatore
+c'è l'andamento dei fantavoti e ci sono i prossimi 3 avversari (anche come pallini
+sotto le maglie della Rosa); nella scheda Lega il **Mercato, sulla carta**, con chi
+prendere e chi proporre in uno scambio.
 
 ---
 

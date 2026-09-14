@@ -125,6 +125,22 @@ function ntfyFinto(ok = true) {
   r = await main({ ...canali(p, n, { argomento: '', iscrizione: 'incollata male' }), adesso: venerdi, dati: dati(1) });
   verifica('iscrizione incollata male e niente ntfy: non invia e non segna', r.inviati.length === 0 && !fs.existsSync(registro));
 
+  console.log('\n5bis. Consiglio salvato prima della scadenza');
+  fs.rmSync(registro, { force: true });
+  const consigli = path.join(cartella, 'consigli.json');
+  fs.rmSync(consigli, { force: true });
+  n = ntfyFinto();
+  await main({ argomento: '', invia: n.invia, adesso: venerdi, registro, dati: dati(1) });
+  let cs = JSON.parse(fs.readFileSync(consigli, 'utf8'));
+  const c1 = cs.giornate && cs.giornate['1'];
+  verifica('undici e panchina per ognuno dei tre moduli, anche senza canali di notifica', c1 && c1.sa === 5
+           && Object.keys(c1.undici).length === 3 && c1.undici['4-3-3'].length === 11 && c1.panchina['4-3-3'].length > 0,
+           c1 && Object.keys(c1.undici).join(', '));
+  const primaVolta = c1.salvato;
+  await main({ argomento: '', invia: n.invia, adesso: new Date('2026-09-18T21:00:00+02:00').getTime(), registro, dati: dati(1) });
+  cs = JSON.parse(fs.readFileSync(consigli, 'utf8'));
+  verifica('dopo la scadenza resta l\'ultimo salvato prima', cs.giornate['1'].salvato === primaVolta);
+
   console.log('\n6. Richiesta vera per il servizio di Apple (con web-push installato)');
   let webpush = null;
   try { webpush = require('web-push'); } catch (e) { console.log('  --   web-push non installato qui: prova saltata (il workflow lo installa)'); }

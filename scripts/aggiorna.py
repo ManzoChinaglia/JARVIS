@@ -13,6 +13,7 @@ Scrive cinque file in dati/:
   dati/jarvis.ics       calendario da sottoscrivere: scadenze di schieramento
   dati/statistiche.json { "aggiornato": "...", "giocatori": { "<id>": [partite, MV, FM, quotazione,
                           gol, gol subiti, rigori parati, assist, ammonizioni, espulsioni] } }
+  dati/voti.json        { "aggiornato": "...", "giornate": { "<n>": { "<id>": [voto, fantavoto] } } }
 
 Regole di sicurezza:
  - se una fonte non risponde o cambia struttura, il file esistente NON viene toccato
@@ -40,6 +41,7 @@ URL_ORARI = 'https://fixturedownload.com/feed/json/serie-a-2026'
 # statistiche e quotazioni pubbliche di fantacalcio.it (senza login), con l'Id del listone nei link
 URL_STATISTICHE = 'https://www.fantacalcio.it/statistiche-serie-a/2026-27/fantacalcio/riepilogo'
 URL_QUOTAZIONI = 'https://www.fantacalcio.it/quotazioni-fantacalcio'
+URL_VOTI = 'https://www.fantacalcio.it/voti-fantacalcio-serie-a/2026-27/{}'   # voti di ogni giornata
 ORE_STATISTICHE = 20   # cambiano solo dopo le partite: basta un giro al giorno
 URL_PRECEDENTE = 'https://fixturedownload.com/feed/json/serie-a-2025'
 
@@ -367,6 +369,48 @@ def statistiche():
     return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'giocatori': giocatori}
 
 
+def voti_giornata(n):
+    """Voto e fantavoto della redazione Fantacalcio di ogni giocatore della giornata n di
+    Serie A, per Id (dal link del giocatore). Chi non ha preso voto non c'è. Nella riga
+    il primo voto e il primo fantavoto sono della redazione Fantacalcio; poi vengono i
+    voti di altre redazioni, che qui non servono."""
+    r = requests.get(URL_VOTI.format(n), headers=UA, timeout=TIMEOUT)
+    r.raise_for_status()
+    voti = {}
+    for tr in BeautifulSoup(r.text, 'lxml').select('table.grades-table tbody tr'):
+        a = tr.find('a', href=re.compile(r'/\d+/?$'))
+        v, fv = tr.find('span', class_='player-grade'), tr.find('span', class_='player-fanta-grade')
+        if not (a and v and fv):
+            continue
+        try:
+            voto = float(v.get('data-value', '').replace(',', '.'))
+            fanta = float(fv.get('data-value', '').replace(',', '.'))
+        except ValueError:
+            continue                              # senza voto
+        voti[str(int(a['href'].rstrip('/').rsplit('/', 1)[1]))] = [voto, fanta]
+    return voti
+
+
+def voti(giornate_orari, vecchie, ora=None):
+    """I voti delle giornate di Serie A finite da almeno 6 ore: quelle nuove e, per tre
+    giorni dalla fine, di nuovo (i voti si assestano). Una giornata con meno di 200 voti
+    non si salva: la pagina non è ancora pronta o ha cambiato struttura."""
+    ora = ora or datetime.now(timezone.utc)
+    giornate = dict(vecchie)
+    for n, g in sorted(giornate_orari.items(), key=lambda x: int(x[0])):
+        if not g.get('ufficiale') or 'fine' not in g:
+            continue
+        passato = ora - datetime.fromisoformat(g['fine'])
+        if passato < timedelta(hours=6) or (n in giornate and passato > timedelta(days=3)):
+            continue
+        v = voti_giornata(int(n))
+        if len(v) >= 200:
+            giornate[n] = v
+        else:
+            print(f'[voti] giornata {n}: solo {len(v)} voti, la salto.')
+    return {'aggiornato': ora.isoformat(timespec='seconds'), 'giornate': giornate}
+
+
 def recente(percorso, ore, ora=None):
     """Vero se il file è stato scritto da meno di `ore` ore."""
     try:
@@ -538,6 +582,20 @@ def main():
         scrivi(percorso, orari(precedenti(percorso, 'giornate')), 38, 'orari')
     except Exception as e:
         print('[orari] fallito:', e)
+        uscita = 1
+
+    # i voti di ogni giornata finita: «com'è andata» e l'andamento dei giocatori.
+    # Il file si riscrive solo se cambia qualcosa, per non fare un commit a ogni giro.
+    percorso_voti = os.path.join(DATI, 'voti.json')
+    try:
+        vecchie = precedenti(percorso_voti, 'giornate')
+        v = voti(precedenti(percorso, 'giornate'), vecchie)
+        if v['giornate'] != vecchie:
+            scrivi(percorso_voti, v, 1, 'voti')
+        else:
+            print('[voti] niente di nuovo.')
+    except Exception as e:
+        print('[voti] fallito:', e)
         uscita = 1
 
     # le probabili della giornata che interessa la lega, secondo gli orari salvati

@@ -486,6 +486,41 @@
   .luce::after{opacity:1; transition:none;}
   .importa-lega{margin-top:12px;}
 
+  /* ---- com'è andata, andamento, calendario dei tuoi, mercato ---- */
+  .ca{margin:14px 0 4px; padding:14px 16px 12px; cursor:pointer;}
+  .ca-testa{display:flex; flex-direction:column; gap:2px; margin-bottom:10px;}
+  .ca-testa .k, .ca-nomi .k{font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--dim);}
+  .ca-testa b{font-size:20px; font-weight:700;}
+  .ca-numeri{display:flex; gap:10px; margin-bottom:10px;}
+  .ca-numeri div{flex:1; padding:10px 6px; border-radius:14px; text-align:center; background:rgba(255,255,255,.05); border:1px solid var(--bordo);}
+  .ca-numeri b{display:block; font-size:26px; font-weight:700; color:var(--oro-chiaro);}
+  .ca-numeri span{font-size:11px; color:var(--dim);}
+  .ca-nomi{margin-top:4px; font-size:13px; line-height:1.5;}
+  .ca-nomi .k{margin-right:6px;}
+  .ca-tutti{margin-top:8px; padding:0; border:0; background:none; font-size:13px; font-weight:600; color:var(--oro-chiaro);}
+  .seg-j, .seg-m{margin-left:5px; font-style:normal; font-size:10px; font-weight:700;}
+  .seg-j{padding:1px 5px; border-radius:6px; background:rgba(252,209,22,.18); color:var(--oro-chiaro);}
+  .seg-m{color:var(--bf-stella);}
+  .fv{font-weight:700; color:var(--oro-chiaro);}
+  .andamento{margin:0 0 10px; padding:12px 12px 8px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid var(--bordo);}
+  .andamento .k{font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--dim);}
+  .andamento svg{display:block; width:100%; height:auto; margin-top:6px;}
+  .andamento polyline{fill:none; stroke:var(--oro); stroke-width:2; stroke-linejoin:round;}
+  .andamento .sei{stroke:rgba(255,255,255,.18); stroke-dasharray:3 4;}
+  .andamento text{font-size:10px; fill:var(--dim); text-anchor:middle;}
+  .andamento .sv{font-size:9px;}
+  .and-ultimi{margin-top:4px; font-size:12px; text-align:right; color:var(--dim);}
+  .mini-linea{display:block; width:44px; height:14px; margin:3px 0 0 auto;}
+  .mini-linea polyline{fill:none; stroke:var(--oro); stroke-width:1.5; stroke-linejoin:round; vector-effect:non-scaling-stroke;}
+  .cal3{display:flex; justify-content:center; gap:4px; margin-top:5px;}
+  .cal3 i{width:8px; height:8px; border-radius:50%; background:#5E6B63;}
+  .cal3 .facile{background:#2BD67B;} .cal3 .media{background:var(--bf-stella);} .cal3 .dura{background:var(--bf-rosso);}
+  .cal3-testo{display:flex; flex-wrap:wrap; justify-content:flex-end; gap:4px;}
+  .cal3-testo span{padding:2px 7px; border-radius:8px; font-size:12px; background:rgba(255,255,255,.06);}
+  .cal3-testo .facile{color:#43E08F;} .cal3-testo .media{color:var(--bf-stella);} .cal3-testo .dura{color:#FF6B6B;}
+  .team .nome small.inline{display:inline; margin-left:6px;}
+  .team .nome small .cal3{display:inline-flex; margin:0 0 0 6px; vertical-align:middle;}
+
   /* ---- rosa: maglie per reparto o elenco, con i filtri ---- */
   .rosa-testa{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:22px 0 10px;}
   .rosa-testa h2{margin:0 2px;}
@@ -589,6 +624,7 @@
 
 <main>
   <section id="s-giornata" class="on">
+    <div id="comeandata"></div>
     <div class="sfida">
       <div class="gg" id="gg"></div>
       <div class="squadra">
@@ -640,6 +676,7 @@
       <input type="file" id="file-lega" accept=".xlsx" hidden>
       <p class="nota-lega" id="esito-lega">Da Chrome sull'iPhone: Leghe → Classifica → «Scarica ora», poi tocca qui e scegli il file.</p>
     </div>
+    <div id="mercato"></div>
     <h2>La forza delle rose, per fantamedia</h2>
     <div id="squadre"></div>
     <h2>Il tuo calendario</h2>
@@ -730,12 +767,17 @@ async function carica(){
   const sq   = await leggi('squadre.json', false);
   const st   = await leggi('statistiche.json', false);
   const lg   = await leggi('lega.json', false);
+  const vt   = await leggi('voti.json', false);
+  const cs   = await leggi('consigli.json', false);
 
   D = base;
   ME = D.me;
   D.orari = ora && ora.giornate ? ora.giornate : null;
   D.prob  = tit && tit.giornata && tit.titolari ? tit : null;
   D.sq    = sq && sq.squadre ? sq : null;
+  /* voti di ogni giornata di Serie A finita e undici consigliati salvati prima delle scadenze */
+  D.voti  = vt && vt.giornate && Object.keys(vt.giornate).length ? vt.giornate : null;
+  D.consigli = cs && cs.giornate ? cs.giornate : null;
   D.lega  = lg && lg.classifica && lg.classifica.length===10 ? lg : null;
   /* classifica importata sul telefono («Importa da Leghe»): vale la più recente delle due */
   try{
@@ -865,6 +907,7 @@ function renderGiornata(){
   disegnaCampo(g);
   renderSfida(g);
   renderQuando(g);
+  renderComeAndata();
   renderAvvisi();
 }
 
@@ -907,8 +950,10 @@ function perPartita(s, campo, i){
 }
 /* l'avversario nel campo in cui gioca: per portiere e difensori conta quanto segna,
    per centrocampisti e attaccanti quanto subisce, rispetto alla media dell'anno scorso */
-function forza(p, g){
-  const m = D.sq && avversarioClub(p.club, g[1]);
+function forza(p, g){ return forzaSa(p, g[1]); }
+/* lo stesso per una giornata di Serie A qualunque: serve anche al calendario dei tuoi */
+function forzaSa(p, sa){
+  const m = D.sq && avversarioClub(p.club, sa);
   const s = m && D.sq.squadre[m.avv];
   if(!s) return null;
   const campo = m.casa ? 'fuori' : 'casa';
@@ -1084,7 +1129,7 @@ function riga(p, g, ordine){
     '<div class="chi"><div class="n">'+p.nome+'</div><div class="sotto">'+sotto+'</div>'+
     (f && !ko ? '<div class="sotto">'+motivoAvv(f)+'</div>' : '')+
     (t && !ko ? '<div class="barra b-'+t.stato+'"><i style="width:'+t.perc+'%"></i></div>' : '')+'</div>'+
-    '<div class="fm '+(p.pgv?'':'nodata')+'">'+fm+'<small>'+(p.pgv||0)+' gare</small></div></div>';
+    '<div class="fm '+(p.pgv?'':'nodata')+'">'+fm+'<small>'+(p.pgv||0)+' gare</small>'+miniLinea(p)+'</div></div>';
 }
 
 /* ---------- maglie ---------- */
@@ -1297,6 +1342,190 @@ async function importaClassifica(buffer){
   return dati.classifica;
 }
 
+/* ---------- voti delle giornate (dati/voti.json) ---------- */
+/* [voto, fantavoto] della redazione Fantacalcio; chi non ha preso voto non c'è */
+function votoDi(p, sa){
+  const v = D.voti && D.voti[String(sa)];
+  return v && v[String(p.id)] || null;
+}
+/* fantavoti di un undici con la regola della lega: chi non prende voto lascia il posto al
+   primo panchinaro dello stesso ruolo, nell'ordine, che il voto l'ha preso */
+function puntiUndici(ids, panchina, sa){
+  const chi = id => players.find(p=>p.id===id);
+  const panca = (panchina || []).map(chi).filter(Boolean), usati = new Set();
+  let tot = 0, cambi = 0, vuoti = 0;
+  ids.map(chi).filter(Boolean).forEach(p=>{
+    const v = votoDi(p, sa);
+    if(v){ tot += v[1]; return; }
+    const entra = panca.find(q=>q.ruolo===p.ruolo && !usati.has(q.id) && votoDi(q, sa));
+    if(entra){ usati.add(entra.id); tot += votoDi(entra, sa)[1]; cambi++; } else vuoti++;
+  });
+  return {tot, cambi, vuoti};
+}
+/* l'undici migliore a posteriori, con i fantavoti veri, sempre con la difesa a quattro */
+function miglioreUndici(sa){
+  let meglio = null;
+  Object.keys(MODULI).forEach(m=>{
+    const q = Object.assign({P:1}, MODULI[m]), scelti = [];
+    ['P','D','C','A'].forEach(r=>scelti.push(...mia.filter(p=>p.ruolo===r && votoDi(p, sa))
+      .sort((a,b)=>votoDi(b, sa)[1]-votoDi(a, sa)[1]).slice(0, q[r])));
+    const tot = scelti.reduce((s,p)=>s+votoDi(p, sa)[1], 0);
+    if(!meglio || tot > meglio.tot) meglio = {modulo:m, tot, scelti};
+  });
+  return meglio;
+}
+
+/* ---------- com'è andata ---------- */
+/* L'ultima giornata di Serie A con i voti, finché non arriva la scadenza della prossima:
+   i fantavoti dei tuoi, l'undici che Jarvis ti aveva consigliato (salvato dal giro
+   automatico prima della scadenza, nel modulo scelto qui) e il migliore possibile.
+   Prima che parta la lega, le giornate di sola Serie A. */
+function comeAndata(){
+  if(!D.voti) return null;
+  const sa = Math.max(...Object.keys(D.voti).map(Number)), prox = prossima(), sc = scadenza(prox);
+  if(!isFinite(sa) || prox[1] <= sa || (sc && oggi() > sc)) return null;
+  const g = D.g.find(x=>x[1]===sa) || null, c = g && D.consigli && D.consigli[String(g[0])];
+  const miei = mia.filter(p=>votoDi(p, sa)).sort((a,b)=>votoDi(b, sa)[1]-votoDi(a, sa)[1]);
+  if(!miei.length) return null;
+  const consiglio = c && c.undici && c.undici[modulo]
+    ? Object.assign({modulo}, puntiUndici(c.undici[modulo], (c.panchina || {})[modulo], sa)) : null;
+  return {sa, g, miei, migliore: miglioreUndici(sa), consiglio, salvato: !!c};
+}
+let caDisegnata = '';
+function renderComeAndata(){
+  const ca = comeAndata();
+  let html = '';
+  if(ca){
+    const titolo = ca.g ? 'Giornata '+ca.g[0]+' · contro '+avversarioLega(ca.g).nome : 'Serie A, giornata '+ca.sa+' · prima della lega';
+    const nome = p => '<span data-id="'+p.id+'">'+cognome(p)+' '+num(votoDi(p, ca.sa)[1], 1)+'</span>';
+    html = '<div class="carta ca" id="ca"><div class="ca-testa"><span class="k">Com\'è andata</span><b class="cond">'+titolo+'</b></div>'+
+      '<div class="ca-numeri">'+
+        (ca.consiglio ? '<div><b class="cond">'+num(ca.consiglio.tot, 1)+'</b><span>l\'undici di Jarvis ('+ca.consiglio.modulo+
+          (ca.consiglio.cambi ? ', '+ca.consiglio.cambi+(ca.consiglio.cambi===1 ? ' cambio' : ' cambi') : '')+')</span></div>' : '')+
+        '<div><b class="cond">'+num(ca.migliore.tot, 1)+'</b><span>il migliore possibile ('+ca.migliore.modulo+')</span></div>'+
+      '</div>'+
+      '<div class="ca-nomi"><span class="k">I migliori</span>'+ca.miei.slice(0, 3).map(nome).join(', ')+'</div>'+
+      '<div class="ca-nomi"><span class="k">I peggiori</span>'+ca.miei.slice(-3).reverse().map(nome).join(', ')+'</div>'+
+      (ca.g && !ca.salvato ? '<p class="nota-lega">L\'undici consigliato di quella giornata non era stato salvato.</p>' : '')+
+      '<button class="ca-tutti">Tutti i voti ›</button>'+
+      '<p class="nota-lega">Fantavoti della redazione Fantacalcio, senza modificatore difesa.</p></div>';
+  }
+  if(html !== caDisegnata){ caDisegnata = html; document.getElementById('comeandata').innerHTML = html; }
+}
+/* tutti i voti dei tuoi in quella giornata: J nell'undici di Jarvis, ★ nel migliore possibile */
+function apriVoti(){
+  const ca = comeAndata();
+  if(!ca) return;
+  const nelMigliore = new Set(ca.migliore.scelti.map(p=>p.id));
+  const c = ca.g && D.consigli && D.consigli[String(ca.g[0])];
+  const diJarvis = new Set(c && c.undici && c.undici[modulo] || []);
+  const valore = p => (votoDi(p, ca.sa) || [0, -99])[1];
+  const righe = r => mia.filter(p=>p.ruolo===r).sort((a,b)=>valore(b)-valore(a)).map(p=>{
+    const v = votoDi(p, ca.sa);
+    return '<div class="gio-riga"><span>'+p.nome+(diJarvis.has(p.id) ? '<i class="seg-j">J</i>' : '')+
+      (nelMigliore.has(p.id) ? '<i class="seg-m">★</i>' : '')+'</span><b>'+
+      (v ? num(v[0], 1)+' · <span class="fv">'+num(v[1], 1)+'</span>' : '<span class="nodata">s.v.</span>')+'</b></div>';
+  }).join('');
+  document.getElementById('foglio-corpo').innerHTML =
+    '<div class="gio-nome cond">'+(ca.g ? 'Giornata '+ca.g[0] : 'Serie A, giornata '+ca.sa)+'</div>'+
+    '<div class="gio-sub">Voto · fantavoto dei tuoi. J nell\'undici di Jarvis, ★ nel migliore possibile.</div>'+
+    ['P','D','C','A'].map(r=>'<h3 class="reparto-t">'+PLURALI[r]+'</h3>'+righe(r)).join('');
+  apriFoglio('foglio');
+}
+
+/* ---------- andamento del giocatore ---------- */
+/* il fantavoto giornata per giornata, nelle giornate con i voti in cui la sua squadra ha
+   giocato; senza voto è «s.v.» */
+function andamento(p){
+  if(!D.voti) return [];
+  return Object.keys(D.voti).map(Number).sort((a,b)=>a-b)
+    .filter(sa=>avversarioClub(p.club, sa)).map(sa=>({sa, v: votoDi(p, sa)}));
+}
+function graficoVoti(p){
+  const serie = andamento(p);
+  if(!serie.length) return '';
+  const W = 300, H = 76, px = 14, py = 10, n = serie.length;
+  const x = i => n===1 ? W/2 : px + i*(W - 2*px)/(n - 1);
+  const y = fv => py + (1 - (Math.max(3, Math.min(15, fv)) - 3)/12) * (H - 2*py);
+  const colore = fv => fv >= 7 ? '#43E08F' : fv < 6 ? '#EF6B6B' : '#E4B451';
+  const pieni = serie.map((s,i)=>s.v ? {x:x(i), y:y(s.v[1]), fv:s.v[1]} : null);
+  const linea = pieni.filter(Boolean).map(q=>q.x.toFixed(1)+','+q.y.toFixed(1)).join(' ');
+  return '<div class="andamento"><span class="k">Fantavoto giornata per giornata</span>'+
+    '<svg viewBox="0 0 '+W+' '+(H + 14)+'" aria-hidden="true">'+
+    '<line class="sei" x1="0" x2="'+W+'" y1="'+y(6).toFixed(1)+'" y2="'+y(6).toFixed(1)+'"/>'+
+    (linea.includes(' ') ? '<polyline points="'+linea+'"/>' : '')+
+    serie.map((s,i)=>(pieni[i] ? '<circle cx="'+pieni[i].x.toFixed(1)+'" cy="'+pieni[i].y.toFixed(1)+'" r="4" fill="'+colore(pieni[i].fv)+'"/>'
+                                : '<text class="sv" x="'+x(i).toFixed(1)+'" y="'+(H - 2)+'">s.v.</text>')+
+      '<text x="'+x(i).toFixed(1)+'" y="'+(H + 12)+'">'+s.sa+'</text>').join('')+
+    '</svg><div class="and-ultimi">Ultime: '+serie.slice(-5).map(s=>s.v ? num(s.v[1], 1) : 's.v.').join(' · ')+'</div></div>';
+}
+/* la stessa linea, piccola, nell'elenco della rosa */
+function miniLinea(p){
+  const serie = andamento(p).slice(-6).filter(s=>s.v);
+  if(serie.length < 2) return '';
+  const W = 44, H = 14, n = serie.length;
+  return '<svg class="mini-linea" viewBox="0 0 '+W+' '+H+'" aria-hidden="true"><polyline points="'+
+    serie.map((s,i)=>(i*W/(n - 1)).toFixed(1)+','+(H - (Math.max(3, Math.min(15, s.v[1])) - 3)/12*H).toFixed(1)).join(' ')+'"/></svg>';
+}
+
+/* ---------- calendario dei tuoi ---------- */
+/* i prossimi 3 avversari in Serie A, dalla giornata che si gioca adesso: verde facile,
+   giallo nella media, rosso difficile (come l'avversario nel consiglio); grigio senza dati */
+function prossimi3(p, g){
+  const out = [];
+  for(let sa = g[1]; sa <= 38 && out.length < 3; sa++){
+    const m = avversarioClub(p.club, sa);
+    if(!m) continue;
+    const f = forzaSa(p, sa);
+    out.push({sa, avv: m.avv, casa: m.casa, livello: !f ? 'nd' : f.delta >= 0.2 ? 'facile' : f.delta <= -0.2 ? 'dura' : 'media'});
+  }
+  return out;
+}
+function pallini3(p, g){
+  const l = prossimi3(p, g);
+  return l.length ? '<span class="cal3">'+l.map(x=>'<i class="'+x.livello+'"></i>').join('')+'</span>' : '';
+}
+
+/* ---------- mercato, sulla carta ---------- */
+/* Stima di Jarvis per le finestre di scambio: valore = fantamedia stimata + titolarità +
+   i prossimi 3 avversari. Da prendere: chi, nelle altre rose, vale più del tuo ultimo
+   titolare dello stesso ruolo; da proporre: i tuoi fuori dall'undici con quotazione alta. */
+const POSTI = {P:1, D:4, C:4, A:3};
+function valoreMercato(p, g){
+  const t = titolarita(p, g), cal = prossimi3(p, g).map(x=>forzaSa(p, x.sa)).filter(Boolean);
+  return fmStimata(p) + (t ? -0.4 + 1.6*t.perc/100 : 0) +
+    (cal.length ? cal.reduce((s,f)=>s + PESI[p.ruolo]*f.delta, 0)/cal.length : 0);
+}
+function mercato(g){
+  const prendere = [], cedere = [];
+  ['P','D','C','A'].forEach(r=>{
+    const miei = mia.filter(p=>p.ruolo===r && disponibile(p, g[2])).map(p=>({p, v: valoreMercato(p, g)})).sort((a,b)=>b.v-a.v);
+    const ultimo = miei[Math.min(POSTI[r], miei.length) - 1];
+    if(!ultimo) return;
+    players.filter(p=>p.team!==ME && p.ruolo===r && disponibile(p, g[2])).map(p=>({p, v: valoreMercato(p, g)}))
+      .filter(x=>x.v >= ultimo.v + 0.3).sort((a,b)=>b.v-a.v).slice(0, 2)
+      .forEach(x=>prendere.push({p: x.p, guadagno: x.v - ultimo.v, alPosto: ultimo.p}));
+    miei.slice(POSTI[r]).filter(x=>x.p.quot >= 10).sort((a,b)=>b.p.quot-a.p.quot).slice(0, 1).forEach(x=>cedere.push(x.p));
+  });
+  return {prendere, cedere};
+}
+let mercatoDisegnato = '';
+function renderMercato(g){
+  const mk = mercato(g);
+  const riga = (p, destra, sotto) => '<div class="team" data-id="'+p.id+'">'+stemma(p.team)+
+    '<span class="nome">'+p.nome+'<small class="inline">'+p.ruolo+' · '+p.club+'</small><small>'+sotto+'</small></span>'+
+    '<span class="val cond">'+destra+'</span></div>';
+  const html = '<h2>Mercato, sulla carta</h2>'+
+    (mk.prendere.length ? '<h3 class="reparto-t">Da prendere</h3><div class="lista">'+mk.prendere.map(x=>
+        riga(x.p, '+'+num(x.guadagno, 1), 'da '+x.p.team+' · meglio di '+cognome(x.alPosto)+pallini3(x.p, g))).join('')+'</div>'
+      : '<p class="nota-lega">Nelle altre rose nessuno vale nettamente più dei tuoi titolari.</p>')+
+    (mk.cedere.length ? '<h3 class="reparto-t">Da proporre in uno scambio</h3><div class="lista">'+mk.cedere.map(p=>
+        riga(p, 'Q '+p.quot, 'fuori dal tuo undici, ma con una quotazione che interessa')).join('')+'</div>' : '')+
+    '<p class="nota-lega">Stima di Jarvis su fantamedia, titolarità e prossimi 3 avversari: un\'idea da trattare, '+
+    'non una certezza. Gli scambi si aprono nelle soste per le nazionali e a gennaio.</p>';
+  if(html !== mercatoDisegnato){ mercatoDisegnato = html; document.getElementById('mercato').innerHTML = html; }
+}
+
 /* ---------- scheda del giocatore ---------- */
 function apriGiocatore(id){
   const p = players.find(x=>x.id===id);
@@ -1320,6 +1549,7 @@ function apriGiocatore(id){
       tessera('quotazione', p.quot)+tessera('partite a voto', giocate ? p.pgv+'/'+giocate : p.pgv)+
       (p.ruolo==='P' ? tessera('gol subiti', b(p.gs))+tessera('rigori parati', b(p.rp))
                      : tessera('gol', b(p.gol))+tessera('assist', b(p.ass)))+'</div>'+
+    graficoVoti(p)+
     (p.amm || p.esp ? '<div class="gio-riga"><span>Cartellini</span><b>'+
       (p.amm ? '<span class="cartellino giallo"></span>'+p.amm+(p.amm===1 ? ' ammonizione' : ' ammonizioni') : '')+
       (p.esp ? '<span class="cartellino rosso"></span>'+p.esp+(p.esp===1 ? ' espulsione' : ' espulsioni') : '')+'</b></div>' : '')+
@@ -1327,6 +1557,8 @@ function apriGiocatore(id){
     stato+
     (m ? '<div class="gio-riga"><span>Giornata '+g[0]+'</span><b>'+(m.casa ? 'in casa con ' : 'a ')+m.avv+
          (oraPartita(p.club, g[1]) ? ' · '+oraBreve(oraPartita(p.club, g[1])) : '')+'</b></div>' : '')+
+    (prossimi3(p, g).length ? '<div class="gio-riga"><span>Prossime 3</span><b class="cal3-testo">'+
+      prossimi3(p, g).map(x=>'<span class="'+x.livello+'">'+(x.casa ? 'vs ' : 'a ')+x.avv+'</span>').join('')+'</b></div>' : '')+
     (f ? '<div class="gio-nota'+(f.delta>=0.2 ? ' buona' : f.delta<=-0.2 ? ' dura' : '')+'">'+motivoAvv(f)+'</div>' : '')+
     '<p class="gio-fonte">Statistiche di fantacalcio.it'+(typeof D.st_v==='string' ? ' del '+dataIt(D.st_v.slice(0,10)) : '')+'</p>';
   apriFoglio('foglio');
@@ -1351,7 +1583,7 @@ function magliaRosa(p, g, i){
   return '<button class="rc'+(st==='fuori' ? ' fuori' : '')+'" data-id="'+p.id+'" data-stato="'+st+'" style="--i:'+i+'">'+
     '<span class="sagoma">'+maglia(p.club)+(t && st!=='fuori' ? '<i class="pallino '+statoTit(t)+'"></i>' : '')+
     '<b class="voto">'+(p.pgv ? p.fm.toFixed(1) : '–')+'</b></span>'+
-    '<span class="rc-nome">'+p.nome+'</span><span class="rc-sotto">'+sotto+'</span></button>';
+    '<span class="rc-nome">'+p.nome+'</span><span class="rc-sotto">'+sotto+'</span>'+pallini3(p, g)+'</button>';
 }
 function renderRosa(){
   const g = prossima();
@@ -1374,7 +1606,9 @@ function renderRosa(){
       '<div class="lista">'+l.map(p=>riga(p, g)).join('')+'</div>';
   }).join('');
   const nome = (FILTRI_ROSA.find(f=>f[0]===filtroRosa) || ['', ''])[1].toLowerCase();
-  rosa.innerHTML = html || '<div class="vuoto">Nessun giocatore «'+nome+'» per questa giornata.</div>';
+  rosa.innerHTML = html ? html+'<p class="nota-lega">I tre pallini sotto ogni maglia sono i prossimi avversari: '+
+      'verde facile, giallo nella media, rosso difficile.</p>'
+    : '<div class="vuoto">Nessun giocatore «'+nome+'» per questa giornata.</div>';
 }
 
 /* ---------- lega ---------- */
@@ -1413,6 +1647,7 @@ function renderLega(){
       '<span class="d"><b class="cond">G'+g[0]+'</b>'+dataIt(g[2]).replace(/^\w+\s/,'')+'</span>'+
       stemma(av.nome)+'<span class="m">'+av.nome+'</span><span class="dove">'+(av.casa?'casa':'fuori')+'</span></div>';
   }).join('')+'</div>';
+  renderMercato(pr);
 }
 
 /* ---------- chiedi ---------- */
@@ -1633,6 +1868,12 @@ function avvisi(g){
                   testo:'È nell\'undici consigliato: guarda le alternative in «Chiedi».'});
     });
   }
+  /* com'è andata: quando escono i voti di una giornata di lega */
+  const ca = comeAndata();
+  if(ca && ca.g)
+    out.push({id:'voti-'+ca.sa, livello:'info', titolo:'Giornata '+ca.g[0]+': com\'è andata',
+              testo:'Voti usciti. '+(ca.consiglio ? 'L\'undici di Jarvis ha fatto '+num(ca.consiglio.tot, 1)+', ' : '')+
+                    'il migliore possibile dei tuoi '+num(ca.migliore.tot, 1)+'. Tutto in cima alla Giornata.'});
   /* il martedì, a giornata finita: rose, calendario e classifica li scarica Claude dal Chrome
      dell'utente, già collegato a Leghe (routine «dati di lega»). Dopo la prima giornata
      giocata ogni settimana, per la classifica; prima, solo se ci sono stati scambi */
@@ -1905,7 +2146,12 @@ function toccaGiocatore(ev){
   const n = ev.target && ev.target.closest ? ev.target.closest('[data-id]') : null;
   if(n) apriGiocatore(+n.dataset.id);
 }
-['campo','sfida','quando','panchina','kobox','rosa'].forEach(id=>{ document.getElementById(id).onclick = toccaGiocatore; });
+['campo','sfida','quando','panchina','kobox','rosa','mercato'].forEach(id=>{ document.getElementById(id).onclick = toccaGiocatore; });
+/* com'è andata: un nome apre il giocatore, il resto della scheda tutti i voti */
+document.getElementById('comeandata').onclick = ev=>{
+  const n = ev.target && ev.target.closest ? ev.target.closest('[data-id]') : null;
+  if(n) apriGiocatore(+n.dataset.id); else apriVoti();
+};
 /* rosa: filtri (sotto il titolo) e vista, maglie o elenco (accanto al titolo) */
 function comandiRosa(ev){
   const b = ev.target && ev.target.closest ? ev.target.closest('button') : null;

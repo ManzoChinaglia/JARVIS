@@ -52,6 +52,8 @@ scripts/importa_lega.py classifica della lega in dati/lega.json, dal file di Leg
 scripts/notifiche.js    manda sull'iPhone gli avvisi nuovi: da Jarvis (Web Push) o con ntfy (gira nel workflow)
 dati/notifiche.json     codici degli avvisi già inviati, per non mandarli due volte
 dati/lega.json          classifica della lega (a mano, con la routine «dati di lega»)
+dati/voti.json          aggiornato automaticamente: voto e fantavoto di ogni giornata di Serie A finita
+dati/consigli.json      l'undici consigliato, salvato dal giro automatico prima di ogni scadenza
 archivio/               file di rose, calendario e classifica già importati (solo sul PC, escluso da Git)
 prove/                  prove automatiche (vedi «Come si prova»)
 .github/workflows/aggiorna.yml   esegue lo script tre volte al giorno, dopo gli aggiornamenti
@@ -238,6 +240,38 @@ nell'undici. Senza orari ufficiali non si mostra niente.
 «Copia la formazione» è stata tolta il 14/09/2026, lo stesso giorno in cui era
 nata: per l'utente è più veloce passare da un'app all'altra, e Leghe non riceve
 formazioni da altre app (sull'iPhone un'app web non può compilarne un'altra).
+
+## Voti, com'è andata, calendario dei tuoi, mercato
+
+Dal 15/09/2026 (quattro idee approvate dall'utente, fatte tutte insieme):
+- **Voti**: `aggiorna.py` (`voti`, `voti_giornata`) scarica la pagina pubblica dei
+  voti di ogni giornata di Serie A finita da almeno 6 ore
+  (`/voti-fantacalcio-serie-a/2026-27/N`): per Id, dal link del giocatore, voto e
+  fantavoto della redazione Fantacalcio (i primi della riga; seguono altre
+  redazioni). Per tre giorni dalla fine si riscarica (i voti si assestano); una
+  giornata con meno di 200 voti non si salva; il file si riscrive solo se cambia.
+- **Consiglio salvato**: `notifiche.js`, a ogni giro prima della scadenza, salva in
+  `dati/consigli.json` undici e panchina della giornata per i tre moduli; dopo la
+  scadenza resta quello dell'ultimo giro prima.
+- **Com'è andata** (`comeAndata`, in cima alla Giornata): l'ultima giornata con i
+  voti, fino alla scadenza della successiva. Il punteggio dell'undici di Jarvis nel
+  modulo scelto (`puntiUndici`, con la regola della lega: chi non prende voto lascia
+  il posto al primo panchinaro dello stesso ruolo), il migliore possibile
+  (`miglioreUndici`, sempre con la difesa a quattro), migliori e peggiori;
+  toccandola, tutti i voti (`apriVoti`). Senza modificatore difesa, e lo dice. Per le
+  giornate di lega arriva la notifica «Giornata N: com'è andata»; prima della lega
+  mostra le giornate di sola Serie A. Servirà alla verifica dei `PESI` (lavoro 1).
+- **Andamento** (`graficoVoti` nella scheda, `miniLinea` nell'elenco della Rosa):
+  fantavoto giornata per giornata; «s.v.» se la sua squadra ha giocato e lui non ha
+  preso voto.
+- **Calendario dei tuoi** (`prossimi3`, `pallini3`): i prossimi 3 avversari sotto
+  ogni maglia della Rosa e nella scheda del giocatore, verde facile, giallo nella
+  media, rosso difficile, con lo stesso calcolo dell'avversario nel consiglio
+  (`forzaSa`).
+- **Mercato, sulla carta** (`mercato`, nella scheda Lega): chi nelle altre rose vale
+  almeno 0,3 più del tuo ultimo titolare dello stesso ruolo (fantamedia stimata,
+  titolarità, prossimi 3 avversari) e i tuoi fuori dall'undici con una quotazione
+  che interessa. È una stima e la pagina lo dice.
 
 ## Movimento e senza rete
 
@@ -447,21 +481,10 @@ lato, e il risultato sarebbe una precisione finta.
    risultati, il **tabellone**: il punteggio della tua sfida nella testata della
    Giornata, al posto del «VS», con un festeggiamento se vinci.
 
-4. **Idee approvate dall'utente il 15/09/2026** (posizioni proposte da Claude, da
-   confermare prima di farle):
-   - **«Com'è andata»** (dopo il 20/09): in cima alla Giornata, dal giorno dopo
-     l'ultima partita fino alla scadenza successiva, voti e fantavoti dei tuoi
-     dalle pagine pubbliche dei voti ufficiali, confrontati con il consiglio; più
-     una notifica quando escono. Serve anche alla verifica dei `PESI` (punto 1).
-   - **Calendario dei tuoi**: nella Rosa, sotto ogni maglia, i prossimi 3
-     avversari da verde (facile) a rosso (difficile); nella scheda del giocatore
-     la riga «Prossime 3». I dati ci sono già (`D.f`, `squadre.json`).
-   - **Consigli di scambio**: nella scheda Lega, sezione «Mercato» sotto la
-     classifica, in evidenza nelle finestre di mercato (soste, gennaio). È una
-     stima e va detto.
-   - **Andamento del giocatore** (dopo 3-4 giornate): nella scheda, grafico dei
-     voti giornata per giornata; nell'elenco della Rosa una mini linea.
-   Niente quinta scheda in basso: sull'iPhone finiva fuori schermo.
+4. **Rivedere con l'utente le quattro funzioni del 15/09** (com'è andata,
+   andamento, calendario dei tuoi, mercato): le ha volute tutte insieme per
+   guardarle in una volta e dire se «abbiamo esagerato». Niente quinta scheda in
+   basso: sull'iPhone finiva fuori schermo.
 
 ## Come si prova
 

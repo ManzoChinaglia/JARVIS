@@ -16,6 +16,9 @@
 // Senza nessun canale non invia e non segna niente, così appena se ne imposta uno
 // arriva tutto. Un errore non fa mai fallire il giro.
 //
+// Prima di ogni scadenza salva anche l'undici consigliato in dati/consigli.json: dopo
+// la giornata l'app lo confronta con i voti veri («com'è andata»).
+//
 // Uso: node scripts/notifiche.js   (con PROVA_NOTIFICHE=true aggiunge una notifica di prova)
 'use strict';
 const crypto = require('crypto'), fs = require('fs'), path = require('path'), vm = require('vm');
@@ -30,8 +33,9 @@ const RIATTIVA = { id: 'riattiva', livello: 'urgente', titolo: 'Riattiva le noti
   testo: 'L\'iPhone ha chiuso l\'iscrizione. Apri Jarvis dalla Home → campanella → «Attiva le notifiche», ' +
          'copia il codice e mettilo su GitHub nel Secret PUSH_ISCRIZIONE. Intanto gli avvisi arrivano qui.' };
 
-/* Gli avvisi calcolati dall'app sui file di dati/. dati: file da sostituire (prove). */
-async function avvisiDellApp({ repo = REPO, adesso = Date.now(), dati = {} } = {}) {
+/* Il codice dell'app sui file di dati/, pronto per chiedergli gli avvisi e il consiglio.
+   dati: file da sostituire (prove). */
+async function appSuiDati({ repo = REPO, adesso = Date.now(), dati = {} } = {}) {
   const html = fs.readFileSync(path.join(repo, 'index.html'), 'utf8');
   const codice = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].pop()[1];
   const VeraData = Date;
@@ -63,11 +67,30 @@ async function avvisiDellApp({ repo = REPO, adesso = Date.now(), dati = {} } = {
   };
   ctx.window = ctx;
   vm.createContext(ctx);
+  // il consiglio: undici e panchina della prossima giornata per ognuno dei tre moduli,
+  // solo prima della scadenza (dopo, resta l'ultimo salvato)
   vm.runInContext(codice + '\n;globalThis.__pronto = () => !!D && mia.length > 0;' +
-                  'globalThis.__avvisi = () => avvisi(prossima());', ctx);
+                  'globalThis.__avvisi = () => avvisi(prossima());' +
+                  'globalThis.__consiglio = () => { const g = prossima(), sc = scadenza(g); if (!sc || oggi() >= sc) return null;' +
+                  ' const prima = modulo, undiciPer = {}, panchinaPer = {};' +
+                  ' for (const m of Object.keys(MODULI)) { modulo = m; const u = undici(g);' +
+                  ' undiciPer[m] = [].concat(u.P, u.D, u.C, u.A).map(p => p.id); panchinaPer[m] = panchina(g).map(p => p.id); }' +
+                  ' modulo = prima; return { giornata: g[0], sa: g[1], undici: undiciPer, panchina: panchinaPer }; };', ctx);
   for (let i = 0; i < 100 && !ctx.__pronto(); i++) await new Promise(r => setTimeout(r, 20));
   if (!ctx.__pronto()) throw new Error('l\'app non ha caricato i dati');
-  return ctx.__avvisi();
+  return ctx;
+}
+async function avvisiDellApp(opzioni) { return (await appSuiDati(opzioni)).__avvisi(); }
+
+/* l'undici consigliato di una giornata, per «com'è andata»: si sovrascrive a ogni giro
+   finché non arriva la scadenza, così resta quello dell'ultimo giro prima */
+function salvaConsiglio(file, c, adesso) {
+  let reg = {};
+  try { reg = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) {}
+  reg.giornate = reg.giornate || {};
+  reg.giornate[String(c.giornata)] = { sa: c.sa, undici: c.undici, panchina: c.panchina, salvato: new Date(adesso).toISOString() };
+  reg.aggiornato = new Date(adesso).toISOString();
+  fs.writeFileSync(file, JSON.stringify(reg));
 }
 
 function leggiRegistro(file) {
@@ -115,8 +138,11 @@ async function ntfy(invia, argomento, a) {
 async function main({ argomento = process.env.NTFY_ARGOMENTO, iscrizione = process.env.PUSH_ISCRIZIONE,
                       chiave = process.env.PUSH_CHIAVE, prova = process.env.PROVA_NOTIFICHE === 'true',
                       invia = fetch, spedisci = spedisciPush, adesso = Date.now(),
-                      registro = REGISTRO, repo = REPO, dati = {} } = {}) {
-  const lista = await avvisiDellApp({ repo, adesso, dati });
+                      registro = REGISTRO, consigli, repo = REPO, dati = {} } = {}) {
+  const app = await appSuiDati({ repo, adesso, dati });
+  const lista = app.__avvisi();
+  const c = app.__consiglio();
+  if (c) salvaConsiglio(consigli || path.join(path.dirname(registro), 'consigli.json'), c, adesso);
   const reg = leggiRegistro(registro), gia = new Set(reg.inviati || []);
   let nuovi = lista.filter(a => !gia.has(a.id));
   if (prova) nuovi.unshift({ id: 'prova-' + new Date(adesso).toISOString(), livello: 'info', titolo: 'Notifica di prova',
@@ -170,4 +196,4 @@ if (require.main === module) {
   // le notifiche non devono mai far fallire il giro: i dati vanno salvati comunque
   main().catch(e => console.log('[notifiche] fallito:', e.message));
 }
-module.exports = { avvisiDellApp, main, MASSIMO, opzioniPush, chiavePubblica, leggiIscrizione };
+module.exports = { avvisiDellApp, appSuiDati, main, MASSIMO, opzioniPush, chiavePubblica, leggiIscrizione };

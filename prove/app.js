@@ -68,7 +68,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,oraPartita,leggiXlsx,classificaDaRighe,importaClassifica,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -661,6 +661,70 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('vista a elenco, ricordata sul telefono', el.rosa.dataset.vista === 'elenco' && memRosa['jarvis-rosa-vista'] === 'elenco');
   ({ el } = await avvia({ adesso: giovedi, memoria: memRosa }));
   verifica('riaprendo l\'app resta l\'elenco', el.rosa.dataset.vista === 'elenco');
+
+  console.log('\n28. Voti: com\'è andata, andamento, calendario dei tuoi, mercato');
+  const martedi = '2026-09-15T12:00:00+02:00';
+  ({ t } = await avvia({ adesso: martedi, dati: { 'titolari.json': null, 'infortuni.json': null, 'voti.json': null } }));
+  const portieri = t.mia.filter(p => p.ruolo === 'P');
+  const sa4 = {};
+  t.mia.filter(p => p.ruolo !== 'P' || p === portieri[0]).forEach((p, k) => { sa4[p.id] = [6 + (k % 3) * 0.5, 5 + (k % 6)]; });
+  const conVoti = { 'titolari.json': null, 'infortuni.json': null, 'consigli.json': null,
+                    'voti.json': { aggiornato: '2026-09-15T08:00:00+00:00', giornate: { '4': sa4 } } };
+  ({ t, el } = await avvia({ adesso: martedi, dati: conVoti }));
+  let ca = t.comeAndata();
+  verifica('prima della lega: com\'è andata la giornata 4 di Serie A', ca && ca.sa === 4 && !ca.g
+           && /Serie A, giornata 4/.test(el.comeandata.innerHTML));
+  const QM = [{ D: 4, C: 3, A: 3 }, { D: 4, C: 4, A: 2 }, { D: 4, C: 5, A: 1 }];
+  const meglioAtteso = Math.max(...QM.map(q => ['P', 'D', 'C', 'A'].reduce((s, r) => s + t.mia
+    .filter(p => p.ruolo === r && sa4[p.id]).map(p => sa4[p.id][1]).sort((a, b) => b - a)
+    .slice(0, r === 'P' ? 1 : q[r]).reduce((x, y) => x + y, 0), 0)));
+  verifica('il migliore possibile con i voti veri, difesa a quattro', Math.abs(ca.migliore.tot - meglioAtteso) < 1e-9
+           && ca.migliore.scelti.filter(p => p.ruolo === 'D').length === 4, ca.migliore.tot);
+  verifica('prima della lega nessuna notifica dei voti', !t.avvisi(t.prossima()).some(a => a.id.startsWith('voti-')));
+  const conVotoC = t.mia.find(p => p.ruolo === 'C' && sa4[p.id]);
+  t.apriGiocatore(conVotoC.id);
+  verifica('andamento nella scheda del giocatore', /Fantavoto giornata per giornata/.test(el['foglio-corpo'].innerHTML)
+           && el['foglio-corpo'].innerHTML.includes('Ultime: ' + sa4[conVotoC.id][1].toFixed(1).replace('.', ',')), conVotoC.nome);
+  const senzaVoto = portieri.find(p => !sa4[p.id] && t.avversarioClub(p.club, 4));
+  if (senzaVoto) {
+    t.apriGiocatore(senzaVoto.id);
+    verifica('chi non ha preso voto: s.v.', /s\.v\./.test(el['foglio-corpo'].innerHTML), senzaVoto.nome);
+  }
+  verifica('com\'è andata sparisce dopo la scadenza della giornata dopo',
+           !(await avvia({ adesso: '2026-09-18T21:00:00+02:00', dati: conVoti })).t.comeAndata());
+  // giornata 1 di lega (Serie A 5): consiglio salvato, un difensore titolare senza voto
+  const perRuolo = r => t.mia.filter(p => p.ruolo === r);
+  const titolariG1 = [...perRuolo('P').slice(0, 1), ...perRuolo('D').slice(0, 4), ...perRuolo('C').slice(0, 3), ...perRuolo('A').slice(0, 3)];
+  const panchinaG1 = t.mia.filter(p => !titolariG1.includes(p));
+  const sa5 = {};
+  t.mia.forEach((p, k) => { sa5[p.id] = [6, 6 + (k % 4)]; });
+  delete sa5[titolariG1[1].id];
+  const entra = panchinaG1.find(p => p.ruolo === 'D');
+  const attesoJ = titolariG1.filter(p => sa5[p.id]).reduce((s, p) => s + sa5[p.id][1], 0) + sa5[entra.id][1];
+  ({ t, el } = await avvia({ adesso: '2026-09-22T12:00:00+02:00', dati: { 'titolari.json': null, 'infortuni.json': null,
+          'voti.json': { aggiornato: 'x', giornate: { '4': sa4, '5': sa5 } },
+          'consigli.json': { giornate: { '1': { sa: 5, undici: { '4-3-3': titolariG1.map(p => p.id) }, panchina: { '4-3-3': panchinaG1.map(p => p.id) } } } } } }));
+  ca = t.comeAndata();
+  verifica('giornata 1 di lega: l\'undici di Jarvis con la sostituzione della lega', ca && ca.g && ca.g[0] === 1 && ca.consiglio
+           && Math.abs(ca.consiglio.tot - attesoJ) < 1e-9 && ca.consiglio.cambi === 1, ca && ca.consiglio && ca.consiglio.tot);
+  verifica('nella scheda l\'undici di Jarvis e il migliore possibile', /undici di Jarvis \(4-3-3, 1 cambio\)/.test(el.comeandata.innerHTML)
+           && /il migliore possibile/.test(el.comeandata.innerHTML));
+  verifica('e la notifica «com\'è andata»', t.avvisi(t.prossima()).some(a => a.id === 'voti-5' && /^Giornata 1: com'è andata/.test(a.titolo)));
+  // calendario dei tuoi e mercato
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'infortuni.json': null, 'squadre.json': sq2 } }));
+  g = t.prossima();
+  const p3 = t.prossimi3(t.mia[0], g);
+  verifica('calendario dei tuoi: i prossimi 3 avversari, dalla giornata che si gioca', p3.length === 3 && p3[0].sa === g[1]
+           && p3.every(x => ['facile', 'media', 'dura', 'nd'].includes(x.livello)), p3.map(x => x.avv + ' ' + x.livello).join(', '));
+  verifica('squadre tutte nella media: pallini gialli', p3.some(x => x.livello === 'media') && p3.every(x => x.livello === 'media' || x.livello === 'nd'));
+  verifica('pallini sotto ogni maglia della rosa', (el.rosa.innerHTML.match(/class="cal3"/g) || []).length === 25);
+  t.apriGiocatore(t.mia[0].id);
+  verifica('nella scheda la riga «Prossime 3»', /Prossime 3/.test(el['foglio-corpo'].innerHTML));
+  const mk = t.mercato(g);
+  verifica('mercato: da prendere solo dalle altre rose, stesso ruolo, meglio del tuo ultimo titolare', mk.prendere.every(x =>
+           x.p.team !== t.ME && x.p.ruolo === x.alPosto.ruolo && x.guadagno >= 0.3), mk.prendere.length + ' da prendere');
+  verifica('da proporre: solo tuoi', mk.cedere.every(p => p.team === t.ME));
+  verifica('sezione Mercato nella Lega, detta come stima', /Mercato, sulla carta/.test(el.mercato.innerHTML) && /Stima di Jarvis/.test(el.mercato.innerHTML));
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
