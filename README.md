@@ -111,8 +111,7 @@ Sotto il campo, **«La sfida, sulla carta»**: il tuo undici contro il migliore 
 tuo avversario, reparto per reparto, con la somma dei punteggi di Jarvis. È una
 stima fatta sulle rose, non il risultato.
 
-**Copia la formazione** copia l'undici per reparto e la panchina numerata, da
-seguire mentre la inserisci su Leghe. **Quando giocano i tuoi** mette in ordine le
+**Quando giocano i tuoi** mette in ordine le
 partite della giornata con i tuoi giocatori, con la scadenza in cima; l'orario c'è
 anche sotto ogni maglia e nella scheda del giocatore.
 

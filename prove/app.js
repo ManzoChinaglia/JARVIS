@@ -67,7 +67,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,testoFormazione,oraPartita,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,oraPartita,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -588,9 +588,10 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('gesti: pannelli da trascinare in giù, schede da scorrere', /function trascinaPerChiudere/.test(html)
            && /dataset\.verso/.test(html) && /changedTouches/.test(html));
   g = t.prossima();
-  const tf = t.testoFormazione(g);
-  verifica('formazione da copiare: undici per reparto e panchina numerata', tf.startsWith(t.ME + ' · giornata 1 contro ' + AVV1)
-           && tutti(t.undici(g)).every(p => tf.includes(p.nome)) && /\nPanchina: 1\. /.test(tf) && tf.split('\n').length === 6, tf.split('\n')[0]);
+  verifica('niente più «Copia la formazione» (sul telefono si fa prima a mano)', !/copia-formazione|testoFormazione/.test(html));
+  verifica('barra come su iOS 26: lente di vetro da trascinare col dito, barra che si stringe scorrendo',
+           /setPointerCapture/.test(html) && /pointermove/.test(html) && /classList\.toggle\('mini'/.test(html)
+           && (html.match(/<nav>[\s\S]*?<\/nav>/)[0].match(/<span>(Giornata|Rosa|Lega|Chiedi)<\/span>/g) || []).length === 4);
   const portiereU = t.undici(g).P[0];
   const conPartite = { ...orariVeri, aggiornato: '2026-09-17T08:00:00+00:00', giornate: { ...orariVeri.giornate,
     '5': { ...orariVeri.giornate['5'], partite: [[portiereU.club, 'Squadra finta', '2026-09-19T16:00:00+00:00']] } } };

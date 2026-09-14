@@ -205,7 +205,7 @@ altre, le iniziali su un colore tutto suo (`COLORI_SQUADRE`, assegnati in ordine
 alfabetico: dieci squadre, dieci colori). Sono nella testata della giornata, nella
 sfida, in classifica e nel calendario. Scelti dall'utente il 14/09/2026.
 
-## Orari dei tuoi e formazione da copiare
+## Orari dei tuoi
 
 `orari.json` ha, per ogni giornata con orario ufficiale, anche `partite`:
 `[casa, fuori, calcio d'inizio]` in ordine di orario (dal 14/09/2026). L'app lo usa
@@ -214,10 +214,9 @@ giocatore e in «Quando giocano i tuoi» (`renderQuando`): la scadenza in cima, 
 le partite dove gioca almeno un tuo giocatore disponibile, in grassetto chi è
 nell'undici. Senza orari ufficiali non si mostra niente.
 
-«Copia la formazione» (`testoFormazione`) copia l'undici per reparto e la panchina
-numerata nell'ordine di Leghe, da tenere sotto gli occhi mentre la si inserisce:
-Leghe non riceve formazioni da altre app, e sull'iPhone un'app web non può
-compilarne un'altra. Senza appunti disponibili si apre la condivisione.
+«Copia la formazione» è stata tolta il 14/09/2026, lo stesso giorno in cui era
+nata: per l'utente è più veloce passare da un'app all'altra, e Leghe non riceve
+formazioni da altre app (sull'iPhone un'app web non può compilarne un'altra).
 
 ## Movimento e senza rete
 
@@ -242,6 +241,15 @@ entrano dal lato verso cui ci si sposta (`data-verso`). All'apertura `#avvio`
 ripete l'immagine d'avvio dell'iPhone (`img/avvio/`, una per schermo, con i
 `media` in `index.html`, ridotte a 256 colori) e sfuma quando i dati sono pronti.
 L'iPhone prende le immagini d'avvio solo aggiungendo di nuovo l'app alla Home.
+
+Barra in basso in stile **Liquid Glass di iOS 26** (richiesta dell'utente,
+14/09/2026): vetro chiaro con riflessi (anche campanella e selettore del modulo);
+la «lente» della scheda attiva si trascina col dito da una scheda all'altra
+(Pointer Events con `setPointerCapture`) e si allarga mentre la tieni; al rilascio,
+o con un tocco semplice, si va alla scheda sotto il dito. Scorrendo la pagina in
+giù la barra si stringe e perde le scritte (`mini`), in su torna. La rifrazione
+vera del vetro sul web non si può fare (Safari non applica filtri SVG allo sfondo):
+la lente la imita con sfocatura, saturazione, luminosità e riflessi.
 
 `sw.js` è il service worker: **prima la rete, poi la copia salvata**. Con la rete
 pagina e dati sono sempre freschi (mai una versione vecchia); senza rete si usa
