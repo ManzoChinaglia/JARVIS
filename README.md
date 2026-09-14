@@ -11,26 +11,36 @@ da lì funziona a schermo intero, come un'app.
 
 ```
 index.html                    l'app (codice, nessun dato dentro)
-font/                         Barlow Condensed e la sua licenza (OFL)
+sw.js                         service worker: l'app funziona anche senza rete
+manifest.webmanifest          nome, colori e icone per la Home
+font/                         Barlow Condensed (600 e 700) e la sua licenza (OFL)
+img/                          icona (Re Guyzo), sfondo (lo stemma), immagini d'avvio
 dati/
   base.json                   rose, calendario lega, calendario Serie A, statistiche
-  infortuni.json              chi è fuori e fino a quando        [automatico]
-  titolari.json               probabili della giornata, in %     [automatico]
-  orari.json                  orari delle giornate di Serie A    [automatico]
-  squadre.json                rendimento in casa e fuori         [automatico]
-  jarvis.ics                  calendario delle scadenze          [automatico]
-  statistiche.json            partite, MV, FM, quotazioni        [automatico]
+  infortuni.json              chi è fuori e fino a quando          [automatico]
+  titolari.json               probabili della giornata, in %       [automatico]
+  orari.json                  orari di ogni partita di Serie A     [automatico]
+  squadre.json                rendimento in casa e fuori           [automatico]
+  statistiche.json            partite, MV, FM, bonus, quotazioni   [automatico]
+  jarvis.ics                  calendario delle scadenze            [automatico]
+  notifiche.json              avvisi già inviati                   [automatico]
+  lega.json                   classifica della lega                [«dati di lega»]
   listone.json                elenco ufficiale, serve agli script
 scripts/
   aggiorna.py                 scarica infortuni, probabili, orari, squadre e statistiche
-  importa_rose.py             aggiorna le rose da rose.csv, dopo uno scambio
+  notifiche.js                manda gli avvisi nuovi sull'iPhone (da Jarvis, ntfy di riserva)
+  importa_rose.py             aggiorna le rose dal file di Leghe, dopo uno scambio
+  importa_lega.py             aggiorna la classifica dal file di Leghe
 .github/workflows/
-  aggiorna.yml                esegue lo script tre volte al giorno
+  aggiorna.yml                esegue script e notifiche tre volte al giorno
 prove/
-  app.js                      prova l'app in Node:     node prove/app.js
-  orari.py                    prova la logica orari:   python prove/orari.py
-  script.py                   prova lo script:         python prove/script.py
-  rose.py                     prova l'import delle rose: python prove/rose.py
+  app.js                      prova l'app in Node:              node prove/app.js
+  notifiche.js                prova le notifiche:               node prove/notifiche.js
+  orari.py                    prova la logica degli orari:      python prove/orari.py
+  script.py                   prova lo script:                  python prove/script.py
+  rose.py                     prova l'import delle rose:        python prove/rose.py
+  lega.py                     prova l'import della classifica:  python prove/lega.py
+  dati/                       file di prova, con numeri inventati
 ```
 
 Il codice e i dati sono separati di proposito: si aggiorna l'uno senza toccare l'altro.
@@ -41,7 +51,8 @@ Il codice e i dati sono separati di proposito: si aggiorna l'uno senza toccare l
 
 | Dato | Fonte | Aggiornamento |
 |---|---|---|
-| Rose delle 10 squadre | file delle rose dall'app di Leghe Fantacalcio | a ogni scambio |
+| Rose delle 10 squadre | file delle rose di Leghe Fantacalcio («dati di lega») | a ogni scambio |
+| Classifica della lega | file della classifica di Leghe Fantacalcio | ogni settimana, dal telefono o con «dati di lega» |
 | Calendario della lega | esportazione da Fantalab | una volta |
 | Calendario Serie A | date ufficiali | una volta |
 | Statistiche giocatori (partite, MV, FM, gol, assist, cartellini) e quotazioni | pagine pubbliche di fantacalcio.it | automatico, 1 volta al giorno |
@@ -54,8 +65,9 @@ La scadenza per schierare la formazione è un quarto d'ora prima del primo antic
 della giornata. Finché la Lega Serie A non fissa gli orari di una giornata, Jarvis
 scrive «orario non ancora ufficiale» invece di stimarla.
 
-L'unico passaggio manuale è scaricare `rose.csv` dopo uno scambio o durante il
-mercato: la lega è privata e richiede il login.
+La lega è privata e richiede il login, quindi rose e classifica non si scaricano da
+sole: le prende Claude dal tuo Chrome quando gli scrivi «dati di lega», oppure
+importi la classifica dal telefono (vedi «Dati della lega»).
 
 ---
 
@@ -192,7 +204,7 @@ perché. Il microfono della tastiera funziona sempre.
 
 ---
 
-## Dopo uno scambio
+## Dati della lega: rose e classifica
 
 Sul PC scrivi a Claude **«dati di lega»** (il martedì Jarvis te lo ricorda).
 Claude apre Leghe Fantacalcio nel tuo Chrome, dove sei già collegato, e scarica

@@ -33,7 +33,7 @@ Indirizzo: https://manzochinaglia.github.io/JARVIS/
 
 ```
 index.html              app completa (HTML, CSS, JS in un file solo)
-font/                   Barlow Condensed in woff2 e la sua licenza (OFL): da Google Fonts
+font/                   Barlow Condensed in woff2 (600 e 700) e la sua licenza (OFL): da Google Fonts
                         sull'iPhone non si caricava, non reintrodurre dipendenze esterne
 img/                    icona per la Home (Re Guyzo, dallo stemma), sfondo (lo stemma intero), avvio/ (immagini d'avvio)
 manifest.webmanifest    nome, colori e icone dell'app per iPhone e browser
@@ -255,22 +255,23 @@ Barra in basso in stile **Liquid Glass di iOS 26** (richiesta dell'utente,
 14/09/2026): vetro chiaro con riflessi (anche campanella e selettore del modulo);
 la «lente» della scheda attiva si trascina col dito da una scheda all'altra
 (Pointer Events con `setPointerCapture`) e si allarga mentre la tieni; al rilascio,
-o con un tocco semplice, si va alla scheda sotto il dito. Scorrendo la pagina in
-giù la barra si stringe e perde le scritte (`mini`), in su torna. La rifrazione
+o con un tocco semplice, si va alla scheda sotto il dito. La barra resta sempre
+grande e fissa: il restringimento scorrendo è stato tolto lo stesso giorno, su
+richiesta dell'utente. La rifrazione
 vera del vetro sul web non si può fare (Safari non applica filtri SVG allo sfondo):
 la lente la imita con sfocatura, saturazione, luminosità e riflessi.
 
-Stesso stile, scelto dall'utente per il resto dell'app: intestazione fissa che
-scorrendo diventa una capsula di vetro (`body.scorso`: JARVIS più piccolo, riga
-dei dati nascosta; è fuori dal flusso, così non fa saltare la pagina), selettore
-del modulo con la lente da trascinare (`scegliModulo`), pannelli di vetro staccati
-dai bordi, pulsanti di vetro che si illuminano nel punto toccato (`.luce`,
-`--gx`/`--gy`). Il vetro va sui controlli che galleggiano, non sui contenuti.
+Stesso stile, scelto dall'utente per il resto dell'app: selettore del modulo con
+la lente da trascinare (`scegliModulo`), pannelli di vetro staccati dai bordi,
+pulsanti di vetro che si illuminano nel punto toccato (`.luce`, `--gx`/`--gy`). Il
+vetro va sui controlli che galleggiano, non sui contenuti. L'intestazione a
+capsula che si stringeva scorrendo è stata tolta lo stesso giorno (non piaceva):
+JARVIS scorre con la pagina.
 
 `sw.js` è il service worker: **prima la rete, poi la copia salvata**. Con la rete
 pagina e dati sono sempre freschi (mai una versione vecchia); senza rete si usa
 l'ultima copia e l'intestazione scrive «senza rete». Se si cambia la lista dei
-file fissi, cambiare anche il nome della cache (ora `jarvis-2`, poi `jarvis-3`).
+file fissi, cambiare anche il nome della cache (ora `jarvis-3`, poi `jarvis-4`).
 
 ## Avvisi e notifiche
 
@@ -343,10 +344,9 @@ Lo script può fallire senza che nessuno lo veda. Due difese:
 
 ## Siri
 
-Il 15/09/2026 l'utente ha deciso di non usare Siri («Jarvis ha tutto»): la guida
-è stata tolta dal README. Resta la risposta a una domanda nell'indirizzo
-(`?q=...`), innocua e provata da `prove/app.js`: l'app risponde solo dopo aver
-caricato i dati, poi toglie `?q=` dall'indirizzo.
+Non si usa: il 14/09/2026 l'utente ha deciso di rinunciare a Siri («Jarvis ha
+tutto»). La guida del README e la risposta alla domanda nell'indirizzo (`?q=`)
+sono state tolte nella pulizia dello stesso giorno.
 
 ## Probabili formazioni
 

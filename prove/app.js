@@ -317,12 +317,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
                                                    'titolari.json': null, 'squadre.json': null } }));
   verifica('file sospetto (meno di 400 giocatori): restano quelle di base.json', P(d1).pgv === base.p.find(a => a[0] === d1)[7]);
 
-  console.log('\n12. Domanda dal Comando Rapido di Siri (?q=...)');
-  ({ t, el } = await avvia({ adesso: '2026-09-13T12:00:00+02:00', search: '?q=chi%20affronto' }));
-  verifica('risponde a dati caricati', new RegExp('affronti ' + AVV1).test(el.risposta.textContent), el.risposta.textContent.replace(/\n/g, ' / '));
-  verifica('la domanda resta nel campo', el.q.value === 'chi affronto', el.q.value);
-  ({ t, el } = await avvia({ adesso: '2026-09-13T12:00:00+02:00', search: '?q=come%20sta%20Baturina' }));
-  verifica('domanda su un giocatore', /Baturina/.test(el.risposta.textContent), el.risposta.textContent.split('\n')[0]);
+  console.log('\n12. Siri non si usa');
+  verifica('niente più domanda dall\'indirizzo (?q=), tolta nella pulizia', !/domandaDaIndirizzo|location\.search/.test(html));
 
   console.log('\n13. Pagina Chiedi');
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'squadre.json': null, 'infortuni.json': null } }));
@@ -380,7 +376,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   console.log('\n14. Font ospitato nel repository');
   verifica('nessuna richiesta a Google Fonts', !/fonts\.(googleapis|gstatic)\.com/.test(html));
   const fonti = [...html.matchAll(/url\("(font\/[^"]+\.woff2)"\)/g)].map(m => m[1]);
-  verifica('tre spessori dichiarati', fonti.length === 3, fonti.join(', '));
+  verifica('due spessori, 600 e 700 (il 500 non lo usava nessuno)', fonti.length === 2 && !fonti.some(f => /500/.test(f)), fonti.join(', '));
   verifica('i file esistono e sono woff2', fonti.every(f => fs.existsSync(path.join(REPO, f)) &&
            fs.readFileSync(path.join(REPO, f)).subarray(0, 4).toString() === 'wOF2'));
   verifica('licenza inclusa', fs.existsSync(path.join(REPO, 'font', 'OFL.txt')));
@@ -449,7 +445,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            && /index\.html/.test(sw) && /barlow-condensed-700\.woff2/.test(sw));
   verifica('service worker registrato solo se il browser lo supporta', /'serviceWorker' in navigator/.test(html));
   verifica('rispetta «Riduci movimento» dell\'iPhone', /prefers-reduced-motion: reduce/.test(html));
-  verifica('cache nuova per i file fissi cambiati', /jarvis-2/.test(sw) && /img\/sfondo\.jpg/.test(sw) && !/stemma\.jpg/.test(sw));
+  verifica('cache nuova per i file fissi cambiati', /jarvis-3/.test(sw) && /img\/sfondo\.jpg/.test(sw) && !/stemma\.jpg|condensed-500/.test(sw));
 
   console.log('\n18. Campo, maglie e schede');
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': prob5, 'squadre.json': null, 'infortuni.json': null } }));
@@ -590,8 +586,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            && /dataset\.verso/.test(html) && /changedTouches/.test(html));
   g = t.prossima();
   verifica('niente più «Copia la formazione» (sul telefono si fa prima a mano)', !/copia-formazione|testoFormazione/.test(html));
-  verifica('barra come su iOS 26: lente di vetro da trascinare col dito, barra che si stringe scorrendo',
-           /setPointerCapture/.test(html) && /pointermove/.test(html) && /classList\.toggle\('mini'/.test(html)
+  verifica('barra come su iOS 26: lente di vetro da trascinare col dito, sempre grande e fissa',
+           /setPointerCapture/.test(html) && /pointermove/.test(html) && !/classList\.toggle\('mini'/.test(html)
            && (html.match(/<nav>[\s\S]*?<\/nav>/)[0].match(/<span>(Giornata|Rosa|Lega|Chiedi)<\/span>/g) || []).length === 4);
   const portiereU = t.undici(g).P[0];
   const conPartite = { ...orariVeri, aggiornato: '2026-09-17T08:00:00+00:00', giornate: { ...orariVeri.giornate,
@@ -642,7 +638,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   }
 
   console.log('\n26. Liquid Glass');
-  verifica('intestazione di vetro che si stringe scorrendo', /body\.scorso \.testa/.test(html) && /classList\.toggle\('scorso'/.test(html));
+  verifica('intestazione normale: niente capsula che si stringe scorrendo (non piaceva)', !/body\.scorso|'scorso'/.test(html));
   verifica('modulo con la lente da trascinare', /selettore\.addEventListener\('pointermove'/.test(html) && /function scegliModulo/.test(html));
   verifica('pannelli di vetro staccati dai bordi', /\.foglio\{left:8px; right:8px/.test(html));
   verifica('pulsanti di vetro che si illuminano al tocco', /\.luce::after/.test(html) && /--gx/.test(html));
