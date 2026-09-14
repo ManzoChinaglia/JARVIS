@@ -306,6 +306,8 @@ def orari(vecchie):
             'inizio': primo.isoformat(),
             'fine': max(vicine).isoformat(),
             'prima': f'{casa}-{fuori}',
+            # ogni partita con il suo orario: l'app dice quando gioca ogni tuo giocatore
+            'partite': [[c, f, q.isoformat()] for q, c, f in lista],
         }
 
     uff = sum(1 for g in giornate.values() if g['ufficiale'])

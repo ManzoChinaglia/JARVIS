@@ -35,7 +35,7 @@ Indirizzo: https://manzochinaglia.github.io/JARVIS/
 index.html              app completa (HTML, CSS, JS in un file solo)
 font/                   Barlow Condensed in woff2 e la sua licenza (OFL): da Google Fonts
                         sull'iPhone non si caricava, non reintrodurre dipendenze esterne
-img/                    icona per la Home (Re Guyzo, dallo stemma) e sfondo (lo stemma intero)
+img/                    icona per la Home (Re Guyzo, dallo stemma), sfondo (lo stemma intero), avvio/ (immagini d'avvio)
 manifest.webmanifest    nome, colori e icone dell'app per iPhone e browser
 sw.js                   service worker: l'app funziona anche senza rete, con l'ultima copia
 dati/base.json          rose, calendario lega, calendario Serie A, statistiche
@@ -48,8 +48,10 @@ dati/statistiche.json   aggiornato automaticamente: partite, MV, FM e quotazioni
 dati/listone.json       elenco ufficiale, usato dagli script
 scripts/aggiorna.py     scarica infortuni, probabili, orari, rendimento delle squadre e statistiche
 scripts/importa_rose.py aggiorna le rose di base.json dal file dell'app di Leghe, dopo scambi o mercato
+scripts/importa_lega.py classifica della lega in dati/lega.json, dal file di Leghe (routine «dati di lega»)
 scripts/notifiche.js    manda sull'iPhone gli avvisi nuovi: da Jarvis (Web Push) o con ntfy (gira nel workflow)
 dati/notifiche.json     codici degli avvisi già inviati, per non mandarli due volte
+dati/lega.json          classifica della lega (a mano, con la routine «dati di lega»)
 archivio/               file delle rose già importati e vecchi file del fantacalcio (solo sul PC, escluso da Git)
 prove/                  prove automatiche (vedi «Come si prova»)
 .github/workflows/aggiorna.yml   esegue lo script tre volte al giorno, dopo gli aggiornamenti
@@ -88,9 +90,30 @@ nella rosa attuale, poi nel listone (dove ogni nome è unico). Si accetta anche
 nessun giocatore in due squadre. Serve `openpyxl` (`pip install openpyxl`), solo
 sul PC.
 
-La lega è privata: le rose richiedono il login, e Claude non fa accessi con la
-password dell'utente (nemmeno tramite uno script, nemmeno se cifrata). Se un
-giorno la lega diventa visibile a tutti, le rose si possono leggere senza login.
+La lega è privata (per renderla pubblica andrebbe rifatta): le rose richiedono il
+login, e Claude non fa accessi con la password dell'utente (nemmeno tramite uno
+script, nemmeno se cifrata, nemmeno con token o cookie copiati).
+
+**Routine «dati di lega» (dal 14/09/2026, provata):** l'utente scrive «dati di
+lega» (o «rose aggiornate»); Claude usa il **Chrome dell'utente** (estensione
+Claude in Chrome) dove l'utente è **già collegato** a Leghe: niente password e
+niente password salvate; se Leghe chiede l'accesso, lo fa l'utente. Ogni download
+va confermato dall'utente. In Leghe solo lettura. Pagine e pulsanti:
+- rose: `/rivoluzione-fantacalcio/view/rosters/<id>` → «Esporta XLSX»
+  (`rivoluzione-fantacalcio-rosters-<numero>.xlsx`)
+- calendario: `/rivoluzione-fantacalcio/calendario` → «SCARICA ORA»
+  (`Calendario_Sborra-league.xlsx`)
+- classifica: `/rivoluzione-fantacalcio/classifica` → «SCARICA ORA»
+  (`Classifica_Sborra-league.xlsx`: Pos, Squadra, G, V, N, P, Gf, Gs, Dr, Pt.,
+  Pt. Totali, con i nomi dell'app)
+
+I pulsanti si cliccano sulle coordinate (il clic sul riferimento dell'albero non
+scarica). Durante «Esporta XLSX» non fare screenshot per ~15 secondi: il 14/09 la
+pagina si è bloccata ed è servita una scheda nuova. Poi `importa_rose.py --prova`
+(e senza, se ci sono scambi) e `importa_lega.py`: classifica in `dati/lega.json`,
+mostrata nella scheda Lega; il file e il calendario scaricato insieme passano in
+`archivio/lega`, con la data nel nome. I crediti rimasti (500 − totale nel file
+delle rose) all'utente non interessano: non si mostrano (scelta del 14/09/2026).
 
 **Statistiche e quotazioni non si aggiornano più a mano**: lo script le prende
 una volta al giorno dalle pagine pubbliche di fantacalcio.it
@@ -182,6 +205,20 @@ altre, le iniziali su un colore tutto suo (`COLORI_SQUADRE`, assegnati in ordine
 alfabetico: dieci squadre, dieci colori). Sono nella testata della giornata, nella
 sfida, in classifica e nel calendario. Scelti dall'utente il 14/09/2026.
 
+## Orari dei tuoi e formazione da copiare
+
+`orari.json` ha, per ogni giornata con orario ufficiale, anche `partite`:
+`[casa, fuori, calcio d'inizio]` in ordine di orario (dal 14/09/2026). L'app lo usa
+(`oraPartita`, `oraBreve`) sotto ogni maglia («sab 18:00»), nella scheda del
+giocatore e in «Quando giocano i tuoi» (`renderQuando`): la scadenza in cima, poi
+le partite dove gioca almeno un tuo giocatore disponibile, in grassetto chi è
+nell'undici. Senza orari ufficiali non si mostra niente.
+
+«Copia la formazione» (`testoFormazione`) copia l'undici per reparto e la panchina
+numerata nell'ordine di Leghe, da tenere sotto gli occhi mentre la si inserisce:
+Leghe non riceve formazioni da altre app, e sull'iPhone un'app web non può
+compilarne un'altra. Senza appunti disponibili si apre la condivisione.
+
 ## Movimento e senza rete
 
 Animazioni con solo CSS e JavaScript (scelta dell'utente, niente framework):
@@ -197,6 +234,14 @@ segnaposto che luccicano durante il caricamento. Con «Riduci movimento»
 dell'iPhone si spengono tutte. «Tira giù per aggiornare» è stato tolto il
 15/09/2026 (all'utente disturbava): i dati si aggiornano da soli all'apertura, al
 ritorno della rete e tornando nell'app dopo mezz'ora; a mano, dalla campanella.
+
+Gesti da iPhone (14/09/2026): i pannelli si chiudono trascinandoli in giù
+(`trascinaPerChiudere`); scorrendo a destra o a sinistra si cambia scheda (non dal
+bordo, che su iPhone serve per tornare indietro, e non sul campo), e i contenuti
+entrano dal lato verso cui ci si sposta (`data-verso`). All'apertura `#avvio`
+ripete l'immagine d'avvio dell'iPhone (`img/avvio/`, una per schermo, con i
+`media` in `index.html`, ridotte a 256 colori) e sfuma quando i dati sono pronti.
+L'iPhone prende le immagini d'avvio solo aggiungendo di nuovo l'app alla Home.
 
 `sw.js` è il service worker: **prima la rete, poi la copia salvata**. Con la rete
 pagina e dati sono sempre freschi (mai una versione vecchia); senza rete si usa
@@ -354,11 +399,10 @@ lato, e il risultato sarebbe una precisione finta.
    campo con le maglie dei club, schede dei giocatori, vetro e animazioni. Altre
    migliorie si concordano con l'utente.
 
-3. **Scheda Lega con classifica e risultati.** La lega è privata (per renderla
-   pubblica andrebbe rifatta) e dall'app di Leghe sull'iPhone non si esporta
-   niente: il calendario con i risultati si scarica dal sito, sul PC, insieme
-   alle rose. È un'azione dell'utente, ricordata dal promemoria del martedì dopo
-   la prima giornata giocata («dati di lega»). Il file (`Calendario_<lega>.xlsx`)
+3. **Risultati e forma nella scheda Lega.** La classifica c'è (14/09/2026,
+   `importa_lega.py` → `dati/lega.json`, routine «dati di lega», ricordata dal
+   promemoria del martedì). Mancano i risultati di ogni giornata e la forma delle
+   squadre, dal calendario scaricato insieme. Il file (`Calendario_<lega>.xlsx`)
    ha per ogni partita: squadra, due numeri, squadra, risultato; prima della
    prima giornata (20/09/2026) sono solo 0 e «-», quindi l'import va scritto sul
    primo file vero, senza indovinare le colonne. Può contenere nomi di persone
@@ -374,6 +418,7 @@ node prove/app.js
 python prove/orari.py
 python prove/script.py
 python prove/rose.py
+python prove/lega.py
 node prove/notifiche.js
 ```
 

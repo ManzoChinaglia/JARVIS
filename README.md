@@ -111,6 +111,11 @@ Sotto il campo, **«La sfida, sulla carta»**: il tuo undici contro il migliore 
 tuo avversario, reparto per reparto, con la somma dei punteggi di Jarvis. È una
 stima fatta sulle rose, non il risultato.
 
+**Copia la formazione** copia l'undici per reparto e la panchina numerata, da
+seguire mentre la inserisci su Leghe. **Quando giocano i tuoi** mette in ordine le
+partite della giornata con i tuoi giocatori, con la scadenza in cima; l'orario c'è
+anche sotto ogni maglia e nella scheda del giocatore.
+
 ---
 
 ## Scadenze nel calendario dell'iPhone
@@ -190,15 +195,14 @@ perché. Il microfono della tastiera funziona sempre.
 
 ## Dopo uno scambio
 
-1. Dal sito di Leghe Fantacalcio, sul PC (dall'app dell'iPhone non si può), scarica il file delle rose
-   («rivoluzione-fantacalcio-rosters-….xlsx»): finisce nella cartella Download,
-   non serve spostarlo né rinominarlo.
-2. Scrivi a Claude «rose aggiornate». Lancia `python scripts/importa_rose.py`,
-   che riconosce le squadre anche se nell'app hanno un nome diverso, controlla il
-   file (10 squadre da 25, ruoli giusti), aggiorna le rose ed elenca gli scambi
-   trovati; poi prove e pubblicazione.
-3. Il file usato viene spostato in `archivio/rose`, dentro la cartella del
-   progetto: la cartella Download resta pulita.
+Sul PC scrivi a Claude **«dati di lega»** (il martedì Jarvis te lo ricorda).
+Claude apre Leghe Fantacalcio nel tuo Chrome, dove sei già collegato, e scarica
+rose, calendario e classifica: niente password, e ogni download te lo chiede
+prima. Poi aggiorna le rose se ci sono stati scambi (`scripts/importa_rose.py`,
+che controlla 10 squadre da 25 con i ruoli giusti) e la classifica della scheda
+Lega (`scripts/importa_lega.py`), fa le prove e ti chiede il via per pubblicare.
+I file usati finiscono in `archivio/`, dentro la cartella del progetto: la
+cartella Download resta pulita.
 
 Statistiche e quotazioni si aggiornano da sole ogni giorno: niente più
 esportazione settimanale.

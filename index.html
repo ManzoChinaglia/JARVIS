@@ -11,6 +11,18 @@
 <link rel="apple-touch-icon" href="img/icona-180.png">
 <link rel="icon" type="image/png" href="img/icona-180.png">
 <link rel="manifest" href="manifest.webmanifest">
+<!-- immagini d'avvio dell'iPhone (dall'icona sulla Home): Re Guyzo e JARVIS invece dello schermo vuoto -->
+<link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="img/avvio/avvio-1320x2868.png">
+<link rel="apple-touch-startup-image" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="img/avvio/avvio-1206x2622.png">
+<link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="img/avvio/avvio-1179x2556.png">
+<link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="img/avvio/avvio-1290x2796.png">
+<link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="img/avvio/avvio-1170x2532.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="img/avvio/avvio-1125x2436.png">
+<link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="img/avvio/avvio-1284x2778.png">
+<link rel="apple-touch-startup-image" media="(device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="img/avvio/avvio-1260x2736.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="img/avvio/avvio-1242x2688.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="img/avvio/avvio-828x1792.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="img/avvio/avvio-750x1334.png">
 <link rel="preload" href="font/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
 <style>
   /* Barlow Condensed ospitato nel repository (SIL Open Font License, font/OFL.txt):
@@ -225,6 +237,37 @@
   .sf-ruolo{width:26px; height:26px; border-radius:8px; display:grid; place-items:center; background:rgba(255,255,255,.06); font-size:14px;}
   .sf-nota{margin:10px 0 0; font-size:11px; line-height:1.45; color:var(--dim);}
 
+  /* ---- quando giocano i tuoi, formazione da copiare ---- */
+  .qg{padding:4px 14px;}
+  .qg-riga{display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--line);}
+  .qg-riga:last-child{border-bottom:none;}
+  .qg-ora{flex-shrink:0; width:76px; font-size:15px; font-weight:700; color:var(--oro-chiaro);}
+  .qg-riga.scad .qg-ora, .qg-riga.scad b{color:#FF6B6B;}
+  .qg-dett{flex:1; min-width:0; font-size:13.5px;}
+  .qg-nomi{margin-top:3px; font-size:12.5px; line-height:1.45; color:var(--dim);}
+  .qg-nomi .in{color:var(--ink); font-weight:600;}
+  .qg-nomi span{cursor:pointer;}
+  .qg-riga.passata{opacity:.45;}
+  .copia-formazione{width:100%; display:flex; align-items:center; justify-content:center; gap:9px; margin:14px 0 0; padding:12px;
+                    border-radius:14px; border:1px solid rgba(252,209,22,.35); background:rgba(252,209,22,.08);
+                    color:var(--oro-chiaro); font-weight:600; font-size:14.5px;}
+  .copia-formazione svg{width:18px; height:18px;}
+  .gioc .ora{max-width:100%; font-size:9px; line-height:1.15; color:var(--oro-chiaro);
+             white-space:nowrap; text-shadow:0 1px 3px rgba(0,0,0,.9);}
+
+  /* ---- apertura: come l'immagine d'avvio dell'iPhone, poi sfuma ---- */
+  .avvio{position:fixed; inset:0; z-index:50; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+         background:radial-gradient(60% 40% at 50% 45%, rgba(228,180,81,.13), transparent 70%), var(--bg);
+         transition:opacity .55s ease, visibility 0s linear .55s;}
+  .avvio img{width:34vw; max-width:170px; aspect-ratio:1; border-radius:50%; object-fit:cover;
+             border:3px solid var(--oro); box-shadow:0 0 0 8px rgba(228,180,81,.12), 0 20px 50px rgba(0,0,0,.6);}
+  .avvio span{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:44px; line-height:1; letter-spacing:.12em; color:var(--oro);}
+  .avvio.via{opacity:0; visibility:hidden;}
+  .avvio.via img{transform:scale(1.08); transition:transform .55s ease;}
+  /* cambiando scheda i contenuti entrano dal lato verso cui ci si sposta */
+  body[data-verso="avanti"] section.on > *{animation-name:daDestra;}
+  body[data-verso="indietro"] section.on > *{animation-name:daSinistra;}
+
   /* ---- righe giocatore ---- */
   .lista{padding:2px 14px;}
   .riga{display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--line); cursor:pointer;}
@@ -264,7 +307,10 @@
               background:linear-gradient(90deg,rgba(228,180,81,.35),var(--oro));}
   .team.io .nome, .team.io .pos{color:var(--accento); font-weight:600;}
   .team.io .barretta i{background:linear-gradient(90deg,var(--bf-rosso),var(--bf-verde));}
-  .team .val{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:19px;}
+  .team .val{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:19px; text-align:right;}
+  .team .nome small{display:block; margin-top:3px; font-size:11px; font-weight:400; color:var(--dim);}
+  .team .val small{display:block; font-family:-apple-system,sans-serif; font-weight:400; font-size:10px; color:var(--dim); letter-spacing:0;}
+  .nota-lega{margin:8px 2px 0; font-size:11.5px; line-height:1.45; color:var(--dim);}
   .cal{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);}
   .cal:last-child{border-bottom:none;}
   .cal .d{display:flex; align-items:baseline; gap:7px; width:90px; flex-shrink:0; font-size:12px; color:var(--dim);}
@@ -442,6 +488,8 @@
     <stop offset="1" stop-color="#000" stop-opacity=".4"/></linearGradient>
 </defs></svg>
 <div class="toast" id="toast"></div>
+<!-- apertura: lo stesso disegno dell'immagine d'avvio, poi sfuma quando i dati sono pronti -->
+<div class="avvio" id="avvio" aria-hidden="true"><img src="img/icona-180.png" alt=""><span>JARVIS</span></div>
 <header>
   <div class="testa">
     <h1 class="titolo" aria-label="JARVIS"><svg viewBox="0 -10 2867 722" aria-hidden="true">
@@ -491,7 +539,9 @@
       <span><i class="pallino si"></i>titolare</span><span><i class="pallino forse"></i>in dubbio</span>
       <span><i class="pallino no"></i>fuori</span>
     </div>
+    <button class="copia-formazione" id="copia-formazione"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="13" rx="2.5"/><path d="M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-7A2.5 2.5 0 0 0 4 5.5v9A2.5 2.5 0 0 0 6.5 17H8"/></svg>Copia la formazione</button>
     <div id="sfida"></div>
+    <div id="quando"></div>
     <div id="panchina"></div>
     <div id="kobox"></div>
     <div class="versione" id="versione"></div>
@@ -503,7 +553,8 @@
   </section>
 
   <section id="s-lega">
-    <h2>Le squadre, per fantamedia della rosa</h2>
+    <div id="classifica"></div>
+    <h2>La forza delle rose, per fantamedia</h2>
     <div id="squadre"></div>
     <h2>Il tuo calendario</h2>
     <div id="calendario"></div>
@@ -592,12 +643,14 @@ async function carica(){
   const ora  = await leggi('orari.json', false);
   const sq   = await leggi('squadre.json', false);
   const st   = await leggi('statistiche.json', false);
+  const lg   = await leggi('lega.json', false);
 
   D = base;
   ME = D.me;
   D.orari = ora && ora.giornate ? ora.giornate : null;
   D.prob  = tit && tit.giornata && tit.titolari ? tit : null;
   D.sq    = sq && sq.squadre ? sq : null;
+  D.lega  = lg && lg.classifica && lg.classifica.length===10 ? lg : null;
   D.inf_v = inf && inf.aggiornato ? inf.aggiornato.slice(0,10) : null;
   D.tit_v = tit && tit.aggiornato ? tit.aggiornato.slice(0,10) : null;
   D.inf_t = inf && inf.aggiornato || null;
@@ -720,6 +773,7 @@ function renderGiornata(){
   const sa = g[1], iso = g[2];
   disegnaCampo(g);
   renderSfida(g);
+  renderQuando(g);
   renderAvvisi();
 }
 
@@ -880,7 +934,7 @@ const RIGHE_CAMPO = {P:88, D:65, C:41, A:17};
 const PASSO = {1:0, 2:30, 3:28, 4:24, 5:20};
 function posizione(r, k, n){
   const esterno = n>2 && (k===0 || k===n-1), passo = PASSO[Math.min(n,5)];
-  const y = RIGHE_CAMPO[r] + (!esterno ? 0 : r==='A' ? 2 : -3);
+  const y = RIGHE_CAMPO[r] + (!esterno ? 0 : r==='A' ? 1 : -2);
   /* larghezza di maglia e nome: lo spazio tra due vicini, così i nomi non si toccano */
   return {x: 50 + (k-(n-1)/2)*passo, y, w: n<3 ? 30 : passo-1};
 }
@@ -889,7 +943,7 @@ function statoTit(t){
   return t.stato==='r' ? 'no' : t.stato==='c' || t.perc<60 ? 'forse' : 'si';
 }
 function cella(p, g, pos, i){
-  const m = avversarioClub(p.club, g[1]);
+  const m = avversarioClub(p.club, g[1]), quando = oraPartita(p.club, g[1]);
   const t = titolarita(p, g);
   const rischio = t && (t.stato==='c' || t.stato==='r' || t.perc<60);
   return '<button class="gioc'+(rischio?' rischio':'')+'" data-id="'+p.id+'" style="left:'+pos.x+'%;top:'+pos.y+'%;width:'+pos.w+'%;--i:'+i+'">'+
@@ -898,6 +952,7 @@ function cella(p, g, pos, i){
       '<b class="voto">'+(p.pgv?p.fm.toFixed(1):'–')+'</b></span>'+
     '<span class="nm">'+p.nome+'</span>'+
     '<span class="av">'+(m ? (m.casa?'vs ':'a ')+m.avv : p.club)+'</span>'+
+    (quando ? '<span class="ora">'+oraBreve(quando)+'</span>' : '')+
   '</button>';
 }
 
@@ -1033,6 +1088,56 @@ function renderSfida(g){
   if(html !== sfidaDisegnata){ sfidaDisegnata = html; document.getElementById('sfida').innerHTML = html; }
 }
 
+/* ---------- quando giocano i tuoi ---------- */
+/* orario della partita del club in quella giornata di Serie A: solo con orari ufficiali */
+function oraPartita(club, sa){
+  const o = D.orari && D.orari[String(sa)];
+  const m = o && o.ufficiale && o.partite && o.partite.find(x=>x[0]===club || x[1]===club);
+  return m ? new Date(m[2]) : null;
+}
+function oraBreve(d){
+  return d.toLocaleString('it-IT',{weekday:'short', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Rome'});
+}
+/* le partite della giornata in cui gioca almeno un tuo giocatore disponibile, in ordine di
+   orario, con in cima la scadenza: in grassetto chi è nell'undici consigliato */
+function renderQuando(g){
+  const box = document.getElementById('quando'), o = orario(g);
+  if(!o || !o.partite){ box.innerHTML = ''; return; }
+  const u = undici(g), scelti = new Set([].concat(u.P,u.D,u.C,u.A).map(p=>p.id));
+  const disp = mia.filter(p=>disponibile(p, g[2])), ora = oggi().getTime();
+  const righe = o.partite.map(([casa, fuori, iso])=>{
+    const miei = disp.filter(p=>p.club===casa || p.club===fuori)
+                     .sort((a,b)=>scelti.has(b.id)-scelti.has(a.id) || ORD[a.ruolo]-ORD[b.ruolo]);
+    if(!miei.length) return '';
+    const d = new Date(iso);
+    return '<div class="qg-riga'+(d.getTime()+2*3600000 < ora ? ' passata' : '')+'"><span class="qg-ora cond">'+oraBreve(d)+'</span>'+
+      '<div class="qg-dett"><b>'+casa+' – '+fuori+'</b><div class="qg-nomi">'+
+      miei.map(p=>'<span data-id="'+p.id+'"'+(scelti.has(p.id) ? ' class="in"' : '')+'>'+p.nome+'</span>').join(', ')+'</div></div></div>';
+  }).join('');
+  const sc = scadenza(g);
+  box.innerHTML = !righe ? '' : '<h2>Quando giocano i tuoi</h2><div class="lista qg">'+
+    (sc ? '<div class="qg-riga scad"><span class="qg-ora cond">'+oraBreve(sc)+'</span><div class="qg-dett"><b>Scadenza della formazione</b></div></div>' : '')+
+    righe+'</div><p class="nota-lega">In grassetto chi è nell\'undici consigliato.</p>';
+}
+
+/* ---------- formazione da copiare ---------- */
+/* il testo da tenere sotto gli occhi mentre la inserisci su Leghe: l'undici per reparto,
+   poi la panchina nell'ordine in cui entra. Leghe non riceve formazioni da altre app. */
+function testoFormazione(g){
+  const u = undici(g), av = avversarioLega(g);
+  return ME+' · giornata '+g[0]+' contro '+av.nome+' · '+modulo+'\n'+
+    ['P','D','C','A'].map(r=>r+': '+u[r].map(p=>p.nome).join(', ')).join('\n')+'\n'+
+    'Panchina: '+panchina(g).map((p,k)=>(k+1)+'. '+p.nome+' ('+p.ruolo+')').join(', ');
+}
+async function copiaFormazione(){
+  const t = testoFormazione(prossima());
+  try{ await navigator.clipboard.writeText(t); toast('Formazione copiata'); }
+  catch(e){
+    if(navigator.share){ try{ await navigator.share({text:t}); }catch(_){} }
+    else toast('Non riesco a copiare: la trovi scritta in «Chiedi» → «Chi schiero?»');
+  }
+}
+
 /* ---------- scheda del giocatore ---------- */
 function apriGiocatore(id){
   const p = players.find(x=>x.id===id);
@@ -1061,7 +1166,8 @@ function apriGiocatore(id){
       (p.esp ? '<span class="cartellino rosso"></span>'+p.esp+(p.esp===1 ? ' espulsione' : ' espulsioni') : '')+'</b></div>' : '')+
     '<div class="gio-riga"><span>Punteggio per il consiglio</span><b class="cond">'+num(punteggio(p, g),2)+'</b></div>'+
     stato+
-    (m ? '<div class="gio-riga"><span>Giornata '+g[0]+'</span><b>'+(m.casa ? 'in casa con ' : 'a ')+m.avv+'</b></div>' : '')+
+    (m ? '<div class="gio-riga"><span>Giornata '+g[0]+'</span><b>'+(m.casa ? 'in casa con ' : 'a ')+m.avv+
+         (oraPartita(p.club, g[1]) ? ' · '+oraBreve(oraPartita(p.club, g[1])) : '')+'</b></div>' : '')+
     (f ? '<div class="gio-nota'+(f.delta>=0.2 ? ' buona' : f.delta<=-0.2 ? ' dura' : '')+'">'+motivoAvv(f)+'</div>' : '')+
     '<p class="gio-fonte">Statistiche di fantacalcio.it'+(typeof D.st_v==='string' ? ' del '+dataIt(D.st_v.slice(0,10)) : '')+'</p>';
   apriFoglio('foglio');
@@ -1078,6 +1184,20 @@ function renderRosa(){
 
 /* ---------- lega ---------- */
 function renderLega(){
+  /* classifica vera, dal file che Leghe fa scaricare (dati/lega.json, routine «dati di lega»):
+     [posizione, squadra, partite, vinte, pari, perse, gol fatti, gol subiti, differenza, punti, fantapunti] */
+  const cl = document.getElementById('classifica');
+  if(D.lega){
+    const n1 = x => Number.isInteger(x) ? String(x) : num(x, 1);
+    const iniziata = D.lega.classifica.some(r=>r[2]>0);
+    cl.innerHTML = '<h2>Classifica</h2><div class="lista">'+D.lega.classifica.map(r=>
+      '<div class="team'+(r[1]===ME?' io':'')+'"><span class="pos cond">'+r[0]+'</span>'+stemma(r[1])+
+      '<span class="nome">'+r[1]+'<small>'+r[2]+(r[2]===1?' partita':' partite')+' · '+r[3]+' V · '+r[4]+' N · '+r[5]+
+      ' P · gol '+r[6]+'-'+r[7]+'</small></span>'+
+      '<span class="val cond">'+n1(r[9])+'<small>'+n1(r[10])+' fantapunti</small></span></div>').join('')+'</div>'+
+      '<p class="nota-lega">'+(iniziata ? '' : 'Si comincia '+dataIt(D.g[0][2])+': la classifica si riempie dopo. ')+
+      'Da Leghe Fantacalcio, aggiornata '+dataIt(D.lega.aggiornato.slice(0,10))+'.</p>';
+  } else cl.innerHTML = '';
   const teams = [...new Set(players.map(p=>p.team))].map(t=>{
     const rosa = players.filter(p=>p.team===t && p.pgv>0);
     const fm = rosa.length ? rosa.reduce((a,b)=>a+b.fm,0)/rosa.length : 0;
@@ -1318,20 +1438,20 @@ function avvisi(g){
                   testo:'È nell\'undici consigliato: guarda le alternative in «Chiedi».'});
     });
   }
-  /* il martedì, a giornata finita. Dall'app di Leghe sull'iPhone non si esporta niente:
-     i file si scaricano dal sito, sul PC. Dopo la prima giornata giocata serve anche il
-     calendario con i risultati, per classifica e risultati della lega */
+  /* il martedì, a giornata finita: rose, calendario e classifica li scarica Claude dal Chrome
+     dell'utente, già collegato a Leghe (routine «dati di lega»). Dopo la prima giornata
+     giocata ogni settimana, per la classifica; prima, solo se ci sono stati scambi */
   if(ora.getDay()===2){
     const giocata = D.g.some(x=>x[2] < isoOggi());
     out.push({id:'rose-martedi-'+isoOggi(), livello:'info',
               titolo: giocata ? 'Dati della lega da aggiornare' : 'Scambi questa settimana?',
               testo: giocata
-                ? 'Dal sito di Leghe Fantacalcio, sul PC, scarica il calendario con i risultati (e il file delle rose, se hai fatto scambi), poi scrivi a Claude «dati di lega».'
-                : 'Se hai fatto scambi, scarica il file delle rose dal sito di Leghe Fantacalcio, sul PC, e scrivi a Claude «rose aggiornate».'});
+                ? 'Sul PC scrivi a Claude «dati di lega»: scarica lui classifica, calendario e rose dal tuo Chrome.'
+                : 'Se hai fatto scambi, sul PC scrivi a Claude «dati di lega»: scarica lui le rose dal tuo Chrome.'});
   }
   else if(D.v && giorniDa(D.v) > 21)
     out.push({id:'rose-'+D.v, livello:'info', titolo:'Rose del '+dataIt(D.v),
-              testo:'Se hai fatto scambi, scarica il file delle rose dal sito di Leghe Fantacalcio, sul PC, e scrivi a Claude «rose aggiornate».'});
+              testo:'Se hai fatto scambi, sul PC scrivi a Claude «dati di lega»: scarica lui le rose dal tuo Chrome.'});
   return out.sort((a,b)=>ORDINE_AVVISI[a.livello]-ORDINE_AVVISI[b.livello]);
 }
 function renderAvvisi(){
@@ -1528,8 +1648,14 @@ document.getElementById('modulo').onclick = ev=>{
 };
 
 /* ---------- avvio ---------- */
+function via(){                    // la schermata d'apertura sfuma e poi sparisce
+  const s = document.getElementById('avvio');
+  s.classList.add('via');
+  setTimeout(()=>{ s.hidden = true; }, 700);
+}
 function avvia(){
   if(document.body) document.body.classList.remove('carica');     // via i segnaposto
+  via();
   /* data della versione: se sull'iPhone è vecchia, l'icona sulla Home tiene una copia vecchia */
   const pubblicata = document.lastModified ? new Date(document.lastModified) : null;
   if(pubblicata && !isNaN(pubblicata))
@@ -1544,6 +1670,9 @@ function avvia(){
 const SCHEDE = ['giornata','rosa','lega','chiedi'];
 document.querySelectorAll('nav button').forEach(b=>{
   b.onclick = ()=>{
+    /* i contenuti entrano dal lato verso cui ci si sposta */
+    const prima = document.querySelector('section.on'), da = prima ? SCHEDE.indexOf(prima.id.slice(2)) : 0;
+    if(document.body) document.body.dataset.verso = SCHEDE.indexOf(b.dataset.s) >= da ? 'avanti' : 'indietro';
     document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
     document.querySelectorAll('section').forEach(s=>
       s.classList.toggle('on', s.id==='s-'+b.dataset.s));
@@ -1563,7 +1692,45 @@ function toccaGiocatore(ev){
   const n = ev.target && ev.target.closest ? ev.target.closest('[data-id]') : null;
   if(n) apriGiocatore(+n.dataset.id);
 }
-['campo','sfida','panchina','kobox','rosa'].forEach(id=>{ document.getElementById(id).onclick = toccaGiocatore; });
+['campo','sfida','quando','panchina','kobox','rosa'].forEach(id=>{ document.getElementById(id).onclick = toccaGiocatore; });
+document.getElementById('copia-formazione').onclick = copiaFormazione;
+
+/* ---------- gesti da iPhone ---------- */
+/* i pannelli si chiudono trascinandoli in giù, dalla maniglia o dall'inizio del contenuto */
+function trascinaPerChiudere(f){
+  let y0 = null, dy = 0;
+  f.addEventListener('touchstart', e=>{ y0 = f.scrollTop<=0 ? e.touches[0].clientY : null; dy = 0; }, {passive:true});
+  f.addEventListener('touchmove', e=>{
+    if(y0===null) return;
+    dy = Math.max(0, e.touches[0].clientY - y0);
+    if(dy>0){ f.style.transition = 'none'; f.style.transform = 'translateY('+dy+'px)'; }
+  }, {passive:true});
+  f.addEventListener('touchend', ()=>{
+    if(y0===null) return;
+    f.style.transition = ''; f.style.transform = '';
+    if(dy > 90) chiudiFogli();
+    y0 = null; dy = 0;
+  });
+}
+if(typeof window.addEventListener==='function'){
+  ['pannello','foglio'].forEach(id=>trascinaPerChiudere(document.getElementById(id)));
+  /* scorrendo col dito a destra o a sinistra si passa alla scheda vicina (non sul campo,
+     non sui campi di testo, non dal bordo, che su iPhone serve per tornare indietro) */
+  let x0 = null, y0 = 0;
+  document.querySelector('main').addEventListener('touchstart', e=>{
+    const t = e.touches[0];
+    x0 = t.clientX > 24 && t.clientX < innerWidth - 24 && !e.target.closest('.campo, input, textarea, .moduli') ? t.clientX : null;
+    y0 = t.clientY;
+  }, {passive:true});
+  document.querySelector('main').addEventListener('touchend', e=>{
+    if(x0===null || document.body.classList.contains('bloccato')) return;
+    const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+    x0 = null;
+    if(Math.abs(dx) < 70 || Math.abs(dx) < 2*Math.abs(dy)) return;
+    const qui = SCHEDE.indexOf(document.querySelector('section.on').id.slice(2)), dopo = qui + (dx < 0 ? 1 : -1);
+    if(dopo >= 0 && dopo < SCHEDE.length) document.querySelector('nav button[data-s="'+SCHEDE[dopo]+'"]').click();
+  }, {passive:true});
+}
 /* domande pronte: toccarle equivale a scriverle */
 document.getElementById('esempi').onclick = ev=>{
   const b = ev.target.closest('button');
@@ -1660,6 +1827,7 @@ if(typeof navigator!=='undefined' && 'serviceWorker' in navigator && location.pr
 carica()
   .then(()=>{ avvia(); domandaDaIndirizzo(); })
   .catch(err=>{
+    via();
     document.querySelector('main').innerHTML =
       '<div class="errore"><b>Dati non disponibili</b><br>'+err.message+
       '<br><br>Se hai appena pubblicato, attendi un minuto e ricarica.</div>';

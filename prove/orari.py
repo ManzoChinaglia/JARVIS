@@ -53,6 +53,10 @@ verifica('12 ufficiali', sum(x['ufficiale'] for x in g.values()) == 12)
 verifica('giornata 13 senza orario inventato', g['13'] == {'ufficiale': False}, g['13'])
 verifica('inizio = prima partita', g['1']['inizio'] == '2026-08-21T18:45:00+00:00', g['1']['inizio'])
 verifica('Internazionale diventa Inter', g['1']['prima'] == 'Inter-Monza', g['1']['prima'])
+verifica('ogni partita con il suo orario, in ordine', len(g['1']['partite']) == 10
+         and g['1']['partite'][0] == ['Inter', 'Monza', '2026-08-21T18:45:00+00:00']
+         and [p[2] for p in g['1']['partite']] == sorted(p[2] for p in g['1']['partite']), g['1']['partite'][0])
+verifica('senza orario ufficiale nessuna partita con orario', 'partite' not in g['13'])
 
 print('\n2. La fonte perde un orario gia\' noto')
 con(feed(ufficiali=12))

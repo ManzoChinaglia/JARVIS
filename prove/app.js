@@ -67,7 +67,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,testoFormazione,oraPartita,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -508,7 +508,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            /setAppBadge/.test(sw) && /aumentaNumero\(\)/.test(sw) && /n !== CACHE && n !== NUMERO/.test(sw));
 
   console.log('\n21. Pulizia e statistiche nella scheda');
-  verifica('niente più «tira giù per aggiornare»', !/id="tira"/.test(html) && !/touchmove/.test(html));
+  verifica('niente più «tira giù per aggiornare»', !/id="tira"/.test(html) && !/Tira giù per aggiornare/.test(html));
   verifica('niente più «tocca un giocatore» sotto il campo', !/tocca un giocatore/.test(html));
   verifica('tornando nell\'app dopo mezz\'ora i dati si aggiornano da soli', /visibilitychange/.test(html) && /30\*60000/.test(html));
   const statB = {};
@@ -560,9 +560,49 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            && /class="stemma"/.test(el.calendario.innerHTML));
   ({ t } = await avvia({ adesso: '2026-09-22T12:00:00+02:00', dati: { 'titolari.json': null, 'infortuni.json': null } }));
   const mar = t.avvisi(t.prossima()).find(a => a.id === 'rose-martedi-2026-09-22');
-  verifica('dopo la prima giornata il martedì chiede anche il calendario con i risultati, dal sito sul PC',
-           mar && mar.titolo === 'Dati della lega da aggiornare' && /calendario con i risultati/.test(mar.testo) && /sul PC/.test(mar.testo),
+  verifica('dopo la prima giornata il martedì chiede i dati della lega: basta scrivere «dati di lega»',
+           mar && mar.titolo === 'Dati della lega da aggiornare' && /«dati di lega»/.test(mar.testo) && /sul PC/i.test(mar.testo),
            mar && mar.titolo);
+
+  console.log('\n23. Classifica della lega');
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'lega.json': null } }));
+  verifica('senza il file della lega nessuna classifica inventata', el.classifica.innerHTML === '');
+  const squadreLega = [...new Set(base.p.map(a => a[4]))];
+  const finta = squadreLega.map((s, k) => [k + 1, s, 1, k < 5 ? 1 : 0, 0, k < 5 ? 0 : 1, 2, 1, 1, k < 5 ? 3 : 0, 70.5 - k]);
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'lega.json': { aggiornato: '2026-09-22T10:00:00+00:00', classifica: finta } } }));
+  const cla = el.classifica.innerHTML;
+  verifica('classifica vera: 10 squadre in ordine, con stemma, punti e fantapunti', (cla.match(/class="stemma"/g) || []).length === 10
+           && cla.indexOf(squadreLega[0]) < cla.indexOf(squadreLega[9]) && cla.includes('70,5 fantapunti') && cla.includes('1 partita'));
+  verifica('la tua squadra in evidenza', new RegExp('<div class="team io"><span class="pos cond">\\d+</span>').test(cla));
+  verifica('nessun credito mostrato', !/credit/i.test(cla));
+  ({ el } = await avvia({ adesso: giovedi, dati: { 'lega.json': { aggiornato: '2026-09-14T10:00:00+00:00',
+          classifica: squadreLega.map((s, k) => [k + 1, s, 0, 0, 0, 0, 0, 0, 0, 0, 0]) } } }));
+  verifica('prima della prima giornata lo dice', /Si comincia/.test(el.classifica.innerHTML));
+
+  console.log('\n24. Avvio, gesti, orari dei tuoi, formazione da copiare');
+  const avvii = [...html.matchAll(/<link rel="apple-touch-startup-image" media="[^"]+" href="(img\/avvio\/[^"]+\.png)">/g)].map(m => m[1]);
+  verifica('immagini d\'avvio per gli iPhone, e i file ci sono', avvii.length >= 10 && avvii.every(f => png(path.join(REPO, f))), avvii.length + ' immagini');
+  const senzaSorprese = { 'titolari.json': null, 'infortuni.json': null };
+  ({ t, el } = await avvia({ adesso: giovedi, dati: senzaSorprese }));
+  verifica('la schermata d\'apertura sfuma quando i dati sono pronti', el.avvio.classList.contains('via'));
+  verifica('gesti: pannelli da trascinare in giù, schede da scorrere', /function trascinaPerChiudere/.test(html)
+           && /dataset\.verso/.test(html) && /changedTouches/.test(html));
+  g = t.prossima();
+  const tf = t.testoFormazione(g);
+  verifica('formazione da copiare: undici per reparto e panchina numerata', tf.startsWith(t.ME + ' · giornata 1 contro ' + AVV1)
+           && tutti(t.undici(g)).every(p => tf.includes(p.nome)) && /\nPanchina: 1\. /.test(tf) && tf.split('\n').length === 6, tf.split('\n')[0]);
+  const portiereU = t.undici(g).P[0];
+  const conPartite = { ...orariVeri, aggiornato: '2026-09-17T08:00:00+00:00', giornate: { ...orariVeri.giornate,
+    '5': { ...orariVeri.giornate['5'], partite: [[portiereU.club, 'Squadra finta', '2026-09-19T16:00:00+00:00']] } } };
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { ...senzaSorprese, 'orari.json': conPartite } }));
+  verifica('sotto la maglia il giorno e l\'ora della partita', el.campo.innerHTML.includes('<span class="ora">sab 18:00</span>'));
+  verifica('«Quando giocano i tuoi»: scadenza in cima, poi la partita con i tuoi', /Quando giocano i tuoi/.test(el.quando.innerHTML)
+           && el.quando.innerHTML.indexOf('Scadenza della formazione') < el.quando.innerHTML.indexOf(portiereU.nome), portiereU.nome);
+  t.apriGiocatore(portiereU.id);
+  verifica('nella scheda anche l\'orario', /sab 18:00/.test(el['foglio-corpo'].innerHTML));
+  ({ el } = await avvia({ adesso: giovedi, dati: { ...senzaSorprese, 'orari.json': { ...orariVeri, aggiornato: '2026-09-17T08:00:00+00:00',
+          giornate: { ...orariVeri.giornate, '5': { ...orariVeri.giornate['5'], partite: undefined } } } } }));
+  verifica('senza gli orari delle partite nessun orario inventato', el.quando.innerHTML === '' && !/class="ora"/.test(el.campo.innerHTML));
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
