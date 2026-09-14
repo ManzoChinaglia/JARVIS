@@ -486,6 +486,37 @@
   .luce::after{opacity:1; transition:none;}
   .importa-lega{margin-top:12px;}
 
+  /* ---- rosa: maglie per reparto o elenco, con i filtri ---- */
+  .rosa-testa{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:22px 0 10px;}
+  .rosa-testa h2{margin:0 2px;}
+  .rosa-comandi{display:flex; align-items:center; gap:8px; margin:0 0 4px;}
+  .filtri{display:flex; gap:6px; min-width:0; overflow-x:auto; scrollbar-width:none;}
+  .filtri::-webkit-scrollbar{display:none;}
+  .filtri button, .vista button{flex-shrink:0; padding:7px 10px; border-radius:18px; font-size:12.5px; color:var(--dim);
+     background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.02)), rgba(14,18,16,.4);
+     border:1px solid rgba(255,255,255,.14); box-shadow:inset 0 1px 0 rgba(255,255,255,.2);
+     -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); transition:color .2s, border-color .2s, background .2s;}
+  .filtri button b{margin-left:3px; color:var(--ink); font-weight:700;}
+  .filtri button.on, .vista button.on{color:var(--oro-chiaro); border-color:rgba(252,209,22,.45);
+     background:linear-gradient(180deg,rgba(255,240,190,.22),rgba(228,180,81,.08)), rgba(46,36,10,.4);}
+  .vista{display:flex; gap:4px; flex-shrink:0;}
+  .vista button{display:grid; place-items:center; padding:7px 9px;}
+  .vista svg{width:16px; height:16px;}
+  #rosa[data-vista="maglie"] .lista, #rosa[data-vista="elenco"] .rosa-griglia{display:none;}
+  .reparto-t small{margin-left:4px; font-size:11px; color:var(--dim);}
+  .rosa-griglia{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .rc{position:relative; min-width:0; display:flex; flex-direction:column; align-items:center; gap:2px; padding:12px 4px 10px;
+      border-radius:18px; color:var(--ink); background:var(--vetro); border:1px solid var(--bordo);
+      -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); box-shadow:0 8px 20px rgba(0,0,0,.25);
+      animation:sale .45s var(--morbida) both; animation-delay:calc(var(--i) * .025s);}
+  .rc .sagoma{width:48px; height:48px; margin-bottom:6px;}
+  .rc-nome{max-width:100%; font-size:12.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .rc-sotto{max-width:100%; font-size:10.5px; line-height:1.3; text-align:center; color:var(--dim); overflow:hidden;}
+  .rc[data-stato="dubbio"]{border-color:rgba(252,209,22,.35);}
+  .rc.fuori{opacity:.6;}
+  .rc.fuori .sagoma{filter:grayscale(.85) drop-shadow(0 7px 6px rgba(0,0,0,.5));}
+  .rc:active{transform:scale(.96);}
+
   /* ---- messaggi in alto ---- */
   .toast{position:fixed; left:50%; top:calc(env(safe-area-inset-top) + 8px); z-index:30;
                 padding:8px 15px; border-radius:18px; font-size:12.5px; color:var(--ink);
@@ -597,7 +628,8 @@
   </section>
 
   <section id="s-rosa">
-    <h2>La tua rosa</h2>
+    <div class="rosa-testa"><h2>La tua rosa</h2><div class="vista" id="rosa-vista"></div></div>
+    <div class="rosa-comandi" id="rosa-comandi"></div>
     <div id="rosa"></div>
   </section>
 
@@ -1301,12 +1333,48 @@ function apriGiocatore(id){
 }
 
 /* ---------- rosa ---------- */
+/* due viste: le maglie per reparto e l'elenco con i dettagli (la scelta resta sul
+   telefono); i filtri valgono per tutte e due */
+let vistaRosa = 'maglie', filtroRosa = 'tutti';
+try{ vistaRosa = localStorage.getItem('jarvis-rosa-vista') || 'maglie'; }catch(e){}
+const FILTRI_ROSA = [['tutti','Tutti'], ['ok','Disponibili'], ['dubbio','In dubbio'], ['fuori','Fuori']];
+function statoRosa(p, g){
+  if(!disponibile(p, g[2])) return 'fuori';
+  const t = titolarita(p, g);
+  return t && (t.stato==='c' || t.stato==='r' || t.perc<60) ? 'dubbio' : 'ok';
+}
+function magliaRosa(p, g, i){
+  const st = statoRosa(p, g), t = titolarita(p, g), m = avversarioClub(p.club, g[1]), quando = oraPartita(p.club, g[1]);
+  const fuori = fuoriGiornata(p, g[2]);
+  const sotto = st==='fuori' ? '<span class="ko">'+(fuori ? fuori.motivo : p.motivo || 'Fuori')+'</span>'
+    : (m ? (m.casa ? 'vs ' : 'a ')+m.avv : p.club)+(quando ? '<br>'+oraBreve(quando) : '');
+  return '<button class="rc'+(st==='fuori' ? ' fuori' : '')+'" data-id="'+p.id+'" data-stato="'+st+'" style="--i:'+i+'">'+
+    '<span class="sagoma">'+maglia(p.club)+(t && st!=='fuori' ? '<i class="pallino '+statoTit(t)+'"></i>' : '')+
+    '<b class="voto">'+(p.pgv ? p.fm.toFixed(1) : '–')+'</b></span>'+
+    '<span class="rc-nome">'+p.nome+'</span><span class="rc-sotto">'+sotto+'</span></button>';
+}
 function renderRosa(){
   const g = prossima();
   const ord = mia.slice().sort((a,b)=>ORD[a.ruolo]-ORD[b.ruolo] || b.fm-a.fm);
-  document.getElementById('rosa').innerHTML = ['P','D','C','A'].map(r=>
-    '<h3 class="reparto-t">'+PLURALI[r]+'</h3><div class="lista">'+
-    ord.filter(p=>p.ruolo===r).map(p=>riga(p,g)).join('')+'</div>').join('');
+  const conta = {tutti: ord.length, ok: 0, dubbio: 0, fuori: 0};
+  ord.forEach(p=>conta[statoRosa(p, g)]++);
+  document.getElementById('rosa-comandi').innerHTML =
+    '<div class="filtri">'+FILTRI_ROSA.map(([k, n])=>'<button data-filtro="'+k+'"'+(k===filtroRosa ? ' class="on"' : '')+'>'+
+      n+'<b>'+conta[k]+'</b></button>').join('')+'</div>';
+  document.getElementById('rosa-vista').innerHTML =
+      '<button data-vista="maglie" aria-label="Maglie"'+(vistaRosa==='maglie' ? ' class="on"' : '')+'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>'+
+      '<button data-vista="elenco" aria-label="Elenco"'+(vistaRosa==='elenco' ? ' class="on"' : '')+'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></button>';
+  const rosa = document.getElementById('rosa');
+  rosa.dataset.vista = vistaRosa;
+  let i = 0;
+  const html = ['P','D','C','A'].map(r=>{
+    const l = ord.filter(p=>p.ruolo===r && (filtroRosa==='tutti' || statoRosa(p, g)===filtroRosa));
+    return !l.length ? '' : '<h3 class="reparto-t">'+PLURALI[r]+'<small>'+l.length+'</small></h3>'+
+      '<div class="rosa-griglia">'+l.map(p=>magliaRosa(p, g, i++)).join('')+'</div>'+
+      '<div class="lista">'+l.map(p=>riga(p, g)).join('')+'</div>';
+  }).join('');
+  const nome = (FILTRI_ROSA.find(f=>f[0]===filtroRosa) || ['', ''])[1].toLowerCase();
+  rosa.innerHTML = html || '<div class="vuoto">Nessun giocatore «'+nome+'» per questa giornata.</div>';
 }
 
 /* ---------- lega ---------- */
@@ -1838,6 +1906,15 @@ function toccaGiocatore(ev){
   if(n) apriGiocatore(+n.dataset.id);
 }
 ['campo','sfida','quando','panchina','kobox','rosa'].forEach(id=>{ document.getElementById(id).onclick = toccaGiocatore; });
+/* rosa: filtri (sotto il titolo) e vista, maglie o elenco (accanto al titolo) */
+function comandiRosa(ev){
+  const b = ev.target && ev.target.closest ? ev.target.closest('button') : null;
+  if(!b) return;
+  if(b.dataset.filtro) filtroRosa = b.dataset.filtro;
+  if(b.dataset.vista){ vistaRosa = b.dataset.vista; try{ localStorage.setItem('jarvis-rosa-vista', vistaRosa); }catch(e){} }
+  renderRosa();
+}
+document.getElementById('rosa-comandi').onclick = document.getElementById('rosa-vista').onclick = comandiRosa;
 
 /* ---------- gesti da iPhone ---------- */
 /* i pannelli si chiudono trascinandoli in giù, dalla maniglia o dall'inizio del contenuto */

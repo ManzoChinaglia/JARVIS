@@ -643,6 +643,25 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('pannelli di vetro staccati dai bordi', /\.foglio\{left:8px; right:8px/.test(html));
   verifica('pulsanti di vetro che si illuminano al tocco', /\.luce::after/.test(html) && /--gx/.test(html));
 
+  console.log('\n27. Rosa: maglie per reparto, elenco e filtri');
+  const memRosa = {};
+  ({ t, el } = await avvia({ adesso: giovedi, memoria: memRosa, dati: { 'titolari.json': indisp5, 'squadre.json': null, 'infortuni.json': null } }));
+  const tessere = r => (r.match(/<button class="rc/g) || []).length;
+  verifica('vista con le maglie: 25 giocatori per reparto, e l\'elenco con i dettagli pronto', el.rosa.dataset.vista === 'maglie'
+           && tessere(el.rosa.innerHTML) === 25 && (el.rosa.innerHTML.match(/<div class="riga/g) || []).length === 25, tessere(el.rosa.innerHTML));
+  const squalificato = el.rosa.innerHTML.match(new RegExp('<button class="rc fuori" data-id="' + d1 + '"[\\s\\S]*?</button>'));
+  verifica('chi è fuori è sbiadito, con il motivo', !!squalificato && /Squalificato/.test(squalificato[0]));
+  verifica('filtri con il numero di giocatori', /Fuori<b>2<\/b>/.test(el['rosa-comandi'].innerHTML) && /Tutti<b>25<\/b>/.test(el['rosa-comandi'].innerHTML),
+           el['rosa-comandi'].innerHTML.replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+  const tocca = ds => el['rosa-comandi'].onclick({ target: { closest: () => ({ dataset: ds }) } });
+  tocca({ filtro: 'fuori' });
+  verifica('filtro «Fuori»: solo i due fuori', tessere(el.rosa.innerHTML) === 2 && el.rosa.innerHTML.includes('data-id="' + d1 + '"'));
+  tocca({ filtro: 'tutti' });
+  tocca({ vista: 'elenco' });
+  verifica('vista a elenco, ricordata sul telefono', el.rosa.dataset.vista === 'elenco' && memRosa['jarvis-rosa-vista'] === 'elenco');
+  ({ el } = await avvia({ adesso: giovedi, memoria: memRosa }));
+  verifica('riaprendo l\'app resta l\'elenco', el.rosa.dataset.vista === 'elenco');
+
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
 })().catch(e => { console.error('ERRORE', e); process.exit(2); });

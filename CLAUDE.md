@@ -41,7 +41,7 @@ sw.js                   service worker: l'app funziona anche senza rete, con l'u
 dati/base.json          rose, calendario lega, calendario Serie A, statistiche
 dati/infortuni.json     aggiornato automaticamente
 dati/titolari.json      aggiornato automaticamente: probabili della prossima giornata, in percentuale
-dati/orari.json         aggiornato automaticamente: primo e ultimo calcio d'inizio di ogni giornata
+dati/orari.json         aggiornato automaticamente: orario di ogni partita, primo e ultimo calcio d'inizio
 dati/squadre.json       aggiornato automaticamente: rendimento casa/fuori, quest'anno e l'anno scorso
 dati/jarvis.ics         generato dallo script: calendario da sottoscrivere sull'iPhone
 dati/statistiche.json   aggiornato automaticamente: partite, MV, FM e quotazioni dalle pagine pubbliche
@@ -52,7 +52,7 @@ scripts/importa_lega.py classifica della lega in dati/lega.json, dal file di Leg
 scripts/notifiche.js    manda sull'iPhone gli avvisi nuovi: da Jarvis (Web Push) o con ntfy (gira nel workflow)
 dati/notifiche.json     codici degli avvisi già inviati, per non mandarli due volte
 dati/lega.json          classifica della lega (a mano, con la routine «dati di lega»)
-archivio/               file delle rose già importati e vecchi file del fantacalcio (solo sul PC, escluso da Git)
+archivio/               file di rose, calendario e classifica già importati (solo sul PC, escluso da Git)
 prove/                  prove automatiche (vedi «Come si prova»)
 .github/workflows/aggiorna.yml   esegue lo script tre volte al giorno, dopo gli aggiornamenti
                                  delle probabili delle 11:30 e delle 19:30 (orari nel file)
@@ -77,7 +77,8 @@ cartella Download) e dice «rose aggiornate». Si lancia prima
 `python scripts/importa_rose.py --prova` (mostra gli scambi senza scrivere),
 poi senza `--prova`; poi prove, commit e push come sempre. Il file usato passa
 da Download a `archivio/rose` (escluso da Git): la cartella resta pulita e non si
-cancella niente. I vecchi file del fantacalcio sono in `archivio/vecchi`.
+cancella niente. I vecchi file dei primi giorni (`archivio/vecchi`) sono andati nel
+Cestino di Windows il 14/09/2026, con l'ok dell'utente.
 
 Il file dell'app ha un blocco per squadra (nome, «costo», 25 giocatori in ordine
 P, D, C, A, riga «totale») e **niente Id**: le squadre si riconoscono dai
@@ -129,7 +130,7 @@ una volta al giorno dalle pagine pubbliche di fantacalcio.it
 (`dati/statistiche.json`, abbinate per Id dal link del giocatore, almeno 400
 giocatori per scrivere) e l'app le applica sopra `base.json`. L'esportazione
 «Lista calciatori» non serve più (quella del 12/09 era filtrata su 5 squadre).
-Dalla stessa pagina arrivano, dal 15/09/2026, gol, gol subiti, rigori parati,
+Dalla stessa pagina arrivano, dal 14/09/2026, gol, gol subiti, rigori parati,
 assist, ammonizioni ed espulsioni (in coda a ogni riga di `statistiche.json`):
 se cambiano solo quelle colonne si salvano le statistiche principali, senza bonus.
 
@@ -196,8 +197,19 @@ Toccando un giocatore, in campo o in una lista, sale la sua scheda
 della sua squadra, gol e assist (per i portieri gol subiti e rigori parati),
 cartellini, punteggio del consiglio, titolarità, partita e avversario, e la data
 delle statistiche. Senza i bonus della fonte compare un trattino. Sotto il campo
-nessuna scritta «tocca un giocatore»: per l'utente è intuitivo (15/09/2026). Il
+nessuna scritta «tocca un giocatore»: per l'utente è intuitivo (14/09/2026). Il
 modulo si sceglie con tre pulsanti sopra il campo.
+
+## Rosa
+
+Due viste (la scelta resta sul telefono, `jarvis-rosa-vista`): **maglie** per
+reparto, tre per riga, ognuna con colori del club, fantamedia, pallino della
+titolarità, avversario e orario; chi è fuori è sbiadito, con il motivo
+(`magliaRosa`); oppure **elenco** con i dettagli (titolarità, avversario, barre).
+Filtri con il numero di giocatori: Tutti, Disponibili, In dubbio, Fuori
+(`statoRosa`: fuori se non disponibile, in dubbio se in panchina, fuori dalle
+probabili o sotto il 60%). Toccando maglia o riga sale la scheda del giocatore.
+Scelta dell'utente del 15/09/2026.
 
 ## La sfida e gli stemmi
 
@@ -240,7 +252,7 @@ cursori che scorrono (barra in basso e modulo), pannelli che salgono dal basso,
 blocchi che salgono uno dopo l'altro cambiando scheda, barre che crescono,
 segnaposto che luccicano durante il caricamento. Con «Riduci movimento»
 dell'iPhone si spengono tutte. «Tira giù per aggiornare» è stato tolto il
-15/09/2026 (all'utente disturbava): i dati si aggiornano da soli all'apertura, al
+14/09/2026 (all'utente disturbava): i dati si aggiornano da soli all'apertura, al
 ritorno della rete e tornando nell'app dopo mezz'ora; a mano, dalla campanella.
 
 Gesti da iPhone (14/09/2026): i pannelli si chiudono trascinandoli in giù
@@ -301,7 +313,7 @@ appena scaricati e invia solo gli avvisi mai inviati (codici in
   sue notifiche. Si attivano una volta dal pannello Avvisi («Attiva le notifiche»,
   solo dall'icona sulla Home, iOS 16.4 o più recente): l'iPhone dà un'iscrizione
   che l'utente copia nel Secret `PUSH_ISCRIZIONE`. Con le notifiche attive il
-  riquadro si nasconde (pannello pulito, scelta dell'utente del 15/09): resta in
+  riquadro si nasconde (pannello pulito, scelta dell'utente del 14/09): resta in
   fondo la riga «Non arrivano più?», che lo riapre. La chiave privata VAPID sta solo
   nel Secret `PUSH_CHIAVE` (generata da Claude e data in chat, mai scritta in un
   file); la pubblica è `CHIAVE_PUSH` in `index.html`. Se si rigenerano le chiavi
@@ -431,7 +443,25 @@ lato, e il risultato sarebbe una precisione finta.
    prima giornata (20/09/2026) sono solo 0 e «-», quindi l'import va scritto sul
    primo file vero, senza indovinare le colonne. Può contenere nomi di persone
    (una squadra si chiamava «Francesco e Fabrizio Fontana»): il file resta in
-   `archivio/`, nel repository vanno solo i dati, con i nomi dell'app.
+   `archivio/`, nel repository vanno solo i dati, con i nomi dell'app. Con i
+   risultati, il **tabellone**: il punteggio della tua sfida nella testata della
+   Giornata, al posto del «VS», con un festeggiamento se vinci.
+
+4. **Idee approvate dall'utente il 15/09/2026** (posizioni proposte da Claude, da
+   confermare prima di farle):
+   - **«Com'è andata»** (dopo il 20/09): in cima alla Giornata, dal giorno dopo
+     l'ultima partita fino alla scadenza successiva, voti e fantavoti dei tuoi
+     dalle pagine pubbliche dei voti ufficiali, confrontati con il consiglio; più
+     una notifica quando escono. Serve anche alla verifica dei `PESI` (punto 1).
+   - **Calendario dei tuoi**: nella Rosa, sotto ogni maglia, i prossimi 3
+     avversari da verde (facile) a rosso (difficile); nella scheda del giocatore
+     la riga «Prossime 3». I dati ci sono già (`D.f`, `squadre.json`).
+   - **Consigli di scambio**: nella scheda Lega, sezione «Mercato» sotto la
+     classifica, in evidenza nelle finestre di mercato (soste, gennaio). È una
+     stima e va detto.
+   - **Andamento del giocatore** (dopo 3-4 giornate): nella scheda, grafico dei
+     voti giornata per giornata; nell'elenco della Rosa una mini linea.
+   Niente quinta scheda in basso: sull'iPhone finiva fuori schermo.
 
 ## Come si prova
 
