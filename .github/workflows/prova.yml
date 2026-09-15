@@ -1,0 +1,46 @@
+name: Prova Jarvis
+
+# Fa girare tutto quello che c'è in prove/ a ogni push e pull request, su
+# qualunque branch: un intervento che rompe qualcosa (da Claude Code sul PC o
+# da una sessione cloud) risulta rosso su GitHub prima di finire su main,
+# invece di scoprirlo aprendo l'app. Vedi CLAUDE.md, «Provare prima di
+# consegnare» e «Lavoro da remoto».
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  prova:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Installa dipendenze Python
+        run: pip install requests beautifulsoup4 lxml openpyxl
+
+      - name: prove/app.js — l'app (script estratto da index.html)
+        run: node prove/app.js
+
+      - name: prove/lega.py — classifica e calendario della lega
+        run: python prove/lega.py
+
+      - name: prove/rose.py — import delle rose
+        run: python prove/rose.py
+
+      - name: prove/orari.py — orari delle partite
+        run: python prove/orari.py
+
+      - name: prove/script.py — aggiornamento dei dati
+        run: python prove/script.py
+
+      - name: prove/notifiche.js — avvisi e notifiche
+        run: node prove/notifiche.js
