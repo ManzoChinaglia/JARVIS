@@ -284,10 +284,19 @@ Dal 15/09/2026 (quattro idee approvate dall'utente, fatte tutte insieme):
   tuo undici migliora di almeno 0,3, chi dai entra nel loro undici e il loro non
   peggiora). Prima gli scambi di esuberi (chi prendi da loro non giocava). Il valore è per la
   stagione (`valoreStagione`: fantamedia stimata e presenze, `presenze`; niente
-  calendario), gli undici con `migliori11`. Al massimo 6, mai lo stesso giocatore
-  chiesto due volte. Nella pagina una riga; in sovraimpressione (`apriMercato`) per
+  calendario), gli undici con `migliori11` (e, per fare in fretta, `perReparto`,
+  `valore11`, `valoreDopo`). Anche **2 contro 2** (scelta dell'utente del 15/09): somme
+  delle quotazioni vicine (15% o 3 punti), fantamedia vera media non più bassa di 0,5,
+  il tuo undici migliora di almeno 0,5 e di almeno 0,2 più del miglior scambio singolo
+  tra quegli stessi giocatori che si potrebbe fare davvero (alla pari e buono anche per
+  loro): il 15/09 il confronto con tutti i singoli, anche quelli impossibili, non
+  lasciava passare nessun 2 contro 2, mentre spesso il secondo giocatore serve proprio
+  a pareggiare le quotazioni. Al massimo 4 singoli e 3 doppi, mai lo stesso giocatore
+  chiesto due volte; il risultato si tiene in memoria (`mercatoMemo`) finché non
+  cambiano i dati o la giornata. Nella pagina una riga; in sovraimpressione (`apriMercato`) per
   ogni scambio chi dai e chi prendi, «per te» e «per loro», chi entra negli undici e
-  la tabella voce per voce. Da fare, se servirà: scambi 2 contro 2.
+  la tabella voce per voce (per i 2 contro 2 i due insieme), in due gruppi: «1 contro
+  1» e «2 contro 2».
 - **La stagione** (`stagione`, riga in cima alla Rosa, `apriStagione`): in cima il
   grafico giornata per giornata dei fantapunti dei tuoi migliori 11 (`graficoStagione`:
   una colonna per giornata, ★ sulla migliore, linea della media), che si tocca per

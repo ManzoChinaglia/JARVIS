@@ -574,6 +574,10 @@
   .sc-lato b{max-width:100%; font-size:16px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .sc-lato small{font-size:11.5px; line-height:1.4; color:var(--dim);}
   .sc-freccia{align-self:center; width:28px; height:28px; color:var(--oro);}
+  .sc-g{display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; max-width:100%;}
+  .sc-g + .sc-g{margin-top:12px;}
+  .sez{margin:22px 4px 10px; font-family:"Barlow Condensed",sans-serif; font-size:23px; font-weight:700; color:var(--ink);}
+  .sovra-corpo > .sez:first-child{margin-top:4px;}
   .sc-conti{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;}
   .sc-conti div{min-width:0; padding:9px 6px; border-radius:14px; text-align:center; background:rgba(0,0,0,.22);}
   .sc-conti span{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
@@ -1692,39 +1696,96 @@ function intoccabili(t){
   ['P','D','C','A'].forEach(r=>piuQuotati(rosa.filter(p=>p.ruolo===r), r==='P' ? 1 : 2).forEach(p=>ids.add(p.id)));
   return ids;
 }
-/* [{dai, prendi, squadra, perMe, perLoro, entra, usciva, entraLoro, esubero}], al massimo 6 */
+/* valori per reparto, dal più alto: così l'undici migliore dopo uno scambio si calcola in
+   fretta (i 2 contro 2 sono decine di migliaia di combinazioni) */
+function perReparto(rosa, val){
+  const r = {P:[], D:[], C:[], A:[]};
+  rosa.forEach(p=>r[p.ruolo].push(val.get(p.id)));
+  Object.values(r).forEach(l=>l.sort((a,b)=>b-a));
+  return r;
+}
+function valore11(r){
+  const s = (k, n) => { let t = 0; for(let i = 0; i < n && i < r[k].length; i++) t += r[k][i]; return t; };
+  return Math.max(...Object.values(MODULI).map(q=>s('P', 1) + s('D', q.D) + s('C', q.C) + s('A', q.A)));
+}
+/* il valore dell'undici dopo uno scambio: fuori quelli che dai, dentro quelli che prendi */
+function valoreDopo(r, via, dentro, val){
+  const n = Object.assign({}, r), toccati = new Set(via.concat(dentro).map(p=>p.ruolo));
+  toccati.forEach(k=>{ n[k] = r[k].slice(); });
+  via.forEach(p=>{ const i = n[p.ruolo].indexOf(val.get(p.id)); if(i >= 0) n[p.ruolo].splice(i, 1); });
+  dentro.forEach(p=>n[p.ruolo].push(val.get(p.id)));
+  toccati.forEach(k=>n[k].sort((a,b)=>b-a));
+  return valore11(n);
+}
+/* {singoli: 1 contro 1 (al massimo 4), doppi: 2 contro 2 (al massimo 3)}; ogni scambio
+   {dai: [...], prendi: [...], squadra, perMe, perLoro, esubero, entrano, escono, entranoLoro, esconoLoro}.
+   Un 2 contro 2 chiede di più (0,5 per te) e deve rendere almeno 0,2 più del miglior
+   scambio singolo tra quegli stessi giocatori: altrimenti basta il singolo */
+let mercatoMemo = null;
 function mercato(g){
+  if(mercatoMemo && mercatoMemo.players===players && mercatoMemo.sa===g[1]) return mercatoMemo.r;
   const val = new Map(players.map(p=>[p.id, valoreStagione(p)]));
   const rosaDi = t => players.filter(p=>p.team===t && disponibile(p, g[2]));
-  const fmVera = p => p.pgv >= 2 ? p.fm : null;
-  const mia0 = rosaDi(ME), base = migliori11(mia0, val), idee = [];
+  const somma = l => l.reduce((s,p)=>s + p.quot, 0);
+  const fmVera = l => l.every(p=>p.pgv >= 2) ? l.reduce((s,p)=>s + p.fm, 0)/l.length : null;
+  const coppie = l => l.flatMap((a,i)=>l.slice(i + 1).map(b=>[a, b]));
+  const mia0 = rosaDi(ME), mioR = perReparto(mia0, val), mioBase = valore11(mioR), mieCoppie = coppie(mia0);
+  const singoli = [], doppi = [], squadre = {};
   [...new Set(players.map(p=>p.team))].filter(t=>t!==ME).forEach(t=>{
-    const loro0 = rosaDi(t), baseLoro = migliori11(loro0, val), forti = intoccabili(t);
-    loro0.filter(y=>!forti.has(y.id)).forEach(y=>mia0.forEach(x=>{
-      if(Math.abs(x.quot - y.quot) > Math.max(2, 0.15*Math.max(x.quot, y.quot))) return;
-      if(fmVera(x)!==null && fmVera(y)!==null && fmVera(x) < fmVera(y) - 0.5) return;
-      const dopo = migliori11(mia0.filter(p=>p!==x).concat(y), val), perMe = dopo.tot - base.tot;
-      if(perMe < 0.3) return;
-      const dopoLoro = migliori11(loro0.filter(p=>p!==y).concat(x), val), perLoro = dopoLoro.tot - baseLoro.tot;
-      if(perLoro < 0 || !dopoLoro.ids.has(x.id)) return;
-      idee.push({dai: x, prendi: y, squadra: t, perMe, perLoro, entraLoro: true, esubero: !baseLoro.ids.has(y.id),
-                 entra: dopo.ids.has(y.id), usciva: base.ids.has(x.id)});
+    const loro0 = rosaDi(t), loroR = perReparto(loro0, val), loroBase = valore11(loroR), forti = intoccabili(t);
+    const titolari = migliori11(loro0, val).ids, cedibili = loro0.filter(y=>!forti.has(y.id));
+    squadre[t] = loro0;
+    const prova = (dai, prendi, minimo, scarto) => {
+      const qd = somma(dai), qp = somma(prendi);
+      if(Math.abs(qd - qp) > Math.max(scarto, 0.15*Math.max(qd, qp))) return null;
+      const fd = fmVera(dai), fp = fmVera(prendi);
+      if(fd!==null && fp!==null && fd < fp - 0.5) return null;
+      const perMe = valoreDopo(mioR, dai, prendi, val) - mioBase;
+      if(perMe < minimo) return null;
+      const perLoro = valoreDopo(loroR, prendi, dai, val) - loroBase;
+      return perLoro < 0 ? null : {dai, prendi, squadra: t, perMe, perLoro, esubero: prendi.every(p=>!titolari.has(p.id))};
+    };
+    cedibili.forEach(y=>mia0.forEach(x=>{ const i = prova([x], [y], 0.3, 2); if(i) singoli.push(i); }));
+    coppie(cedibili).forEach(py=>mieCoppie.forEach(px=>{
+      const i = prova(px, py, 0.5, 3);
+      if(!i) return;
+      /* il confronto è con i singoli che si potrebbero fare davvero (alla pari, buoni anche per
+         loro): spesso il secondo giocatore serve proprio a pareggiare le quotazioni */
+      const fattibili = px.flatMap(x=>py.map(y=>prova([x], [y], -Infinity, 2))).filter(Boolean);
+      i.meglioSingolo = fattibili.length ? Math.max(...fattibili.map(s=>s.perMe)) : 0;
+      if(i.perMe >= i.meglioSingolo + 0.2) doppi.push(i);
     }));
   });
-  /* prima gli esuberi; senza chiedere due volte lo stesso giocatore e offrendo lo stesso tuo al massimo due volte */
-  idee.sort((a,b)=>b.esubero-a.esubero || b.perMe-a.perMe || b.perLoro-a.perLoro);
-  const scelte = [], chiesti = new Set(), offerti = new Map();
-  idee.forEach(i=>{
-    if(scelte.length >= 6 || chiesti.has(i.prendi.id) || (offerti.get(i.dai.id) || 0) >= 2) return;
-    chiesti.add(i.prendi.id); offerti.set(i.dai.id, (offerti.get(i.dai.id) || 0) + 1); scelte.push(i);
-  });
-  return scelte;
+  /* chi entra e chi esce dagli undici; chi dai deve entrare nel loro, o per loro non ha senso */
+  const descrivi = i => {
+    const loro0 = squadre[i.squadra], prima = migliori11(mia0, val), dopo = migliori11(mia0.filter(p=>!i.dai.includes(p)).concat(i.prendi), val);
+    const primaLoro = migliori11(loro0, val), dopoLoro = migliori11(loro0.filter(p=>!i.prendi.includes(p)).concat(i.dai), val);
+    return Object.assign(i, {entrano: i.prendi.filter(p=>dopo.ids.has(p.id)), escono: i.dai.filter(p=>prima.ids.has(p.id)),
+      entranoLoro: i.dai.filter(p=>dopoLoro.ids.has(p.id)), esconoLoro: i.prendi.filter(p=>primaLoro.ids.has(p.id))});
+  };
+  /* prima gli esuberi; mai lo stesso giocatore chiesto due volte, lo stesso tuo offerto al massimo due volte */
+  const chiesti = new Set(), offerti = new Map();
+  const scegli = (idee, quanti) => {
+    const scelte = [];
+    idee.sort((a,b)=>b.esubero - a.esubero || b.perMe - a.perMe || b.perLoro - a.perLoro).forEach(i=>{
+      if(scelte.length >= quanti || i.prendi.some(p=>chiesti.has(p.id)) || i.dai.some(p=>(offerti.get(p.id) || 0) >= 2)) return;
+      if(!descrivi(i).entranoLoro.length) return;
+      i.prendi.forEach(p=>chiesti.add(p.id));
+      i.dai.forEach(p=>offerti.set(p.id, (offerti.get(p.id) || 0) + 1));
+      scelte.push(i);
+    });
+    return scelte;
+  };
+  const r = {singoli: scegli(singoli, 4), doppi: scegli(doppi, 3)};
+  mercatoMemo = {players, sa: g[1], r};
+  return r;
 }
 let mercatoDisegnato = '';
 function renderMercato(g){
-  const mk = mercato(g);
-  const html = invito(ICONA_MERCATO, 'Mercato, sulla carta', mk.length ? mk.length+(mk.length===1 ? ' scambio alla pari' : ' scambi alla pari')
-    : 'Nessuno scambio alla pari', mk.length ? 'Il migliore: '+mk[0].dai.nome+' per '+mk[0].prendi.nome+', +'+num(mk[0].perMe) : '');
+  const mk = mercato(g), tutti = mk.singoli.concat(mk.doppi), primo = tutti[0], n = tutti.length;
+  const nomi = l => l.map(p=>p.nome).join(' e ');
+  const html = invito(ICONA_MERCATO, 'Mercato, sulla carta', n ? n+(n===1 ? ' scambio alla pari' : ' scambi alla pari')
+    : 'Nessuno scambio alla pari', primo ? 'Il migliore: '+nomi(primo.dai)+' per '+nomi(primo.prendi)+', +'+num(primo.perMe) : '');
   if(html !== mercatoDisegnato){ mercatoDisegnato = html; document.getElementById('mercato').innerHTML = html; }
 }
 const FRECCE = '<svg class="sc-freccia" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h15l-4-4M20 15H5l4 4"/></svg>';
@@ -1734,8 +1795,9 @@ function apriMercato(g){
   g = g || prossima();
   const mk = mercato(g);
   const segno = x => (x >= 0.05 ? '+' : x <= -0.05 ? '−' : '')+num(Math.abs(x));
-  const lato = (cl, k, p) => '<div class="sc-lato '+cl+'" data-id="'+p.id+'"><span class="k">'+k+'</span>'+maglia(p.club)+
+  const persona = p => '<div class="sc-g" data-id="'+p.id+'">'+maglia(p.club)+
     '<b>'+p.nome+'</b><small>'+RUOLI[p.ruolo]+' · '+p.club+'<br>quotazione '+p.quot+'</small></div>';
+  const lato = (cl, k, l) => '<div class="sc-lato '+cl+'"><span class="k">'+k+'</span>'+l.map(persona).join('')+'</div>';
   const riga = (k, x, y, a, b, cl) => {
     const m = a > b + 0.05 ? [' class="meglio"', ''] : b > a + 0.05 ? ['', ' class="meglio"'] : ['', ''];
     return '<tr'+(cl ? ' class="'+cl+'"' : '')+'><th>'+k+'</th><td'+m[0]+'>'+x+'</td><td'+m[1]+'>'+y+'</td></tr>';
@@ -1743,19 +1805,37 @@ function apriMercato(g){
   const pres = p => { const x = presenze(p); return x ? x.giocate+'/'+x.di : '–'; };
   const quota = p => { const x = presenze(p); return x ? x.giocate/x.di : 0; };
   const vera = p => '<small>vera '+(p.pgv ? num(p.fm) : '–')+'</small>';
-  const tabella = (a, b) => '<table class="mk-tab"><thead><tr><th></th><td>'+cognome(a)+'</td><td>'+cognome(b)+'</td></tr></thead><tbody>'+
-    riga('Fantamedia', num(fmStimata(a))+vera(a), num(fmStimata(b))+vera(b), fmStimata(a), fmStimata(b))+
-    riga('Presenze', pres(a), pres(b), quota(a), quota(b))+
-    riga('Valore Jarvis', num(valoreStagione(a)), num(valoreStagione(b)), valoreStagione(a), valoreStagione(b), 'tot')+'</tbody></table>';
+  const tot = (l, f) => l.reduce((s,p)=>s + f(p), 0);
+  /* 1 contro 1: giocatore contro giocatore; 2 contro 2: i due insieme, contro i due */
+  const tabella = i => {
+    if(i.dai.length===1){
+      const a = i.dai[0], b = i.prendi[0];
+      return '<table class="mk-tab"><thead><tr><th></th><td>'+cognome(a)+'</td><td>'+cognome(b)+'</td></tr></thead><tbody>'+
+        riga('Fantamedia', num(fmStimata(a))+vera(a), num(fmStimata(b))+vera(b), fmStimata(a), fmStimata(b))+
+        riga('Presenze', pres(a), pres(b), quota(a), quota(b))+
+        riga('Valore Jarvis', num(valoreStagione(a)), num(valoreStagione(b)), valoreStagione(a), valoreStagione(b), 'tot')+'</tbody></table>';
+    }
+    const fa = tot(i.dai, fmStimata)/i.dai.length, fb = tot(i.prendi, fmStimata)/i.prendi.length;
+    const va = tot(i.dai, valoreStagione), vb = tot(i.prendi, valoreStagione);
+    return '<table class="mk-tab"><thead><tr><th></th><td>Dai</td><td>Prendi</td></tr></thead><tbody>'+
+      riga('Quotazione', tot(i.dai, p=>p.quot), tot(i.prendi, p=>p.quot), 0, 0)+
+      riga('Fantamedia', num(fa), num(fb), fa, fb)+
+      riga('Valore Jarvis', num(va), num(vb), va, vb, 'tot')+'</tbody></table>';
+  };
+  const nomi = l => l.map(p=>'<b>'+p.nome+'</b>').join(' e '), semplici = l => l.map(p=>p.nome).join(' e ');
+  const perche = i => 'Da te '+(i.entrano.length ? nomi(i.entrano)+(i.entrano.length > 1 ? ' entrano' : ' entra')+' nell\'undici' : 'l\'undici non cambia')+
+    (i.escono.length ? ', '+semplici(i.escono)+(i.escono.length > 1 ? ' ne escono' : ' ne esce') : '')+
+    '. Da loro '+nomi(i.entranoLoro)+(i.entranoLoro.length > 1 ? ' entrano' : ' entra')+' nell\'undici'+
+    (i.esconoLoro.length ? ', '+semplici(i.esconoLoro)+(i.esconoLoro.length > 1 ? ' ne escono.' : ' ne esce.') : ', chi ti danno non giocava.');
   const carta = i => '<div class="blocco mk">'+
     '<div class="sc-coppia">'+lato('dai', 'Dai', i.dai)+FRECCE+lato('prendi', 'Prendi', i.prendi)+'</div>'+
     '<div class="sc-conti"><div><span>Per te</span><b class="cond'+(i.perMe >= 0.05 ? ' su' : '')+'">'+segno(i.perMe)+'</b></div>'+
       '<div><span>Per '+i.squadra+'</span><b class="cond'+(i.perLoro >= 0.05 ? ' su' : '')+'">'+segno(i.perLoro)+'</b></div></div>'+
-    '<p class="sc-perche">Da te <b>'+i.prendi.nome+'</b> '+(i.entra ? 'entra nell\'undici' : 'parte dalla panchina')+
-      (i.usciva ? ', '+i.dai.nome+' ne esce' : ', '+i.dai.nome+' non ci giocava')+'. Da loro <b>'+i.dai.nome+'</b> entra nell\'undici'+
-      (i.esubero ? ', '+i.prendi.nome+' non ci giocava.' : ', '+i.prendi.nome+' ne esce.')+'</p>'+tabella(i.dai, i.prendi)+'</div>';
+    '<p class="sc-perche">'+perche(i)+'</p>'+tabella(i)+'</div>';
+  const html = (mk.singoli.length ? '<h3 class="sez">1 contro 1</h3>'+mk.singoli.map(carta).join('') : '')+
+               (mk.doppi.length ? '<h3 class="sez">2 contro 2</h3>'+mk.doppi.map(carta).join('') : '');
   apriSovra('Mercato, sulla carta', 'Scambi alla pari',
-    mk.length ? mk.map(carta).join('') : '<div class="blocco"><p>Nessuno scambio alla pari conviene a tutti e due, per ora.</p></div>');
+    html || '<div class="blocco"><p>Nessuno scambio alla pari conviene a tutti e due, per ora.</p></div>');
 }
 
 /* ---------- la stagione ---------- */
