@@ -273,18 +273,28 @@ Dal 15/09/2026 (quattro idee approvate dall'utente, fatte tutte insieme):
   (`forzaSa`).
 - **Mercato, sulla carta** (`mercato`, nella scheda Lega), rifatto il 15/09 perché
   il primo proponeva di prendere senza dare («Dinastia Fontana non mi darebbe mai
-  Malen»). Scambi **1 contro 1, anche tra ruoli diversi** (regola della lega,
-  confermata dall'utente; niente crediti): quotazioni alla pari (entro il 15% o 2
-  punti), mai le due quotazioni più alte di una rosa (i loro big), il tuo undici
-  migliora di almeno 0,3 e il loro non peggiora (più di 0,1). Il valore è per la
+  Malen»), e di nuovo lo stesso giorno perché «ragiona troppo per numeri»: deve
+  pensare come una persona in un fantacalcio vero («Palle Sudate non mi darà mai
+  uno dei suoi due top attaccanti per Hermoso»). Scambi **1 contro 1, anche tra
+  ruoli diversi** (regola della lega, confermata dall'utente; niente crediti):
+  nessuno cede i pezzi forti (`intoccabili`: i due più quotati di ogni reparto, il
+  portiere più quotato, i tre più quotati della rosa); alla pari a vista, perché
+  l'altro guarda quotazione e fantamedia (quotazioni entro il 15% o 2 punti, e chi
+  dai non ha una fantamedia vera più bassa di oltre 0,5); serve a tutti e due (il
+  tuo undici migliora di almeno 0,3, chi dai entra nel loro undici e il loro non
+  peggiora). Prima gli scambi di esuberi (chi prendi da loro non giocava). Il valore è per la
   stagione (`valoreStagione`: fantamedia stimata e presenze, `presenze`; niente
   calendario), gli undici con `migliori11`. Al massimo 6, mai lo stesso giocatore
   chiesto due volte. Nella pagina una riga; in sovraimpressione (`apriMercato`) per
   ogni scambio chi dai e chi prendi, «per te» e «per loro», chi entra negli undici e
   la tabella voce per voce. Da fare, se servirà: scambi 2 contro 2.
-- **La stagione** (`stagione`, riga in cima alla Rosa, `apriStagione`): gol, assist,
-  ammonizioni dei tuoi e «chi produce», i fantapunti di ognuno in tutte le giornate
-  con i voti, con media e bonus e malus. Scelta dell'utente: con le formazioni vere
+- **La stagione** (`stagione`, riga in cima alla Rosa, `apriStagione`): in cima il
+  grafico giornata per giornata dei fantapunti dei tuoi migliori 11 (`graficoStagione`:
+  una colonna per giornata, ★ sulla migliore, linea della media), che si tocca per
+  aprire sotto la giornata (`scegliGiornata`, `dettaglioGiornata`: totale, «la
+  migliore»/«la peggiore», porta, difesa, centrocampo, attacco e gli 11 con voto e
+  bonus; frecce per le altre). Poi gol, assist, ammonizioni dei tuoi e «chi produce»,
+  i fantapunti di ognuno in tutte le giornate, con media e bonus e malus. Scelta dell'utente: con le formazioni vere
   (lavoro aperto 3) dirà anche chi era schierato e chi ha prodotto il totale vero.
 
 **Sovraimpressione** (15/09/2026, scelta dell'utente, da usare per ogni sezione che

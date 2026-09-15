@@ -68,7 +68,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,apriStagione,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,apriStagione,scegliGiornata,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -694,10 +694,28 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   t.apriStagione();
   const st = t.stagione(), sst = el['sovra-corpo'].innerHTML;
   const piuAlto = Math.max(...t.mia.map(p => sa4[p.id] ? sa4[p.id][1] : 0));
-  verifica('chi produce: tutti i tuoi, dal più prolifico', (sst.match(/class="vr"/g) || []).length === t.mia.length
+  verifica('chi produce: tutti i tuoi, dal più prolifico', (sst.match(/class="vr prod"/g) || []).length === t.mia.length
            && Math.abs(st.righe[0].tot - piuAlto) < 1e-9 && st.righe.every((x, i) => !i || st.righe[i - 1].tot >= x.tot), st.righe[0].p.nome);
   verifica('con gol, assist e ammonizioni dei tuoi', ['Gol', 'Assist', 'Ammonizioni'].every(k => sst.includes(k)));
   t.chiudiSovra();
+  // giornata per giornata, da navigare
+  const sa3 = {};
+  t.mia.forEach((p, k) => { sa3[p.id] = [6, 4 + (k % 3)]; });
+  ({ t, el } = await avvia({ adesso: martedi, dati: Object.assign({}, conVoti, { 'voti.json': { aggiornato: 'x', giornate: { '3': sa3, '4': sa4 } } }) }));
+  const st2 = t.stagione();
+  verifica('giornata per giornata: i migliori 11 di ogni giornata, reparto per reparto', st2.per.length === 2 && st2.per.every(x =>
+           x.scelti.length === 11 && x.scelti.filter(p => p.ruolo === 'D').length === 4
+           && Math.abs(x.tot - ['P', 'D', 'C', 'A'].reduce((s, r) => s + x.reparti[r], 0)) < 1e-9), st2.per.map(x => x.tot).join(' e '));
+  t.apriStagione();
+  const piccoSt = st2.per.reduce((a, b) => b.tot > a.tot ? b : a), altraSt = st2.per.find(x => x !== piccoSt).sa;
+  sc = el['sovra-corpo'].innerHTML;
+  verifica('il grafico: una colonna per giornata, si apre sulla migliore', (sc.match(/class="st-col[ "]/g) || []).length === 2
+           && sc.includes('class="st-col sel" data-sa="' + piccoSt.sa + '"') && /la migliore/.test(sc) && /★/.test(sc), 'giornata ' + piccoSt.sa);
+  t.scegliGiornata(altraSt);
+  verifica('toccando un\'altra giornata: chi ha fatto cosa quel giorno', el['st-grafico'].innerHTML.includes('class="st-col sel" data-sa="' + altraSt + '"')
+           && (el['st-giornata'].innerHTML.match(/class="vr"/g) || []).length === 11 && /la peggiore/.test(el['st-giornata'].innerHTML)
+           && ['Porta', 'Difesa', 'Centrocampo', 'Attacco'].every(k => el['st-giornata'].innerHTML.includes(k)));
+  ({ t, el } = await avvia({ adesso: martedi, dati: conVoti }));    // di nuovo una giornata sola, per le prove che seguono
   const QM = [{ D: 4, C: 3, A: 3 }, { D: 4, C: 4, A: 2 }, { D: 4, C: 5, A: 1 }];
   const meglioAtteso = Math.max(...QM.map(q => ['P', 'D', 'C', 'A'].reduce((s, r) => s + t.mia
     .filter(p => p.ruolo === r && sa4[p.id]).map(p => sa4[p.id][1]).sort((a, b) => b - a)
@@ -763,21 +781,27 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   t.apriGiocatore(t.mia[0].id);
   verifica('nella scheda la riga «Prossime 3»', /Prossime 3/.test(el['foglio-corpo'].innerHTML));
   const mk = t.mercato(g);
-  verifica('mercato: scambi 1 contro 1, dai uno dei tuoi e prendi uno loro', mk.length > 0 && mk.length <= 6
+  verifica('mercato: scambi 1 contro 1, dai uno dei tuoi e prendi uno loro', mk.length <= 6
            && mk.every(i => i.dai.team === t.ME && i.prendi.team === i.squadra && i.squadra !== t.ME),
-           mk.map(i => i.dai.nome + ' per ' + i.prendi.nome).join(', '));
-  verifica('alla pari: quotazioni entro il 15% (o 2 punti)', mk.every(i =>
-           Math.abs(i.dai.quot - i.prendi.quot) <= Math.max(2, 0.15 * Math.max(i.dai.quot, i.prendi.quot))));
-  verifica('i loro big non si chiedono: mai le due quotazioni più alte di una rosa', mk.every(i =>
-           !t.players.filter(p => p.team === i.squadra).sort((a, b) => b.quot - a.quot).slice(0, 2).includes(i.prendi)));
-  verifica('conviene a te e non peggiora loro', mk.every(i => i.perMe >= 0.3 && i.perLoro >= -0.1));
+           mk.map(i => i.dai.nome + ' per ' + i.prendi.nome).join(', ') || 'nessuno');
+  verifica('alla pari a vista: quotazioni entro il 15% e fantamedia vera non nettamente più bassa', mk.every(i =>
+           Math.abs(i.dai.quot - i.prendi.quot) <= Math.max(2, 0.15 * Math.max(i.dai.quot, i.prendi.quot))
+           && !(i.dai.pgv >= 2 && i.prendi.pgv >= 2 && i.dai.fm < i.prendi.fm - 0.5)));
+  verifica('i pezzi forti non si chiedono: mai i due più quotati del reparto, né i tre della rosa', mk.every(i => {
+    const rosa = t.players.filter(p => p.team === i.squadra), q = (a, b) => b.quot - a.quot;
+    return !rosa.slice().sort(q).slice(0, 3).includes(i.prendi)
+        && !rosa.filter(p => p.ruolo === i.prendi.ruolo).sort(q).slice(0, i.prendi.ruolo === 'P' ? 1 : 2).includes(i.prendi);
+  }));
+  verifica('serve a tutti e due: il tuo undici migliora, chi dai entra nel loro', mk.every(i => i.perMe >= 0.3 && i.perLoro >= 0 && i.entraLoro));
+  verifica('prima gli scambi di esuberi', mk.every((i, k) => !k || mk[k - 1].esubero >= i.esubero));
   verifica('mai lo stesso giocatore chiesto due volte', new Set(mk.map(i => i.prendi.id)).size === mk.length);
   verifica('nella Lega solo una riga, che invita ad aprire', /class="invito"/.test(el.mercato.innerHTML)
            && /Mercato, sulla carta/.test(el.mercato.innerHTML) && !/sc-coppia/.test(el.mercato.innerHTML));
   t.apriMercato(g);
   sc = el['sovra-corpo'].innerHTML;
-  verifica('in sovraimpressione: chi dai, chi prendi, per te e per loro', el.sovra.classList.contains('aperto')
-           && (sc.match(/class="blocco mk"/g) || []).length === mk.length && ['Dai', 'Prendi', 'Per te', 'Valore Jarvis'].every(k => sc.includes(k)));
+  verifica('in sovraimpressione: chi dai, chi prendi, per te e per loro', el.sovra.classList.contains('aperto') && (mk.length
+           ? (sc.match(/class="blocco mk"/g) || []).length === mk.length && ['Dai', 'Prendi', 'Per te', 'Valore Jarvis'].every(k => sc.includes(k))
+           : /Nessuno scambio/.test(sc)));
   verifica('niente tutorial', !/Come si legge|stima di Jarvis|sovra-intro/i.test(sc));
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
