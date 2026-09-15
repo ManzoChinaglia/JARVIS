@@ -29,6 +29,29 @@ Indirizzo: https://manzochinaglia.github.io/JARVIS/
 6. **Provare prima di consegnare.** Questo progetto nasce dopo due app
    consegnate senza test sufficienti e rivelatesi difettose all'uso reale.
 
+## Lavoro da remoto (sessioni cloud)
+
+Dal 15/09/2026. Oltre a Claude Code sul PC, il progetto si porta avanti anche
+da una sessione Claude nel cloud, da remoto: stesso repository, stesse regole
+sopra, ma senza accesso diretto al push su GitHub (il proxy della sessione
+cloud rifiuta le richieste verso questo repository).
+
+- La sessione cloud clona il repository e lavora su un branch
+  `claude-cloud/<data>`, mai su `main` direttamente.
+- Ogni intervento finito aggiorna anche **questo file** nello stesso commit,
+  con una nota datata nella sezione giusta, come per ogni altra modifica:
+  CLAUDE.md resta l'unica fonte di verità sullo stato del progetto, letta da
+  chi riprende il lavoro — sul PC o da un'altra sessione cloud.
+- Il lavoro si consegna come patch (`git format-patch`), da salvare in
+  `remoto/patch/`: fuori da Git (come `archivio/`), è solo smistamento, non
+  fa parte della storia del progetto.
+- Con Claude Code: si applicano le patch in ordine (`git am
+  remoto/patch/*.patch`), si fa push, poi si ripulisce `remoto/patch/` — le
+  patch hanno già fatto il loro lavoro, restano solo i commit veri.
+- Se una sessione cloud riparte e trova un proprio branch precedente non
+  ancora applicato (la patch non è ancora arrivata su GitHub), lo dice
+  invece di ripartire da capo o di rifare lo stesso lavoro.
+
 ## Struttura
 
 ```

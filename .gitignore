@@ -3,3 +3,5 @@ __pycache__/
 node_modules/
 # file delle rose già importati: restano solo sul PC
 archivio/
+# patch dal lavoro da remoto (sessioni cloud): smistamento, non fa parte della storia
+remoto/
