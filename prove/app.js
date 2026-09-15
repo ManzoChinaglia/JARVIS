@@ -22,6 +22,9 @@ const AVV1 = BASE0.g[0][3].map(([a, b]) => a === BASE0.me ? b : b === BASE0.me ?
 // l'avviso dei dati vecchi non dipende dal giorno in cui si lanciano le prove
 // memoria: il localStorage finto, da passare uguale per simulare la riapertura dell'app
 async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, memoria = {}, nav }) {
+  // senza dirlo, l'app parte senza il modello (dati/modello.json): le prove del calcolo di
+  // prima restano quelle; il modello ha la sua sezione (32)
+  dati = Object.assign({ 'modello.json': null }, dati);
   const RealDate = Date;
   const fisso = new RealDate(adesso).getTime();
   class FintaData extends RealDate {
@@ -66,7 +69,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   ctx.window = ctx;
   vm.createContext(ctx);
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
-    'get players(){return players},get STIME(){return STIME},avvisi,apriAvvisi,renderGiornata,' +
+    'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
+    'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
     'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,apriStagione,scegliGiornata,accuratezzaConsiglio,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,forma,risultatoLega,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
@@ -1001,6 +1005,56 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('e l\'undici si forma lo stesso, come prima',
            (u3 => u3.P.length === 1 && u3.D.length === 4
                   && Object.values(u3).flat().length === 11)(t.undici(t.prossima())));
+
+  console.log('\n32. Il fantavoto atteso (dati/modello.json)');
+  const m31 = JSON.parse(fs.readFileSync(path.join(REPO, 'dati', 'modello.json'), 'utf8'));
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31 } }));
+  g = t.prossima();
+  const d31 = t.mia.find(p => p.ruolo === 'D' && t.disponibile(p, g[2]));
+  const a31 = t.attesoModello('fantavoto', d31, g);
+  verifica('fantavoto atteso dal modello, con la sua incertezza', a31 && a31.media > 3 && a31.media < 10 && a31.sd > 0.3 && a31.sd < 3,
+           a31 && d31.nome + ' ' + a31.media.toFixed(2) + ' ± ' + a31.sd.toFixed(2));
+  verifica('la scomposizione torna: base + casa + avversario + squadra',
+           a31 && circa(a31.parti.base + a31.parti.casa + a31.parti.avv + a31.parti.squadra, a31.media));
+  const tit31 = t.titolarita(d31, g);
+  verifica('punteggio = fantavoto atteso + titolarità, come prima',
+           circa(t.punteggio(d31, g), a31.media + (tit31 ? -0.4 + 1.6 * tit31.perc / 100 : 0)));
+  t.CALCOLO_VECCHIO = true;
+  const v31 = t.punteggio(d31, g);
+  t.CALCOLO_VECCHIO = false;
+  verifica('il calcolo di prima resta, per il confronto', circa(v31, t.punteggioVecchio(d31, g)) && !circa(v31, t.punteggio(d31, g)),
+           v31.toFixed(2) + ' prima, ' + t.punteggio(d31, g).toFixed(2) + ' ora');
+  const p31 = t.mia.find(p => p.ruolo === 'P');
+  verifica('voto dei portieri: dove il modello non batte il calcolo di prima, resta quello',
+           m31.voto.P.usa || t.attesoModello('voto', p31, g) === null);
+  const vd31 = t.votoAtteso(d31, g), avd31 = t.attesoModello('voto', d31, g);
+  verifica('voto dei difensori dal modello (va al modificatore)', !m31.voto.D.usa || (vd31 && avd31 && circa(vd31.media, avd31.media)),
+           vd31 && vd31.media.toFixed(2));
+  const u31 = t.undici(g);
+  verifica('undici completo, difesa a quattro', [].concat(u31.P, u31.D, u31.C, u31.A).length === 11 && u31.D.length === 4);
+  t.apriGiocatore(d31.id);
+  verifica('nella scheda il fantavoto atteso, quanto balla e il perché', /Fantavoto atteso, se gioca/.test(el['foglio-corpo'].innerHTML)
+           && /±/.test(el['foglio-corpo'].innerHTML) && /base \d/.test(el['foglio-corpo'].innerHTML));
+  const m31b = JSON.parse(JSON.stringify(m31));
+  m31b.fantavoto.A.usa = false;
+  ({ t } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31b } }));
+  const at31 = t.mia.find(p => p.ruolo === 'A');
+  verifica('in un ruolo dove il modello non ha battuto il calcolo di prima, si usa quello', circa(t.punteggio(at31, g), t.punteggioVecchio(at31, g)));
+  // «Quanto si avvicina Jarvis»: il consiglio del modello e quello del calcolo di prima
+  const ids31 = r => t.mia.filter(p => p.ruolo === r).map(p => p.id);
+  const und31 = [...ids31('P').slice(0, 1), ...ids31('D').slice(0, 4), ...ids31('C').slice(0, 3), ...ids31('A').slice(0, 3)];
+  const vec31 = [...ids31('P').slice(1, 2), ...ids31('D').slice(1, 5), ...ids31('C').slice(1, 4), ...ids31('A').slice(1, 4)];
+  const v5 = {};
+  t.mia.forEach((p, k) => { v5[p.id] = [6, 6 + (k % 3)]; });
+  ({ t, el } = await avvia({ adesso: '2026-09-22T12:00:00+02:00', dati: { 'modello.json': m31, 'titolari.json': null, 'infortuni.json': null,
+          'voti.json': { aggiornato: 'x', giornate: { '5': v5 } },
+          'consigli.json': { giornate: { '1': { sa: 5, undici: { '4-3-3': und31 }, undici_vecchio: { '4-3-3': vec31 } } } } } }));
+  const x31 = t.stagione().per.find(x => x.g && x.g[0] === 1), acc31 = t.accuratezzaConsiglio(t.stagione().per);
+  const somma31 = l => l.reduce((s, id) => s + v5[id][1], 0);
+  verifica('per ogni giornata anche il consiglio del calcolo di prima', x31 && circa(x31.consiglio, somma31(und31))
+           && circa(x31.consiglioPrima, somma31(vec31)), x31 && (x31.consiglio + ' e ' + x31.consiglioPrima));
+  t.apriStagione();
+  verifica('e nella stagione il confronto', acc31 && circa(acc31.prima, somma31(vec31)) && /Calcolo di prima/.test(el['sovra-corpo'].innerHTML));
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);

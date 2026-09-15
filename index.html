@@ -449,6 +449,8 @@
   .gio-riga span{color:var(--dim);}
   .gio-riga b{text-align:right; font-weight:600;}
   .gio-riga b.cond{font-size:21px; font-weight:700; color:var(--oro-chiaro);}
+  .gio-riga b small{font-size:13px; font-weight:400; color:var(--dim);}
+  .gio-scomposta{margin:-6px 2px 8px; font-size:12px; line-height:1.45; color:var(--dim);}
   .stato{padding:12px 2px; border-bottom:1px solid var(--line); font-size:14px;}
   .stato .barra{width:100%; max-width:none; height:6px; margin-top:9px;}
   .stato.ko{color:var(--rosso);}
@@ -953,6 +955,7 @@ async function carica(){
   const lg   = await leggi('lega.json', false);
   const vt   = await leggi('voti.json', false);
   const cs   = await leggi('consigli.json', false);
+  const md   = await leggi('modello.json', false);
 
   D = base;
   ME = D.me;
@@ -962,6 +965,8 @@ async function carica(){
   /* voti di ogni giornata di Serie A finita e undici consigliati salvati prima delle scadenze */
   D.voti  = vt && vt.giornate && Object.keys(vt.giornate).length ? vt.giornate : null;
   D.consigli = cs && cs.giornate ? cs.giornate : null;
+  /* il modello del fantavoto atteso (scripts/modello.py): senza, resta il calcolo di prima */
+  D.mod = md && md.versione===1 && md.fantavoto && md.voto && md.giocatori ? md : null;
   D.lega  = lg && lg.classifica && lg.classifica.length===10 ? lg : null;
   /* classifica importata sul telefono («Importa da Leghe»): vale la più recente delle due */
   try{
@@ -1243,12 +1248,68 @@ function stimaVoti(){
   });
   if(n >= 200) BALLO = Math.sqrt(scarti/n);  // sotto è una misura, non una stima
 }
-/* voto atteso: come per la fantamedia, con poche partite la media del giocatore è
-   rumore e si mescola con quella del suo ruolo */
-function votoAtteso(p){
+/* ── Il fantavoto atteso (B2) ────────────────────────────────────────────────
+   dati/modello.json, addestrato sullo storico dei voti da scripts/modello.py: per
+   ruolo i pesi di storia del giocatore, quotazione iniziale, casa, avversario e forza
+   della sua squadra; per ogni giocatore delle rose la parte che dipende solo da lui
+   ([peso della storia, media fantavoto, media voto, ballo fantavoto, ballo voto,
+   presenze, quotazione iniziale]). Qui si aggiunge la partita, misurata come nel
+   modello. Per un ruolo si usa solo se nella verifica ha battuto il calcolo di prima
+   («usa»); altrimenti, e senza il file, resta quello. CALCOLO_VECCHIO forza il calcolo
+   di prima: serve al confronto in «Quanto si avvicina Jarvis». */
+let CALCOLO_VECCHIO = false;
+function modelloPer(quale, p){
+  const m = D.mod && !CALCOLO_VECCHIO && D.mod[quale] ? D.mod[quale][p.ruolo] : null;
+  return m && m.usa ? m : null;
+}
+/* la partita come la vede il modello (scripts/modello.py, contesto): l'avversario come
+   forzaSa, attacco e difesa della propria squadra nel suo campo, tutti come differenza
+   dalla media del campionato scorso. null se manca qualcosa */
+function contestoModello(p, g){
+  const m = g && D.sq && avversarioClub(p.club, g[1]);
+  const s = m && D.sq.squadre[m.avv], mia = D.sq && D.sq.squadre[p.club];
+  if(!s || !mia) return null;
+  const cAvv = m.casa ? 'fuori' : 'casa', cMio = m.casa ? 'casa' : 'fuori';
+  const dietro = p.ruolo==='P' || p.ruolo==='D', i = dietro ? 1 : 2;
+  const L = D.sq.campionato_precedente, media = (c, k) => L[c][k]/L[c][0];
+  const val = perPartita(s, cAvv, i);
+  return {casa: m.casa ? 1 : 0, avv: dietro ? media(cAvv, i) - val : val - media(cAvv, i),
+          att: perPartita(mia, cMio, 1) - media(cMio, 1), dif: media(cMio, 2) - perPartita(mia, cMio, 2)};
+}
+/* fantavoto ('fantavoto') o voto ('voto') attesi se gioca: {media, sd, parti}. L'incertezza
+   mescola quella del giocatore e quella del ruolo, con più peso al giocatore dove il suo
+   ballo si conserva da una stagione all'altra (n0 piccolo) */
+function attesoModello(quale, p, g){
+  const m = modelloPer(quale, p), gi = m && D.mod.giocatori[String(p.id)];
+  if(!gi) return null;
+  const W = gi[0], storia = quale==='fantavoto' ? gi[1] : gi[2], ballo = quale==='fantavoto' ? gi[3] : gi[4], n = gi[5];
+  const c = m.coef, lam = W/(W + D.mod.K), qi = gi[6] || D.mod.qi_ruolo[p.ruolo];
+  const x = contestoModello(p, g);
+  const parti = {base: c[0] + c[1]*lam*(storia || 0) + c[2]*(1 - lam) + c[3]*(1 - lam)*qi,
+                 casa: x ? c[4]*x.casa : 0, avv: x ? c[5]*x.avv : 0, squadra: x ? c[6]*x.att + c[7]*x.dif : 0};
+  const sd = ballo===null || ballo===undefined ? m.sd : (n*ballo + m.n0*m.sd)/(n + m.n0);
+  return {media: parti.base + parti.casa + parti.avv + parti.squadra, sd, parti, storia: lam, casa: x ? x.casa : null};
+}
+/* voto atteso: dal modello dove si usa; altrimenti come prima, la media del giocatore
+   mescolata con quella del suo ruolo, con il ballo misurato su tutta la lega */
+function votoAtteso(p, g){
+  const a = attesoModello('voto', p, g);
+  if(a) return {media: a.media, sd: a.sd};
   const r = VOTO_RUOLO[p.ruolo];
   if(BALLO === null || r === null || r === undefined) return null;
   return {media: (p.pgv*p.mv + PARTITE_PRIOR_VOTO*r) / (p.pgv + PARTITE_PRIOR_VOTO), sd: BALLO};
+}
+/* nella scheda: il fantavoto atteso se gioca, quanto balla e il perché (base del
+   giocatore, casa, avversario, squadra). Solo col modello */
+function righeAtteso(p, g){
+  const a = attesoModello('fantavoto', p, g);
+  if(!a) return '';
+  const s = x => (x >= 0 ? '+' : '−')+num(Math.abs(x));
+  const pezzi = ['base '+num(a.parti.base)+(a.storia >= 0.5 ? '' : ' (conta la quotazione)')]
+    .concat(a.casa===1 ? ['in casa '+s(a.parti.casa)] : [])
+    .concat(a.casa===null ? [] : ['avversario '+s(a.parti.avv), 'squadra '+s(a.parti.squadra)]);
+  return '<div class="gio-riga"><span>Fantavoto atteso, se gioca</span><b class="cond">'+num(a.media)+
+    '<small> ± '+num(a.sd)+'</small></b></div><p class="gio-scomposta">'+pezzi.join(' · ')+'</p>';
 }
 
 /* I voti veri escono a mezzi punti: simularli continui gonfierebbe la precisione
@@ -1274,10 +1335,11 @@ const SIMULAZIONI_SCELTA = 250;  // per confrontare le combinazioni fra loro (co
 /* i campioni si tengono da parte: provare settanta combinazioni rigenerandoli ogni
    volta costerebbe più della scelta stessa. Si svuotano quando i dati cambiano. */
 let CAMPIONI = {};
-function campioneVoti(p, n){
-  const chiave = p.id + ':' + n;
+function campioneVoti(p, n, g){
+  /* il voto atteso dipende dalla partita e dal calcolo in uso: stanno nella chiave */
+  const chiave = p.id + ':' + n + ':' + (g ? g[1] : '') + (CALCOLO_VECCHIO ? ':prima' : '');
   if(CAMPIONI[chiave]) return CAMPIONI[chiave];
-  const v = votoAtteso(p);
+  const v = votoAtteso(p, g);
   if(!v) return null;
   const r = casuale(p.id*7919 + 13), out = new Float64Array(n);
   for(let i = 0; i < n; i++) out[i] = arrotondaVoto(v.media + v.sd*normale(r));
@@ -1302,10 +1364,10 @@ function mediaModificatore(cp, cd, n){
    Si simula invece di fare il conto sulle medie perché gli scalini rendono la media
    bugiarda: un blocco che oscilla attorno a 6,5 non vale «+3 sempre», vale una
    moneta tra +2 e +3, e la differenza si vede solo simulando. */
-function modificatoreAtteso(portiere, difensori, n){
+function modificatoreAtteso(portiere, difensori, n, g){
   n = n || SIMULAZIONI;
   if(!portiere || difensori.length < 3) return null;
-  const cp = campioneVoti(portiere, n), cd = difensori.map(p=>campioneVoti(p, n));
+  const cp = campioneVoti(portiere, n, g), cd = difensori.map(p=>campioneVoti(p, n, g));
   if(!cp || cd.some(c=>!c)) return null;
   const conta = {};
   let somma = 0;
@@ -1322,7 +1384,16 @@ function modificatoreAtteso(portiere, difensori, n){
   return {atteso: fasce.reduce((s,f)=>s + f.bonus*f.prob, 0), media: somma/n, fasce};
 }
 
+/* il punteggio con cui Jarvis ordina i giocatori: il fantavoto atteso se gioca (dal
+   modello) più la titolarità, come prima. Senza modello, il calcolo di prima */
 function punteggio(p, g){
+  const a = attesoModello('fantavoto', p, g);
+  if(!a) return punteggioVecchio(p, g);
+  const t = titolarita(p, g);
+  return a.media + (t ? -0.4 + 1.6*t.perc/100 : 0);   // titolare sicuro +1,2 · fuori −0,4
+}
+/* il calcolo di prima: fantamedia stimata, titolarità e avversario pesato con PESI */
+function punteggioVecchio(p, g){
   let v = fmStimata(p);
   const t = titolarita(p, g);
   if(t) v += -0.4 + 1.6*t.perc/100;          // titolare sicuro +1,2 · fuori −0,4
@@ -1351,8 +1422,8 @@ function combinazioni(a, k){
    comunque pochi, che le combinazioni crescono in fretta. */
 let BLOCCHI = {};
 function bloccoDifensivo(disp, g, quanti){
-  if(BALLO === null) return null;
-  const chiave = g[0]+':'+quanti+':'+disp.map(p=>p.id).join(',');
+  if(BALLO === null && !D.mod) return null;
+  const chiave = g[0]+':'+quanti+':'+disp.map(p=>p.id).join(',')+(CALCOLO_VECCHIO ? ':prima' : '');
   if(chiave in BLOCCHI) return BLOCCHI[chiave];
   const pt = new Map();                                  // il punteggio si ricalcola molte volte
   disp.forEach(p=>pt.set(p, punteggio(p, g)));
@@ -1360,16 +1431,16 @@ function bloccoDifensivo(disp, g, quanti){
   const por = disp.filter(p=>p.ruolo==='P').sort(ord);
   const dif = disp.filter(p=>p.ruolo==='D').sort(ord);
   if(!por.length || dif.length < quanti) return (BLOCCHI[chiave] = null);
-  const vm = p=>{ const v = votoAtteso(p); return v ? v.media : 0; };
+  const vm = p=>{ const v = votoAtteso(p, g); return v ? v.media : 0; };
   const cand = [];
   dif.slice(0,6).concat(dif.slice().sort((a,b)=>vm(b)-vm(a)).slice(0,6))
      .forEach(p=>{ if(cand.indexOf(p) < 0) cand.push(p); });
   const porScelta = por.slice(0,2)
-    .map(p=>({p, c: campioneVoti(p, SIMULAZIONI_SCELTA), v: pt.get(p)}))
+    .map(p=>({p, c: campioneVoti(p, SIMULAZIONI_SCELTA, g), v: pt.get(p)}))
     .filter(x=>x.c);
   let meglio = null;
   combinazioni(cand, quanti).forEach(d=>{
-    const cd = d.map(p=>campioneVoti(p, SIMULAZIONI_SCELTA));
+    const cd = d.map(p=>campioneVoti(p, SIMULAZIONI_SCELTA, g));
     if(cd.some(c=>!c)) return;
     const sd = d.reduce((s,x)=>s+pt.get(x), 0);
     porScelta.forEach(x=>{
@@ -1406,7 +1477,7 @@ function renderDifesa(g){
   const box = document.getElementById('difesa');
   if(!box) return;
   const u = undici(g);
-  const m = u.P.length && u.D.length >= 3 ? modificatoreAtteso(u.P[0], u.D) : null;
+  const m = u.P.length && u.D.length >= 3 ? modificatoreAtteso(u.P[0], u.D, SIMULAZIONI, g) : null;
   if(!m){ box.innerHTML = ''; return; }
   const alta = m.fasce.slice().sort((a,b)=>b.prob-a.prob)[0];
   /* quanto manca allo scalino sopra: è l'informazione che fa cambiare un difensore */
@@ -2183,7 +2254,11 @@ function stagione(){
     const c = g && D.consigli && D.consigli[String(g[0])];
     const consiglio = c && c.undici && c.undici[modulo]
       ? puntiUndici(c.undici[modulo], (c.panchina || {})[modulo], sa).tot : null;
-    return {sa, tot: m.tot, modulo: m.modulo, scelti: m.scelti, reparti, g, risultato: g ? risultatoLega(g[0]) : null, consiglio};
+    /* lo stesso con il calcolo di prima, salvato insieme dal 15/09/2026 per confrontarli */
+    const consiglioPrima = c && c.undici_vecchio && c.undici_vecchio[modulo]
+      ? puntiUndici(c.undici_vecchio[modulo], (c.panchina_vecchio || {})[modulo], sa).tot : null;
+    return {sa, tot: m.tot, modulo: m.modulo, scelti: m.scelti, reparti, g, risultato: g ? risultatoLega(g[0]) : null,
+            consiglio, consiglioPrima};
   });
   return {giornate, righe, per};
 }
@@ -2195,7 +2270,11 @@ function accuratezzaConsiglio(per){
   const valutate = per.filter(x=>x.consiglio!==null);
   if(!valutate.length) return null;
   const consiglio = valutate.reduce((s,x)=>s+x.consiglio, 0), massimo = valutate.reduce((s,x)=>s+x.tot, 0);
-  return {n: valutate.length, consiglio, massimo, media: massimo ? 100*consiglio/massimo : null};
+  /* il calcolo di prima, solo se c'è per tutte le giornate valutate: un confronto su
+     giornate diverse non direbbe niente */
+  const prima = valutate.every(x=>x.consiglioPrima!==null && x.consiglioPrima!==undefined)
+    ? valutate.reduce((s,x)=>s+x.consiglioPrima, 0) : null;
+  return {n: valutate.length, consiglio, massimo, prima, media: massimo ? 100*consiglio/massimo : null};
 }
 /* il grafico: una colonna per giornata, la migliore con la stella, la linea della media;
    la colonna scelta è dorata. Si tocca per vedere la giornata sotto */
@@ -2231,6 +2310,7 @@ function dettaglioGiornata(s, sa){
     (r ? '<p class="st-ris">Risultato vero: '+num(r.mio)+' a '+num(r.loro)+', '+r.golMio+'-'+r.golLoro+' contro '+r.avv+'</p>' : '')+
     (diff===null ? '' : '<p class="st-ris">Il consiglio di Jarvis: '+num(x.consiglio)+
       (Math.abs(diff) < 0.05 ? ', come il massimo possibile' : ', '+num(Math.abs(diff))+' in meno del massimo')+'</p>')+
+    (x.consiglioPrima===null || x.consiglioPrima===undefined ? '' : '<p class="st-ris">Con il calcolo di prima: '+num(x.consiglioPrima)+'</p>')+
     '<div class="st-reparti">'+['P','D','C','A'].map(k=>'<div><span>'+NOMI_REPARTO[k]+'</span><b class="cond">'+num(x.reparti[k])+'</b></div>').join('')+'</div>'+
     x.scelti.slice().sort((a,b)=>votoDi(b, sa)[1] - votoDi(a, sa)[1]).map(p=>{
       const v = votoDi(p, sa);
@@ -2288,7 +2368,10 @@ function apriStagione(){
   const accuratezza = !acc ? '' : '<div class="blocco"><div class="blocco-t">Quanto si avvicina Jarvis<small>'+
     quanteGiornate(acc.n)+' di lega</small></div><div class="st-numeri">'+
     tessera('Consigliato', num(acc.consiglio))+tessera('Massimo possibile', num(acc.massimo))+
-    (acc.media===null ? '' : tessera('Vicinanza', num(acc.media, 0)+'%'))+'</div></div>';
+    (acc.media===null ? '' : tessera('Vicinanza', num(acc.media, 0)+'%'))+'</div>'+
+    (acc.prima===null ? '' : '<p class="nota">Calcolo di prima: '+num(acc.prima)+
+      (Math.abs(acc.consiglio - acc.prima) < 0.05 ? ', come il modello' : ', '+num(Math.abs(acc.consiglio - acc.prima))+
+        (acc.consiglio > acc.prima ? ' in meno' : ' in più')+' del modello')+'.</p>')+'</div>';
   const testo = ['La stagione — '+quanteGiornate(s.giornate.length)+' di Serie A',
     'Chi produce di più: '+s.righe[0].p.nome+', '+num(s.righe[0].tot)+' fantapunti']
     .concat(acc && acc.media!==null ? ['Quanto si avvicina Jarvis: '+num(acc.media, 0)+'% su '+quanteGiornate(acc.n)+' di lega'] : [])
@@ -2332,6 +2415,7 @@ function apriGiocatore(id){
     (p.amm || p.esp ? '<div class="gio-riga"><span>Cartellini</span><b>'+
       (p.amm ? '<span class="cartellino giallo"></span>'+p.amm+(p.amm===1 ? ' ammonizione' : ' ammonizioni') : '')+
       (p.esp ? '<span class="cartellino rosso"></span>'+p.esp+(p.esp===1 ? ' espulsione' : ' espulsioni') : '')+'</b></div>' : '')+
+    righeAtteso(p, g)+
     '<div class="gio-riga"><span>Punteggio per il consiglio</span><b class="cond">'+num(punteggio(p, g),2)+'</b></div>'+
     stato+
     (m ? '<div class="gio-riga"><span>Giornata '+g[0]+'</span><b>'+(m.casa ? 'in casa con ' : 'a ')+m.avv+

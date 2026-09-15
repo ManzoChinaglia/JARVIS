@@ -98,9 +98,16 @@ quando i dati hanno più di 4 giorni.
 La difesa è **sempre a quattro**. Il modulo cambia solo nei reparti avanzati
 (4-3-3, 4-4-2, 4-5-1) dal selettore sopra il campo.
 
-Il punteggio con cui Jarvis ordina i giocatori parte dalla fantamedia (con poche
-partite avvicinata a quella attesa per la quotazione, così un gol fortunato o un
-esordio non contano troppo) e tiene conto di:
+Dal 15/09/2026 il punteggio con cui Jarvis ordina i giocatori è il **fantavoto
+atteso** di un modello addestrato su 11 stagioni di voti (`scripts/modello.py`): la
+storia del giocatore, la sua quotazione iniziale, il giocare in casa, l'avversario e
+la forza della sua squadra, più la titolarità. Nella scheda di ogni giocatore c'è il
+valore, quanto balla (±) e il perché. Il modello si usa solo dove, verificato sulle
+ultime due stagioni, ordina meglio del calcolo di prima; dove no, resta quello.
+
+Il calcolo di prima parte dalla fantamedia (con poche partite avvicinata a quella
+attesa per la quotazione, così un gol fortunato o un esordio non contano troppo) e
+tiene conto di:
 
 1. **disponibilità** — chi è infortunato alla data della giornata è escluso
 2. **titolarità** — la percentuale media delle quattro redazioni nelle probabili

@@ -47,3 +47,6 @@ jobs:
 
       - name: prove/privacy.py — nessun nome grezzo nei dati committati
         run: python prove/privacy.py
+
+      - name: prove/modello.py — il modello del fantavoto atteso
+        run: python prove/modello.py

@@ -72,10 +72,15 @@ async function appSuiDati({ repo = REPO, adesso = Date.now(), dati = {} } = {}) 
   vm.runInContext(codice + '\n;globalThis.__pronto = () => !!D && mia.length > 0;' +
                   'globalThis.__avvisi = () => avvisi(prossima());' +
                   'globalThis.__consiglio = () => { const g = prossima(), sc = scadenza(g); if (!sc || oggi() >= sc) return null;' +
-                  ' const prima = modulo, undiciPer = {}, panchinaPer = {};' +
+                  ' const prima = modulo, calcola = () => { const undiciPer = {}, panchinaPer = {};' +
                   ' for (const m of Object.keys(MODULI)) { modulo = m; const u = undici(g);' +
                   ' undiciPer[m] = [].concat(u.P, u.D, u.C, u.A).map(p => p.id); panchinaPer[m] = panchina(g).map(p => p.id); }' +
-                  ' modulo = prima; return { giornata: g[0], sa: g[1], undici: undiciPer, panchina: panchinaPer }; };', ctx);
+                  ' return { undiciPer, panchinaPer }; };' +
+                  // dal 15/09/2026 anche col calcolo di prima, per il confronto in «Quanto si avvicina Jarvis»
+                  ' const nuovo = calcola(); let vecchio = null;' +
+                  ' if (D.mod) { CALCOLO_VECCHIO = true; try { vecchio = calcola(); } finally { CALCOLO_VECCHIO = false; } }' +
+                  ' modulo = prima; return { giornata: g[0], sa: g[1], undici: nuovo.undiciPer, panchina: nuovo.panchinaPer,' +
+                  ' undici_vecchio: vecchio && vecchio.undiciPer, panchina_vecchio: vecchio && vecchio.panchinaPer }; };', ctx);
   for (let i = 0; i < 100 && !ctx.__pronto(); i++) await new Promise(r => setTimeout(r, 20));
   if (!ctx.__pronto()) throw new Error('l\'app non ha caricato i dati');
   return ctx;
@@ -88,7 +93,9 @@ function salvaConsiglio(file, c, adesso) {
   let reg = {};
   try { reg = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) {}
   reg.giornate = reg.giornate || {};
-  reg.giornate[String(c.giornata)] = { sa: c.sa, undici: c.undici, panchina: c.panchina, salvato: new Date(adesso).toISOString() };
+  reg.giornate[String(c.giornata)] = Object.assign({ sa: c.sa, undici: c.undici, panchina: c.panchina },
+    c.undici_vecchio ? { undici_vecchio: c.undici_vecchio, panchina_vecchio: c.panchina_vecchio } : {},
+    { salvato: new Date(adesso).toISOString() });
   reg.aggiornato = new Date(adesso).toISOString();
   fs.writeFileSync(file, JSON.stringify(reg));
 }

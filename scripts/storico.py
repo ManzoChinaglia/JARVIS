@@ -26,9 +26,12 @@ _spec.loader.exec_module(aggiorna)
 STAGIONI = [f'{a}-{(a + 1) % 100:02d}' for a in range(2015, 2026)]     # 2015-16 ... 2025-26
 GIORNATE = 38
 URL = 'https://www.fantacalcio.it/voti-fantacalcio-serie-a/{stagione}/{giornata}'
+URL_QUOTAZIONI = 'https://www.fantacalcio.it/quotazioni-fantacalcio/{stagione}'
+URL_CALENDARIO = 'https://fixturedownload.com/feed/json/serie-a-{anno}'
 CARTELLA = os.path.join(aggiorna.DATI, 'storico')
 PAUSA = 2.0                     # secondi tra una richiesta e l'altra
 MINIMO = 200                    # sotto, la pagina non è pronta o ha cambiato struttura
+MINIMO_QUOTAZIONI = 400         # una stagione ne ha 600-700
 CAMPI = ['voto', 'fantavoto', 'ruolo', 'squadra'] + aggiorna.BONUS_VOTI
 
 
@@ -66,8 +69,47 @@ def giornata(stagione, n):
             for x in aggiorna.righe_voti(r.text)}
 
 
+def quotazioni(stagione):
+    """{Id: [quotazione iniziale, quotazione finale, ruolo]} di una stagione, dalla pagina
+    pubblica delle quotazioni (Classic). Per il modello conta l'iniziale: è nota prima
+    delle partite, la finale invece si muove con il rendimento della stagione."""
+    r = aggiorna.requests.get(URL_QUOTAZIONI.format(stagione=stagione), headers=aggiorna.UA,
+                              timeout=aggiorna.TIMEOUT)
+    r.raise_for_status()
+    out = {}
+    for tr in aggiorna.BeautifulSoup(r.text, 'lxml').select('tr.player-row'):
+        a = tr.find('a', href=aggiorna.ID_GIOCATORE)
+        qi, qa = tr.select_one('td[data-col-key="c_qi"]'), tr.select_one('td[data-col-key="c_qa"]')
+        if not (a and qi and qa):
+            continue
+        try:
+            out[aggiorna.ID_GIOCATORE.search(a['href']).group(1)] = [
+                int(qi.get_text(strip=True)), int(qa.get_text(strip=True)),
+                (tr.get('data-filter-role-classic') or '').upper() or None]
+        except ValueError:
+            continue
+    return out
+
+
+def calendario(stagione):
+    """Le partite della stagione dal feed di fixturedownload: [giornata del feed, casa,
+    fuori, gol casa, gol fuori], con i nomi di fantacalcio.it (aggiorna.SQUADRE). Una
+    lista vuota se il feed di quella stagione non esiste (404: il 2015-16 e il 2016-17).
+    Attenzione: la giornata del feed non è sempre quella ufficiale (rinvii), vedi
+    CLAUDE.md, B2."""
+    r = aggiorna.requests.get(URL_CALENDARIO.format(anno=stagione[:4]), headers=aggiorna.UA,
+                              timeout=aggiorna.TIMEOUT)
+    if r.status_code == 404:
+        return []
+    r.raise_for_status()
+    nome = lambda x: aggiorna.SQUADRE.get(x, x)
+    return [[x['RoundNumber'], nome(x['HomeTeam']), nome(x['AwayTeam']), x.get('HomeTeamScore'), x.get('AwayTeamScore')]
+            for x in r.json()]
+
+
 def scarica(stagioni, cartella=CARTELLA, pausa=PAUSA, dormi=time.sleep):
-    """Scarica le giornate che mancano; {stagione: (giornate salvate, nuove, saltate)}."""
+    """Scarica le giornate che mancano, e una volta sola le quotazioni e il calendario
+    della stagione; {stagione: (giornate salvate, nuove, saltate)}."""
     esito = {}
     for s in stagioni:
         dati = leggi(s, cartella)
@@ -89,6 +131,29 @@ def scarica(stagioni, cartella=CARTELLA, pausa=PAUSA, dormi=time.sleep):
                 dati['giornate'][str(n)] = g
                 salva(dati, cartella)
                 nuove += 1
+            dormi(pausa)
+        # un errore di rete non segna niente: al giro dopo si riprova
+        if 'quotazioni' not in dati:
+            try:
+                q = quotazioni(s)
+                if len(q) >= MINIMO_QUOTAZIONI:
+                    dati['quotazioni'] = q
+                    salva(dati, cartella)
+                else:
+                    print(f'[storico] {s}: solo {len(q)} quotazioni, le salto.')
+            except Exception as e:
+                print(f'[storico] {s} quotazioni: {e}')
+            dormi(pausa)
+        if 'partite' not in dati:
+            try:
+                c = calendario(s)
+                if c == [] or len(c) >= 300:
+                    dati['partite'] = c
+                    salva(dati, cartella)
+                else:
+                    print(f'[storico] {s}: calendario con solo {len(c)} partite, lo salto.')
+            except Exception as e:
+                print(f'[storico] {s} calendario: {e}')
             dormi(pausa)
         esito[s] = (len(dati['giornate']), nuove, saltate)
         print(f'[storico] {s}: {len(dati["giornate"])}/{GIORNATE} giornate ({nuove} nuove, {saltate} saltate)')

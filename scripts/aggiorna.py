@@ -45,8 +45,10 @@ URL_VOTI = 'https://www.fantacalcio.it/voti-fantacalcio-serie-a/2026-27/{}'   # 
 ORE_STATISTICHE = 20   # cambiano solo dopo le partite: basta un giro al giorno
 URL_PRECEDENTE = 'https://fixturedownload.com/feed/json/serie-a-2025'
 
-# nomi del feed delle partite che differiscono da quelli del listone
-SQUADRE = {'Internazionale': 'Inter'}
+# nomi del feed delle partite che differiscono da quelli del listone, anche delle stagioni
+# passate per lo storico (confronto fatto stagione per stagione il 15/09/2026)
+SQUADRE = {'Internazionale': 'Inter', 'Inter Milan': 'Inter', 'AC Milan': 'Milan', 'Hellas Verona': 'Verona',
+           'Chievoverona': 'Chievo', 'Spal': 'SPAL'}
 
 URL_APP = 'https://manzochinaglia.github.io/JARVIS/'
 DOMINIO = 'manzochinaglia.github.io'
@@ -357,7 +359,7 @@ def statistiche():
     testaq, quot = righe_con_id(URL_QUOTAZIONI)
     if testaq[5:7] != ['QI', 'QA']:
         raise ValueError(f'colonne delle quotazioni inattese: {testaq[5:7]}')
-    giocatori = {}
+    giocatori, iniziali = {}, {}
     for i in set(stat) | set(quot):
         s, q = stat.get(i), quot.get(i)
         riga = [int(numero(s[5])) if s else 0, round(numero(s[6]), 2) if s else 0.0,
@@ -365,8 +367,13 @@ def statistiche():
         if bonus:   # Gol, GS, RP, Ass, Amm, Esp (Rig, «segnati / calciati», non serve)
             riga += [int(numero(s[k])) if s and len(s) > k else 0 for k in (8, 9, 11, 12, 13, 14)]
         giocatori[str(i)] = riga
+        # la quotazione iniziale, a parte: la usa il modello (scripts/modello.py), perché è
+        # nota prima delle partite; quella attuale si muove con il rendimento della stagione
+        if q:
+            iniziali[str(i)] = int(numero(q[5]))
     print(f'[statistiche] {len(stat)} giocatori con statistiche, {len(quot)} con quotazione.')
-    return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'giocatori': giocatori}
+    return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'giocatori': giocatori,
+            'iniziali': iniziali}
 
 
 # l'Id dal link del giocatore; nelle stagioni passate il link finisce con la stagione

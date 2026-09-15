@@ -34,6 +34,12 @@ jobs:
       - name: Scarica i dati e genera il calendario
         run: python scripts/aggiorna.py
 
+      # il modello del fantavoto atteso (B2): si riaddestra con i voti nuovi, in Python
+      # puro, in pochi secondi. Se il risultato non è plausibile resta il file di prima.
+      - name: Aggiorna il modello del fantavoto
+        if: always()
+        run: python scripts/modello.py
+
       # gli avvisi nuovi arrivano sull'iPhone da Jarvis (Web Push) o, di riserva, con
       # ntfy. Iscrizione, chiave privata e argomento stanno nei Secrets di GitHub, mai
       # nel codice. Se web-push non si installa resta ntfy. Non fa mai fallire il giro.

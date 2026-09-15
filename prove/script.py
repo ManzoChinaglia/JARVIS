@@ -162,7 +162,7 @@ verifica('20 squadre, Internazionale diventa Inter', len(sq) == 20 and 'Inter' i
 verifica('Inter ha la stagione scorsa', not sq['Inter'].get('neopromossa') and sq['Inter']['precedente']['casa'] == [19, 38, 19, 0],
          sq['Inter']['precedente'])
 verifica('neopromosse segnate come stima', all(sq[x].get('neopromossa') for x in ('Frosinone', 'Monza', 'Venezia')))
-verifica('le tre retrocesse', s['retrocesse'] == ['Cremonese', 'Hellas Verona', 'Pisa'], s['retrocesse'])
+verifica('le tre retrocesse, con i nomi di fantacalcio.it', s['retrocesse'] == ['Cremonese', 'Pisa', 'Verona'], s['retrocesse'])
 verifica('stima = media delle retrocesse', sq['Monza']['precedente']['fuori'] == [19, 19, 38, 0], sq['Monza']['precedente'])
 verifica('partite di quest\'anno contate', sum(v['attuale']['casa'][0] + v['attuale']['fuori'][0] for v in sq.values()) == 60)
 verifica('modulo abituale', sq['Inter'].get('modulo') == '3-5-2' and 'modulo' not in sq['Roma'])
@@ -199,8 +199,10 @@ servi({mod.URL_STATISTICHE: tabella(TESTA_ST, [(5841, 'Svilar', ['ROM', '3', '6,
        mod.URL_QUOTAZIONI: tabella(TESTA_QU, [(5841, 'Svilar', ['ROM', '18', '18', '83']),
                                                (5585, 'Malen', ['ROM', '34', '37', '445']),
                                                (9999, 'Nuovo', ['ROM', '5', '6', '10'])])})
-st = mod.statistiche()['giocatori']
+rst = mod.statistiche()
+st = rst['giocatori']
 verifica('partite, media voto, fantamedia e quotazione per Id', st['5841'] == [3, 6.5, 7.17, 18] and st['5585'] == [4, 7.0, 12.33, 37], st)
+verifica('la quotazione iniziale a parte, per il modello', rst['iniziali'] == {'5841': 18, '5585': 34, '9999': 5}, rst['iniziali'])
 verifica('chi ha solo la quotazione (nuovo arrivo) c\'è con 0 partite', st['9999'] == [0, 0.0, 0.0, 6], st.get('9999'))
 verifica('colonne dei bonus diverse: restano le statistiche principali, senza bonus', all(len(v) == 4 for v in st.values()))
 TESTA_BONUS = ['Calciatore', '', '', '', 'Sq', 'PV', 'MV', 'FM', 'Gol', 'GS', 'Rig', 'RP', 'Ass', 'Amm', 'Esp']
@@ -307,12 +309,44 @@ with tempfile.TemporaryDirectory() as cartella:
              d['campi'] == sto.CAMPI and len(riga) == len(sto.CAMPI) and riga[:4] == [6.5, 9.5, 'D', 'Atalanta'], riga)
     chieste_s.clear()
     sto.scarica(['2021-22'], cartella=cartella, dormi=lambda s: None)
+    # (quotazioni e calendario qui non sono pagine vere: non si salvano e si riprovano, come dopo un errore di rete)
     verifica('ripartibile: la seconda volta chiede solo le giornate che mancano',
-             [u.rsplit('/', 1)[1] for u in chieste_s] == ['4', '5'], [u.rsplit('/', 1)[1] for u in chieste_s])
+             [u.rsplit('/', 1)[1] for u in chieste_s if 'voti-fantacalcio' in u] == ['4', '5'],
+             [u.rsplit('/', 1)[1] for u in chieste_s if 'voti-fantacalcio' in u])
     prima = open(sto.percorso('2021-22', cartella), 'rb').read()
     sto.salva(sto.leggi('2021-22', cartella), cartella)
     verifica('stesso contenuto, stesso file compresso (niente data nello zip)',
              open(sto.percorso('2021-22', cartella), 'rb').read() == prima)
+    # quotazioni e calendario della stagione, una volta sola
+    righe_q = ''.join(f'<tr class="player-row" data-filter-role-classic="d"><th>'
+                      f'<a class="player-link" href="https://www.fantacalcio.it/serie-a/squadre/atalanta/nome/{7000 + k}/2021-22">n</a></th>'
+                      f'<td data-col-key="c_qi"> {10 + k % 5} </td><td data-col-key="c_qa"> 12 </td></tr>' for k in range(450))
+    pagina_q = Risposta(f'<table><tbody>{righe_q}</tbody></table>')
+    class Feed(Risposta):
+        def __init__(self, dati, codice=200):
+            super().__init__('', dati)
+            self.status_code = codice
+    feed = Feed([{'RoundNumber': 1 + k // 10, 'HomeTeam': 'Hellas Verona', 'AwayTeam': 'Inter Milan',
+                  'HomeTeamScore': 1, 'AwayTeamScore': 2} for k in range(380)])
+    def finto_tutto(url, *a, **k):
+        chieste_s.append(url)
+        if 'quotazioni-fantacalcio' in url:
+            return pagina_q
+        if 'fixturedownload' in url:
+            return feed if '2021' in url else Feed(None, 404)
+        return pagina_storico(250)
+    sto.aggiorna.requests.get = finto_tutto
+    sto.scarica(['2021-22', '2015-16'], cartella=cartella, dormi=lambda s: None)
+    d = sto.leggi('2021-22', cartella)
+    verifica('quotazioni della stagione per Id: iniziale, finale, ruolo',
+             d['quotazioni'].get('7001') == [11, 12, 'D'] and len(d['quotazioni']) == 450, d['quotazioni'].get('7001'))
+    verifica('calendario con i nomi di fantacalcio.it (Hellas Verona, Inter Milan)',
+             d['partite'][0] == [1, 'Verona', 'Inter', 1, 2] and len(d['partite']) == 380, d['partite'][0])
+    verifica('stagione senza calendario (404): segnata vuota', sto.leggi('2015-16', cartella)['partite'] == [])
+    chieste_s.clear()
+    sto.scarica(['2021-22', '2015-16'], cartella=cartella, dormi=lambda s: None)
+    verifica('la seconda volta quotazioni e calendario non si richiedono',
+             not any('quotazioni' in u or 'fixturedownload' in u for u in chieste_s), len(chieste_s))
 
 print('\n7. Calendario')
 base_finta = {'me': 'BURKINA FASO', 'g': [

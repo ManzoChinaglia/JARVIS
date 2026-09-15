@@ -196,7 +196,9 @@ dati/lega.json          classifica della lega (a mano, con la routine «dati di 
 dati/voti.json          aggiornato automaticamente: voto e fantavoto di ogni giornata di Serie A finita
 dati/consigli.json      l'undici consigliato, salvato dal giro automatico prima di ogni scadenza
 dati/storico/           lo storico dei voti dal 2015-16, una stagione per file compresso (B1, non per l'iPhone)
-scripts/storico.py      giro una tantum e ripartibile che riempie dati/storico/
+scripts/storico.py      giro una tantum e ripartibile che riempie dati/storico/ (voti, quotazioni, calendari)
+scripts/modello.py      addestra il modello del fantavoto atteso (B2) e scrive dati/modello.json, nel giro automatico
+dati/modello.json       il modello: pesi per ruolo, verifica, e per ogni giocatore delle rose la parte che dipende solo da lui
 archivio/               file di rose, calendario e classifica già importati (solo sul PC, escluso da Git)
 prove/                  prove automatiche (vedi «Come si prova»)
 .github/workflows/aggiorna.yml   esegue lo script tre volte al giorno, dopo gli aggiornamenti
@@ -281,6 +283,8 @@ giocatori per scrivere) e l'app le applica sopra `base.json`. L'esportazione
 Dalla stessa pagina arrivano, dal 14/09/2026, gol, gol subiti, rigori parati,
 assist, ammonizioni ed espulsioni (in coda a ogni riga di `statistiche.json`):
 se cambiano solo quelle colonne si salvano le statistiche principali, senza bonus.
+Dal 15/09/2026 `statistiche.json` ha anche `iniziali`, la quotazione iniziale di ogni
+giocatore: la usa il modello (B2), perché quella attuale si muove con il rendimento.
 
 ## Scadenza formazione
 
@@ -726,7 +730,14 @@ titolarità. Fino al 13 settembre 2026 lo script la usava per errore come probab
 
 ## Consiglio di formazione
 
-Il punteggio parte dalla **fantamedia stimata** e aggiunge:
+**Dal 15/09/2026 il punteggio viene dal modello** (B2, scelta dell'utente): fantavoto
+atteso se gioca (`attesoModello`, da `dati/modello.json`) più la titolarità, come
+prima. Il calcolo descritto qui sotto (fantamedia stimata, titolarità, `PESI`) resta
+come `punteggioVecchio`: vale per un ruolo dove il modello non ha battuto quel
+calcolo nella verifica, quando manca il file, e per il confronto in «Quanto si
+avvicina Jarvis». Vedi B2 più sotto.
+
+Il calcolo di prima parte dalla **fantamedia stimata** e aggiunge:
 - **titolarità**: da −0,4 (fuori dalle probabili) a +1,2 (titolare sicuro), in
   proporzione alla percentuale. Finché le probabili della sua squadra non escono
   si stima dalle presenze (partite giocate su quelle della squadra, «presenze
@@ -753,6 +764,9 @@ in `PESI` (`D:0.8`), cioè «i difensori contano un po' di più». Adesso:
   fantamedia) e quanto balla (`BALLO`, misurato sui voti veri di tutta la lega
   messi insieme: con poche giornate il singolo non basta). **Senza voti misurati
   resta spento e l'undici si forma come prima**: niente incertezza inventata.
+- **dal 15/09/2026 il voto atteso viene dal modello** (B2): `votoAtteso(p, g)` usa
+  `attesoModello('voto', …)` con la partita e l'incertezza del giocatore, per i ruoli
+  dove il modello batte il calcolo di prima; per i portieri no, resta quello sopra.
 - **si simula invece di fare la media** (`modificatoreAtteso`, Monte Carlo con
   seme fisso, così lo stesso undici non balla da un tocco all'altro e le prove
   sono ripetibili). Sugli scalini la media è bugiarda: un blocco «da 2,8» non
@@ -902,6 +916,45 @@ Dato giocatore, ruolo, avversario, casa/fuori, forma e squadra intorno →
 - Onestà obbligatoria: niente numero secco con aria sicura. Il calcio è
   genuinamente casuale e anche l'xG vero di Opta, su una partita, ha barre
   d'errore larghe. Mostrare l'incertezza, non nasconderla.
+- **Fatto il 15/09/2026** (scelte dell'utente: il modello sostituisce il calcolo di
+  prima, quotazioni storiche di tutte le stagioni, scomposizione nella scheda):
+  - dati: `storico.py` aggiunge a ogni stagione `quotazioni` ({Id: [iniziale, finale,
+    ruolo]}, 630-684 a stagione) e `partite` (il calendario col risultato, dal
+    2017-18); `aggiorna.py` salva la quotazione iniziale di oggi in
+    `statistiche.json` → `iniziali`.
+  - `scripts/modello.py`: un modello lineare (ridge, Python puro) per ruolo, per il
+    fantavoto e per il voto, con le voci `VOCI`: storia del giocatore (media pesata
+    sulle ultime ~33 presenze, peso `W/(W+K)`), quotazione iniziale (conta per chi ha
+    poca storia), in casa, avversario, attacco e difesa della propria squadra —
+    misurati **esattamente** come `forzaSa`/`perPartita` nell'app, così i pesi valgono
+    dentro l'app. Solo informazioni note prima della partita (provato in
+    `prove/modello.py`). La forma recente è stata misurata e lasciata fuori: non predice.
+  - verifica automatica sulle ultime due stagioni contro un'imitazione del calcolo di
+    prima, quotazione compresa. Il 15/09 la correlazione col fantavoto vero, modello
+    contro prima: P .217/.203, D .189/.131, C .197/.183, A .165/.154, e l'errore è più
+    basso in tutti i ruoli. Per il voto dei portieri no (.019/.095). Regola scritta nel
+    file (`usa`): **un ruolo usa il modello solo se in verifica batte il calcolo di
+    prima**, e si ricalcola a ogni addestramento.
+  - incertezza: il ballo del giocatore mescolato con quello del ruolo, con `n0`
+    presenze «di fiducia» ricavate da quanto il ballo si conserva tra le stagioni
+    (fantavoto C .49, A .47, P .33, D .24; voto dei portieri .08).
+  - `dati/modello.json` (~13 KB): pesi, verifica e per ognuno dei 250 giocatori delle
+    rose [peso della storia, media fantavoto, media voto, ballo fantavoto, ballo voto,
+    presenze, quotazione iniziale]. Si riaddestra a ogni giro automatico (passo
+    «Aggiorna il modello del fantavoto», ~2 secondi); si riscrive solo se cambia e solo
+    se plausibile, altrimenti resta quello di prima.
+  - nell'app: `attesoModello(quale, p, g)` (base del giocatore più la partita),
+    `punteggio` = fantavoto atteso + titolarità, `votoAtteso(p, g)` dal modello (va al
+    modificatore), `punteggioVecchio` e `CALCOLO_VECCHIO` per il calcolo di prima. Nella
+    scheda del giocatore «Fantavoto atteso, se gioca» con ± e la scomposizione (base,
+    in casa, avversario, squadra). Il consiglio salvato da `notifiche.js` ha anche
+    `undici_vecchio`, e «Quanto si avvicina Jarvis» mostra il calcolo di prima accanto.
+  - misurato, da ricordare: i `PESI` di prima sopravvalutavano l'avversario (per gol a
+    partita: D 0,8 → 0,16 nel modello, P 1,0 → 0,50, A 0,8 → 0,31, C 0,4 → 0,16), e il
+    giocare in casa, che prima non contava, vale +0,14/+0,18.
+  - non ancora: il mercato (`valoreStagione`) e la riga «per il consiglio» di «Chiedi»
+    usano ancora la fantamedia stimata; tutto ciò che passa da `punteggio` usa già il
+    modello.
 
 ### B3 — Centrocampo e attacco: **probabilità di vittoria**, non punti attesi
 
@@ -1039,15 +1092,16 @@ python prove/rose.py
 python prove/lega.py
 node prove/notifiche.js
 python prove/privacy.py
+python prove/modello.py
 ```
 
 **Il totale delle verifiche cambia col posto, ed è giusto così** (accertato il
 15/09/2026). Alcune prove girano solo se ci sono i file veri esportati da Leghe,
 che stanno in `archivio/` e sono fuori da Git. Quindi:
 
-- **sul PC dell'utente** (che ha `archivio/`): `prove/app.js` 276/276 e
+- **sul PC dell'utente** (che ha `archivio/`): `prove/app.js` 287/287 e
   `prove/lega.py` 34/34
-- **su un clone pulito o nella CI** (senza `archivio/`): 275/275 e 31/31, perché
+- **su un clone pulito o nella CI** (senza `archivio/`): 286/286 e 31/31, perché
   saltano «il file vero di Leghe si legge uguale (solo sul PC)» e le tre di
   `lega.py` sulla stessa cosa
 
