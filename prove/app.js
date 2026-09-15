@@ -68,7 +68,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,apriStagione,scegliGiornata,accuratezzaConsiglio,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,forma,risultatoLega,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,apriStagione,scegliGiornata,accuratezzaConsiglio,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,forma,risultatoLega,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -907,6 +907,97 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            && !/in meno del massimo/.test(el['st-giornata'].innerHTML));
   t.scegliGiornata(4);   // Serie A 4: prima della lega, nessun consiglio possibile
   verifica('prima della lega: niente riga del consiglio', !/Il consiglio di Jarvis/.test(el['st-giornata'].innerHTML));
+
+  console.log('\n31. Il modificatore di difesa (portiere + i 3 migliori difensori)');
+  // la tabella della lega, agli estremi: gli scalini sono il punto delicato
+  verifica('la tabella della lega, scalino per scalino',
+           t.bonusModificatore(5.99) === 0 && t.bonusModificatore(6) === 1
+           && t.bonusModificatore(6.24) === 1 && t.bonusModificatore(6.25) === 2
+           && t.bonusModificatore(6.5) === 3 && t.bonusModificatore(6.74) === 3
+           && t.bonusModificatore(6.75) === 4.5 && t.bonusModificatore(6.99) === 4.5
+           && t.bonusModificatore(7) === 6 && t.bonusModificatore(9) === 6);
+  verifica('i voti si simulano a mezzi punti, dentro la scala',
+           t.arrotondaVoto(6.3) === 6.5 && t.arrotondaVoto(6.1) === 6 && t.arrotondaVoto(-3) === 1
+           && t.arrotondaVoto(12) === 10);
+
+  ({ t, el } = await avvia({ adesso: giovedi }));
+  const gm = t.prossima();
+  const dif = t.mia.filter(p => p.ruolo === 'D'), por = t.mia.filter(p => p.ruolo === 'P');
+  verifica('con i voti veri il modificatore è misurabile', t.votoAtteso(dif[0]) !== null, t.votoAtteso(dif[0]));
+  const m1 = t.modificatoreAtteso(por[0], dif.slice(0, 4));
+  verifica('le probabilità delle fasce fanno uno', m1 && circa(m1.fasce.reduce((s, f) => s + f.prob, 0), 1), m1 && m1.fasce);
+  verifica('stesso blocco, stesso risultato: il seme è fisso, non balla a ogni tocco',
+           circa(t.modificatoreAtteso(por[0], dif.slice(0, 4)).atteso, m1.atteso), m1.atteso);
+
+  // un blocco modForte rende più di uno modDebole, e nessuno dei due è una certezza
+  t.mia.forEach(p => { if (p.ruolo === 'D' || p.ruolo === 'P') { p.mv = 7.4; p.pgv = 10; } });
+  t.stimaVoti();
+  const modForte = t.modificatoreAtteso(por[0], dif.slice(0, 4));
+  t.mia.forEach(p => { if (p.ruolo === 'D' || p.ruolo === 'P') p.mv = 5.4; });
+  t.stimaVoti();
+  const modDebole = t.modificatoreAtteso(por[0], dif.slice(0, 4));
+  verifica('un blocco da voti alti rende più di uno da voti bassi',
+           modForte.atteso > modDebole.atteso, [modForte.atteso, modDebole.atteso]);
+  verifica('e non è mai una certezza: le fasce restano più di una',
+           modForte.fasce.length > 1 || modDebole.fasce.length > 1, [modForte.fasce.length, modDebole.fasce.length]);
+
+  /* il cuore della cosa: con quattro difensori il peggiore viene scartato, quindi UNO
+     da bei bonus e voti scarsi è gratis (il suo voto cade), DUE no (il secondo entra
+     nella media e costa uno scalino). Jarvis deve accorgersene da solo.
+     Il portiere va rimesso a posto: resta nella media tutte le volte. */
+  t.mia.forEach(p => {
+    if (p.ruolo === 'D') { p.mv = 6.5; p.fm = 6; p.pgv = 10; }
+    if (p.ruolo === 'P') { p.mv = 6.5; p.pgv = 10; }
+  });
+  const scarsi = dif.slice(0, 2);
+  scarsi.forEach(p => { p.mv = 4.8; p.fm = 6.8; });   // voti pessimi, ma tanti bonus
+  t.stimaVoti();
+  const blo = t.bloccoDifensivo(t.mia.filter(p => t.disponibile(p, gm[2])), gm, 4);
+  const buoni = t.mia.filter(p => p.ruolo === 'D' && scarsi.indexOf(p) < 0);
+  const mod0 = t.modificatoreAtteso(por[0], buoni.slice(0, 4)).atteso;
+  const mod1 = t.modificatoreAtteso(por[0], [scarsi[0]].concat(buoni.slice(0, 3))).atteso;
+  const mod2 = t.modificatoreAtteso(por[0], scarsi.concat(buoni.slice(0, 2))).atteso;
+  /* il secondo difensore da voti scarsi costa più del primo: il peggiore dei quattro
+     viene scartato, quindi il primo se lo assorbe quasi tutto il conto, il secondo
+     finisce dentro la media per forza. È la ragione per cui la difesa va scelta a
+     blocco e non uno per uno, e vale sempre, non solo su questi numeri. */
+  verifica('il secondo difensore da voti scarsi costa più del primo (il peggiore viene scartato)',
+           mod0 - mod1 > 0 && mod1 - mod2 > mod0 - mod1,
+           'primo −' + (mod0 - mod1).toFixed(2) + ', secondo −' + (mod1 - mod2).toFixed(2));
+  verifica('e infatti non ne prende due', blo && blo.D.filter(p => scarsi.indexOf(p) >= 0).length <= 1,
+           blo && blo.D.filter(p => scarsi.indexOf(p) >= 0).length + ' dei due nel blocco');
+  // il blocco scelto non può rendere meno di quello preso uno per uno: quello è tra i candidati
+  const naive = t.mia.filter(p => t.disponibile(p, gm[2]) && p.ruolo === 'D')
+                     .sort((x, y) => t.punteggio(y, gm) - t.punteggio(x, gm)).slice(0, 4);
+  const pnaive = t.mia.filter(p => t.disponibile(p, gm[2]) && p.ruolo === 'P')
+                      .sort((x, y) => t.punteggio(y, gm) - t.punteggio(x, gm))[0];
+  const totNaive = t.punteggio(pnaive, gm) + naive.reduce((s, p) => s + t.punteggio(p, gm), 0)
+                   + t.modificatoreAtteso(pnaive, naive).atteso;
+  verifica('il blocco scelto non rende mai meno di quello preso uno per uno',
+           blo && blo.tot >= totNaive - 1e-9, blo && [blo.tot, totNaive]);
+  verifica('e l\'undici resta legale: un portiere, quattro difensori',
+           (u2 => u2.P.length === 1 && u2.D.length === 4
+                  && Object.values(u2).flat().length === 11)(t.undici(gm)));
+
+  ({ t, el } = await avvia({ adesso: giovedi }));
+  const dif2 = el.difesa.innerHTML;
+  const mOgg = t.modificatoreAtteso(t.undici(t.prossima()).P[0], t.undici(t.prossima()).D);
+  verifica('nella Giornata il riquadro della difesa: atteso, fasce e quanto manca allo scalino',
+           /La difesa/.test(dif2) && /MODIFICATORE/.test(dif2) && /%/.test(dif2)
+           && /Pi.* probabile/.test(dif2), dif2.slice(0, 150));
+  verifica('e il numero mostrato è quello calcolato, non un altro',
+           dif2.includes(mOgg.atteso.toFixed(1).replace('.', ',')), mOgg.atteso);
+
+  // senza voti non si inventa nulla: si torna alla scelta di prima
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'voti.json': null } }));
+  verifica('senza voti il riquadro della difesa non compare, invece di mostrare zero',
+           el.difesa.innerHTML === '', JSON.stringify(el.difesa.innerHTML));
+  verifica('senza voti il modificatore resta spento, niente incertezza inventata',
+           t.votoAtteso(t.mia.find(p => p.ruolo === 'D')) === null
+           && t.bloccoDifensivo(t.mia, t.prossima(), 4) === null);
+  verifica('e l\'undici si forma lo stesso, come prima',
+           (u3 => u3.P.length === 1 && u3.D.length === 4
+                  && Object.values(u3).flat().length === 11)(t.undici(t.prossima())));
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);

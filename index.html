@@ -591,6 +591,22 @@
   .sc-g + .sc-g{margin-top:12px;}
   .sez{margin:22px 4px 10px; font-family:"Barlow Condensed",sans-serif; font-size:23px; font-weight:700; color:var(--ink);}
   .sovra-corpo > .sez:first-child{margin-top:4px;}
+  /* .blocco sovrappone un velo bianco: sta bene sulle zone scure dello sfondo, ma il
+     riquadro della difesa cade sul centro chiaro dello stemma e il testo si perdeva.
+     Qui sotto va una base scura, così si legge dovunque finisca lo scorrimento. */
+  .blocco.scuro{background:linear-gradient(180deg,rgba(16,20,18,.82),rgba(16,20,18,.72));
+                -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);}
+  /* il modificatore di difesa: il numero atteso e, sotto, dove può davvero cadere */
+  .md-n{margin-top:10px; text-align:center;}
+  .md-n b{display:block; font-size:44px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
+  .md-n span{display:block; margin-top:4px; font-size:12px; color:var(--dim);}
+  .md-barra{display:flex; height:12px; margin:14px 0 8px; border-radius:6px; overflow:hidden;
+            background:rgba(255,255,255,.07);}
+  .md-barra i{display:block; min-width:2px;}
+  .md-barra i + i{border-left:1px solid rgba(0,0,0,.4);}
+  .md-fasce{display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center;
+            font-size:11.5px; color:var(--dim);}
+  .md-fasce b{color:var(--ink); font-weight:600;}
   .sc-conti{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;}
   .sc-conti div{min-width:0; padding:9px 6px; border-radius:14px; text-align:center; background:rgba(0,0,0,.22);}
   .sc-conti span{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
@@ -801,6 +817,7 @@
       </div>
     </div>
     <div class="campo" id="campo"></div>
+    <div id="difesa"></div>
     <div id="sfida"></div>
     <div id="quando"></div>
     <div id="panchina"></div>
@@ -955,6 +972,7 @@ async function carica(){
   applicaStatistiche(st);
   mia = players.filter(p=>p.team===ME);
   stimaQuotazioni();
+  stimaVoti();
 }
 
 /* statistiche del giorno dalle pagine pubbliche (partite, MV, FM, quotazione):
@@ -1073,6 +1091,7 @@ function renderGiornata(){
 
   const sa = g[1], iso = g[2];
   disegnaCampo(g);
+  renderDifesa(g);
   renderSfida(g);
   renderQuando(g);
   renderComeAndata();
@@ -1167,6 +1186,134 @@ function fmStimata(p){
   return (p.pgv*p.fm + PARTITE_PRIOR*(s.a + s.b*p.quot)) / (p.pgv + PARTITE_PRIOR);
 }
 
+/* ── Il modificatore di difesa ────────────────────────────────────────────────
+   La lega lo calcola sulla media voto di portiere + i 3 migliori difensori, a
+   scalini (impostazione «Consigliata», confermata dall'utente il 15/09/2026).
+   Due cose lo rendono diverso da tutto il resto del consiglio:
+   · vive sui VOTI, non sui fantavoti. I bonus non ci entrano: un difensore da
+     gol e assist ma voti mediocri qui non aiuta, uno da 6,5 fisso sì.
+   · è a scalini. Con la media a 6,74 un decimo in più vale un punto e mezzo; a
+     6,20 lo stesso decimo vale zero. Quindi non conta «quanto è bravo» il
+     singolo, conta dove finisce la media del blocco.
+   Per questo la difesa non si sceglie più uno a uno, ma a blocco: vedi
+   bloccoDifensivo(). */
+const MODIFICATORE = [[7, 6], [6.75, 4.5], [6.5, 3], [6.25, 2], [6, 1]];
+/* la tabella sopra resta l'unica fonte di verità; da lei si ricavano una volta due
+   liste piatte, perché nel giro delle simulazioni la fascia si cerca centinaia di
+   migliaia di volte e l'accesso annidato lì si sente */
+const M_SOGLIE = MODIFICATORE.map(x=>x[0]), M_BONUS = MODIFICATORE.map(x=>x[1]);
+function bonusModificatore(media){
+  for(let i = 0; i < M_SOGLIE.length; i++) if(media >= M_SOGLIE[i]) return M_BONUS[i];
+  return 0;
+}
+
+/* Quanto balla un voto attorno alla media del suo giocatore: misurato sui voti veri
+   di questa stagione, messi insieme per tutti (con poche giornate il singolo non
+   basta, la lega sì). Senza voti non si stima nulla e il modificatore resta spento:
+   meglio non dire niente che inventare un'incertezza. */
+const PARTITE_PRIOR_VOTO = 4;
+let VOTO_RUOLO = {}, BALLO = null;
+function stimaVoti(){
+  VOTO_RUOLO = {}; BALLO = null; CAMPIONI = {}; BLOCCHI = {};
+  ['P','D','C','A'].forEach(r=>{
+    const g = players.filter(p=>p.ruolo===r && p.pgv>0), W = g.reduce((s,p)=>s+p.pgv, 0);
+    VOTO_RUOLO[r] = W ? g.reduce((s,p)=>s+p.pgv*p.mv, 0)/W : null;
+  });
+  if(!D.voti) return;
+  const per = {};
+  Object.keys(D.voti).forEach(sa=>{
+    const v = D.voti[sa];
+    Object.keys(v).forEach(id=>{ (per[id] = per[id] || []).push(v[id][0]); });
+  });
+  let scarti = 0, n = 0;
+  Object.keys(per).forEach(id=>{
+    const x = per[id];
+    if(x.length < 2) return;
+    const m = x.reduce((s,y)=>s+y, 0)/x.length;
+    x.forEach(y=>{ scarti += (y-m)*(y-m); });
+    n += x.length - 1;                      // gradi di libertà, non conteggi
+  });
+  if(n >= 200) BALLO = Math.sqrt(scarti/n);  // sotto è una misura, non una stima
+}
+/* voto atteso: come per la fantamedia, con poche partite la media del giocatore è
+   rumore e si mescola con quella del suo ruolo */
+function votoAtteso(p){
+  const r = VOTO_RUOLO[p.ruolo];
+  if(BALLO === null || r === null || r === undefined) return null;
+  return {media: (p.pgv*p.mv + PARTITE_PRIOR_VOTO*r) / (p.pgv + PARTITE_PRIOR_VOTO), sd: BALLO};
+}
+
+/* I voti veri escono a mezzi punti: simularli continui gonfierebbe la precisione
+   proprio sugli scalini, che stanno ogni 0,25. */
+function arrotondaVoto(v){ return Math.min(10, Math.max(1, Math.round(v*2)/2)); }
+/* seme fisso: lo stesso undici non cambia da un tocco all'altro e le prove sono ripetibili */
+function casuale(seme){
+  let s = seme|0;
+  return function(){
+    s = s + 0x6D2B79F5 | 0;
+    let t = Math.imul(s ^ s>>>15, 1|s);
+    t = t + Math.imul(t ^ t>>>7, 61|t) ^ t;
+    return ((t ^ t>>>14)>>>0) / 4294967296;
+  };
+}
+function normale(r){
+  let u = r();
+  while(u === 0) u = r();
+  return Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*r());
+}
+const SIMULAZIONI = 2000;        // per il numero che si mostra
+const SIMULAZIONI_SCELTA = 250;  // per confrontare le combinazioni fra loro (confronto appaiato: bastano poche)
+/* i campioni si tengono da parte: provare settanta combinazioni rigenerandoli ogni
+   volta costerebbe più della scelta stessa. Si svuotano quando i dati cambiano. */
+let CAMPIONI = {};
+function campioneVoti(p, n){
+  const chiave = p.id + ':' + n;
+  if(CAMPIONI[chiave]) return CAMPIONI[chiave];
+  const v = votoAtteso(p);
+  if(!v) return null;
+  const r = casuale(p.id*7919 + 13), out = new Float64Array(n);
+  for(let i = 0; i < n; i++) out[i] = arrotondaVoto(v.media + v.sd*normale(r));
+  return (CAMPIONI[chiave] = out);
+}
+
+/* media del modificatore e basta. Nella ricerca del blocco servono solo i confronti,
+   e costruire la distribuzione per ognuna delle settanta combinazioni costerebbe più
+   della ricerca stessa. I campioni sono gli stessi per tutte (seme fisso per
+   giocatore), quindi il confronto è appaiato e regge anche con poche prove. */
+function mediaModificatore(cp, cd, n){
+  let somma = 0;
+  for(let i = 0; i < n; i++){
+    let s = 0, peggiore = Infinity;
+    for(let k = 0; k < cd.length; k++){ const x = cd[k][i]; s += x; if(x < peggiore) peggiore = x; }
+    /* i 3 migliori difensori: con quattro in campo è la somma meno il peggiore */
+    somma += bonusModificatore((cp[i] + (cd.length > 3 ? s - peggiore : s)) / 4);
+  }
+  return somma / n;
+}
+/* Il modificatore atteso di un blocco, e con che probabilità cade in ogni fascia.
+   Si simula invece di fare il conto sulle medie perché gli scalini rendono la media
+   bugiarda: un blocco che oscilla attorno a 6,5 non vale «+3 sempre», vale una
+   moneta tra +2 e +3, e la differenza si vede solo simulando. */
+function modificatoreAtteso(portiere, difensori, n){
+  n = n || SIMULAZIONI;
+  if(!portiere || difensori.length < 3) return null;
+  const cp = campioneVoti(portiere, n), cd = difensori.map(p=>campioneVoti(p, n));
+  if(!cp || cd.some(c=>!c)) return null;
+  const conta = {};
+  let somma = 0;
+  for(let i = 0; i < n; i++){
+    let s = 0, peggiore = Infinity;
+    for(let k = 0; k < cd.length; k++){ const x = cd[k][i]; s += x; if(x < peggiore) peggiore = x; }
+    const media = (cp[i] + (cd.length > 3 ? s - peggiore : s)) / 4;
+    somma += media;
+    const b = bonusModificatore(media);
+    conta[b] = (conta[b] || 0) + 1;
+  }
+  const fasce = Object.keys(conta).map(Number).sort((a,b)=>b-a)
+                      .map(b=>({bonus:b, prob:conta[b]/n}));
+  return {atteso: fasce.reduce((s,f)=>s + f.bonus*f.prob, 0), media: somma/n, fasce};
+}
+
 function punteggio(p, g){
   let v = fmStimata(p);
   const t = titolarita(p, g);
@@ -1176,6 +1323,56 @@ function punteggio(p, g){
   return v;
 }
 function undici(g){ return undiciDi(mia, g, modulo); }
+
+/* tutte le combinazioni di k elementi, nell'ordine in cui arrivano */
+function combinazioni(a, k){
+  const out = [];
+  (function giro(da, presi){
+    if(presi.length === k){ out.push(presi); return; }
+    for(let i = da; i < a.length; i++) giro(i+1, presi.concat([a[i]]));
+  })(0, []);
+  return out;
+}
+/* Portiere e difesa scelti insieme, a blocco. Il modificatore dipende dalla media
+   del gruppo, quindi il blocco migliore non è sempre fatto dei quattro difensori
+   migliori presi uno per uno: a volte rende di più il quarto regolare del quarto
+   da bonus. Vince la combinazione col totale più alto (fantapunti dei singoli più
+   modificatore atteso).
+   Candidati: i migliori per punteggio uniti ai migliori per voto atteso — uno
+   «specialista del voto» va guardato anche se per fantamedia non spicca — e
+   comunque pochi, che le combinazioni crescono in fretta. */
+let BLOCCHI = {};
+function bloccoDifensivo(disp, g, quanti){
+  if(BALLO === null) return null;
+  const chiave = g[0]+':'+quanti+':'+disp.map(p=>p.id).join(',');
+  if(chiave in BLOCCHI) return BLOCCHI[chiave];
+  const pt = new Map();                                  // il punteggio si ricalcola molte volte
+  disp.forEach(p=>pt.set(p, punteggio(p, g)));
+  const ord = (a,b)=>pt.get(b)-pt.get(a);
+  const por = disp.filter(p=>p.ruolo==='P').sort(ord);
+  const dif = disp.filter(p=>p.ruolo==='D').sort(ord);
+  if(!por.length || dif.length < quanti) return (BLOCCHI[chiave] = null);
+  const vm = p=>{ const v = votoAtteso(p); return v ? v.media : 0; };
+  const cand = [];
+  dif.slice(0,6).concat(dif.slice().sort((a,b)=>vm(b)-vm(a)).slice(0,6))
+     .forEach(p=>{ if(cand.indexOf(p) < 0) cand.push(p); });
+  const porScelta = por.slice(0,2)
+    .map(p=>({p, c: campioneVoti(p, SIMULAZIONI_SCELTA), v: pt.get(p)}))
+    .filter(x=>x.c);
+  let meglio = null;
+  combinazioni(cand, quanti).forEach(d=>{
+    const cd = d.map(p=>campioneVoti(p, SIMULAZIONI_SCELTA));
+    if(cd.some(c=>!c)) return;
+    const sd = d.reduce((s,x)=>s+pt.get(x), 0);
+    porScelta.forEach(x=>{
+      const tot = x.v + sd + mediaModificatore(x.c, cd, SIMULAZIONI_SCELTA);
+      if(!meglio || tot > meglio.tot) meglio = {tot, P:x.p, D:d.slice()};
+    });
+  });
+  /* la distribuzione fine non si calcola qui: serve solo dove si mostra (la propria
+     difesa), non per le dieci rose avversarie. La chiede chi la usa, con modificatoreAtteso. */
+  return (BLOCCHI[chiave] = meglio);
+}
 /* l'undici migliore di una rosa per un modulo: la difesa resta sempre a quattro */
 function undiciDi(rosa, g, mod){
   const iso = g[2];
@@ -1187,7 +1384,39 @@ function undiciDi(rosa, g, mod){
                  .sort((a,b)=>punteggio(b,g)-punteggio(a,g))
                  .slice(0,q[r]);
   });
+  /* portiere e difesa, se il modificatore è misurabile, si rifanno a blocco;
+     altrimenti restano quelli scelti uno per uno, come prima */
+  const b = bloccoDifensivo(disp, g, q.D);
+  if(b){ out.P = [b.P]; out.D = b.D.slice().sort((x,y)=>punteggio(y,g)-punteggio(x,g)); }
   return out;
+}
+/* La difesa di oggi, in chiaro. Si mostra la distribuzione e non solo il numero
+   perché sugli scalini la media non capita mai davvero: un blocco «da 2,8» non
+   prende 2,8, prende +2 oppure +3, e sapere con che probabilità è il punto.
+   Senza voti misurati il riquadro non c'è: niente numero inventato. */
+function renderDifesa(g){
+  const box = document.getElementById('difesa');
+  if(!box) return;
+  const u = undici(g);
+  const m = u.P.length && u.D.length >= 3 ? modificatoreAtteso(u.P[0], u.D) : null;
+  if(!m){ box.innerHTML = ''; return; }
+  const alta = m.fasce.slice().sort((a,b)=>b.prob-a.prob)[0];
+  /* quanto manca allo scalino sopra: è l'informazione che fa cambiare un difensore */
+  const su = M_SOGLIE.filter(s=>s > m.media).sort((a,b)=>a-b)[0];
+  const manca = su === undefined ? null :
+    'Per salire a +'+num(M_BONUS[M_SOGLIE.indexOf(su)], su===7?0:1).replace(',0','')+
+    ' serve '+num(su,2)+' di media: oggi il blocco vale '+num(m.media,2)+'.';
+  box.innerHTML = '<div class="blocco scuro"><div class="blocco-t">La difesa<small>MODIFICATORE</small></div>'+
+    '<div class="md-n"><b class="cond">'+(m.atteso>=0.05?'+':'')+num(m.atteso)+'</b>'+
+    '<span>atteso da portiere e 3 migliori difensori</span></div>'+
+    '<div class="md-barra">'+m.fasce.map(f=>
+      '<i style="width:'+(f.prob*100).toFixed(1)+'%;background:'+
+      (f.bonus>=4.5?'var(--oro)':f.bonus>=2?'rgba(228,180,81,.55)':'rgba(255,255,255,.18)')+'"></i>').join('')+'</div>'+
+    '<div class="md-fasce">'+m.fasce.map(f=>
+      '<span><b>'+(f.bonus?'+'+String(f.bonus).replace('.',','):'0')+'</b> '+
+      Math.round(f.prob*100)+'%</span>').join('')+'</div>'+
+    '<p class="nota">Più probabile <b>'+(alta.bonus?'+'+String(alta.bonus).replace('.',','):'0')+
+    '</b> ('+Math.round(alta.prob*100)+'%). '+(manca||'Sei già nella fascia più alta.')+'</p></div>';
 }
 function disegnaCampo(g){
   const u = undici(g);
@@ -2609,7 +2838,7 @@ async function aggiorna(silenzioso){
       fetch('dati/squadre.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null),
       fetch('dati/statistiche.json?cb='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)
     ]);
-    if(applicaStatistiche(st)) stimaQuotazioni();
+    if(applicaStatistiche(st)){ stimaQuotazioni(); stimaVoti(); }
     if(o && o.giornate && Object.keys(o.giornate).length>=38){ D.orari = o.giornate; D.orari_v = o.aggiornato || D.orari_v; }
     if(s && s.squadre && Object.keys(s.squadre).length>=20) D.sq = s;
     if(i && i.voci && Object.keys(i.voci).length>=5){

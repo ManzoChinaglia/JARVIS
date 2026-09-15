@@ -40,6 +40,36 @@ backend è spostare `dati/` su un branch separato azzerato periodicamente
 (commit orfano), non Supabase. Non riaprire senza un problema vero da
 risolvere.
 
+**xG e statistiche avanzate, cercate e non trovate (15/09/2026, lavoro da
+remoto).** L'utente voleva portare Jarvis al livello delle analisi moderne
+(xG e simili). Verificate le fonti, una per una:
+- **Understat**: il `robots.txt` vieta la raccolta automatica. Escluso — è un no
+  del sito, non un ostacolo tecnico da aggirare.
+- **FBref**: risponde **403 alle richieste automatiche** (anche al solo
+  `robots.txt`). Protezione anti-bot, e un runner GitHub Actions ha un IP da
+  datacenter: inaffidabile per un giro schedulato.
+- **football-data.org** (gratuito, con chiave): niente xG, solo risultati e
+  classifiche, roba che abbiamo già.
+- Tutto il resto che si trova è commerciale a pagamento (Sportmonks, TheStatsAPI,
+  FootyStats) o attori Apify che raschiano Understat, quindi col divieto a monte.
+
+Conclusione: **xG vero, gratuito e lecitamente automatizzabile per la Serie A non
+esiste.** E soprattutto **non è il dato che serve qui**: al fantacalcio il
+bersaglio è il *fantavoto*, cioè voto del giornalista più bonus. xG prevede solo
+la seconda metà, e solo per chi segna; 16 dei 25 giocatori della rosa sono
+difensori e centrocampisti, il cui fantavoto è dominato dal voto. Con il
+modificatore difesa il voto pesa ancora di più. La strada giusta non è comprare
+xG, è costruire il suo equivalente su misura — il **fantavoto atteso** — sullo
+storico dei voti. Non riaprire la caccia alle fonti xG senza un motivo nuovo.
+
+**Lo storico dei voti, verificato e disponibile (15/09/2026).** L'archivio dei
+voti di fantacalcio.it — la fonte che `aggiorna.py` già raschia ogni giorno per la
+giornata corrente — è pubblico, senza login, e i menù di stagione arrivano indietro
+fino al **2015/16**. Sono ~38 giornate × ~290 giocatori × 11 stagioni ≈ **120.000
+righe giocatore-partita**. È la materia prima per il fantavoto atteso, e il parser
+esiste già (`voti_giornata`): serve solo parametrizzare la stagione nell'URL, che
+oggi ha `2026-27` fisso in `URL_VOTI`. Da fare nella patch successiva.
+
 ## Lavoro da remoto (sessioni cloud)
 
 Dal 15/09/2026. Oltre a Claude Code sul PC, il progetto si porta avanti anche
@@ -287,6 +317,12 @@ CRLF: `.gitattributes` impedisce a Git di convertirlo.
   View Transition, che «*» non prende). Senza l'API (Safari più vecchio) l'aggiornamento
   resta immediato, mai un errore. Verificato: la funzione esiste in Chromium, nessun
   errore in console al cambio giornata.
+- **`.blocco` è un velo bianco, non scuro** (15/09, lavoro da remoto): sta bene
+  sulle zone scure dello sfondo, ma il riquadro «La difesa» cade sul centro chiaro
+  dello stemma e il testo si perdeva (visto renderizzato, non dedotto dal CSS).
+  Per quel riquadro c'è `.blocco.scuro`, con base scura e sfocatura. Se un domani
+  altre schede finiscono su zone chiare, la stessa classe è già pronta; non è stata
+  applicata a tutte per non cambiare l'aspetto dell'app intera senza chiederlo.
 - **Sfocatura vetro (`backdrop-filter`), lasciata com'è** (15/09, stesso giro): idea
   valutata insieme alle altre due ma non applicata. Su iPhone più vecchi molte
   sfocature sovrapposte possono pesare sul render, ma sull'iPhone 16 Pro dell'utente
@@ -609,6 +645,55 @@ Il punteggio parte dalla **fantamedia stimata** e aggiunge:
   come differenza dalla media del campionato scorso nello stesso campo,
   moltiplicata per `PESI` in `index.html`. Portiere e difensori pesano di più per
   porta inviolata e modificatore difesa.
+
+**Il modificatore di difesa, calcolato** (15/09/2026, lavoro da remoto). La lega
+usa la configurazione «Consigliata»: **portiere + i 3 migliori difensori**, sulla
+**media voto** (tabella confermata dall'utente con una schermata delle
+impostazioni). Gli scalini: `<6` → 0, `≥6` → +1, `≥6,25` → +2, `≥6,5` → +3,
+`≥6,75` → +4,5, `≥7` → +6. Sono in `MODIFICATORE` in `index.html`, unica fonte di
+verità (le due liste piatte accanto ne derivano, servono solo alla velocità).
+
+Fino a oggi il modificatore non era calcolato: viveva come costante scritta a mano
+in `PESI` (`D:0.8`), cioè «i difensori contano un po' di più». Adesso:
+- **vive sui voti, non sui fantavoti**: un difensore da gol e assist ma voti
+  mediocri non aiuta il modificatore, uno da 6,5 fisso sì. `votoAtteso()` stima il
+  voto (media del giocatore mescolata con quella del ruolo, come per la
+  fantamedia) e quanto balla (`BALLO`, misurato sui voti veri di tutta la lega
+  messi insieme: con poche giornate il singolo non basta). **Senza voti misurati
+  resta spento e l'undici si forma come prima**: niente incertezza inventata.
+- **si simula invece di fare la media** (`modificatoreAtteso`, Monte Carlo con
+  seme fisso, così lo stesso undici non balla da un tocco all'altro e le prove
+  sono ripetibili). Sugli scalini la media è bugiarda: un blocco «da 2,8» non
+  prende mai 2,8, prende +2 o +3. Quello che conta è con che probabilità.
+- **la difesa si sceglie a blocco, non uno per uno** (`bloccoDifensivo`): vince la
+  combinazione col totale più alto, fantapunti dei singoli più modificatore
+  atteso. Candidati: i migliori per punteggio uniti ai migliori per voto atteso,
+  perché uno «specialista del voto» va guardato anche se per fantamedia non
+  spicca.
+- Nella Giornata c'è il riquadro **«La difesa»** con l'atteso, la distribuzione
+  per fascia e quanto manca allo scalino sopra — l'informazione che fa davvero
+  cambiare un difensore.
+
+Una cosa contro-intuitiva, misurata e non supposta: con quattro difensori il
+peggiore viene **scartato**, quindi verrebbe da pensare che uno da voti scarsi sia
+gratis. Non lo è: costa comunque (circa 0,6 sui dati veri di settembre) perché una
+volta su cinque non è lui il peggiore e il suo voto entra nella media. Il secondo
+costa quasi il doppio. È la ragione per cui la scelta a blocco batte quella uno
+per uno, ed è verificata in `prove/app.js` come invariante, non come numero fisso.
+
+**Doppio conteggio, noto e lasciato lì apposta:** `PESI` continua a pesare di più
+portiere e difensori anche per il modificatore, che ora è calcolato a parte. Non
+sposta le scelte (il peso è uguale per tutti i difensori e il loro numero è fisso),
+e ritoccarlo a sentimento sarebbe inventare un numero: si ritara quando il modello
+dello storico darà coefficienti veri. Per questo il modificatore si mostra in un
+riquadro suo e non è sommato nei totali già visibili.
+
+**Velocità:** la ricerca a blocco costa ~6,5 ms a freddo e ~0,3 ms quando è già in
+memoria (misurato, non stimato). Ci si arriva separando la **ricerca** (poche
+simulazioni: il confronto tra combinazioni usa gli stessi campioni, quindi è
+appaiato) dal **numero mostrato** (più simulazioni, una volta sola sul vincitore),
+tenendo i campioni in `CAMPIONI` e i blocchi già risolti in `BLOCCHI` — tutti
+svuotati da `stimaVoti()` quando i dati cambiano.
 
 **Campione piccolo:** a settembre ogni squadra ha giocato 3-4 partite e ogni
 statistica di forma è rumore. Il peso di quest'anno cresce in modo lineare fino
