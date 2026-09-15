@@ -734,7 +734,151 @@ l'app la mostra numerata e «chi schiero?» la riassume.
 quella fascia). Il dato pubblico non dice in modo affidabile chi occupa quale
 lato, e il risultato sarebbe una precisione finta.
 
+## Da fare: il cervello di Jarvis (piano preparato il 15/09/2026)
+
+Piano concordato con l'utente in una sessione cloud e **lasciato da fare a Claude
+Code sul PC**. Qui c'è tutto il necessario per eseguirlo senza rifare le indagini:
+quelle sono già state fatte e i risultati stanno in «xG e statistiche avanzate» e
+«Lo storico dei voti» più sopra. Leggerli prima di cominciare.
+
+L'ordine sotto è anche l'ordine di esecuzione: B1 è la fondazione, B2 e B3 ci
+stanno sopra, B4 è indipendente e può andare quando si vuole.
+
+### B1 — Lo storico dei voti (la fondazione)
+
+L'archivio di fantacalcio.it arriva al 2015/16, pubblico e senza login (verificato
+il 15/09). ~120.000 righe giocatore-partita.
+
+- `URL_VOTI` in `scripts/aggiorna.py` ha `2026-27` fisso: parametrizzare la
+  stagione. Il parser `voti_giornata()` **non va riscritto**, funziona già su
+  queste pagine — cambia solo l'indirizzo. Attenzione: la struttura delle pagine
+  vecchie non è stata verificata (dalla sessione cloud la rete verso
+  fantacalcio.it è chiusa), quindi **provare su una giornata sola prima di
+  lanciare il giro intero**, e far fallire in modo pulito se la tabella non torna.
+- Nuovo `scripts/storico.py`: giro una tantum, **ripartibile** (salta le giornate
+  già prese, così un'interruzione non fa ricominciare), educato con la fonte (una
+  pausa tra le richieste; sono 418 pagine, ~20 minuti). Stessi controlli di
+  plausibilità di `voti()`: sotto 200 voti la giornata non si salva.
+- Dove metterlo: **una stagione per file, compresso** (`dati/storico/2021-22.json.gz`
+  o simile). Le stagioni chiuse non cambiano più, quindi si scrivono una volta e
+  non gonfiano la storia di git. Lo storico grezzo **non va servito all'iPhone**:
+  resta materia prima per l'addestramento.
+- Verifica da fare al primo giro, e da riportare all'utente con i numeri veri:
+  quanti degli Id del listone di oggi compaiono nelle stagioni passate. Gli Id di
+  fantacalcio.it dovrebbero essere stabili per giocatore, **ma non è verificato**:
+  se non lo fossero, tutto il collegamento storia-giocatore salta ed è meglio
+  scoprirlo subito.
+
+### B2 — Il fantavoto atteso (l'equivalente dell'xG, su misura)
+
+Non si compra xG (vedi sopra il perché): si costruisce il bersaglio giusto.
+Dato giocatore, ruolo, avversario, casa/fuori, forma e squadra intorno →
+**distribuzione** del fantavoto, non un numero solo.
+
+- Addestramento **nelle GitHub Actions**, non sul telefono. Nel repository finisce
+  solo il modello addestrato (`dati/modello.json`, qualche decina di coefficienti);
+  l'app li applica offline, all'istante.
+- Preferire un modello **lineare/ridge** a una foresta o simili: l'app deve poter
+  dire *perché* («titolarità +0,8, avversario −0,3»), e una scatola nera non lo sa
+  fare. Con un bersaglio così rumoroso la differenza di accuratezza è piccola, la
+  differenza di spiegabilità è tutta.
+- **Innesto già pronto**: `votoAtteso(p)` in `index.html` restituisce
+  `{media, sd}`. Tutto il resto (`campioneVoti`, `modificatoreAtteso`,
+  `bloccoDifensivo`) passa da lì e non sa da dove venga la stima. Sostituire il
+  corpo di `votoAtteso` con il modello **non tocca nient'altro**: è il punto di
+  innesto pensato apposta il 15/09.
+- Con lo storico, `BALLO` smette di essere una dispersione unica per tutta la lega
+  e diventa **per giocatore** (chi è regolare e chi è una lotteria). È il salto di
+  qualità vero per B3.
+- Onestà obbligatoria: niente numero secco con aria sicura. Il calcio è
+  genuinamente casuale e anche l'xG vero di Opta, su una partita, ha barre
+  d'errore larghe. Mostrare l'incertezza, non nasconderla.
+
+### B3 — Centrocampo e attacco: **probabilità di vittoria**, non punti attesi
+
+L'utente ha chiesto se si può fare per C e A quello che si è fatto per la difesa.
+**Lo stesso algoritmo no, e la ragione è matematica**: il modificatore esiste
+perché una regola di lega fa passare una statistica *di gruppo* (media voto di
+portiere + 3 difensori) attraverso una funzione *a scalini*. Questo rende la scelta
+non separabile: i 4 difensori migliori presi uno per uno non sono il blocco
+migliore. Per centrocampo e attacco **non c'è nessuna regola di gruppo**: ogni
+fantavoto si somma per conto suo, e con una somma di termini indipendenti prendere
+i migliori uno per uno **è già la scelta ottima**. Un «algoritmo a blocco» lì
+sarebbe scenografia.
+
+Quello che invece è vero e non sfruttato: **è sbagliato l'obiettivo**. Jarvis
+massimizza i punti attesi, ma alla giornata non vinci facendo più punti in media —
+vinci battendo *quel* preciso avversario. Le due cose divergono appena conta la
+varianza:
+- se sei dato avanti, ti serve il **pavimento**: gente regolare, ridurre la
+  probabilità di crollare;
+- se sei dato sotto, i punti attesi non servono a niente: ti serve il **soffitto**,
+  perché le uniche strade che portano alla vittoria sono le code.
+
+**Massimizzare la probabilità di vittoria non è separabile** (quanta varianza
+conviene dipende dall'undici intero contro quell'avversario): qui un giro sulle
+combinazioni ci sta, come per la difesa, ma con un altro obiettivo.
+
+Come farlo, con quello che c'è già:
+- Serve la distribuzione del **fantavoto**, non del voto. Scomporre:
+  `fantavoto = voto + bonus`. Il voto è già modellato (`votoAtteso`); i bonus sono
+  eventi discreti, e le frequenze stanno in `dati/statistiche.json`
+  (`[partite, MV, FM, quotazione, gol, gol subiti, rigori parati, assist,
+  ammonizioni, espulsioni]`). Con 3 giornate sono frequenze fragili: **è B1 che le
+  rende solide**, quindi B3 va fatto dopo, o fatto prima segnalando l'incertezza.
+- L'undici avversario c'è già: `sfidaDati(g)` costruisce il suo migliore e i due
+  totali.
+- Simulare i due totali con la macchina già scritta (`casuale` col seme fisso,
+  `campioneVoti` da estendere al fantavoto) e contare le vittorie.
+
+Il guadagno più immediato e onesto: in `renderSfida` la barra della sfida usa oggi
+`Math.max(10, Math.min(90, 50 + diff*4))`, con il commento che ammette «la barra
+esagera il vantaggio, per vederlo». **È un segnaposto dichiarato: lì va la
+probabilità di vittoria vera.** E il consiglio per C e A diventa «massimizza la
+probabilità di vincere», che a volte dirà di lasciare in panchina chi ha la
+fantamedia più alta — e avrà ragione, sapendo spiegare perché.
+
+### B4 — La voce dell'utente (livelli 1, 2 e 4; il 3 è escluso)
+
+Concordato il 15/09. Il livello 3 («le tue regole», condizioni componibili) è stato
+**scartato d'accordo con l'utente**: molta interfaccia per un bisogno che il
+livello 2 copre con un gesto solo. Non riaprirlo senza una richiesta nuova.
+
+1. **Taccuino**: note libere per giocatore o squadra, che Jarvis rimette davanti al
+   momento della scelta. Non tocca i calcoli. Senza backend stanno in
+   `localStorage` — e va detto all'utente che sono legate a quel telefono.
+2. **Pollice sulla bilancia**: un giudizio dell'utente per giocatore che **entra
+   davvero** nel punteggio. Deve restare trasparente: «io lo metterei quarto, tu
+   l'hai spinto secondo». Mai una spinta invisibile.
+4. **Autocalibrazione**: i `PESI` si ritarano sui risultati veri invece di restare
+   quelli scelti a tavolino. La misura c'è già: «Quanto si avvicina Jarvis» (vedi
+   sopra) sta accumulando le prove dal 15/09. **Non prima di mezza stagione**: a 3-4
+   giornate non c'è niente da calibrare e si taglierebbe rumore scambiandolo per
+   segnale — lo stesso problema del «campione piccolo» già scritto qui sopra.
+
+### B5 — Una vista sola per tutto il consiglio
+
+Richiesta dell'utente: raccogliere queste viste (difesa, centrocampo/attacco, il
+ragionamento dietro l'undici) in **una sovraimpressione a tutto schermo**, con lo
+stesso stile ed effetti delle altre — sfondo sfocato dietro, come «Com'è andata»,
+«Mercato» e «La stagione».
+
+Non serve inventare nulla: `apriSovra(k, titolo, html, testo)` fa già esattamente
+questo, e il quarto parametro accende il pulsante di condivisione nativo. Il
+riquadro «La difesa» oggi sta nella schermata Giornata (`renderDifesa`, contenitore
+`#difesa`): decidere con l'utente se **spostarlo** dentro la vista nuova o
+**lasciarne un riassunto** nella Giornata con il resto nella sovraimpressione — la
+seconda probabilmente è meglio, il modificatore atteso è informazione da colpo
+d'occhio.
+
 ## Lavori aperti, in ordine di priorità
+
+0. **Il cervello di Jarvis (B1-B5).** Piano completo qui sopra, in «Da fare: il
+   cervello di Jarvis»: storico dei voti, fantavoto atteso, probabilità di
+   vittoria per centrocampo e attacco, la voce dell'utente, la vista unica.
+   Concordato con l'utente il 15/09/2026 e lasciato a Claude Code sul PC. È il
+   lavoro grosso in corso: sta davanti a tutto il resto di questa lista, e il
+   punto 1 qui sotto viene di fatto assorbito da B4.
 
 1. **Verificare i pesi del consiglio.** I pesi della titolarità e
    dell'avversario (`PESI`) sono stime ragionevoli, non tarate. Dopo una decina
