@@ -70,7 +70,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.createContext(ctx);
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
-    'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
+    'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,baseStagione,apriConsiglio,golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
     'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,apriStagione,scegliGiornata,accuratezzaConsiglio,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,forma,risultatoLega,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
@@ -984,9 +984,15 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
                   && Object.values(u2).flat().length === 11)(t.undici(gm)));
 
   ({ t, el } = await avvia({ adesso: giovedi }));
-  const dif2 = el.difesa.innerHTML;
   const mOgg = t.modificatoreAtteso(t.undici(t.prossima()).P[0], t.undici(t.prossima()).D);
-  verifica('nella Giornata il riquadro della difesa: atteso, tutte le fasce e quanto manca allo scalino',
+  verifica('nella Giornata un riassunto: il modificatore atteso e la fascia più probabile (B5)',
+           /class="invito"/.test(el.difesa.innerHTML) && /La difesa: \+?\d+,\d atteso/.test(el.difesa.innerHTML)
+           && /Fascia più probabile/.test(el.difesa.innerHTML), (el.difesa.innerHTML.match(/La difesa: [^<]*/) || [])[0]);
+  t.apriConsiglio();
+  const dif2 = el['sovra-corpo'].innerHTML;
+  verifica('e il perché di ogni titolare, nella vista del consiglio', (dif2.match(/class="vr"/g) || []).length === 11
+           && /Il perché dell'undici/.test(dif2), (dif2.match(/class="vr"/g) || []).length);
+  verifica('in «Il consiglio» il riquadro della difesa: atteso, tutte le fasce e quanto manca allo scalino',
            /La difesa/.test(dif2) && /MODIFICATORE/.test(dif2)
            && (dif2.match(/class="md-r[ "]/g) || []).length === 6     // una riga per fascia, anche le mai uscite
            && (dif2.match(/class="md-r sel"/g) || []).length === 1 // una sola accesa: la piu probabile
@@ -1035,6 +1041,11 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   t.apriGiocatore(d31.id);
   verifica('nella scheda il fantavoto atteso, quanto balla e il perché', /Fantavoto atteso, se gioca/.test(el['foglio-corpo'].innerHTML)
            && /±/.test(el['foglio-corpo'].innerHTML) && /base \d/.test(el['foglio-corpo'].innerHTML));
+  verifica('mercato: il valore dei giocatori dal modello (base senza la partita)',
+           circa(t.baseStagione(d31), t.attesoModello('fantavoto', d31, null).media) && !circa(t.baseStagione(d31), t.fmStimata(d31)),
+           t.baseStagione(d31).toFixed(2) + ' contro ' + t.fmStimata(d31).toFixed(2));
+  verifica('chiedi: «come sta» dice il fantavoto atteso', /atteso se gioca \d+,\d+ ± /.test(t.rispondi('come sta ' + d31.nome)),
+           t.rispondi('come sta ' + d31.nome).split('\n')[1]);
   const m31b = JSON.parse(JSON.stringify(m31));
   m31b.fantavoto.A.usa = false;
   ({ t } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31b } }));
@@ -1055,6 +1066,50 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            && circa(x31.consiglioPrima, somma31(vec31)), x31 && (x31.consiglio + ' e ' + x31.consiglioPrima));
   t.apriStagione();
   verifica('e nella stagione il confronto', acc31 && circa(acc31.prima, somma31(vec31)) && /Calcolo di prima/.test(el['sovra-corpo'].innerHTML));
+
+  console.log('\n33. La probabilità di vincere la sfida (B3)');
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31 } }));
+  g = t.prossima();
+  verifica('i gol con le fasce della lega: 1° a 66, poi uno ogni 5', t.golDa(65.5) === 0 && t.golDa(66) === 1 && t.golDa(70.5) === 1
+           && t.golDa(71) === 2 && t.golDa(86) === 5 && t.golDa(101) === 8);
+  const ps33 = t.probabilitaSfida(g);
+  verifica('vittoria, pareggio e sconfitta: probabilità che sommano a 1', ps33 && [ps33.vittoria, ps33.pareggio, ps33.sconfitta].every(x => x >= 0 && x <= 1)
+           && circa(ps33.vittoria + ps33.pareggio + ps33.sconfitta, 1),
+           ps33 && [ps33.vittoria, ps33.pareggio, ps33.sconfitta].map(x => Math.round(100 * x) + '%').join(' / '));
+  verifica('totali credibili: fantavoti degli undici più il modificatore', ps33 && ps33.mio > 55 && ps33.mio < 85 && ps33.loro > 55 && ps33.loro < 85,
+           ps33 && ps33.mio.toFixed(1) + ' contro ' + ps33.loro.toFixed(1));
+  t.stimaVoti();
+  const ps33b = t.probabilitaSfida(g);
+  verifica('ripetibile: ricalcolata da capo dà gli stessi numeri', ps33b && ps33b.vittoria === ps33.vittoria && ps33b.pareggio === ps33.pareggio);
+  // un attaccante peggiore *se gioca* al posto del primo (la simulazione suppone che giochino
+  // tutti: la titolarità resta nel consiglio, e scegliere per punteggio prendeva uno migliore in
+  // campo ma a rischio panchina): la media dei totali scende. La vittoria invece può anche salire,
+  // se quello nuovo balla di più, ed è proprio il punto di B3: quello che non può succedere è che
+  // con meno punti, sugli stessi campioni, si vinca di più
+  const fv33 = p => (t.attesoModello('fantavoto', p, g) || {}).media;
+  // (nell'undici gli attaccanti non sono per forza i migliori se giocano: fuori quello col
+  // fantavoto atteso più alto, dentro il panchinaro col più basso)
+  const u33 = ps33.s.mio.u, per33 = (a, b) => fv33(a) - fv33(b);
+  const fuori33 = u33.A.slice().sort(per33).pop();
+  const peggio33 = t.mia.filter(p => p.ruolo === 'A' && !u33.A.includes(p) && fv33(p) !== undefined).sort(per33)[0];
+  const tm33 = peggio33 ? t.totaliSquadra(Object.assign({}, u33, { A: u33.A.map(p => p === fuori33 ? peggio33 : p) }), g, 2000) : null;
+  const media33 = x => x.reduce((a, b) => a + b, 0) / x.length;
+  verifica('se l\'undici peggiora, la media dei totali scende', peggio33 && tm33 && fv33(peggio33) < fv33(fuori33) && media33(tm33) < ps33.mio,
+           peggio33 && peggio33.nome + ' per ' + fuori33.nome + (tm33 ? ': ' + media33(tm33).toFixed(2) + ' contro ' + ps33.mio.toFixed(2) : ''));
+  verifica('e con meno punti sugli stessi campioni la vittoria non sale', t.esitoSfida(ps33.tm.map(x => x - 3), ps33.tl).vittoria <= ps33.vittoria);
+  verifica('nella sfida le probabilità vere al posto della barra «sulla carta»', /Vinci il <b>\d+%<\/b> · pareggi il \d+% · perdi il \d+%/.test(el.sfida.innerHTML)
+           && /sf-barra tre/.test(el.sfida.innerHTML));
+  t.apriConsiglio();
+  verifica('in «Il consiglio» anche la sfida e il perché con la scomposizione', /Vinci il/.test(el['sovra-corpo'].innerHTML)
+           && /La sfida/.test(el['sovra-corpo'].innerHTML) && /base \d/.test(el['sovra-corpo'].innerHTML));
+  t.chiudiSovra();
+  const sug33 = t.suggerimentoSfida(g);
+  verifica('il suggerimento, se c\'è: stesso ruolo, dalla panchina, conviene davvero', sug33 === null || (sug33.entra.ruolo === sug33.fuori.ruolo
+           && 'CA'.includes(sug33.entra.ruolo) && !u33[sug33.entra.ruolo].includes(sug33.entra) && sug33.guadagno >= 0.02
+           && /Per battere/.test(el.sfida.innerHTML)), sug33 ? sug33.entra.nome + ' per ' + sug33.fuori.nome + ', +' + Math.round(100 * sug33.guadagno) : 'nessuno');
+  ({ t, el } = await avvia({ adesso: giovedi }));
+  verifica('senza modello niente probabilità: resta il verdetto sulla carta', t.probabilitaSfida(t.prossima()) === null
+           && /Sulla carta/.test(el.sfida.innerHTML) && !/Vinci il/.test(el.sfida.innerHTML));
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);

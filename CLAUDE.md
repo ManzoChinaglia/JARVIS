@@ -776,9 +776,10 @@ in `PESI` (`D:0.8`), cioè «i difensori contano un po' di più». Adesso:
   atteso. Candidati: i migliori per punteggio uniti ai migliori per voto atteso,
   perché uno «specialista del voto» va guardato anche se per fantamedia non
   spicca.
-- Nella Giornata c'è il riquadro **«La difesa»** con l'atteso, la distribuzione
-  per fascia e quanto manca allo scalino sopra — l'informazione che fa davvero
-  cambiare un difensore.
+- Il riquadro **«La difesa»** ha l'atteso, la distribuzione per fascia e quanto
+  manca allo scalino sopra — l'informazione che fa davvero cambiare un difensore.
+  Dal 15/09/2026 sera sta nella vista «Il consiglio» (B5); nella Giornata ne resta
+  il riassunto.
 
 Una cosa contro-intuitiva, misurata e non supposta: con quattro difensori il
 peggiore viene **scartato**, quindi verrebbe da pensare che uno da voti scarsi sia
@@ -952,9 +953,10 @@ Dato giocatore, ruolo, avversario, casa/fuori, forma e squadra intorno →
   - misurato, da ricordare: i `PESI` di prima sopravvalutavano l'avversario (per gol a
     partita: D 0,8 → 0,16 nel modello, P 1,0 → 0,50, A 0,8 → 0,31, C 0,4 → 0,16), e il
     giocare in casa, che prima non contava, vale +0,14/+0,18.
-  - non ancora: il mercato (`valoreStagione`) e la riga «per il consiglio» di «Chiedi»
-    usano ancora la fantamedia stimata; tutto ciò che passa da `punteggio` usa già il
-    modello.
+  - chiuso il 15/09 sera: anche il mercato (`valoreStagione` → `baseStagione`, il
+    fantavoto atteso senza la partita; nella tabella «Base Jarvis» con la fantamedia
+    vera sotto) e «come sta X» in «Chiedi» («atteso se gioca 6,41 ± 1,2») usano il
+    modello. `fmStimata` resta solo nel calcolo di prima.
 
 ### B3 — Centrocampo e attacco: **probabilità di vittoria**, non punti attesi
 
@@ -1000,6 +1002,33 @@ probabilità di vittoria vera.** E il consiglio per C e A diventa «massimizza l
 probabilità di vincere», che a volte dirà di lasciare in panchina chi ha la
 fantamedia più alta — e avrà ragione, sapendo spiegare perché.
 
+**Fatto il 15/09/2026 sera** (scelte dell'utente: suggerimento, non cambio automatico
+dell'undici; niente fattore campo; le fasce dei gol da leggere su Leghe):
+- `probabilitaSfida(g)`: 2000 simulazioni (`SIMULAZIONI`, semi fissi: ripetibile) dei
+  due undici di `sfidaDati`; per ogni giocatore il voto (`campioneVoti`, lo stesso del
+  modificatore) più i bonus (`campioneFantavoti`: media e ampiezza che rendono giusti
+  fantavoto atteso e ballo del modello); per ogni squadra il suo modificatore; i gol
+  con `golDa` e `REGOLE_GOL`. Esito: vittoria, pareggio, sconfitta. Solo col modello.
+- **`REGOLE_GOL` = primo gol a 66, poi uno ogni 5** (66, 71, 76, … 101 per l'8°):
+  verificato dall'utente nelle impostazioni della lega su Leghe il 15/09/2026, con
+  una schermata. La prima stima era «ogni 6»: sbagliata.
+- si suppone che giochino tutti gli undici: la titolarità resta nel consiglio.
+- in «La sfida» la barra a tre colori (vinci, pareggi, perdi) al posto di quella che
+  esagerava il vantaggio (che resta solo senza modello), e «Vinci il 45% · pareggi il
+  25% · perdi il 31%» (dati del 15/09, contro l'avversario della giornata 1, con le
+  fasce vere; con «ogni 6» era 42/28/30).
+- la simulazione suppone che giochino tutti: un giocatore «peggiore» nel consiglio può
+  non esserlo nella simulazione, se lo è solo per la titolarità (il 15/09 Neres: 6,98
+  contro 7,57 di Maldini nel consiglio, ma 6,69 contro 6,61 se gioca). Le prove
+  controllano la media dei totali, non la vittoria, che può salire anche con un
+  giocatore peggiore se balla di più.
+- `suggerimentoSfida(g)`: un panchinaro di C o A al posto di un titolare dello stesso
+  ruolo, solo se la vittoria sale di almeno 2 punti (`SOGLIA_SUGGERIMENTO`), il motivo
+  è la varianza (da favorito il più regolare, da sfavorito quello che balla di più) e
+  i due sono vicini nel punteggio del consiglio (entro 0,5, titolarità compresa: mai
+  uno che rischia di non giocare). Confronti sugli stessi campioni. Il 15/09 nessuno.
+- veloce: ~3 ms la probabilità, ~2 ms il suggerimento (misurato nell'anteprima).
+
 ### B4 — La voce dell'utente (livelli 1, 2 e 4; il 3 è escluso)
 
 Concordato il 15/09. Il livello 3 («le tue regole», condizioni componibili) è stato
@@ -1032,6 +1061,25 @@ riquadro «La difesa» oggi sta nella schermata Giornata (`renderDifesa`, conten
 **lasciarne un riassunto** nella Giornata con il resto nella sovraimpressione — la
 seconda probabilmente è meglio, il modificatore atteso è informazione da colpo
 d'occhio.
+
+**Fatto il 15/09/2026 sera** (scelta dell'utente: riassunto più vista). Nella
+Giornata, al posto del riquadro, una riga-invito in `#difesa` (`renderDifesa`):
+«Il consiglio · La difesa: +2,0 atteso · Fascia più probabile +2 (32%)»; senza
+voti misurati, «Il perché dell'undici»; senza né difesa né probabilità, niente.
+Toccandola, `apriConsiglio()` apre «Il consiglio» (giornata e modulo) con tre blocchi:
+- **La difesa**: il riquadro di prima, uguale, da `bloccoDifesa(g)` (`{m, alta, html}`).
+- **La sfida**: barra a tre colori, «Vinci il X% · pareggi il Y% · perdi il Z%» e il
+  suggerimento se c'è, da `probabilitaHtml(g)` — la stessa funzione che usa
+  `renderSfida`, così i due punti non possono dire cose diverse. Senza modello il
+  blocco non c'è.
+- **Il perché dell'undici** (`righePerche(g)`): per ogni titolare, reparto per
+  reparto, il punteggio del consiglio scomposto — base, in casa, avversario, squadra
+  e la titolarità col suo contributo (`−0,4 + 1,6·perc`, lo stesso di `punteggio`);
+  senza modello il motivo in breve (`breve`). Toccando un nome sale la scheda.
+
+Con il pulsante di condivisione: undici, modificatore atteso e probabilità in testo.
+I contributi che arrotondano a zero si scrivono «0,0» senza segno (anche nella
+scheda del giocatore): «−0,0» sembrava un malus.
 
 ## Lavori aperti, in ordine di priorità
 
@@ -1099,9 +1147,9 @@ python prove/modello.py
 15/09/2026). Alcune prove girano solo se ci sono i file veri esportati da Leghe,
 che stanno in `archivio/` e sono fuori da Git. Quindi:
 
-- **sul PC dell'utente** (che ha `archivio/`): `prove/app.js` 287/287 e
+- **sul PC dell'utente** (che ha `archivio/`): `prove/app.js` 301/301 e
   `prove/lega.py` 34/34
-- **su un clone pulito o nella CI** (senza `archivio/`): 286/286 e 31/31, perché
+- **su un clone pulito o nella CI** (senza `archivio/`): 300/300 e 31/31, perché
   saltano «il file vero di Leghe si legge uguale (solo sul PC)» e le tre di
   `lega.py` sulla stessa cosa
 

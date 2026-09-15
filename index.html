@@ -230,6 +230,16 @@
   .sf-barra i{display:block; height:100%; border-radius:4px; transform-origin:left; animation:cresce 1s var(--morbida) both;
               background:linear-gradient(90deg,var(--bf-rosso),var(--bf-verde));}
   .sf-verdetto{margin:0 0 10px; text-align:center; font-size:13.5px;}
+  .sf-barra.tre{display:flex; gap:2px; background:none;}
+  .sf-barra.tre i{border-radius:0;}
+  .sf-barra.tre i:first-child{border-radius:4px 0 0 4px;}
+  .sf-barra.tre i:last-child{border-radius:0 4px 4px 0;}
+  .sf-barra.tre .v{background:#43E08F;}
+  .sf-barra.tre .x{background:rgba(255,255,255,.35);}
+  .sf-barra.tre .s{background:#FF7A7A;}
+  .sf-consiglio{margin:0 0 10px; padding:9px 12px; border-radius:12px; font-size:13px; line-height:1.45;
+                background:rgba(252,209,22,.08); border:1px solid rgba(252,209,22,.25);}
+  .sf-consiglio b{cursor:pointer; color:var(--oro-chiaro);}
   .sf-riga{display:grid; grid-template-columns:1fr 26px 1fr; gap:8px; align-items:start; padding:9px 0; border-top:1px solid var(--line);}
   .sf-nomi{font-size:12.5px; line-height:1.4; text-align:right;}
   .sf-nomi.sf-destra{text-align:left;}
@@ -516,6 +526,7 @@
   .invito-testo small{display:block; margin-top:3px; font-size:12.5px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .invito-freccia{flex-shrink:0; font-size:26px; line-height:1; color:var(--oro);}
   #mercato .invito{margin-top:22px;}
+  #difesa .invito{margin-top:14px;}
 
   /* ---- sovraimpressione: le sezioni che chiedono spazio, a tutto schermo, con l'app sfocata dietro ---- */
   .sovra{position:fixed; inset:0; z-index:15; background:rgba(5,7,6,.55);
@@ -1227,7 +1238,7 @@ function bonusModificatore(media){
 const PARTITE_PRIOR_VOTO = 4;
 let VOTO_RUOLO = {}, BALLO = null;
 function stimaVoti(){
-  VOTO_RUOLO = {}; BALLO = null; CAMPIONI = {}; BLOCCHI = {};
+  VOTO_RUOLO = {}; BALLO = null; CAMPIONI = {}; BLOCCHI = {}; CAMPIONI_FV = {}; SFIDE = {};
   ['P','D','C','A'].forEach(r=>{
     const g = players.filter(p=>p.ruolo===r && p.pgv>0), W = g.reduce((s,p)=>s+p.pgv, 0);
     VOTO_RUOLO[r] = W ? g.reduce((s,p)=>s+p.pgv*p.mv, 0)/W : null;
@@ -1304,7 +1315,7 @@ function votoAtteso(p, g){
 function righeAtteso(p, g){
   const a = attesoModello('fantavoto', p, g);
   if(!a) return '';
-  const s = x => (x >= 0 ? '+' : '−')+num(Math.abs(x));
+  const s = x => (Math.abs(x) < 0.05 ? '' : x > 0 ? '+' : '−')+num(Math.abs(x));
   const pezzi = ['base '+num(a.parti.base)+(a.storia >= 0.5 ? '' : ' (conta la quotazione)')]
     .concat(a.casa===1 ? ['in casa '+s(a.parti.casa)] : [])
     .concat(a.casa===null ? [] : ['avversario '+s(a.parti.avv), 'squadra '+s(a.parti.squadra)]);
@@ -1473,33 +1484,78 @@ function undiciDi(rosa, g, mod){
    perché sugli scalini la media non capita mai davvero: un blocco «da 2,8» non
    prende 2,8, prende +2 oppure +3, e sapere con che probabilità è il punto.
    Senza voti misurati il riquadro non c'è: niente numero inventato. */
-function renderDifesa(g){
-  const box = document.getElementById('difesa');
-  if(!box) return;
+/* B5, la vista unica del consiglio (scelta dell'utente del 15/09/2026: nella Giornata un
+   riassunto, il resto a tutto schermo). Nella Giornata una riga, «Il consiglio», con il
+   modificatore atteso e la fascia più probabile; toccandola si apre la vista con la
+   difesa, la sfida e il perché di ogni titolare. */
+const ICONA_CONSIGLIO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 3 8.2 7 10 4-1.8 7-5.6 7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>';
+const etichettaFascia = b => b ? '+'+String(b).replace('.',',') : '0';
+/* La difesa di oggi, in chiaro. Si mostra la distribuzione e non solo il numero
+   perché sugli scalini la media non capita mai davvero: un blocco «da 2,8» non
+   prende 2,8, prende +2 oppure +3, e sapere con che probabilità è il punto.
+   Senza voti misurati niente riquadro: niente numero inventato. */
+function bloccoDifesa(g){
   const u = undici(g);
   const m = u.P.length && u.D.length >= 3 ? modificatoreAtteso(u.P[0], u.D, SIMULAZIONI, g) : null;
-  if(!m){ box.innerHTML = ''; return; }
+  if(!m) return null;
   const alta = m.fasce.slice().sort((a,b)=>b.prob-a.prob)[0];
   /* quanto manca allo scalino sopra: è l'informazione che fa cambiare un difensore */
   const su = M_SOGLIE.filter(s=>s > m.media).sort((a,b)=>a-b)[0];
   const manca = su === undefined ? null :
     'Per +'+num(M_BONUS[M_SOGLIE.indexOf(su)], su===7?0:1).replace(',0','')+
     ' serve '+num(su,2)+' di media: oggi vale '+num(m.media,2)+'.';
-  const etichetta = b => b ? '+'+String(b).replace('.',',') : '0';
   /* le righe coprono tutte le fasce della tabella, anche quelle mai uscite nelle
      simulazioni: una fascia assente è un'informazione (non ci arrivi), non un buco */
   const prob = {};
   m.fasce.forEach(f=>{ prob[f.bonus] = f.prob; });
   const righe = M_BONUS.concat([0]).map(b=>({bonus:b, prob:prob[b] || 0}));
-  box.innerHTML = '<div class="blocco scuro"><div class="blocco-t">La difesa<small>MODIFICATORE</small></div>'+
+  return {m, alta, html: '<div class="blocco scuro"><div class="blocco-t">La difesa<small>MODIFICATORE</small></div>'+
     '<div class="md-n"><b class="cond">'+(m.atteso>=0.05?'+':'')+num(m.atteso)+'</b>'+
     '<span>atteso da portiere e 3 migliori difensori</span></div>'+
     '<div class="md-righe">'+righe.map(f=>
       '<div class="md-r'+(f.bonus===alta.bonus?' sel':'')+'">'+
-      '<span class="md-f">'+etichetta(f.bonus)+'</span>'+
+      '<span class="md-f">'+etichettaFascia(f.bonus)+'</span>'+
       '<i><em style="width:'+(f.prob*100).toFixed(1)+'%"></em></i>'+
       '<span class="md-p">'+Math.round(f.prob*100)+'%</span></div>').join('')+'</div>'+
-    '<p class="nota">'+(manca || 'Sei già nella fascia più alta.')+'</p></div>';
+    '<p class="nota">'+(manca || 'Sei già nella fascia più alta.')+'</p></div>'};
+}
+function renderDifesa(g){
+  const box = document.getElementById('difesa');
+  if(!box) return;
+  const d = bloccoDifesa(g), ps = probabilitaSfida(g);
+  if(!d && !ps){ box.innerHTML = ''; return; }
+  box.innerHTML = invito(ICONA_CONSIGLIO, 'Il consiglio',
+    d ? 'La difesa: '+(d.m.atteso>=0.05 ? '+' : '')+num(d.m.atteso)+' atteso' : 'Il perché dell\'undici',
+    d ? 'Fascia più probabile '+etichettaFascia(d.alta.bonus)+' ('+Math.round(100*d.alta.prob)+'%)' : '');
+}
+/* il perché dell'undici: per ogni titolare il punteggio del consiglio scomposto (col
+   modello: base, casa, avversario, squadra e titolarità; senza, il motivo in breve) */
+function righePerche(g){
+  const u = undici(g), s = x => (Math.abs(x) < 0.05 ? '' : x > 0 ? '+' : '−')+num(Math.abs(x));
+  return ['P','D','C','A'].map(r=>'<h3 class="reparto-t">'+PLURALI[r]+'</h3>'+u[r].map(p=>{
+    const a = attesoModello('fantavoto', p, g), t = titolarita(p, g);
+    let parti = [breve(p, g)];
+    if(a){
+      parti = ['base '+num(a.parti.base)].concat(a.casa===1 ? ['in casa '+s(a.parti.casa)] : [],
+        a.casa===null ? [] : ['avversario '+s(a.parti.avv), 'squadra '+s(a.parti.squadra)]);
+      if(t) parti.push((t.stato==='s' ? 'presenze '+t.giocate+'/'+t.di : t.stato==='t' ? 'titolare '+t.perc+'%'
+        : t.stato==='c' ? 'in panchina' : 'non nelle probabili')+' '+s(-0.4 + 1.6*t.perc/100));
+    }
+    return '<div class="vr" data-id="'+p.id+'">'+maglia(p.club)+'<div class="vr-nome"><b>'+p.nome+'</b><small>'+
+      parti.join(' · ')+'</small></div><strong class="fvn">'+num(punteggio(p, g))+'</strong></div>';
+  }).join('')).join('');
+}
+function apriConsiglio(){
+  const g = prossima(), avv = (avversarioLega(g) || {}).nome || '', u = undici(g);
+  const d = bloccoDifesa(g), pz = probabilitaHtml(g), ps = probabilitaSfida(g), pc = x => Math.round(100*x)+'%';
+  const testo = ['Il consiglio di Jarvis — giornata '+g[0]+(avv ? ' contro '+avv : ''),
+    modulo+': '+[].concat(u.P, u.D, u.C, u.A).map(p=>p.nome).join(', ')]
+    .concat(d ? ['Modificatore atteso '+(d.m.atteso>=0.05 ? '+' : '')+num(d.m.atteso)] : [])
+    .concat(ps ? ['Vinci il '+pc(ps.vittoria)+' · pareggi il '+pc(ps.pareggio)+' · perdi il '+pc(ps.sconfitta)] : []).join('\n');
+  apriSovra('Il consiglio', 'Giornata '+g[0]+' · '+modulo,
+    (d ? d.html : '')+
+    (pz ? '<div class="blocco"><div class="blocco-t">La sfida<small>'+avv+'</small></div>'+pz+'</div>' : '')+
+    '<div class="blocco"><div class="blocco-t">Il perché dell\'undici<small>punteggio</small></div>'+righePerche(g)+'</div>', testo);
 }
 function disegnaCampo(g){
   const u = undici(g);
@@ -1682,6 +1738,105 @@ function sfidaDati(g){
                      .sort((a,b)=>b.tot-a.tot)[0];
   return {avv:av.nome, mio:{modulo, u:mio, tot:somma(mio)}, loro};
 }
+/* ── B3: la probabilità di vincere la sfida ─────────────────────────────────────
+   Si simula la giornata SIMULAZIONI volte, per ogni giocatore dei due undici: il voto
+   (lo stesso campione del modificatore, campioneVoti) più i bonus, un'altra estrazione
+   col suo seme, attorno al fantavoto atteso del modello; il modificatore di ognuna delle
+   due difese dai voti del suo blocco; i gol con le fasce della lega (golDa). Solo col
+   modello: senza, niente probabilità e resta il verdetto «sulla carta». Si suppone che
+   giochino tutti gli undici: la titolarità resta nel consiglio, qui no. */
+const REGOLE_GOL = {primo: 66, passo: 5};      // impostazioni della lega su Leghe: 1° gol a 66, poi uno ogni 5 (verificato dall'utente il 15/09/2026)
+function golDa(tot){ return tot < REGOLE_GOL.primo ? 0 : 1 + Math.floor((tot - REGOLE_GOL.primo)/REGOLE_GOL.passo); }
+let CAMPIONI_FV = {}, SFIDE = {};
+/* fantavoti simulati di un giocatore: voto (arrotondato a mezzi punti, come esce) più i
+   bonus, con media e ampiezza che rendono giusti il fantavoto atteso e il suo ballo */
+function campioneFantavoti(p, n, g){
+  const chiave = p.id + ':' + n + ':' + (g ? g[1] : '') + (CALCOLO_VECCHIO ? ':prima' : '');
+  if(CAMPIONI_FV[chiave]) return CAMPIONI_FV[chiave];
+  const a = attesoModello('fantavoto', p, g), va = votoAtteso(p, g), v = campioneVoti(p, n, g);
+  if(!a || !va || !v) return null;
+  const mb = a.media - va.media, sdb = Math.sqrt(Math.max(0.05, a.sd*a.sd - va.sd*va.sd));
+  const r = casuale(p.id*104729 + 7), out = new Float64Array(n);
+  for(let i = 0; i < n; i++) out[i] = v[i] + mb + sdb*normale(r);
+  return (CAMPIONI_FV[chiave] = out);
+}
+/* i totali di una squadra nelle simulazioni: fantavoti dei suoi undici più il suo
+   modificatore, dai voti del portiere e dei 3 migliori difensori */
+function totaliSquadra(u, g, n){
+  const tutti = [].concat(u.P, u.D, u.C, u.A), fv = tutti.map(p=>campioneFantavoti(p, n, g));
+  if(!tutti.length || fv.some(x=>!x)) return null;
+  const cp = u.P.length ? campioneVoti(u.P[0], n, g) : null, cd = u.D.map(p=>campioneVoti(p, n, g));
+  const conMod = cp && cd.length >= 3 && cd.every(Boolean), out = new Float64Array(n);
+  for(let i = 0; i < n; i++){
+    let s = 0;
+    for(let k = 0; k < fv.length; k++) s += fv[k][i];
+    if(conMod){
+      let d = 0, peggiore = Infinity;
+      for(let k = 0; k < cd.length; k++){ const x = cd[k][i]; d += x; if(x < peggiore) peggiore = x; }
+      s += bonusModificatore((cp[i] + (cd.length > 3 ? d - peggiore : d))/4);
+    }
+    out[i] = s;
+  }
+  return out;
+}
+function esitoSfida(tMio, tLoro){
+  let v = 0, x = 0;
+  const n = tMio.length;
+  for(let i = 0; i < n; i++){ const a = golDa(tMio[i]), b = golDa(tLoro[i]); if(a > b) v++; else if(a === b) x++; }
+  return {vittoria: v/n, pareggio: x/n, sconfitta: (n - v - x)/n};
+}
+function probabilitaSfida(g){
+  if(!D.mod) return null;
+  const chiave = g[0] + ':' + modulo + (CALCOLO_VECCHIO ? ':prima' : '');
+  if(chiave in SFIDE) return SFIDE[chiave];
+  const s = sfidaDati(g), n = SIMULAZIONI;
+  const tm = totaliSquadra(s.mio.u, g, n), tl = totaliSquadra(s.loro.u, g, n);
+  if(!tm || !tl) return (SFIDE[chiave] = null);
+  const media = t => t.reduce((a,b)=>a+b, 0)/n;
+  return (SFIDE[chiave] = Object.assign(esitoSfida(tm, tl), {mio: media(tm), loro: media(tl), tm, tl, s}));
+}
+/* il suggerimento (scelta dell'utente del 15/09/2026: suggerire, non cambiare l'undici):
+   un panchinaro di centrocampo o attacco al posto di un titolare dello stesso ruolo, se
+   alza la vittoria di almeno 2 punti e il motivo è la varianza, non la media: da favorito
+   uno più regolare (il pavimento), da sfavorito uno che balla di più (il soffitto). Solo
+   tra giocatori vicini nel punteggio del consiglio, titolarità compresa: mai uno che
+   rischia di non giocare. Stessi campioni per tutti i confronti: la differenza non è rumore. */
+const SOGLIA_SUGGERIMENTO = 0.02;
+function suggerimentoSfida(g){
+  const ps = probabilitaSfida(g);
+  if(!ps) return null;
+  const n = ps.tm.length, u = ps.s.mio.u, favorito = ps.mio >= ps.loro;
+  const dentro = new Set([].concat(u.P, u.D, u.C, u.A).map(p=>p.id));
+  const sd = p => { const a = attesoModello('fantavoto', p, g); return a ? a.sd : null; };
+  let meglio = null;
+  ['C','A'].forEach(r=>u[r].forEach(fuori=>{
+    const ff = campioneFantavoti(fuori, n, g);
+    mia.filter(p=>p.ruolo===r && !dentro.has(p.id) && disponibile(p, g[2])).forEach(entra=>{
+      const fe = campioneFantavoti(entra, n, g), se = sd(entra), sf = sd(fuori);
+      if(!ff || !fe || se===null || sf===null || punteggio(entra, g) < punteggio(fuori, g) - 0.5) return;
+      if(favorito ? se >= sf : se <= sf) return;
+      const t = new Float64Array(n);
+      for(let i = 0; i < n; i++) t[i] = ps.tm[i] - ff[i] + fe[i];
+      const e = esitoSfida(t, ps.tl), guadagno = e.vittoria - ps.vittoria;
+      if(guadagno >= SOGLIA_SUGGERIMENTO && (!meglio || guadagno > meglio.guadagno))
+        meglio = {entra, fuori, guadagno, dopo: e.vittoria, perche: favorito ? 'pavimento' : 'soffitto'};
+    });
+  }));
+  return meglio;
+}
+/* barra e parole della probabilità di vittoria, e il suggerimento se c'è: nella sfida e
+   nella vista del consiglio. null senza modello */
+function probabilitaHtml(g){
+  const ps = probabilitaSfida(g);
+  if(!ps) return null;
+  const sug = suggerimentoSfida(g), pc = x => Math.round(100*x)+'%';
+  return '<div class="sf-barra tre"><i class="v" style="width:'+(100*ps.vittoria).toFixed(1)+'%"></i>'+
+    '<i class="x" style="width:'+(100*ps.pareggio).toFixed(1)+'%"></i><i class="s" style="width:'+(100*ps.sconfitta).toFixed(1)+'%"></i></div>'+
+    '<p class="sf-verdetto">Vinci il <b>'+pc(ps.vittoria)+'</b> · pareggi il '+pc(ps.pareggio)+' · perdi il '+pc(ps.sconfitta)+'</p>'+
+    (!sug ? '' : '<p class="sf-consiglio">Per battere '+ps.s.avv+': <b data-id="'+sug.entra.id+'">'+sug.entra.nome+
+      '</b> al posto di <b data-id="'+sug.fuori.id+'">'+sug.fuori.nome+'</b>, vittoria dal '+pc(ps.vittoria)+' al '+pc(sug.dopo)+
+      (sug.perche==='pavimento' ? ': da favorito conviene chi è più regolare.' : ': da sfavorito conviene chi può fare il colpo.')+'</p>');
+}
 let sfidaDisegnata = '';
 function renderSfida(g){
   const s = sfidaDati(g), diff = s.mio.tot - s.loro.tot;
@@ -1695,13 +1850,14 @@ function renderSfida(g){
   };
   const verdetto = Math.abs(diff) < 1 ? 'Sulla carta è una sfida alla pari.'
     : diff > 0 ? 'Sulla carta sei avanti di '+num(diff,1)+'.' : 'Sulla carta sono avanti loro di '+num(-diff,1)+'.';
-  const quota = Math.max(10, Math.min(90, 50 + diff*4));      // la barra esagera il vantaggio, per vederlo
+  const quota = Math.max(10, Math.min(90, 50 + diff*4));      // senza modello: la barra esagera il vantaggio, per vederlo
+  const barra = probabilitaHtml(g) ||
+    '<div class="sf-barra"><i style="width:'+quota.toFixed(0)+'%"></i></div><p class="sf-verdetto">'+verdetto+'</p>';
   const html = '<h2>La sfida, sulla carta</h2><div class="carta sfida-carta">'+
     '<div class="sf-testa"><div class="sf-sq">'+stemma(ME)+'<b class="cond">'+ME+'</b><span class="sf-tot cond">'+num(s.mio.tot,1)+'</span></div>'+
     '<span class="sf-vs cond">VS</span>'+
     '<div class="sf-sq">'+stemma(s.avv)+'<b class="cond">'+s.avv+'</b><span class="sf-tot cond">'+num(s.loro.tot,1)+'</span></div></div>'+
-    '<div class="sf-barra"><i style="width:'+quota.toFixed(0)+'%"></i></div>'+
-    '<p class="sf-verdetto">'+verdetto+'</p>'+
+    barra+
     ['P','D','C','A'].map(reparto).join('')+
     '<p class="sf-nota">Tu '+s.mio.modulo+' · loro '+s.loro.modulo+'</p></div>';
   if(html !== sfidaDisegnata){ sfidaDisegnata = html; document.getElementById('sfida').innerHTML = html; }
@@ -2055,9 +2211,15 @@ function presenze(p){
   const s = D.sq && D.sq.squadre[p.club], n = s ? s.attuale.casa[0] + s.attuale.fuori[0] : 0;
   return n ? {giocate: Math.min(p.pgv, n), di: n} : null;
 }
+/* la base del giocatore per la stagione, senza la partita: dal modello (B2) dove si usa,
+   altrimenti la fantamedia stimata di prima */
+function baseStagione(p){
+  const a = attesoModello('fantavoto', p, null);
+  return a ? a.media : fmStimata(p);
+}
 function valoreStagione(p){
   const pr = presenze(p);
-  return fmStimata(p) + (pr ? -0.4 + 1.6*pr.giocate/pr.di : 0);
+  return baseStagione(p) + (pr ? -0.4 + 1.6*pr.giocate/pr.di : 0);
 }
 /* l'undici migliore di una rosa con quei valori, nel modulo che rende di più (difesa a quattro) */
 function migliori11(rosa, val){
@@ -2202,15 +2364,15 @@ function apriMercato(g){
     if(i.dai.length===1){
       const a = i.dai[0], b = i.prendi[0];
       return '<table class="mk-tab"><thead><tr><th></th><td>'+cognome(a)+'</td><td>'+cognome(b)+'</td></tr></thead><tbody>'+
-        riga('Fantamedia', num(fmStimata(a))+vera(a), num(fmStimata(b))+vera(b), fmStimata(a), fmStimata(b))+
+        riga('Base Jarvis', num(baseStagione(a))+vera(a), num(baseStagione(b))+vera(b), baseStagione(a), baseStagione(b))+
         riga('Presenze', pres(a), pres(b), quota(a), quota(b))+
         riga('Valore Jarvis', num(valoreStagione(a)), num(valoreStagione(b)), valoreStagione(a), valoreStagione(b), 'tot')+'</tbody></table>';
     }
-    const fa = tot(i.dai, fmStimata)/i.dai.length, fb = tot(i.prendi, fmStimata)/i.prendi.length;
+    const fa = tot(i.dai, baseStagione)/i.dai.length, fb = tot(i.prendi, baseStagione)/i.prendi.length;
     const va = tot(i.dai, valoreStagione), vb = tot(i.prendi, valoreStagione);
     return '<table class="mk-tab"><thead><tr><th></th><td>Dai</td><td>Prendi</td></tr></thead><tbody>'+
       riga('Quotazione', tot(i.dai, p=>p.quot), tot(i.prendi, p=>p.quot), 0, 0)+
-      riga('Fantamedia', num(fa), num(fb), fa, fb)+
+      riga('Base Jarvis', num(fa), num(fb), fa, fb)+
       riga('Valore Jarvis', num(va), num(vb), va, vb, 'tot')+'</tbody></table>';
   };
   const nomi = l => l.map(p=>'<b>'+p.nome+'</b>').join(' e '), semplici = l => l.map(p=>p.nome).join(' e ');
@@ -2554,10 +2716,11 @@ function quale(lista){
 
 /* poche righe su un giocatore, per la giornata mostrata */
 function scheda(p, g){
-  const m = avversarioClub(p.club, g[1]), f = forza(p, g);
+  const m = avversarioClub(p.club, g[1]), f = forza(p, g), a = attesoModello('fantavoto', p, g);
   const r = [p.nome+' — '+p.club+', '+RUOLI[p.ruolo].toLowerCase()+(p.team===ME ? '' : ' · rosa di '+p.team),
              (p.pgv ? 'Fantamedia '+num(p.fm,2)+' in '+p.pgv+(p.pgv===1 ? ' gara' : ' gare') : 'Non ha ancora giocato')+
-             (Math.abs(fmStimata(p)-p.fm)>=0.05 ? ' · per il consiglio '+num(fmStimata(p),2) : ''),
+             (a ? ' · atteso se gioca '+num(a.media,2)+' ± '+num(a.sd)
+                : Math.abs(fmStimata(p)-p.fm)>=0.05 ? ' · per il consiglio '+num(fmStimata(p),2) : ''),
              !disponibile(p, g[2]) ? perche(p, g[2]) : descriviTit(titolarita(p, g)).trim()];
   if(m) r.push((m.casa ? 'In casa con ' : 'A ')+m.avv);
   if(f) r.push(motivoAvv(f));
@@ -3041,6 +3204,7 @@ document.getElementById('mercato').onclick = ()=>apriMercato();
 document.getElementById('chiudi-sovra').onclick = chiudiSovra;
 document.getElementById('condividi-sovra').onclick = condividi;
 document.getElementById('stagione').onclick = apriStagione;
+document.getElementById('difesa').onclick = apriConsiglio;
 /* rosa: filtri (sotto il titolo) e vista, maglie o elenco (accanto al titolo) */
 function comandiRosa(ev){
   const b = ev.target && ev.target.closest ? ev.target.closest('button') : null;
