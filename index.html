@@ -524,6 +524,7 @@
                 transform:translateY(28px) scale(.98); transition:transform .45s var(--morbida);}
   .sovra.aperto .sovra-foglio{transform:none;}
   .sovra-testa{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:16px 18px 12px;}
+  .sovra-azioni{display:flex; gap:8px; flex-shrink:0;}
   .sovra-testa .k{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--oro);}
   .sovra-testa h2{margin:4px 0 0; font-family:"Barlow Condensed",sans-serif; font-size:31px; font-weight:700; line-height:1.05;
                   letter-spacing:.01em; text-transform:none; color:var(--ink);}
@@ -619,6 +620,11 @@
   .st-svg .num{font-size:10px; fill:var(--dim); text-anchor:middle;}
   .st-col.sel .num{fill:var(--ink); font-weight:700;}
   .st-svg .media{stroke:rgba(255,255,255,.28); stroke-dasharray:3 4;}
+  /* View Transitions (Safari dal 2024): il grafico ha un nome tutto suo così la
+     dissolvenza riguarda solo lui; senza «root» azzerato l'intera pagina (nav, testata,
+     tutto) entrerebbe nella stessa dissolvenza, con un effetto sfarfallio indesiderato. */
+  #st-grafico{view-transition-name:st-grafico;}
+  ::view-transition-group(root){animation:none;}
   @keyframes cresceSu{from{transform:scaleY(0);}}
   .st-dentro{animation:sale .35s var(--morbida) both;}
   .st-testa{display:flex; align-items:center; justify-content:space-between; gap:10px;}
@@ -732,6 +738,8 @@
     animation:luccica 1.2s linear infinite;}
   @media (prefers-reduced-motion: reduce){
     *, *::before, *::after{animation:none !important; transition:none !important;}
+    /* gli pseudo-elementi della View Transition non sono presi dal «*»: vanno spenti a parte */
+    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*){animation:none !important;}
   }
 </style>
 </head>
@@ -885,7 +893,10 @@
   <div class="sovra-foglio" id="sovra-foglio">
     <div class="sovra-testa">
       <div><span class="k" id="sovra-k"></span><h2 id="sovra-titolo"></h2></div>
-      <button class="chiudi" id="chiudi-sovra" aria-label="Chiudi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <div class="sovra-azioni">
+        <button class="chiudi" id="condividi-sovra" aria-label="Condividi" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6"/></svg></button>
+        <button class="chiudi" id="chiudi-sovra" aria-label="Chiudi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
     </div>
     <div class="sovra-corpo" id="sovra-corpo"></div>
   </div>
@@ -1644,7 +1655,13 @@ function apriComeAndata(){
   const tutti = '<div class="blocco"><div class="blocco-t">Tutti i tuoi<small>fantavoto</small></div>'+
     ['P','D','C','A'].map(x=>'<h3 class="reparto-t">'+PLURALI[x]+'</h3>'+
       mia.filter(p=>p.ruolo===x).sort((a,b)=>valore(b)-valore(a)).map(riga).join('')).join('')+'</div>';
-  apriSovra('Com\'è andata', titoloCa(ca), eroe+evid+tutti);
+  const testo = [titoloCa(ca)]
+    .concat(r ? [ME+' '+num(r.mio)+' - '+num(r.loro)+' '+r.avv+' ('+r.golMio+'-'+r.golLoro+')'] : [])
+    .concat(k ? ['Con l\'undici di Jarvis: '+num(k.tot)] : [])
+    .concat(ca.miei.length > 1 ? ['Il migliore: '+ca.miei[0].nome+' '+num(v(ca.miei[0])[1])+
+      ' · il peggiore: '+ca.miei[ca.miei.length - 1].nome+' '+num(v(ca.miei[ca.miei.length - 1])[1])] : [])
+    .join('\n');
+  apriSovra('Com\'è andata', titoloCa(ca), eroe+evid+tutti, testo);
 }
 
 /* ---------- andamento del giocatore ---------- */
@@ -1983,10 +2000,19 @@ function dettaglioGiornata(s, sa){
 function scegliGiornata(sa){
   const s = stagione();
   if(!s || !s.per.some(x=>x.sa===sa)) return;
-  const gr = document.getElementById('st-grafico');
-  gr.classList.add('fermo');                    // le colonne crescono solo all'apertura
-  gr.innerHTML = graficoStagione(s, sa);
-  document.getElementById('st-giornata').innerHTML = dettaglioGiornata(s, sa);
+  const aggiorna = () => {
+    const gr = document.getElementById('st-grafico');
+    gr.classList.add('fermo');                  // le colonne crescono solo all'apertura
+    gr.innerHTML = graficoStagione(s, sa);
+    document.getElementById('st-giornata').innerHTML = dettaglioGiornata(s, sa);
+  };
+  /* il grafico si sostituisce di netto (nuovo <svg> a ogni tocco): con la View Transitions
+     API di Safari (dal 2024) diventa una dissolvenza invece di uno scatto. Se manca (Safari
+     più vecchio) o l'utente ha scelto «riduci movimento», si aggiorna senza transizione:
+     mai un errore, mai un'attesa. */
+  const vaPiano = typeof matchMedia!=='undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!vaPiano && typeof document.startViewTransition==='function') document.startViewTransition(aggiorna);
+  else aggiorna();
 }
 /* nella sovraimpressione: una colonna del grafico o una freccia sceglie la giornata,
    un giocatore apre la sua scheda */
@@ -2022,6 +2048,10 @@ function apriStagione(){
     quanteGiornate(acc.n)+' di lega</small></div><div class="st-numeri">'+
     tessera('Consigliato', num(acc.consiglio))+tessera('Massimo possibile', num(acc.massimo))+
     (acc.media===null ? '' : tessera('Vicinanza', num(acc.media, 0)+'%'))+'</div></div>';
+  const testo = ['La stagione — '+quanteGiornate(s.giornate.length)+' di Serie A',
+    'Chi produce di più: '+s.righe[0].p.nome+', '+num(s.righe[0].tot)+' fantapunti']
+    .concat(acc && acc.media!==null ? ['Quanto si avvicina Jarvis: '+num(acc.media, 0)+'% su '+quanteGiornate(acc.n)+' di lega'] : [])
+    .join('\n');
   apriSovra('La stagione', quanteGiornate(s.giornate.length)+' di Serie A',
     '<div class="blocco"><div class="blocco-t">Giornata per giornata<small>media '+
       num(s.per.reduce((t,x)=>t + x.tot, 0)/s.per.length)+'</small></div>'+
@@ -2030,7 +2060,8 @@ function apriStagione(){
     accuratezza+
     '<div class="blocco"><div class="st-numeri">'+tessera('Gol', somma('gol'))+tessera('Assist', somma('ass'))+
       tessera('Ammonizioni', somma('amm'))+'</div></div>'+
-    '<div class="blocco"><div class="blocco-t">Chi produce<small>fantapunti</small></div>'+s.righe.map(riga).join('')+'</div>');
+    '<div class="blocco"><div class="blocco-t">Chi produce<small>fantapunti</small></div>'+s.righe.map(riga).join('')+'</div>',
+    testo);
 }
 
 /* ---------- scheda del giocatore ---------- */
@@ -2433,9 +2464,13 @@ function chiudiFogli(){
   document.getElementById('velo').classList.remove('aperto');
   if(document.body && !document.getElementById('sovra').classList.contains('aperto')) document.body.classList.remove('bloccato');
 }
+let testoCondividi = '';
 /* sovraimpressione a tutto schermo per le sezioni che chiedono spazio (com'è andata, mercato):
-   l'app resta dietro, sfocata; un giocatore toccato qui apre la sua scheda sopra */
-function apriSovra(k, titolo, html){
+   l'app resta dietro, sfocata; un giocatore toccato qui apre la sua scheda sopra.
+   «testo» (opzionale): un riassunto in chiaro da condividere (foglio nativo dell'iPhone,
+   Web Share API, da iOS 12.2 anche da app installata); il pulsante si vede solo se c'è un
+   testo da mandare e il telefono sa condividere — niente pulsante morto sugli altri browser. */
+function apriSovra(k, titolo, html, testo){
   document.getElementById('sovra-k').textContent = k;
   document.getElementById('sovra-titolo').textContent = titolo;
   const corpo = document.getElementById('sovra-corpo');
@@ -2443,6 +2478,12 @@ function apriSovra(k, titolo, html){
   corpo.scrollTop = 0;
   document.getElementById('sovra').classList.add('aperto');
   if(document.body) document.body.classList.add('bloccato');
+  testoCondividi = testo || '';
+  document.getElementById('condividi-sovra').hidden = !testo || !(typeof navigator!=='undefined' && navigator.share);
+}
+async function condividi(){
+  try{ await navigator.share({title: 'Jarvis', text: testoCondividi}); }
+  catch(e){ if(e && e.name!=='AbortError') toast('Non sono riuscito a condividere'); }
 }
 function chiudiSovra(){
   document.getElementById('sovra').classList.remove('aperto');
@@ -2673,6 +2714,7 @@ document.getElementById('sovra-corpo').onclick = toccaSovra;
 document.getElementById('comeandata').onclick = apriComeAndata;
 document.getElementById('mercato').onclick = ()=>apriMercato();
 document.getElementById('chiudi-sovra').onclick = chiudiSovra;
+document.getElementById('condividi-sovra').onclick = condividi;
 document.getElementById('stagione').onclick = apriStagione;
 /* rosa: filtri (sotto il titolo) e vista, maglie o elenco (accanto al titolo) */
 function comandiRosa(ev){

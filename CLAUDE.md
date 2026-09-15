@@ -269,6 +269,30 @@ CRLF: `.gitattributes` impedisce a Git di convertirlo.
   sempre ≥ 0 quando arrivano fin qui (`mercato()` scarta prima gli scambi che non
   convengono a uno dei due), ma un valore vicino allo zero restava bianco invece che
   verde: sembrava sfavorevole anche quando l'offerta era onesta. Ora sempre verde.
+- **Condividi** (15/09, lavoro da remoto, scelta dell'utente — sfruttare l'iPhone 16
+  Pro/iOS 26): `navigator.share()` (Web Share API, in Safari iOS anche da app
+  installata da iOS 12.2), foglio nativo di condivisione dell'iPhone. Pulsante nella
+  sovraimpressione (`apriSovra`, quarto parametro `testo`), acceso solo dove c'è
+  qualcosa di sensato da mandare — «Com'è andata» e «La stagione» — e solo se il
+  browser sa condividere (`condividi-sovra` resta `hidden` senza `navigator.share`,
+  niente pulsante morto). «Mercato» non ha un testo da condividere: scelta di scopo,
+  non dimenticanza. Verificato con Playwright: nascosto senza `navigator.share`,
+  visibile simulandolo.
+- **Cambio giornata in «La stagione», con dissolvenza** (15/09, stesso giro):
+  `document.startViewTransition()` (Safari dal 2024, iOS 26 la ha) al posto dello
+  scatto secco del grafico. `#st-grafico` ha un `view-transition-name` tutto suo e
+  `::view-transition-group(root)` è azzerato, altrimenti l'intera schermata (testata,
+  barra di navigazione) entrerebbe nella stessa dissolvenza invece del solo grafico.
+  Rispetta «riduci movimento» (media query estesa anche agli pseudo-elementi della
+  View Transition, che «*» non prende). Senza l'API (Safari più vecchio) l'aggiornamento
+  resta immediato, mai un errore. Verificato: la funzione esiste in Chromium, nessun
+  errore in console al cambio giornata.
+- **Sfocatura vetro (`backdrop-filter`), lasciata com'è** (15/09, stesso giro): idea
+  valutata insieme alle altre due ma non applicata. Su iPhone più vecchi molte
+  sfocature sovrapposte possono pesare sul render, ma sull'iPhone 16 Pro dell'utente
+  (chip A18 Pro) non c'è un problema vero da correggere — cambiare qualcosa che non è
+  rotto, sulla base di un timore generico e non di un rallentamento osservato, sarebbe
+  stato un dato inventato.
 
 ## Campo, maglie e schede
 
