@@ -74,8 +74,21 @@ oggi ha `2026-27` fisso in `URL_VOTI`. Da fare nella patch successiva.
 
 Dal 15/09/2026. Oltre a Claude Code sul PC, il progetto si porta avanti anche
 da una sessione Claude nel cloud, da remoto: stesso repository, stesse regole
-sopra, ma senza accesso diretto al push su GitHub (il proxy della sessione
-cloud rifiuta le richieste verso questo repository).
+sopra, ma **senza poter fare push**.
+
+Sul perché, con precisione (verificato il 15/09/2026, prima era scritto in modo
+sbagliato): **GitHub in lettura si raggiunge benissimo** da una sessione cloud —
+`git clone`, `git fetch` e `git ls-remote` su questo repository funzionano, ed è
+pubblico. Quello che manca sono le **credenziali** per scrivere: nessun helper è
+configurato, e un token non va chiesto né fatto passare per la chat. Push dunque
+solo da Claude Code, che gira nativo su Windows e vede le credenziali di sistema.
+
+La conseguenza utile: una sessione cloud **non deve tirare a indovinare sullo
+stato del progetto**. Può clonare `origin/main` e guardare com'è messo davvero,
+e soprattutto può **provare che le proprie patch si applichino pulite** su un
+clone fresco prima di consegnarle, invece di dire «dovrebbero applicarsi». Fatto
+per le prime 13 patch il 15/09: applicate in ordine su `c5ea986`, esito 0, e
+tutte le prove verdi sul clone.
 
 - La sessione cloud clona il repository e lavora su un branch
   `claude-cloud/<data>`, mai su `main` direttamente.
@@ -970,6 +983,19 @@ python prove/lega.py
 node prove/notifiche.js
 python prove/privacy.py
 ```
+
+**Il totale delle verifiche cambia col posto, ed è giusto così** (accertato il
+15/09/2026). Alcune prove girano solo se ci sono i file veri esportati da Leghe,
+che stanno in `archivio/` e sono fuori da Git. Quindi:
+
+- **sul PC dell'utente** (che ha `archivio/`): `prove/app.js` 276/276 e
+  `prove/lega.py` 34/34
+- **su un clone pulito o nella CI** (senza `archivio/`): 275/275 e 31/31, perché
+  saltano «il file vero di Leghe si legge uguale (solo sul PC)» e le tre di
+  `lega.py` sulla stessa cosa
+
+Un numero più basso lì **non è un guasto**: è una prova saltata perché manca il
+file, non una fallita. Le fallite si contano a parte e si vedono come `NO`.
 
 `prove/app.js` segue il metodo usato finora, da mantenere: estrae il blocco
 `<script>` da `index.html`, lo esegue in Node con un finto DOM e una `fetch`
