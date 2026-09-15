@@ -982,9 +982,12 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   ({ t, el } = await avvia({ adesso: giovedi }));
   const dif2 = el.difesa.innerHTML;
   const mOgg = t.modificatoreAtteso(t.undici(t.prossima()).P[0], t.undici(t.prossima()).D);
-  verifica('nella Giornata il riquadro della difesa: atteso, fasce e quanto manca allo scalino',
-           /La difesa/.test(dif2) && /MODIFICATORE/.test(dif2) && /%/.test(dif2)
-           && /Pi.* probabile/.test(dif2), dif2.slice(0, 150));
+  verifica('nella Giornata il riquadro della difesa: atteso, tutte le fasce e quanto manca allo scalino',
+           /La difesa/.test(dif2) && /MODIFICATORE/.test(dif2)
+           && (dif2.match(/class="md-r[ "]/g) || []).length === 6     // una riga per fascia, anche le mai uscite
+           && (dif2.match(/class="md-r sel"/g) || []).length === 1 // una sola accesa: la piu probabile
+           && /serve .* di media|fascia pi/.test(dif2),
+           (dif2.match(/class="md-r[ "]/g) || []).length + ' righe');
   verifica('e il numero mostrato è quello calcolato, non un altro',
            dif2.includes(mOgg.atteso.toFixed(1).replace('.', ',')), mOgg.atteso);
 

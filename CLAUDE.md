@@ -317,6 +317,19 @@ CRLF: `.gitattributes` impedisce a Git di convertirlo.
   View Transition, che «*» non prende). Senza l'API (Safari più vecchio) l'aggiornamento
   resta immediato, mai un errore. Verificato: la funzione esiste in Chromium, nessun
   errore in console al cambio giornata.
+- **Riquadro «La difesa», rifatto a righe** (15/09, lavoro da remoto, su richiesta
+  dell'utente). La prima versione aveva una barra unica a segmenti e la legenda
+  sotto: sei fasce, tre colori soli, e l'occhio doveva accoppiare segmento e
+  percentuale da sé. Ora una riga per fascia, con etichetta e percentuale accanto
+  alla propria barra — nessun accoppiamento da fare. **Una tinta sola** (l'oro),
+  accesa sulla fascia più probabile e spenta sulle altre: la storia è dove cadi,
+  non sei categorie da distinguere; l'ordine delle righe (dal +6 allo zero) porta
+  già il senso di «più in alto è meglio». Le barre restano in scala assoluta
+  (0-100%), non normalizzate al massimo: così si vede anche *quanto* sei sparso,
+  cioè quanto è prevedibile la difesa. Ci sono sempre tutte e sei le fasce, anche
+  quelle mai uscite nelle simulazioni: uno zero lì è un'informazione, non un buco.
+  Il separatore disegnato tra i segmenti della vecchia barra è sparito: tra le
+  barre va uno spazio, non un bordo.
 - **`.blocco` è un velo bianco, non scuro** (15/09, lavoro da remoto): sta bene
   sulle zone scure dello sfondo, ma il riquadro «La difesa» cade sul centro chiaro
   dello stemma e il testo si perdeva (visto renderizzato, non dedotto dal CSS).

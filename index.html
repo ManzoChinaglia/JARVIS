@@ -594,19 +594,27 @@
   /* .blocco sovrappone un velo bianco: sta bene sulle zone scure dello sfondo, ma il
      riquadro della difesa cade sul centro chiaro dello stemma e il testo si perdeva.
      Qui sotto va una base scura, così si legge dovunque finisca lo scorrimento. */
-  .blocco.scuro{background:linear-gradient(180deg,rgba(16,20,18,.82),rgba(16,20,18,.72));
+  .blocco.scuro{background:linear-gradient(180deg,rgba(14,17,15,.9),rgba(14,17,15,.82));
                 -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);}
-  /* il modificatore di difesa: il numero atteso e, sotto, dove può davvero cadere */
+  /* il modificatore di difesa: il numero atteso e, sotto, dove può davvero cadere.
+     Una riga per fascia, con l'etichetta accanto alla sua barra: prima erano una
+     barra unica e una legenda separate, e l'occhio doveva accoppiarle da sé.
+     Una tinta sola, accesa sulla fascia più probabile e spenta sulle altre: la
+     storia è dove cadi, non sei categorie diverse da distinguere. L'ordine delle
+     righe (dal +6 allo zero) porta già il senso di «più in alto è meglio». */
   .md-n{margin-top:10px; text-align:center;}
   .md-n b{display:block; font-size:44px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
   .md-n span{display:block; margin-top:4px; font-size:12px; color:var(--dim);}
-  .md-barra{display:flex; height:12px; margin:14px 0 8px; border-radius:6px; overflow:hidden;
-            background:rgba(255,255,255,.07);}
-  .md-barra i{display:block; min-width:2px;}
-  .md-barra i + i{border-left:1px solid rgba(0,0,0,.4);}
-  .md-fasce{display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center;
-            font-size:11.5px; color:var(--dim);}
-  .md-fasce b{color:var(--ink); font-weight:600;}
+  .md-righe{display:flex; flex-direction:column; gap:7px; margin:16px 0 4px;}
+  .md-r{display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--dim);}
+  .md-r .md-f{width:32px; flex-shrink:0; text-align:right; font-weight:600; font-variant-numeric:tabular-nums;}
+  .md-r .md-p{width:32px; flex-shrink:0; text-align:right; font-variant-numeric:tabular-nums;}
+  .md-r i{flex:1; min-width:0; height:10px; border-radius:5px; background:rgba(255,255,255,.055);}
+  .md-r i em{display:block; min-width:4px; height:100%; border-radius:5px;
+             background:rgba(228,180,81,.3); transition:width .3s var(--morbida);}
+  .md-r.sel{color:var(--ink);}
+  .md-r.sel .md-f{color:var(--oro-chiaro);}
+  .md-r.sel i em{background:var(--oro);}
   .sc-conti{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;}
   .sc-conti div{min-width:0; padding:9px 6px; border-radius:14px; text-align:center; background:rgba(0,0,0,.22);}
   .sc-conti span{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
@@ -1404,19 +1412,23 @@ function renderDifesa(g){
   /* quanto manca allo scalino sopra: è l'informazione che fa cambiare un difensore */
   const su = M_SOGLIE.filter(s=>s > m.media).sort((a,b)=>a-b)[0];
   const manca = su === undefined ? null :
-    'Per salire a +'+num(M_BONUS[M_SOGLIE.indexOf(su)], su===7?0:1).replace(',0','')+
-    ' serve '+num(su,2)+' di media: oggi il blocco vale '+num(m.media,2)+'.';
+    'Per +'+num(M_BONUS[M_SOGLIE.indexOf(su)], su===7?0:1).replace(',0','')+
+    ' serve '+num(su,2)+' di media: oggi vale '+num(m.media,2)+'.';
+  const etichetta = b => b ? '+'+String(b).replace('.',',') : '0';
+  /* le righe coprono tutte le fasce della tabella, anche quelle mai uscite nelle
+     simulazioni: una fascia assente è un'informazione (non ci arrivi), non un buco */
+  const prob = {};
+  m.fasce.forEach(f=>{ prob[f.bonus] = f.prob; });
+  const righe = M_BONUS.concat([0]).map(b=>({bonus:b, prob:prob[b] || 0}));
   box.innerHTML = '<div class="blocco scuro"><div class="blocco-t">La difesa<small>MODIFICATORE</small></div>'+
     '<div class="md-n"><b class="cond">'+(m.atteso>=0.05?'+':'')+num(m.atteso)+'</b>'+
     '<span>atteso da portiere e 3 migliori difensori</span></div>'+
-    '<div class="md-barra">'+m.fasce.map(f=>
-      '<i style="width:'+(f.prob*100).toFixed(1)+'%;background:'+
-      (f.bonus>=4.5?'var(--oro)':f.bonus>=2?'rgba(228,180,81,.55)':'rgba(255,255,255,.18)')+'"></i>').join('')+'</div>'+
-    '<div class="md-fasce">'+m.fasce.map(f=>
-      '<span><b>'+(f.bonus?'+'+String(f.bonus).replace('.',','):'0')+'</b> '+
-      Math.round(f.prob*100)+'%</span>').join('')+'</div>'+
-    '<p class="nota">Più probabile <b>'+(alta.bonus?'+'+String(alta.bonus).replace('.',','):'0')+
-    '</b> ('+Math.round(alta.prob*100)+'%). '+(manca||'Sei già nella fascia più alta.')+'</p></div>';
+    '<div class="md-righe">'+righe.map(f=>
+      '<div class="md-r'+(f.bonus===alta.bonus?' sel':'')+'">'+
+      '<span class="md-f">'+etichetta(f.bonus)+'</span>'+
+      '<i><em style="width:'+(f.prob*100).toFixed(1)+'%"></em></i>'+
+      '<span class="md-p">'+Math.round(f.prob*100)+'%</span></div>').join('')+'</div>'+
+    '<p class="nota">'+(manca || 'Sei già nella fascia più alta.')+'</p></div>';
 }
 function disegnaCampo(g){
   const u = undici(g);
