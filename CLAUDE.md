@@ -93,6 +93,45 @@ cloud rifiuta le richieste verso questo repository).
   ancora applicato (la patch non è ancora arrivata su GitHub), lo dice
   invece di ripartire da capo o di rifare lo stesso lavoro.
 
+**`remoto/patch/` è la cassetta della posta ufficiale** (regola dal 15/09/2026,
+voluta dall'utente). Vale in tutte e due le direzioni:
+
+- **Claude Code, a ogni inizio sessione, guarda lì dentro senza che glielo si
+  chieda.** Se ci sono `.patch`, c'è lavoro svolto da remoto che non è ancora
+  nella storia: si applica quello *prima* di mettersi a fare altro, altrimenti si
+  lavora su una base vecchia e le patch poi non entrano più pulite. Cartella vuota
+  = niente in sospeso, si procede normalmente.
+- **La sessione cloud ce le scrive dentro da sé**, quando il computer dell'utente
+  è collegato all'app Claude Desktop: non serve che l'utente scarichi niente a
+  mano dalla chat. Se il computer non è collegato, restano i file in chat e la
+  cartella la riempie l'utente.
+- Le patch sono numerate e **vanno applicate in ordine**: sono commit consecutivi.
+  Su conflitto: `git am --abort` e si riferisce, senza risolvere a naso.
+
+**Trappola dei fine riga (CRLF), vista davvero il 15/09/2026.** Il repository sta
+in una cartella OneDrive su Windows. Può capitare di trovare `git status` con
+*tutti* i file modificati — `index.html`, `CLAUDE.md`, `prove/`, tutto — e un
+diff con lo stesso identico numero di righe aggiunte e tolte. **Non è lavoro
+perso e non è un conflitto: è solo il fine riga**, i file riscritti in CRLF
+mentre in Git stanno in LF. Come accertarlo in un colpo:
+
+```
+git diff --ignore-cr-at-eol --stat     # se non stampa nulla: solo fine riga
+```
+
+Se non stampa nulla, il contenuto è identico e si ripulisce con `git restore .`
+senza perdere niente. **Da fare prima di `git am`**: con l'albero sporco le patch
+non si applicano. Dal 15/09 `.gitattributes` normalizza a LF per prevenirlo (con
+l'eccezione di `dati/*.ics`, che per RFC 5545 vuole CRLF davvero).
+
+Altra cosa vista lo stesso giorno: una sessione cloud che tocca il repository
+attraverso il ponte del desktop **non può cancellare file** nella cartella
+collegata, se l'utente non glielo concede. Git ci lascia allora un
+`.git/index.lock` che blocca ogni operazione di scrittura. Lo si toglie da
+Claude Code, che gira nativo e non ha quella restrizione. Meglio ancora: dalla
+sessione cloud non si lanciano comandi git che scrivono, dentro quella cartella —
+lì si consegnano file e basta, il git lo fa Claude Code.
+
 ## Struttura
 
 ```
