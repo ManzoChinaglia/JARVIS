@@ -44,3 +44,6 @@ jobs:
 
       - name: prove/notifiche.js — avvisi e notifiche
         run: node prove/notifiche.js
+
+      - name: prove/privacy.py — nessun nome grezzo nei dati committati
+        run: python prove/privacy.py

@@ -114,7 +114,8 @@ esempio Dinastia Fontana = ex FC TETTENHAM); i giocatori dal nome, prima
 nella rosa attuale, poi nel listone (dove ogni nome è unico). Si accetta anche
 `rose.csv`, che ha l'Id. Controlli: 10 squadre da 25 (3/8/8/6), ruoli coerenti,
 nessun giocatore in due squadre. Serve `openpyxl` (`pip install openpyxl`), solo
-sul PC.
+sul PC. Dal 15/09/2026 `prove/privacy.py` controlla che in `dati/` non finisca
+mai un nome «grezzo»: le uniche squadre ammesse sono quelle di `dati/base.json`.
 
 La lega è privata (per renderla pubblica andrebbe rifatta): le rose richiedono il
 login, e Claude non fa accessi con la password dell'utente (nemmeno tramite uno
@@ -592,7 +593,9 @@ lato, e il risultato sarebbe una precisione finta.
 
 ## Come si prova
 
-Le prove sono in `prove/` e vanno lanciate prima di ogni consegna:
+Le prove sono in `prove/` e vanno lanciate prima di ogni consegna (dal
+15/09/2026 girano anche da sole, a ogni push e pull request:
+`.github/workflows/prova.yml`):
 
 ```
 node prove/app.js
@@ -601,6 +604,7 @@ python prove/script.py
 python prove/rose.py
 python prove/lega.py
 node prove/notifiche.js
+python prove/privacy.py
 ```
 
 `prove/app.js` segue il metodo usato finora, da mantenere: estrae il blocco
