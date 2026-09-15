@@ -856,6 +856,12 @@ il 15/09). ~120.000 righe giocatore-partita.
   contenuto dà sempre lo stesso file, e le stagioni chiuse si scrivono una volta e
   non gonfiano la storia di git. Lo storico grezzo **non va servito all'iPhone**:
   resta materia prima per l'addestramento.
+- **Giro completo fatto il 15/09/2026**: 11 stagioni, 418 giornate su 418, nessuna
+  saltata, **114.111 righe giocatore-partita**, 548 KB in tutto, nessun voto fuori
+  scala. Giocatori con voto ancora nel listone di oggi, stagione per stagione: 28
+  (2015-16), 35, 46, 58, 77, 87, 128, 157, 209, 271, 336 (2025-26). Per rifare una
+  stagione (un file rovinato) basta `python scripts/storico.py <stagione>`, che
+  riparte da dove era arrivato; a fine 2026-27 va aggiunta estendendo `STAGIONI`.
 
 ### B2 — Il fantavoto atteso (l'equivalente dell'xG, su misura)
 
@@ -863,6 +869,21 @@ Non si compra xG (vedi sopra il perché): si costruisce il bersaglio giusto.
 Dato giocatore, ruolo, avversario, casa/fuori, forma e squadra intorno →
 **distribuzione** del fantavoto, non un numero solo.
 
+- **Avversario e casa/fuori delle partite passate** (verificato dal PC il 15/09/2026):
+  lo storico ha solo la squadra di ogni giocatore; i calendari stanno nel feed di
+  fixturedownload già usato per gli orari (`/feed/json/serie-a-<anno>`), che c'è
+  **dal 2017-18 al 2025-26** (380 partite a stagione, con risultato). Il 2015-16 e
+  il 2016-17 no (404): per quelle due stagioni niente avversario, restano buone per
+  la storia del giocatore. Due trappole viste: il `RoundNumber` del feed non è
+  sempre la giornata ufficiale (nel 2017-18 le partite rinviate stanno in una
+  «giornata 39» o in giornate da 11-12 partite: abbinare squadra e giornata solo se
+  l'abbinamento è unico, e scartare gli altri, che sono pochi), e una partita del
+  2023-24 non ha risultato (Sassuolo–Frosinone, giornata 28). I nomi del feed vanno
+  tradotti in quelli di fantacalcio.it: `AC Milan`→`Milan`, `Inter Milan` e
+  `Internazionale`→`Inter`, `Hellas Verona`→`Verona`, `Chievoverona`→`Chievo`,
+  `Spal`→`SPAL` (confronto fatto stagione per stagione dal 2017-18 al 2023-24; oggi
+  `SQUADRE` in `aggiorna.py` ha solo `Internazionale`, perché serve alla stagione in
+  corso).
 - Addestramento **nelle GitHub Actions**, non sul telefono. Nel repository finisce
   solo il modello addestrato (`dati/modello.json`, qualche decina di coefficienti);
   l'app li applica offline, all'istante.
