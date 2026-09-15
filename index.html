@@ -212,9 +212,6 @@
             box-shadow:0 2px 6px rgba(0,0,0,.35);}
   .gioc .av{max-width:100%; margin-top:2px; font-size:9.5px; color:rgba(255,255,255,.8);
             white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.9);}
-  .legenda{display:flex; flex-wrap:wrap; gap:6px 14px; padding:2px 4px; font-size:11px; color:var(--dim);}
-  .legenda span{display:inline-flex; align-items:center; gap:5px;}
-  .legenda .pallino{position:static; width:9px; height:9px; border-width:0;}
 
   /* ---- la sfida, sulla carta ---- */
   .sfida-carta{padding:16px 14px 12px;}
@@ -307,6 +304,8 @@
   .team .nome small{display:block; margin-top:3px; font-size:11px; font-weight:400; color:var(--dim);}
   .team .val small{display:block; font-family:-apple-system,sans-serif; font-weight:400; font-size:10px; color:var(--dim); letter-spacing:0;}
   .nota-lega{margin:8px 2px 0; font-size:11.5px; line-height:1.45; color:var(--dim);}
+  .nota-lega:empty{display:none;}
+  .dialogo:has(.risposta:empty){display:none;}
   .cal{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);}
   .cal:last-child{border-bottom:none;}
   .cal .d{display:flex; align-items:baseline; gap:7px; width:90px; flex-shrink:0; font-size:12px; color:var(--dim);}
@@ -522,10 +521,6 @@
   .sovra.aperto .sovra-corpo > *{animation:sale .5s var(--morbida) both;}
   .sovra.aperto .sovra-corpo > :nth-child(2){animation-delay:.06s;} .sovra.aperto .sovra-corpo > :nth-child(3){animation-delay:.12s;}
   .sovra.aperto .sovra-corpo > :nth-child(n+4){animation-delay:.18s;}
-  .sovra-intro{margin:0 4px 14px; font-size:14px; line-height:1.5; color:var(--dim);}
-  .sez{margin:24px 4px 2px; font-family:"Barlow Condensed",sans-serif; font-size:23px; font-weight:700; color:var(--ink);}
-  .sovra-intro + .sez{margin-top:6px;}
-  .sez + .reparto-t{margin-top:8px;}
   .blocco{margin-bottom:14px; padding:16px; border-radius:24px;
           background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.025)); border:1px solid rgba(255,255,255,.11);
           box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 12px 30px rgba(0,0,0,.25);}
@@ -533,28 +528,27 @@
             font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.1em; color:var(--oro);}
   .blocco-t small{font-size:10px; letter-spacing:.08em; color:var(--dim);}
   .blocco p{margin:12px 0 0; font-size:14px; line-height:1.5;}
-  .blocco p.nota, .come-si-legge p{font-size:12.5px; color:var(--dim);}
-  .come-si-legge p b{color:var(--ink); font-weight:600;}
+  .blocco p.nota{font-size:12.5px; color:var(--dim);}
   .blocco .reparto-t{margin:16px 0 2px;}
   .fvn{font-family:"Barlow Condensed",sans-serif; font-weight:700; color:var(--oro-chiaro); font-variant-numeric:tabular-nums;}
   .fvn.alto{color:#43E08F;} .fvn.basso{color:#FF7A7A;}
   .chip{display:inline-block; margin-left:6px; padding:1px 6px; border-radius:7px; font-style:normal; font-size:10px;
         font-weight:700; letter-spacing:.02em; vertical-align:2px;}
   .chip.j{background:rgba(252,209,22,.14); border:1px solid rgba(252,209,22,.38); color:var(--oro-chiaro);}
-  .chip.m{background:rgba(67,224,143,.1); border:1px solid rgba(67,224,143,.38); color:#8FF0B8;}
-  .legenda-chip{margin:6px 0 0 !important; font-size:12px !important; color:var(--dim);}
-  .legenda-chip .chip{margin:0 4px 0 0;}
   /* com'è andata */
   .ca-due{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-  .ca-due > div, .ca-uno{padding:14px 6px 12px; border-radius:18px; text-align:center; background:rgba(0,0,0,.22);}
-  .ca-due span, .ca-uno span{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);}
-  .ca-due b, .ca-uno b{display:block; margin-top:6px; font-size:42px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
-  .ca-due > div:first-child b{color:var(--ink);}
-  .ca-uno b{font-size:56px;}
+  .ca-due > div{min-width:0; padding:14px 6px 12px; border-radius:18px; text-align:center; background:rgba(0,0,0,.22);}
+  .ca-due span{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
+               white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .ca-due b{display:block; margin-top:6px; font-size:42px; font-weight:700; line-height:1; color:var(--ink);}
+  .ca-due > div:first-child b{color:var(--oro-chiaro);}
   .ca-due small{display:block; margin-top:5px; font-size:12px; color:var(--dim);}
-  .ca-barra{height:8px; margin-top:14px; border-radius:4px; overflow:hidden; background:rgba(255,255,255,.08);}
-  .ca-barra i{display:block; height:100%; border-radius:4px; transform-origin:left;
-              background:linear-gradient(90deg,var(--oro),var(--oro-chiaro)); animation:cresce 1s var(--morbida) both .25s;}
+  .ca-jarvis{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; padding:12px 14px;
+             border-radius:16px; background:rgba(252,209,22,.07); border:1px solid rgba(252,209,22,.25);}
+  .blocco > .ca-jarvis:first-child{margin-top:0;}
+  .ca-jarvis span{font-size:13.5px;}
+  .ca-jarvis span small{display:block; margin-top:2px; font-size:12px; color:var(--dim);}
+  .ca-jarvis b{font-size:34px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
   .ca-evid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;}
   .ca-tess{display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; padding:14px 8px 12px; margin:0; text-align:center;}
   .ca-tess .maglia{width:48px; height:48px; margin-bottom:4px; filter:drop-shadow(0 6px 8px rgba(0,0,0,.45));}
@@ -571,18 +565,31 @@
   .vr strong{min-width:46px; font-size:27px; text-align:right;}
   .vr.sv{opacity:.55;}
   .vr.sv strong{font-size:16px; color:var(--dim);}
-  /* mercato */
-  .mk-testa{display:flex; align-items:center; gap:12px;}
-  .mk-testa .maglia{width:46px; height:46px; flex-shrink:0; filter:drop-shadow(0 6px 8px rgba(0,0,0,.45));}
-  .mk-nome{flex:1; min-width:0;}
-  .mk-nome b{display:block; font-size:18px; font-weight:600;}
-  .mk-nome small{display:block; margin-top:2px; font-size:12px; color:var(--dim);}
-  .mk-guad{flex-shrink:0; text-align:right;}
-  .mk-guad b{display:block; font-size:32px; line-height:1; color:#43E08F;}
-  .mk-guad.q b{color:var(--oro-chiaro);}
-  .mk-guad small{font-size:10.5px; color:var(--dim);}
-  .blocco p.mk-perche{font-size:13px; color:var(--dim);}
-  .mk-perche b{color:var(--ink); font-weight:600;}
+  /* mercato: scambi alla pari */
+  .sc-coppia{display:grid; grid-template-columns:1fr 28px 1fr; align-items:start; gap:6px;}
+  .sc-lato{display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; text-align:center;}
+  .sc-lato .k{font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.1em; color:var(--dim);}
+  .sc-lato.prendi .k{color:#43E08F;}
+  .sc-lato .maglia{width:52px; height:52px; margin:4px 0; filter:drop-shadow(0 6px 8px rgba(0,0,0,.45));}
+  .sc-lato b{max-width:100%; font-size:16px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sc-lato small{font-size:11.5px; line-height:1.4; color:var(--dim);}
+  .sc-freccia{align-self:center; width:28px; height:28px; color:var(--oro);}
+  .sc-conti{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;}
+  .sc-conti div{min-width:0; padding:9px 6px; border-radius:14px; text-align:center; background:rgba(0,0,0,.22);}
+  .sc-conti span{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
+                 white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .sc-conti b{display:block; margin-top:3px; font-size:26px; line-height:1;}
+  .sc-conti b.su{color:#43E08F;}
+  .blocco p.sc-perche{font-size:13px; color:var(--dim);}
+  .sc-perche b{color:var(--ink); font-weight:600;}
+  /* la stagione */
+  .st-numeri{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .st-numeri div{padding:12px 4px 10px; border-radius:16px; text-align:center; background:rgba(0,0,0,.22);}
+  .st-numeri span{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);}
+  .st-numeri b{display:block; margin-top:4px; font-size:34px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
+  .pr-barra{display:block; height:4px; margin-top:6px; border-radius:2px; overflow:hidden; background:rgba(255,255,255,.07);}
+  .pr-barra i{display:block; height:100%; border-radius:2px; transform-origin:left;
+              background:linear-gradient(90deg,var(--oro),var(--oro-chiaro)); animation:cresce .8s var(--morbida) both .2s;}
   .mk-tab{width:100%; margin-top:10px; border-collapse:collapse; font-size:14px;}
   .mk-tab th{padding:9px 0; text-align:left; font-size:12.5px; font-weight:400; color:var(--dim);}
   .mk-tab td{width:31%; padding:9px 4px; text-align:center; font-variant-numeric:tabular-nums;}
@@ -741,10 +748,6 @@
       </div>
     </div>
     <div class="campo" id="campo"></div>
-    <div class="legenda">
-      <span><i class="pallino si"></i>titolare</span><span><i class="pallino forse"></i>in dubbio</span>
-      <span><i class="pallino no"></i>fuori</span>
-    </div>
     <div id="sfida"></div>
     <div id="quando"></div>
     <div id="panchina"></div>
@@ -753,6 +756,7 @@
   </section>
 
   <section id="s-rosa">
+    <div id="stagione"></div>
     <div class="rosa-testa"><h2>La tua rosa</h2><div class="vista" id="rosa-vista"></div></div>
     <div class="rosa-comandi" id="rosa-comandi"></div>
     <div id="rosa"></div>
@@ -763,7 +767,7 @@
     <div class="importa-lega">
       <button class="aggiorna secondario" id="importa-lega"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M4 15v3.5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V15"/></svg><span>Importa da Leghe</span></button>
       <input type="file" id="file-lega" accept=".xlsx" hidden>
-      <p class="nota-lega" id="esito-lega">Da Chrome sull'iPhone: Leghe → Classifica → «Scarica ora», poi tocca qui e scegli il file.</p>
+      <p class="nota-lega" id="esito-lega"></p>
     </div>
     <div id="mercato"></div>
     <h2>La forza delle rose, per fantamedia</h2>
@@ -783,7 +787,7 @@
     <div class="esempi" id="esempi"></div>
     <div class="dialogo">
       <img class="avatar" src="img/icona-180.png" alt="">
-      <div class="risposta" id="risposta">Tocca una domanda qui sopra, o scrivila: chi schierare, un confronto tra due giocatori, come sta qualcuno, chi affronti.</div>
+      <div class="risposta" id="risposta"></div>
     </div>
   </section>
 </main>
@@ -1317,9 +1321,7 @@ function renderSfida(g){
     '<div class="sf-barra"><i style="width:'+quota.toFixed(0)+'%"></i></div>'+
     '<p class="sf-verdetto">'+verdetto+'</p>'+
     ['P','D','C','A'].map(reparto).join('')+
-    '<p class="sf-nota">Somma dei punteggi del consiglio (fantamedia stimata, titolarità e avversario): una stima di Jarvis, '+
-    'non il risultato. Tu '+s.mio.modulo+', loro '+s.loro.modulo+', il modulo che per loro rende di più. '+
-    'Il modificatore difesa non è compreso.</p></div>';
+    '<p class="sf-nota">Tu '+s.mio.modulo+' · loro '+s.loro.modulo+'</p></div>';
   if(html !== sfidaDisegnata){ sfidaDisegnata = html; document.getElementById('sfida').innerHTML = html; }
 }
 
@@ -1352,7 +1354,7 @@ function renderQuando(g){
   const sc = scadenza(g);
   box.innerHTML = !righe ? '' : '<h2>Quando giocano i tuoi</h2><div class="lista qg">'+
     (sc ? '<div class="qg-riga scad"><span class="qg-ora cond">'+oraBreve(sc)+'</span><div class="qg-dett"><b>Scadenza della formazione</b></div></div>' : '')+
-    righe+'</div><p class="nota-lega">In grassetto chi è nell\'undici consigliato.</p>';
+    righe+'</div>';
 }
 
 /* ---------- importa da Leghe, sul telefono ---------- */
@@ -1488,7 +1490,16 @@ function comeAndata(){
   if(!miei.length) return null;
   const consiglio = c && c.undici && c.undici[modulo]
     ? Object.assign({modulo}, puntiUndici(c.undici[modulo], (c.panchina || {})[modulo], sa)) : null;
-  return {sa, g, miei, migliore: miglioreUndici(sa), consiglio, salvato: !!c};
+  return {sa, g, miei, migliore: miglioreUndici(sa), consiglio, salvato: !!c, risultato: g ? risultatoLega(g[0]) : null};
+}
+/* il risultato vero della tua sfida, dal calendario di Leghe: in dati/lega.json
+   "risultati": {"<giornata>": [[casa, fantapunti, fuori, fantapunti, gol casa, gol fuori], ...]} */
+function risultatoLega(gio){
+  const r = D.lega && D.lega.risultati && D.lega.risultati[String(gio)];
+  const m = r && r.find(x=>x[0]===ME || x[2]===ME);
+  if(!m) return null;
+  const casa = m[0]===ME;
+  return {avv: casa ? m[2] : m[0], mio: casa ? m[1] : m[3], loro: casa ? m[3] : m[1], golMio: casa ? m[4] : m[5], golLoro: casa ? m[5] : m[4]};
 }
 /* nella pagina una riga sola, che apre la sezione in sovraimpressione */
 const ICONA_CA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5.5-5.5 4 3.5L20 7"/><path d="M15 7h5v5"/></svg>';
@@ -1511,10 +1522,11 @@ function renderComeAndata(){
   const ca = comeAndata();
   let html = '';
   if(ca){
-    const top = ca.miei[0];
-    html = invito(ICONA_CA, 'Com\'è andata', titoloCa(ca), ca.consiglio
-      ? 'Undici di Jarvis '+num(ca.consiglio.tot)+' su '+num(ca.migliore.tot)+' possibili'
-      : 'Il migliore dei tuoi: '+top.nome+', '+num(votoDi(top, ca.sa)[1]));
+    const k = ca.consiglio, r = ca.risultato, top = ca.miei[0];
+    html = invito(ICONA_CA, 'Com\'è andata', titoloCa(ca),
+      r ? 'Finita '+r.golMio+'-'+r.golLoro+', '+num(r.mio)+' a '+num(r.loro)+(k ? ' · Jarvis '+num(k.tot) : '')
+        : k ? 'Con l\'undici di Jarvis '+num(k.tot)
+        : 'Il migliore dei tuoi: '+top.nome+', '+num(votoDi(top, ca.sa)[1]));
   }
   if(html !== caDisegnata){ caDisegnata = html; document.getElementById('comeandata').innerHTML = html; }
 }
@@ -1524,27 +1536,23 @@ function apriComeAndata(){
   const ca = comeAndata();
   if(!ca) return;
   const c = ca.g && D.consigli && D.consigli[String(ca.g[0])];
-  const diJarvis = new Set(c && c.undici && c.undici[modulo] || []), nelMassimo = new Set(ca.migliore.scelti.map(p=>p.id));
-  const v = p => votoDi(p, ca.sa), k = ca.consiglio, max = ca.migliore;
-  let eroe;
-  if(k){
-    const perc = Math.round(100*k.tot/max.tot), resto = max.tot - k.tot;
+  const diJarvis = new Set(c && c.undici && c.undici[modulo] || []);
+  const v = p => votoDi(p, ca.sa), k = ca.consiglio, r = ca.risultato;
+  /* in cima, solo per le giornate di lega: il risultato vero (da Leghe) e l'undici di Jarvis */
+  let eroe = '';
+  if(ca.g){
+    const diff = r && k ? k.tot - r.mio : null;
     eroe = '<div class="blocco">'+
-      '<div class="ca-due"><div><span>Undici di Jarvis</span><b class="cond">'+num(k.tot)+'</b><small>'+k.modulo+'</small></div>'+
-      '<div><span>Il massimo possibile</span><b class="cond">'+num(max.tot)+'</b><small>'+max.modulo+'</small></div></div>'+
-      '<div class="ca-barra"><i style="width:'+Math.min(100, perc)+'%"></i></div>'+
-      '<p>Con l\'undici consigliato da Jarvis avresti fatto <b>'+num(k.tot)+'</b>, il '+perc+'% del massimo'+
-        (resto >= 0.05 ? ': '+num(resto)+' punti sono rimasti in panchina.' : ': meglio di così non si poteva.')+'</p>'+
-      (k.cambi ? '<p>'+(k.cambi===1 ? '1 titolare senza voto, sostituito' : k.cambi+' titolari senza voto, sostituiti')+
-        ' dalla panchina, come vuole la lega.</p>' : '')+
-      (k.vuoti ? '<p>'+(k.vuoti===1 ? '1 titolare senza voto e nessuno in panchina per sostituirlo'
-                                   : k.vuoti+' titolari senza voto e nessuno in panchina per sostituirli')+': zero punti.</p>' : '')+
-      '<p class="nota">È l\'undici che ti aveva consigliato Jarvis, non la formazione schierata su Leghe.</p></div>';
-  } else {
-    eroe = '<div class="blocco"><div class="ca-uno"><span>Il massimo possibile</span><b class="cond">'+num(max.tot)+'</b></div>'+
-      '<p>La somma dei fantavoti dei tuoi 11 migliori di quella giornata, in '+max.modulo+' (la difesa resta a quattro).</p>'+
-      '<p class="nota">'+(ca.g ? 'L\'undici consigliato di quella giornata non era stato salvato: il confronto con Jarvis non c\'è.'
-                              : 'La lega non era ancora iniziata: questa giornata non contava, serve a vedere come sono andati i tuoi.')+'</p></div>';
+      (r ? '<div class="ca-due"><div><span>'+ME+'</span><b class="cond">'+num(r.mio)+'</b><small>'+r.golMio+' gol</small></div>'+
+           '<div><span>'+r.avv+'</span><b class="cond">'+num(r.loro)+'</b><small>'+r.golLoro+' gol</small></div></div>' : '')+
+      (k ? '<div class="ca-jarvis"><span>Con l\'undici di Jarvis ('+k.modulo+')'+
+             (diff===null ? '' : '<small>'+(Math.abs(diff) < 0.05 ? 'come il tuo' : num(Math.abs(diff))+(diff > 0 ? ' in più' : ' in meno'))+'</small>')+
+             '</span><b class="cond">'+num(k.tot)+'</b></div>'+
+           (k.cambi ? '<p>'+(k.cambi===1 ? '1 titolare senza voto, sostituito' : k.cambi+' titolari senza voto, sostituiti')+
+             ' dalla panchina.</p>' : '')+
+           (k.vuoti ? '<p>'+(k.vuoti===1 ? '1 titolare senza voto e nessuno in panchina per sostituirlo'
+                                        : k.vuoti+' titolari senza voto e nessuno in panchina per sostituirli')+'.</p>' : '')
+         : '<p class="nota">L\'undici consigliato di quella giornata non era stato salvato.</p>')+'</div>';
   }
   const tessera = (etichetta, p) => '<div class="blocco ca-tess" data-id="'+p.id+'">'+maglia(p.club)+'<span class="k">'+etichetta+'</span>'+
     '<b>'+p.nome+'</b><strong class="fvn '+classeFv(v(p)[1])+'">'+num(v(p)[1])+'</strong><small>'+spiegaVoto(v(p))+'</small></div>';
@@ -1553,21 +1561,15 @@ function apriComeAndata(){
   const riga = p => {
     const x = v(p);
     return '<div class="vr'+(x ? '' : ' sv')+'" data-id="'+p.id+'">'+maglia(p.club)+
-      '<div class="vr-nome"><b>'+p.nome+(diJarvis.has(p.id) ? '<i class="chip j">Jarvis</i>' : '')+
-        (nelMassimo.has(p.id) ? '<i class="chip m">Top 11</i>' : '')+'</b>'+
+      '<div class="vr-nome"><b>'+p.nome+(diJarvis.has(p.id) ? '<i class="chip j">Jarvis</i>' : '')+'</b>'+
       '<small>'+(x ? spiegaVoto(x) : avversarioClub(p.club, ca.sa) ? 'senza voto: non ha giocato o troppo poco' : 'la sua squadra non giocava')+'</small></div>'+
       '<strong class="fvn '+(x ? classeFv(x[1]) : '')+'">'+(x ? num(x[1]) : 's.v.')+'</strong></div>';
   };
   const valore = p => (v(p) || [0, -99])[1];
   const tutti = '<div class="blocco"><div class="blocco-t">Tutti i tuoi<small>fantavoto</small></div>'+
-    '<p class="legenda-chip">'+(diJarvis.size ? '<i class="chip j">Jarvis</i>nell\'undici consigliato · ' : '')+
-      '<i class="chip m">Top 11</i>nei migliori 11 possibili</p>'+
-    ['P','D','C','A'].map(r=>'<h3 class="reparto-t">'+PLURALI[r]+'</h3>'+
-      mia.filter(p=>p.ruolo===r).sort((a,b)=>valore(b)-valore(a)).map(riga).join('')).join('')+'</div>';
-  const nota = '<div class="blocco come-si-legge"><div class="blocco-t">Come si legge</div>'+
-    '<p>Il <b>fantavoto</b> è il voto della redazione Fantacalcio più bonus e malus: gol +3, assist +1, gol subito −1, '+
-    'ammonizione −0,5, espulsione −1. Il modificatore difesa della lega non è compreso.</p></div>';
-  apriSovra('Com\'è andata', titoloCa(ca), eroe+evid+tutti+nota);
+    ['P','D','C','A'].map(x=>'<h3 class="reparto-t">'+PLURALI[x]+'</h3>'+
+      mia.filter(p=>p.ruolo===x).sort((a,b)=>valore(b)-valore(a)).map(riga).join('')).join('')+'</div>';
+  apriSovra('Com\'è andata', titoloCa(ca), eroe+evid+tutti);
 }
 
 /* ---------- andamento del giocatore ---------- */
@@ -1624,93 +1626,132 @@ function pallini3(p, g){
 }
 
 /* ---------- mercato, sulla carta ---------- */
-/* Stima di Jarvis per le finestre di scambio: valore = fantamedia stimata + titolarità +
-   i prossimi 3 avversari. Da prendere: chi, nelle altre rose, vale più del tuo ultimo
-   titolare dello stesso ruolo; da proporre: i tuoi fuori dall'undici con quotazione alta. */
-const POSTI = {P:1, D:4, C:4, A:3};
-/* le tre parti del valore, con gli stessi conti del consiglio: fantamedia stimata,
-   titolarità e la media dei prossimi 3 avversari */
-function partiMercato(p, g){
-  const t = titolarita(p, g), cal = prossimi3(p, g), forze = cal.map(x=>forzaSa(p, x.sa)).filter(Boolean);
-  const fm = fmStimata(p), tit = t ? -0.4 + 1.6*t.perc/100 : 0;
-  const avv = forze.length ? forze.reduce((s,f)=>s + PESI[p.ruolo]*f.delta, 0)/forze.length : 0;
-  return {fm, t, tit, cal, avv, tot: fm + tit + avv};
+/* Scambi 1 contro 1, anche tra ruoli diversi, come si fanno davvero:
+   - alla pari: quotazioni entro il 15% (o 2 punti), cioè si cede anche un giocatore forte;
+   - i loro big non si chiedono: mai le due quotazioni più alte di una rosa;
+   - sensati per tutti e due: il tuo undici migliora di almeno 0,3, il loro non peggiora.
+   Il valore è per la stagione, non per le prossime 3: fantamedia stimata e presenze. */
+function presenze(p){
+  const s = D.sq && D.sq.squadre[p.club], n = s ? s.attuale.casa[0] + s.attuale.fuori[0] : 0;
+  return n ? {giocate: Math.min(p.pgv, n), di: n} : null;
 }
-function valoreMercato(p, g){ return partiMercato(p, g).tot; }
-/* da prendere: {p, guadagno, alPosto: il tuo ultimo titolare del ruolo, posto: il suo numero};
-   da proporre: {p, pos: il suo numero tra i tuoi del ruolo, per: chi potresti chiedere in cambio} */
-function mercato(g){
-  const prendere = [], cedere = [];
-  ['P','D','C','A'].forEach(r=>{
-    const miei = mia.filter(p=>p.ruolo===r && disponibile(p, g[2])).map(p=>({p, v: valoreMercato(p, g)})).sort((a,b)=>b.v-a.v);
-    const posto = Math.min(POSTI[r], miei.length), ultimo = miei[posto - 1];
-    if(!ultimo) return;
-    const altri = players.filter(p=>p.team!==ME && p.ruolo===r && disponibile(p, g[2])).map(p=>({p, v: valoreMercato(p, g)}))
-      .filter(x=>x.v >= ultimo.v + 0.3).sort((a,b)=>b.v-a.v).slice(0, 2);
-    altri.forEach(x=>prendere.push({p: x.p, guadagno: x.v - ultimo.v, alPosto: ultimo.p, posto}));
-    miei.slice(POSTI[r]).filter(x=>x.p.quot >= 10).sort((a,b)=>b.p.quot-a.p.quot).slice(0, 1)
-      .forEach(x=>cedere.push({p: x.p, pos: miei.indexOf(x) + 1, per: altri.length ? altri[0].p : null}));
+function valoreStagione(p){
+  const pr = presenze(p);
+  return fmStimata(p) + (pr ? -0.4 + 1.6*pr.giocate/pr.di : 0);
+}
+/* l'undici migliore di una rosa con quei valori, nel modulo che rende di più (difesa a quattro) */
+function migliori11(rosa, val){
+  let meglio = null;
+  Object.values(MODULI).forEach(q=>{
+    const ids = new Set();
+    let tot = 0;
+    [['P',1],['D',q.D],['C',q.C],['A',q.A]].forEach(([r,n])=>rosa.filter(p=>p.ruolo===r)
+      .sort((a,b)=>val.get(b.id)-val.get(a.id)).slice(0, n).forEach(p=>{ ids.add(p.id); tot += val.get(p.id); }));
+    if(!meglio || tot > meglio.tot) meglio = {tot, ids};
   });
-  return {prendere, cedere};
+  return meglio;
+}
+/* [{dai, prendi, squadra, perMe, perLoro, entra, usciva, entraLoro}], le migliori per te, al massimo 6 */
+function mercato(g){
+  const val = new Map(players.map(p=>[p.id, valoreStagione(p)]));
+  const rosaDi = t => players.filter(p=>p.team===t && disponibile(p, g[2]));
+  const mia0 = rosaDi(ME), base = migliori11(mia0, val), idee = [];
+  [...new Set(players.map(p=>p.team))].filter(t=>t!==ME).forEach(t=>{
+    const loro0 = rosaDi(t), baseLoro = migliori11(loro0, val);
+    const big = new Set(players.filter(p=>p.team===t).sort((a,b)=>b.quot-a.quot).slice(0, 2).map(p=>p.id));
+    loro0.filter(y=>!big.has(y.id)).forEach(y=>mia0.forEach(x=>{
+      if(Math.abs(x.quot - y.quot) > Math.max(2, 0.15*Math.max(x.quot, y.quot))) return;
+      const dopo = migliori11(mia0.filter(p=>p!==x).concat(y), val), perMe = dopo.tot - base.tot;
+      if(perMe < 0.3) return;
+      const dopoLoro = migliori11(loro0.filter(p=>p!==y).concat(x), val), perLoro = dopoLoro.tot - baseLoro.tot;
+      if(perLoro < -0.1) return;
+      idee.push({dai: x, prendi: y, squadra: t, perMe, perLoro,
+                 entra: dopo.ids.has(y.id), usciva: base.ids.has(x.id), entraLoro: dopoLoro.ids.has(x.id)});
+    }));
+  });
+  /* senza chiedere due volte lo stesso giocatore, e offrendo lo stesso tuo al massimo due volte */
+  idee.sort((a,b)=>b.perMe-a.perMe || b.perLoro-a.perLoro);
+  const scelte = [], chiesti = new Set(), offerti = new Map();
+  idee.forEach(i=>{
+    if(scelte.length >= 6 || chiesti.has(i.prendi.id) || (offerti.get(i.dai.id) || 0) >= 2) return;
+    chiesti.add(i.prendi.id); offerti.set(i.dai.id, (offerti.get(i.dai.id) || 0) + 1); scelte.push(i);
+  });
+  return scelte;
 }
 let mercatoDisegnato = '';
 function renderMercato(g){
-  const mk = mercato(g), colpo = mk.prendere.slice().sort((a,b)=>b.guadagno-a.guadagno)[0];
-  const conta = [mk.prendere.length ? mk.prendere.length+' da cercare' : '', mk.cedere.length ? mk.cedere.length+' da proporre' : '']
-    .filter(Boolean).join(' · ') || 'Nessuno scambio da proporre';
-  const html = invito(ICONA_MERCATO, 'Mercato, sulla carta', conta, colpo
-    ? 'Il colpo: '+colpo.p.nome+', +'+num(colpo.guadagno)+' a partita'
-    : 'Nelle altre rose nessuno vale nettamente più dei tuoi titolari');
+  const mk = mercato(g);
+  const html = invito(ICONA_MERCATO, 'Mercato, sulla carta', mk.length ? mk.length+(mk.length===1 ? ' scambio alla pari' : ' scambi alla pari')
+    : 'Nessuno scambio alla pari', mk.length ? 'Il migliore: '+mk[0].dai.nome+' per '+mk[0].prendi.nome+', +'+num(mk[0].perMe) : '');
   if(html !== mercatoDisegnato){ mercatoDisegnato = html; document.getElementById('mercato').innerHTML = html; }
 }
-/* in sovraimpressione: ogni idea con il confronto voce per voce contro il tuo giocatore */
+const FRECCE = '<svg class="sc-freccia" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h15l-4-4M20 15H5l4 4"/></svg>';
+/* in sovraimpressione: per ogni scambio chi dai e chi prendi, quanto guadagni tu e quanto loro,
+   chi entra negli undici e il confronto voce per voce */
 function apriMercato(g){
   g = g || prossima();
   const mk = mercato(g);
-  const tit = t => !t ? '–' : t.perc+'%';
-  const vera = p => '<small>vera '+(p.pgv ? num(p.fm) : '–')+'</small>';
+  const segno = x => (x >= 0.05 ? '+' : x <= -0.05 ? '−' : '')+num(Math.abs(x));
+  const lato = (cl, k, p) => '<div class="sc-lato '+cl+'" data-id="'+p.id+'"><span class="k">'+k+'</span>'+maglia(p.club)+
+    '<b>'+p.nome+'</b><small>'+RUOLI[p.ruolo]+' · '+p.club+'<br>quotazione '+p.quot+'</small></div>';
   const riga = (k, x, y, a, b, cl) => {
     const m = a > b + 0.05 ? [' class="meglio"', ''] : b > a + 0.05 ? ['', ' class="meglio"'] : ['', ''];
     return '<tr'+(cl ? ' class="'+cl+'"' : '')+'><th>'+k+'</th><td'+m[0]+'>'+x+'</td><td'+m[1]+'>'+y+'</td></tr>';
   };
-  const confronto = (a, b) => {
-    const A = partiMercato(a, g), B = partiMercato(b, g);
-    return '<table class="mk-tab"><thead><tr><th></th><td>'+cognome(a)+'</td><td>'+cognome(b)+'<small>il tuo</small></td></tr></thead><tbody>'+
-      riga('Fantamedia', num(A.fm)+vera(a), num(B.fm)+vera(b), A.fm, B.fm)+
-      riga('Titolarità', tit(A.t), tit(B.t), A.tit, B.tit)+
-      riga('Prossime 3', pallini3(a, g), pallini3(b, g), A.avv, B.avv)+
-      riga('Valore Jarvis', num(A.tot), num(B.tot), A.tot, B.tot, 'tot')+'</tbody></table>';
-  };
-  const chi = x => x.p.ruolo==='P' ? 'il tuo portiere titolare' : 'il tuo '+x.posto+'° '+RUOLI[x.p.ruolo].toLowerCase();
-  let reparto = '';
-  const prendi = mk.prendere.map(x=>{
-    const testa = x.p.ruolo !== reparto ? '<h3 class="reparto-t">'+REPARTI[x.p.ruolo]+'</h3>' : '';
-    reparto = x.p.ruolo;
-    return testa+'<div class="blocco mk" data-id="'+x.p.id+'"><div class="mk-testa">'+maglia(x.p.club)+
-      '<div class="mk-nome"><b>'+x.p.nome+'</b><small>'+x.p.club+' · nella rosa di '+x.p.team+'</small></div>'+
-      '<div class="mk-guad"><b class="cond">+'+num(x.guadagno)+'</b><small>a partita</small></div></div>'+
-      '<p class="mk-perche">Rende più di <b>'+x.alPosto.nome+'</b>, '+chi(x)+' per Jarvis.</p>'+confronto(x.p, x.alPosto)+'</div>';
-  }).join('');
-  const cedi = mk.cedere.map(x=>'<div class="blocco mk" data-id="'+x.p.id+'"><div class="mk-testa">'+maglia(x.p.club)+
-      '<div class="mk-nome"><b>'+x.p.nome+'</b><small>'+RUOLI[x.p.ruolo]+' · '+x.p.club+'</small></div>'+
-      '<div class="mk-guad q"><b class="cond">'+x.p.quot+'</b><small>quotazione</small></div></div>'+
-      '<p class="mk-perche">Per Jarvis è il tuo '+x.pos+'° '+RUOLI[x.p.ruolo].toLowerCase()+': di solito resta fuori dall\'undici, '+
-      'ma con quotazione '+x.p.quot+' può interessare agli altri.'+
-      (x.per ? ' Un\'idea: offrilo per <b>'+x.per.nome+'</b> ('+x.per.team+').' : '')+'</p></div>').join('');
-  apriSovra('Mercato, sulla carta', 'Idee di scambio',
-    '<p class="sovra-intro">Chi, nelle altre rose, renderebbe più dei tuoi titolari nelle prossime 3 giornate, e chi dei tuoi '+
-      'potresti offrire. Gli scambi si aprono nelle soste per le nazionali e a gennaio.</p>'+
-    (prendi ? '<h3 class="sez">Da cercare</h3>'+prendi
-            : '<div class="blocco"><p>Nelle altre rose nessuno vale nettamente più dei tuoi titolari.</p></div>')+
-    (cedi ? '<h3 class="sez">Da proporre in uno scambio</h3>'+cedi : '')+
-    '<div class="blocco come-si-legge"><div class="blocco-t">Come si legge</div>'+
-    '<p><b>Valore Jarvis</b>: fantamedia stimata + titolarità + prossimi 3 avversari, con gli stessi conti dell\'undici '+
-      'consigliato. Il numero verde in alto è la differenza con il tuo giocatore, in punti a partita.</p>'+
-    '<p><b>Fantamedia</b>: quella stimata; con poche partite Jarvis la avvicina a quella attesa per la quotazione. '+
-      'Sotto c\'è quella vera.</p>'+
-    '<p><b>Titolarità</b>: dalle probabili della giornata; finché non escono, dalle partite giocate su quelle della squadra.</p>'+
-    '<p><b>Prossime 3</b>: verde facile, giallo nella media, rosso difficile. Nella tabella, in verde chi è meglio voce per voce.</p>'+
-    '<p>È una stima di Jarvis: un\'idea da trattare, non una certezza.</p></div>');
+  const pres = p => { const x = presenze(p); return x ? x.giocate+'/'+x.di : '–'; };
+  const quota = p => { const x = presenze(p); return x ? x.giocate/x.di : 0; };
+  const vera = p => '<small>vera '+(p.pgv ? num(p.fm) : '–')+'</small>';
+  const tabella = (a, b) => '<table class="mk-tab"><thead><tr><th></th><td>'+cognome(a)+'</td><td>'+cognome(b)+'</td></tr></thead><tbody>'+
+    riga('Fantamedia', num(fmStimata(a))+vera(a), num(fmStimata(b))+vera(b), fmStimata(a), fmStimata(b))+
+    riga('Presenze', pres(a), pres(b), quota(a), quota(b))+
+    riga('Valore Jarvis', num(valoreStagione(a)), num(valoreStagione(b)), valoreStagione(a), valoreStagione(b), 'tot')+'</tbody></table>';
+  const carta = i => '<div class="blocco mk">'+
+    '<div class="sc-coppia">'+lato('dai', 'Dai', i.dai)+FRECCE+lato('prendi', 'Prendi', i.prendi)+'</div>'+
+    '<div class="sc-conti"><div><span>Per te</span><b class="cond'+(i.perMe >= 0.05 ? ' su' : '')+'">'+segno(i.perMe)+'</b></div>'+
+      '<div><span>Per '+i.squadra+'</span><b class="cond'+(i.perLoro >= 0.05 ? ' su' : '')+'">'+segno(i.perLoro)+'</b></div></div>'+
+    '<p class="sc-perche">Da te <b>'+i.prendi.nome+'</b> '+(i.entra ? 'entra nell\'undici' : 'parte dalla panchina')+
+      (i.usciva ? ', '+i.dai.nome+' ne esce' : ', '+i.dai.nome+' non ci giocava')+'. Da loro '+i.dai.nome+
+      (i.entraLoro ? ' entra nell\'undici.' : ' parte dalla panchina.')+'</p>'+tabella(i.dai, i.prendi)+'</div>';
+  apriSovra('Mercato, sulla carta', 'Scambi alla pari',
+    mk.length ? mk.map(carta).join('') : '<div class="blocco"><p>Nessuno scambio alla pari conviene a tutti e due, per ora.</p></div>');
+}
+
+/* ---------- la stagione ---------- */
+/* chi produce: per ogni tuo giocatore i fantapunti di tutte le giornate con i voti, la media
+   e i bonus e malus; gol, assist e ammonizioni dalle statistiche */
+const ICONA_STAGIONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M6 16v-5M11 16V6M16 16v-8M21 16v-3"/></svg>';
+function stagione(){
+  const giornate = D.voti ? Object.keys(D.voti).map(Number).sort((a,b)=>a-b) : [];
+  if(!giornate.length) return null;
+  const righe = mia.map(p=>{
+    const v = giornate.map(sa=>votoDi(p, sa)).filter(Boolean), tot = v.reduce((s,x)=>s + x[1], 0);
+    return {p, voti: v.length, tot, media: v.length ? tot/v.length : 0, bonus: v.reduce((s,x)=>s + x[1] - x[0], 0)};
+  }).sort((a,b)=>b.tot - a.tot || b.media - a.media);
+  return {giornate, righe};
+}
+const quanteGiornate = n => n+(n===1 ? ' giornata' : ' giornate');
+let stagioneDisegnata = '';
+function renderStagione(){
+  const s = stagione(), top = s && s.righe[0];
+  const html = top && top.voti ? invito(ICONA_STAGIONE, 'La stagione', quanteGiornate(s.giornate.length)+' di Serie A',
+    'Chi produce di più: '+top.p.nome+', '+num(top.tot)+' fantapunti') : '';
+  if(html !== stagioneDisegnata){ stagioneDisegnata = html; document.getElementById('stagione').innerHTML = html; }
+}
+function apriStagione(){
+  const s = stagione();
+  if(!s) return;
+  const somma = k => mia.some(p=>typeof p[k]==='number') ? mia.reduce((t,p)=>t + (p[k] || 0), 0) : '–';
+  const max = Math.max(1, ...s.righe.map(x=>x.tot));
+  const tessera = (k, v) => '<div><span>'+k+'</span><b class="cond">'+v+'</b></div>';
+  const riga = x => '<div class="vr" data-id="'+x.p.id+'">'+maglia(x.p.club)+
+    '<div class="vr-nome"><b>'+x.p.nome+'</b><small>'+(x.voti ? 'media '+num(x.media)+' · '+x.voti+(x.voti===1 ? ' voto' : ' voti')+
+      (Math.abs(x.bonus) >= 0.05 ? ' · '+(x.bonus > 0 ? '+' : '−')+num(Math.abs(x.bonus))+' di bonus e malus' : '') : 'nessun voto')+'</small>'+
+      '<i class="pr-barra"><i style="width:'+(100*Math.max(0, x.tot)/max).toFixed(0)+'%"></i></i></div>'+
+    '<strong class="fvn">'+num(x.tot)+'</strong></div>';
+  apriSovra('La stagione', quanteGiornate(s.giornate.length)+' di Serie A',
+    '<div class="blocco"><div class="st-numeri">'+tessera('Gol', somma('gol'))+tessera('Assist', somma('ass'))+
+      tessera('Ammonizioni', somma('amm'))+'</div></div>'+
+    '<div class="blocco"><div class="blocco-t">Chi produce<small>fantapunti</small></div>'+s.righe.map(riga).join('')+'</div>');
 }
 
 /* ---------- scheda del giocatore ---------- */
@@ -1793,9 +1834,8 @@ function renderRosa(){
       '<div class="lista">'+l.map(p=>riga(p, g)).join('')+'</div>';
   }).join('');
   const nome = (FILTRI_ROSA.find(f=>f[0]===filtroRosa) || ['', ''])[1].toLowerCase();
-  rosa.innerHTML = html ? html+'<p class="nota-lega">I tre pallini sotto ogni maglia sono i prossimi avversari: '+
-      'verde facile, giallo nella media, rosso difficile.</p>'
-    : '<div class="vuoto">Nessun giocatore «'+nome+'» per questa giornata.</div>';
+  rosa.innerHTML = html || '<div class="vuoto">Nessun giocatore «'+nome+'» per questa giornata.</div>';
+  renderStagione();
 }
 
 /* ---------- lega ---------- */
@@ -1805,14 +1845,12 @@ function renderLega(){
   const cl = document.getElementById('classifica');
   if(D.lega){
     const n1 = x => Number.isInteger(x) ? String(x) : num(x, 1);
-    const iniziata = D.lega.classifica.some(r=>r[2]>0);
     cl.innerHTML = '<h2>Classifica</h2><div class="lista">'+D.lega.classifica.map(r=>
       '<div class="team'+(r[1]===ME?' io':'')+'"><span class="pos cond">'+r[0]+'</span>'+stemma(r[1])+
       '<span class="nome">'+r[1]+'<small>'+r[2]+(r[2]===1?' partita':' partite')+' · '+r[3]+' V · '+r[4]+' N · '+r[5]+
       ' P · gol '+r[6]+'-'+r[7]+'</small></span>'+
       '<span class="val cond">'+n1(r[9])+'<small>'+n1(r[10])+' fantapunti</small></span></div>').join('')+'</div>'+
-      '<p class="nota-lega">'+(iniziata ? '' : 'Si comincia '+dataIt(D.g[0][2])+': la classifica si riempie dopo. ')+
-      (D.lega.origine==='telefono' ? 'Importata sul telefono ' : 'Da Leghe Fantacalcio, aggiornata ')+dataIt(D.lega.aggiornato.slice(0,10))+'.</p>';
+      '<p class="nota-lega">'+(D.lega.origine==='telefono' ? 'Importata sul telefono ' : 'Aggiornata ')+dataIt(D.lega.aggiornato.slice(0,10))+'.</p>';
   } else cl.innerHTML = '';
   const teams = [...new Set(players.map(p=>p.team))].map(t=>{
     const rosa = players.filter(p=>p.team===t && p.pgv>0);
@@ -2353,6 +2391,7 @@ function toccaGiocatore(ev){
 document.getElementById('comeandata').onclick = apriComeAndata;
 document.getElementById('mercato').onclick = ()=>apriMercato();
 document.getElementById('chiudi-sovra').onclick = chiudiSovra;
+document.getElementById('stagione').onclick = apriStagione;
 /* rosa: filtri (sotto il titolo) e vista, maglie o elenco (accanto al titolo) */
 function comandiRosa(ev){
   const b = ev.target && ev.target.closest ? ev.target.closest('button') : null;

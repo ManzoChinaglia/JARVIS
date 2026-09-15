@@ -132,12 +132,13 @@ anche sotto ogni maglia e nella scheda del giocatore.
 
 Dopo ogni giornata, fino alla scadenza della prossima, in cima alla Giornata c'è
 **Com'è andata**: toccala e si apre a tutto schermo, con l'app sfocata dietro. Dentro:
-quanto avrebbe fatto l'undici di Jarvis contro il massimo possibile, il migliore e il
-peggiore, tutti i tuoi con voto e bonus o malus. Nella scheda di ogni giocatore c'è
-l'andamento dei fantavoti e ci sono i prossimi 3 avversari (anche come pallini sotto
-le maglie della Rosa). Nella scheda Lega il **Mercato, sulla carta**, anche lui a
-tutto schermo: chi cercare, con il confronto voce per voce contro il tuo giocatore, e
-chi proporre in uno scambio. Si chiude con la X o trascinando in giù.
+il risultato vero della tua sfida e quanto avrebbe fatto l'undici di Jarvis, il
+migliore e il peggiore, tutti i tuoi con voto e bonus o malus. In cima alla Rosa
+**La stagione**: chi produce, giornata dopo giornata. Nella scheda di ogni giocatore
+c'è l'andamento dei fantavoti e ci sono i prossimi 3 avversari (anche come pallini
+sotto le maglie della Rosa). Nella scheda Lega il **Mercato, sulla carta**: scambi 1
+contro 1 alla pari, che convengono a te senza togliere niente all'altro. Si chiude
+con la X o trascinando in giù.
 
 ---
 

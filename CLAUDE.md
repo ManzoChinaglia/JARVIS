@@ -219,9 +219,8 @@ Sotto il campo, «La sfida, sulla carta» (`sfidaDati`, `renderSfida`): il tuo
 undici contro il migliore dell'avversario della giornata, calcolato con lo stesso
 motore sulle rose (`undiciDi`; per loro il modulo che rende di più, sempre con la
 difesa a quattro), reparto per reparto, con la somma dei punteggi del consiglio e
-un verdetto «sulla carta». La scheda dice che è una stima di Jarvis, non il
-risultato, e che il modificatore difesa non è compreso. Toccando un nome si apre
-la scheda del giocatore.
+un verdetto «sulla carta», e sotto i due moduli. Toccando un nome si apre la scheda
+del giocatore.
 
 Stemmi (`stemma`): uno scudo per squadra, con Re Guyzo per BURKINA FASO e, per le
 altre, le iniziali su un colore tutto suo (`COLORI_SQUADRE`, assegnati in ordine
@@ -255,15 +254,16 @@ Dal 15/09/2026 (quattro idee approvate dall'utente, fatte tutte insieme):
   scadenza resta quello dell'ultimo giro prima.
 - **Com'è andata** (`comeAndata`, in cima alla Giornata): l'ultima giornata con i
   voti, fino alla scadenza della successiva. Nella pagina una riga sola; toccandola,
-  in sovraimpressione (`apriComeAndata`): il punteggio dell'undici di Jarvis nel
-  modulo scelto (`puntiUndici`, con la regola della lega: chi non prende voto lascia
-  il posto al primo panchinaro dello stesso ruolo) contro il massimo possibile
-  (`miglioreUndici`, sempre con la difesa a quattro), con la barra e la frase che li
-  spiega; il migliore e il peggiore; tutti i tuoi con voto e bonus o malus
-  (`spiegaVoto`: «voto 6,5 · +3,5 di bonus») e i segni «Jarvis» e «Top 11». Senza
-  modificatore difesa, e lo dice. Per le giornate di lega arriva la notifica
-  «Giornata N: com'è andata»; prima della lega mostra le giornate di sola Serie A.
-  Servirà alla verifica dei `PESI` (lavoro 1).
+  in sovraimpressione (`apriComeAndata`): per le giornate di lega in cima il
+  risultato vero della tua sfida (`risultatoLega`, da `dati/lega.json` → `risultati`,
+  appena l'import del calendario c'è) e, accanto, «con l'undici di Jarvis» nel modulo
+  scelto (`puntiUndici`, con la regola della lega: chi non prende voto lascia il
+  posto al primo panchinaro dello stesso ruolo) e quanto in più o in meno; poi il
+  migliore e il peggiore e tutti i tuoi con voto e bonus o malus (`spiegaVoto`: «voto
+  6,5 · +3,5 di bonus»), con il segno «Jarvis» su chi era nell'undici consigliato.
+  Prima della lega niente totali (scelta dell'utente: non servono). Il «massimo
+  possibile» (`miglioreUndici`) non si mostra più: resta per la verifica dei `PESI`
+  (lavoro 1). Per le giornate di lega arriva la notifica «Giornata N: com'è andata».
 - **Andamento** (`graficoVoti` nella scheda, `miniLinea` nell'elenco della Rosa):
   fantavoto giornata per giornata; «s.v.» se la sua squadra ha giocato e lui non ha
   preso voto.
@@ -271,18 +271,33 @@ Dal 15/09/2026 (quattro idee approvate dall'utente, fatte tutte insieme):
   ogni maglia della Rosa e nella scheda del giocatore, verde facile, giallo nella
   media, rosso difficile, con lo stesso calcolo dell'avversario nel consiglio
   (`forzaSa`).
-- **Mercato, sulla carta** (`mercato`, nella scheda Lega): chi nelle altre rose vale
-  almeno 0,3 più del tuo ultimo titolare dello stesso ruolo (`partiMercato`:
-  fantamedia stimata, titolarità, prossimi 3 avversari) e i tuoi fuori dall'undici
-  con una quotazione che interessa, con l'idea di chi chiedere in cambio. Nella
-  pagina una riga; in sovraimpressione (`apriMercato`) ogni idea con la tabella voce
-  per voce contro il tuo giocatore e «Come si legge». È una stima e la pagina lo dice.
+- **Mercato, sulla carta** (`mercato`, nella scheda Lega), rifatto il 15/09 perché
+  il primo proponeva di prendere senza dare («Dinastia Fontana non mi darebbe mai
+  Malen»). Scambi **1 contro 1, anche tra ruoli diversi** (regola della lega,
+  confermata dall'utente; niente crediti): quotazioni alla pari (entro il 15% o 2
+  punti), mai le due quotazioni più alte di una rosa (i loro big), il tuo undici
+  migliora di almeno 0,3 e il loro non peggiora (più di 0,1). Il valore è per la
+  stagione (`valoreStagione`: fantamedia stimata e presenze, `presenze`; niente
+  calendario), gli undici con `migliori11`. Al massimo 6, mai lo stesso giocatore
+  chiesto due volte. Nella pagina una riga; in sovraimpressione (`apriMercato`) per
+  ogni scambio chi dai e chi prendi, «per te» e «per loro», chi entra negli undici e
+  la tabella voce per voce. Da fare, se servirà: scambi 2 contro 2.
+- **La stagione** (`stagione`, riga in cima alla Rosa, `apriStagione`): gol, assist,
+  ammonizioni dei tuoi e «chi produce», i fantapunti di ognuno in tutte le giornate
+  con i voti, con media e bonus e malus. Scelta dell'utente: con le formazioni vere
+  (lavoro aperto 3) dirà anche chi era schierato e chi ha prodotto il totale vero.
 
 **Sovraimpressione** (15/09/2026, scelta dell'utente, da usare per ogni sezione che
 chiede spazio): nella pagina solo una riga-invito (`invito`); toccandola la sezione
 si apre a tutto schermo (`apriSovra`, `chiudiSovra`), con l'app sfocata dietro, che
 si chiude con la X, trascinando in giù o con Esc. Un giocatore toccato lì apre la sua
 scheda sopra. Niente da incastrare nella pagina: più spazio, più chiarezza.
+
+**Niente tutorial** (15/09/2026, scelta dell'utente): «quando mi sono chiare non
+servono». Solo scritte con uno scopo (date dei dati, errori, dati che mancano). Tolti
+«Come si legge», introduzioni, legenda sotto il campo, note della sfida, «in
+grassetto chi è nell'undici», spiegazione dei pallini, istruzioni sotto «Importa da
+Leghe», «Si comincia…» in classifica, messaggio iniziale di Chiedi. Non rimetterne.
 
 ## Movimento e senza rete
 
@@ -488,9 +503,15 @@ lato, e il risultato sarebbe una precisione finta.
    prima giornata (20/09/2026) sono solo 0 e «-», quindi l'import va scritto sul
    primo file vero, senza indovinare le colonne. Può contenere nomi di persone
    (una squadra si chiamava «Francesco e Fabrizio Fontana»): il file resta in
-   `archivio/`, nel repository vanno solo i dati, con i nomi dell'app. Con i
-   risultati, il **tabellone**: il punteggio della tua sfida nella testata della
-   Giornata, al posto del «VS», con un festeggiamento se vinci.
+   `archivio/`, nel repository vanno solo i dati, con i nomi dell'app. Formato già
+   usato dall'app: in `dati/lega.json` `"risultati": {"<giornata>": [[casa,
+   fantapunti, fuori, fantapunti, gol casa, gol fuori], ...]}` (Com'è andata lo
+   legge già). Con i risultati, il **tabellone**: il punteggio della tua sfida nella
+   testata della Giornata, al posto del «VS», con un festeggiamento se vinci.
+   Nella stessa routine, scelta dell'utente del 15/09: leggere dal suo Chrome la
+   **formazione schierata** in ogni giornata (pagina delle formazioni di Leghe, da
+   vedere sul primo caso vero), per «La stagione»: chi era schierato e chi ha
+   prodotto il totale.
 
 4. **Rivedere con l'utente le quattro funzioni del 15/09** (com'è andata,
    andamento, calendario dei tuoi, mercato): le ha volute tutte insieme per

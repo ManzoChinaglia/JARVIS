@@ -387,6 +387,8 @@ def voti_giornata(n):
             fanta = float(fv.get('data-value', '').replace(',', '.'))
         except ValueError:
             continue                              # senza voto
+        if not 1 <= voto <= 10:
+            continue                              # «s.v.»: la pagina lo scrive come 55
         voti[str(int(a['href'].rstrip('/').rsplit('/', 1)[1]))] = [voto, fanta]
     return voti
 

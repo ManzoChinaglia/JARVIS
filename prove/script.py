@@ -239,10 +239,12 @@ tanti = {5000 + k: ('6,5', '7,5') for k in range(210)}
 tanti[4431] = ('6', '4,5')
 con_sv = dict(tanti)
 con_sv[4999] = ('-', '-')
+con_sv[4998] = ('55', '55')                  # così la pagina scrive «s.v.»
 servi({mod.URL_VOTI.format(4): pagina_voti(con_sv)})
 v4 = mod.voti_giornata(4)
 verifica('voto e fantavoto della redazione Fantacalcio per Id; chi è senza voto non c\'è',
          v4['4431'] == [6.0, 4.5] and v4['5000'] == [6.5, 7.5] and '4999' not in v4 and len(v4) == 211, len(v4))
+verifica('«s.v.» scritto come 55: non è un voto', '4998' not in v4)
 ora = datetime(2026, 9, 15, 12, tzinfo=timezone.utc)
 g_orari = {'3': {'ufficiale': True, 'fine': '2026-09-01T18:45:00+00:00'},
            '4': {'ufficiale': True, 'fine': '2026-09-14T18:45:00+00:00'},
