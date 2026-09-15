@@ -254,6 +254,21 @@ CRLF: `.gitattributes` impedisce a Git di convertirlo.
   stemma sono sfocati. La foto originale e l'altra foto restano solo sul PC.
 - Le schede sono «vetro» (`--vetro`, con la sfocatura di ciò che sta dietro)
   sopra lo stemma.
+- **Colori delle squadre** (`COLORI_SQUADRE`, `coloreSquadra`): una tavolozza fissa di
+  10 colori assegnati per posizione alfabetica, non per nome (cambia da solo se una
+  squadra cambia nome). Rifatta il 15/09 (lavoro da remoto, dopo una revisione grafica
+  vera: la pagina renderizzata in un browser con Playwright, non letta dal CSS) perché
+  tre colori cadevano troppo vicini ai colori con un significato nell'app — oro
+  dell'accento e della stella, rosso e verde di forma e disponibilità — e su un
+  controllo con le 10 squadre vere «Ostia Liedholm» usciva con un ambra quasi identico
+  all'oro. La nuova tavolozza tiene ogni colore lontano da quei quattro.
+- **Focus visibile su «Chiedi»** (15/09, stesso giro): il campo toglie il proprio
+  contorno (taglierebbe lo spigolo del vetro), ma `.chiedi-in:focus-within` illumina
+  tutto il pillolo — prima non c'era nessun segno del fuoco.
+- **Mercato, «per loro» sempre verde** (15/09, stesso giro): `perMe` e `perLoro` sono
+  sempre ≥ 0 quando arrivano fin qui (`mercato()` scarta prima gli scambi che non
+  convengono a uno dei due), ma un valore vicino allo zero restava bianco invece che
+  verde: sembrava sfavorevole anche quando l'offerta era onesta. Ora sempre verde.
 
 ## Campo, maglie e schede
 

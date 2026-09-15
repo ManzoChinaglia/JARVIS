@@ -328,8 +328,11 @@
 
   /* ---- chiedi ---- */
   .chiedi-in{display:flex; gap:6px; margin-bottom:14px; padding:6px; border-radius:18px;
-             background:var(--vetro); border:1px solid var(--bordo);
+             background:var(--vetro); border:1px solid var(--bordo); transition:border-color .2s, box-shadow .2s;
              -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);}
+  /* il campo toglie il proprio contorno (taglierebbe lo spigolo arrotondato del vetro): il
+     fuoco si vede sul pillolo intero, coerente con lo stile, non perso */
+  .chiedi-in:focus-within{border-color:rgba(252,209,22,.55); box-shadow:0 0 0 3px rgba(252,209,22,.18);}
   .chiedi-in input{flex:1; min-width:0; padding:10px 8px; border:0; outline:none; background:transparent; color:var(--ink);}
   .mic{width:44px; height:44px; flex-shrink:0; padding:0; border:0; border-radius:14px;
        display:grid; place-items:center; background:rgba(255,255,255,.07); color:var(--oro-chiaro);}
@@ -1323,7 +1326,12 @@ const PLURALI = {P:'Portieri', D:'Difensori', C:'Centrocampisti', A:'Attaccanti'
 /* uno scudo per squadra: Re Guyzo per BURKINA FASO; per le altre le iniziali su un colore
    tutto suo, assegnato in ordine alfabetico (dieci squadre, dieci colori diversi) */
 const SCUDO = 'M20 1.5 37.5 7v15c0 11.5-7.5 18.5-17.5 22.5C10 40.5 2.5 33.5 2.5 22V7Z';
-const COLORI_SQUADRE = ['#2F6FDB','#8E3FD1','#E07B24','#12A38A','#D2314B','#1F9BD1','#C79A1E','#6D5BD0','#E0569B','#5E7D8C'];
+/* niente tonalità troppo vicine ai colori con un significato nell'app (oro/giallo
+   dell'accento e della stella, verde e rosso della forma e della disponibilità):
+   controllato il 15/09 sulle 10 squadre vere, «Ostia Liedholm» cadeva su un ambra
+   quasi identico all'oro dell'app. Rifatta la palette, tenendo le tonalità lontane
+   da quelle quattro. */
+const COLORI_SQUADRE = ['#2F6FDB','#8E3FD1','#5C983E','#12A38A','#BC4EB2','#1F9BD1','#724531','#6D5BD0','#E0569B','#5E7D8C'];
 function coloreSquadra(nome){
   const altre = [...new Set(players.map(p=>p.team))].filter(t=>t!==ME).sort();
   return COLORI_SQUADRE[Math.max(0, altre.indexOf(nome)) % COLORI_SQUADRE.length];
@@ -1883,8 +1891,11 @@ function apriMercato(g){
     (i.esconoLoro.length ? ', '+semplici(i.esconoLoro)+(i.esconoLoro.length > 1 ? ' ne escono.' : ' ne esce.') : ', chi ti danno non giocava.');
   const carta = i => '<div class="blocco mk">'+
     '<div class="sc-coppia">'+lato('dai', 'Dai', i.dai)+FRECCE+lato('prendi', 'Prendi', i.prendi)+'</div>'+
-    '<div class="sc-conti"><div><span>Per te</span><b class="cond'+(i.perMe >= 0.05 ? ' su' : '')+'">'+segno(i.perMe)+'</b></div>'+
-      '<div><span>Per '+i.squadra+'</span><b class="cond'+(i.perLoro >= 0.05 ? ' su' : '')+'">'+segno(i.perLoro)+'</b></div></div>'+
+    /* perMe e perLoro sono sempre >= 0 qui (mercato() scarta prima gli scambi che non
+       convengono a uno dei due): sempre in verde, anche quando il numero è vicino allo
+       zero, così un'offerta onesta ma di poco vantaggio per loro non sembra sfavorevole */
+    '<div class="sc-conti"><div><span>Per te</span><b class="cond su">'+segno(i.perMe)+'</b></div>'+
+      '<div><span>Per '+i.squadra+'</span><b class="cond su">'+segno(i.perLoro)+'</b></div></div>'+
     '<p class="sc-perche">'+perche(i)+'</p>'+tabella(i)+'</div>';
   const html = (mk.singoli.length ? '<h3 class="sez">1 contro 1</h3>'+mk.singoli.map(carta).join('') : '')+
                (mk.doppi.length ? '<h3 class="sez">2 contro 2</h3>'+mk.doppi.map(carta).join('') : '');
