@@ -1888,9 +1888,25 @@ function stagione(){
   const per = giornate.map(sa=>{
     const m = miglioreUndici(sa), reparti = {P:0, D:0, C:0, A:0}, g = D.g.find(x=>x[1]===sa) || null;
     m.scelti.forEach(p=>{ reparti[p.ruolo] += votoDi(p, sa)[1]; });
-    return {sa, tot: m.tot, modulo: m.modulo, scelti: m.scelti, reparti, g, risultato: g ? risultatoLega(g[0]) : null};
+    /* il consiglio di quella giornata, salvato prima della scadenza (dati/consigli.json):
+       solo dalle giornate di lega, prima non c'è niente da consigliare. Nello stesso
+       modulo di «Com'è andata», per restare confrontabile con quello che si vede lì. */
+    const c = g && D.consigli && D.consigli[String(g[0])];
+    const consiglio = c && c.undici && c.undici[modulo]
+      ? puntiUndici(c.undici[modulo], (c.panchina || {})[modulo], sa).tot : null;
+    return {sa, tot: m.tot, modulo: m.modulo, scelti: m.scelti, reparti, g, risultato: g ? risultatoLega(g[0]) : null, consiglio};
   });
   return {giornate, righe, per};
+}
+/* quanto si avvicina il consiglio di Jarvis al massimo possibile, sulle giornate di
+   lega dove c'è un consiglio salvato: per il lavoro aperto di tarare i PESI (in
+   CLAUDE.md) e per la vista in apriStagione. Nessun dato inventato: se non c'è
+   nessuna giornata valutabile, null invece di una media su zero valori. */
+function accuratezzaConsiglio(per){
+  const valutate = per.filter(x=>x.consiglio!==null);
+  if(!valutate.length) return null;
+  const consiglio = valutate.reduce((s,x)=>s+x.consiglio, 0), massimo = valutate.reduce((s,x)=>s+x.tot, 0);
+  return {n: valutate.length, consiglio, massimo, media: massimo ? 100*consiglio/massimo : null};
 }
 /* il grafico: una colonna per giornata, la migliore con la stella, la linea della media;
    la colonna scelta è dorata. Si tocca per vedere la giornata sotto */
@@ -1918,12 +1934,14 @@ function dettaglioGiornata(s, sa){
   const tutti = s.per.map(z=>z.tot), tag = s.per.length < 2 ? ''
     : x.tot===Math.max(...tutti) ? '<i class="chip su">la migliore</i>' : x.tot===Math.min(...tutti) ? '<i class="chip giu">la peggiore</i>' : '';
   const freccia = (z, segno, etichetta) => '<button class="st-nav"'+(z ? ' data-sa="'+z.sa+'"' : ' disabled')+' aria-label="'+etichetta+'">'+segno+'</button>';
-  const r = x.risultato;
+  const r = x.risultato, diff = x.consiglio===null ? null : x.consiglio - x.tot;
   return '<div class="st-dentro"><div class="st-testa">'+freccia(s.per[i - 1], '‹', 'Giornata prima')+
       '<div class="st-titolo"><span class="k">'+(x.g ? 'Giornata '+x.g[0]+' di lega' : 'Giornata '+sa+' di Serie A')+'</span>'+
         '<b class="cond">'+num(x.tot)+'</b><small>i migliori 11 · '+x.modulo+'</small>'+tag+'</div>'+
       freccia(s.per[i + 1], '›', 'Giornata dopo')+'</div>'+
     (r ? '<p class="st-ris">Risultato vero: '+num(r.mio)+' a '+num(r.loro)+', '+r.golMio+'-'+r.golLoro+' contro '+r.avv+'</p>' : '')+
+    (diff===null ? '' : '<p class="st-ris">Il consiglio di Jarvis: '+num(x.consiglio)+
+      (Math.abs(diff) < 0.05 ? ', come il massimo possibile' : ', '+num(Math.abs(diff))+' in meno del massimo')+'</p>')+
     '<div class="st-reparti">'+['P','D','C','A'].map(k=>'<div><span>'+NOMI_REPARTO[k]+'</span><b class="cond">'+num(x.reparti[k])+'</b></div>').join('')+'</div>'+
     x.scelti.slice().sort((a,b)=>votoDi(b, sa)[1] - votoDi(a, sa)[1]).map(p=>{
       const v = votoDi(p, sa);
@@ -1965,11 +1983,20 @@ function apriStagione(){
       (Math.abs(x.bonus) >= 0.05 ? ' · '+(x.bonus > 0 ? '+' : '−')+num(Math.abs(x.bonus))+' di bonus e malus' : '') : 'nessun voto')+'</small>'+
       '<i class="pr-barra"><i style="width:'+(100*Math.max(0, x.tot)/max).toFixed(0)+'%"></i></i></div>'+
     '<strong class="fvn">'+num(x.tot)+'</strong></div>';
+  const acc = accuratezzaConsiglio(s.per);
+  /* quanto si avvicina il consiglio di Jarvis al massimo possibile: per il lavoro
+     aperto di tarare i PESI (CLAUDE.md), e per farsi un'idea di quanto ci si può
+     fidare. Solo dalle giornate di lega con un consiglio salvato: prima non c'è. */
+  const accuratezza = !acc ? '' : '<div class="blocco"><div class="blocco-t">Quanto si avvicina Jarvis<small>'+
+    quanteGiornate(acc.n)+' di lega</small></div><div class="st-numeri">'+
+    tessera('Consigliato', num(acc.consiglio))+tessera('Massimo possibile', num(acc.massimo))+
+    (acc.media===null ? '' : tessera('Vicinanza', num(acc.media, 0)+'%'))+'</div></div>';
   apriSovra('La stagione', quanteGiornate(s.giornate.length)+' di Serie A',
     '<div class="blocco"><div class="blocco-t">Giornata per giornata<small>media '+
       num(s.per.reduce((t,x)=>t + x.tot, 0)/s.per.length)+'</small></div>'+
       '<div id="st-grafico">'+graficoStagione(s, picco.sa)+'</div></div>'+
     '<div class="blocco" id="st-giornata">'+dettaglioGiornata(s, picco.sa)+'</div>'+
+    accuratezza+
     '<div class="blocco"><div class="st-numeri">'+tessera('Gol', somma('gol'))+tessera('Assist', somma('ass'))+
       tessera('Ammonizioni', somma('amm'))+'</div></div>'+
     '<div class="blocco"><div class="blocco-t">Chi produce<small>fantapunti</small></div>'+s.righe.map(riga).join('')+'</div>');

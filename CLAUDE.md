@@ -367,6 +367,20 @@ Dal 15/09/2026 (quattro idee approvate dall'utente, fatte tutte insieme):
   bonus; frecce per le altre). Poi gol, assist, ammonizioni dei tuoi e «chi produce»,
   i fantapunti di ognuno in tutte le giornate, con media e bonus e malus. Scelta dell'utente: con le formazioni vere
   (lavoro aperto 3) dirà anche chi era schierato e chi ha prodotto il totale vero.
+  **«Quanto si avvicina Jarvis»** (lavoro da remoto, 15/09/2026, uno dei consigli
+  proposti dalla sessione cloud e approvati dall'utente insieme agli altri tre di
+  questo elenco): per ogni giornata di lega con un consiglio salvato (`dati/consigli.json`,
+  già scritto da `notifiche.js` a ogni giro, vedi sopra), `stagione()` calcola anche i
+  punti che avrebbe fatto quell'undici (`puntiUndici`, stessa regola della lega di
+  «Com'è andata») accanto al massimo possibile di quella giornata; in
+  `dettaglioGiornata` una riga in più («Il consiglio di Jarvis: X, Y in meno del
+  massimo»); in cima alla sovraimpressione un blocco riassuntivo
+  (`accuratezzaConsiglio`) con consigliato, massimo possibile e vicinanza in
+  percentuale su tutte le giornate valutabili. Niente dato nuovo da raccogliere: i
+  file `dati/consigli.json` e `dati/voti.json` accumulano già tutta la stagione da
+  soli, qui è solo una lettura in più di dati che ci sono già — e proprio per questo
+  serve al lavoro aperto 1 (tarare i `PESI`), per vedere a occhio quanto Jarvis si
+  avvicina prima di cambiare i pesi.
 
 **Sovraimpressione** (15/09/2026, scelta dell'utente, da usare per ogni sezione che
 chiede spazio): nella pagina solo una riga-invito (`invito`); toccandola la sezione
@@ -566,7 +580,12 @@ lato, e il risultato sarebbe una precisione finta.
 
 1. **Verificare i pesi del consiglio.** I pesi della titolarità e
    dell'avversario (`PESI`) sono stime ragionevoli, non tarate. Dopo una decina
-   di giornate vanno confrontati con i fantavoti reali e corretti.
+   di giornate vanno confrontati con i fantavoti reali e corretti. Da usare per
+   questo: «Quanto si avvicina Jarvis» in «La stagione» (15/09/2026, vedi «Voti,
+   com'è andata, calendario dei tuoi, mercato» più sopra), che mostra quanto il
+   consiglio salvato si avvicina al massimo possibile, giornata per giornata e
+   in totale — non tara nulla da sola, ma dà il numero su cui giudicare quando
+   sarà il momento di correggere i `PESI`.
 
 2. **Parte grafica.** Il piano del 13/09/2026 è completo: nomi delle squadre
    dell'app, titolo disegnato, versione visibile, archivio dei file, colori e

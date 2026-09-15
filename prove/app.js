@@ -68,7 +68,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,apriStagione,scegliGiornata,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,forma,risultatoLega,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,apriStagione,scegliGiornata,accuratezzaConsiglio,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,forma,risultatoLega,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -857,6 +857,50 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
 
   ({ el } = await avvia({ adesso: giovedi, dati: { 'lega.json': null } }));
   verifica('senza il file della lega: niente forma, niente tabellone', el.vs.textContent === 'VS' && el.classifica.innerHTML === '');
+
+  console.log('\n30. Quanto si avvicina Jarvis (l\'accuratezza del consiglio)');
+  const sa6 = {};
+  t.mia.forEach((p, k) => { sa6[p.id] = [6, 5 + (k % 5)]; });
+  const consigliG1 = { '1': { sa: 5, undici: { '4-3-3': titolariG1.map(p => p.id) }, panchina: { '4-3-3': panchinaG1.map(p => p.id) } } };
+  const senzaConsiglio2 = { 'titolari.json': null, 'infortuni.json': null,
+    'voti.json': { aggiornato: 'x', giornate: { '4': sa4, '5': sa5, '6': sa6 } },
+    'consigli.json': null };
+  ({ t, el } = await avvia({ adesso: giovedi, dati: senzaConsiglio2 }));
+  verifica('senza nessun consiglio salvato: niente da valutare', t.accuratezzaConsiglio(t.stagione().per) === null);
+  t.apriStagione();
+  verifica('niente blocco «Quanto si avvicina Jarvis» se non c\'è niente da valutare',
+           !/Quanto si avvicina Jarvis/.test(el['sovra-corpo'].innerHTML));
+  // giornata 1: il consiglio salvato con la sostituzione della lega (sotto il massimo);
+  // giornata 2: il consiglio coincide esattamente col migliore possibile, preso da lì
+  const conSoloG1 = Object.assign({}, senzaConsiglio2, { 'consigli.json': { giornate: consigliG1 } });
+  ({ t, el } = await avvia({ adesso: giovedi, dati: conSoloG1 }));
+  const g2prima = t.stagione().per.find(x => x.g && x.g[0] === 2);
+  verifica('giornata di lega senza un suo consiglio: nessun valore, non zero', g2prima && g2prima.consiglio === null);
+  const consigliG1eG2 = Object.assign({}, consigliG1, { '2': { sa: 6,
+    undici: { [g2prima.modulo]: g2prima.scelti.map(p => p.id) }, panchina: { [g2prima.modulo]: [] } } });
+  ({ t, el } = await avvia({ adesso: giovedi, dati: Object.assign({}, senzaConsiglio2, { 'consigli.json': { giornate: consigliG1eG2 } }) }));
+  let s = t.stagione();
+  const g1 = s.per.find(x => x.g && x.g[0] === 1), g2 = s.per.find(x => x.g && x.g[0] === 2);
+  verifica('il consiglio di giornata 1: gli stessi punti visti in «Com\'è andata»', g1 && circa(g1.consiglio, attesoJ), g1 && g1.consiglio);
+  verifica('il consiglio di giornata 2: coincide col massimo, preso da lì', g2 && circa(g2.consiglio, g2.tot), g2 && [g2.consiglio, g2.tot]);
+  verifica('il consiglio non supera mai il massimo di quella giornata', s.per.filter(x => x.consiglio !== null).every(x => x.consiglio <= x.tot + 1e-9));
+  const acc = t.accuratezzaConsiglio(s.per);
+  verifica('l\'accuratezza: solo le giornate valutabili, sommate', acc && acc.n === 2
+           && circa(acc.consiglio, g1.consiglio + g2.consiglio) && circa(acc.massimo, g1.tot + g2.tot)
+           && circa(acc.media, 100 * (g1.consiglio + g2.consiglio) / (g1.tot + g2.tot)), acc);
+  t.apriStagione();
+  sc = el['sovra-corpo'].innerHTML;
+  verifica('in sovraimpressione: consigliato, massimo possibile e vicinanza',
+           /Quanto si avvicina Jarvis/.test(sc) && /2 giornate di lega/.test(sc)
+           && sc.includes(f1(acc.consiglio)) && sc.includes(f1(acc.massimo)) && sc.includes(Math.round(acc.media) + '%'), sc.match(/Quanto si avvicina[\s\S]{0,200}/));
+  t.scegliGiornata(g1.sa);
+  verifica('nella giornata sotto il massimo: quanto in meno', /Il consiglio di Jarvis: .*in meno del massimo/.test(el['st-giornata'].innerHTML)
+           && el['st-giornata'].innerHTML.includes(f1(Math.abs(g1.consiglio - g1.tot))), el['st-giornata'].innerHTML.match(/Il consiglio[^<]*/));
+  t.scegliGiornata(g2.sa);
+  verifica('nella giornata al massimo: come il massimo possibile', /Il consiglio di Jarvis: .*come il massimo possibile/.test(el['st-giornata'].innerHTML)
+           && !/in meno del massimo/.test(el['st-giornata'].innerHTML));
+  t.scegliGiornata(4);   // Serie A 4: prima della lega, nessun consiglio possibile
+  verifica('prima della lega: niente riga del consiglio', !/Il consiglio di Jarvis/.test(el['st-giornata'].innerHTML));
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
