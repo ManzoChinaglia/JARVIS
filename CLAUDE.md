@@ -121,6 +121,31 @@ voluta dall'utente). Vale in tutte e due le direzioni:
 - Le patch sono numerate e **vanno applicate in ordine**: sono commit consecutivi.
   Su conflitto: `git am --abort` e si riferisce, senza risolvere a naso.
 
+**Regole di convivenza tra PC e cloud** (15/09/2026, concordate con l'utente dopo
+la prima consegna da 14 patch):
+
+- **Un solo cantiere per volta sugli stessi file.** Prima che una sessione cloud
+  cominci, il lavoro del PC è già su GitHub; finché ci sono patch in cassetta, sul
+  PC non si tocca il codice. In parallelo si lavora solo su file diversi (per
+  esempio il PC su `scripts/`, il cloud su `index.html`), e in questo file ognuno
+  scrive nella sezione del proprio lavoro: così `git am` entra pulito anche quando
+  tutti e due toccano CLAUDE.md.
+- **Con le patch, una nota di consegna** (`remoto/patch/CONSEGNA.md`): commit di
+  partenza, elenco delle patch, totali attesi delle prove, e cosa è stato
+  verificato davvero e cosa no. Claude Code la legge prima di `git am` e confronta
+  i totali.
+- **Chi fa cosa lo decide la rete.** Dal cloud fantacalcio.it, i feed degli orari
+  e Leghe non si raggiungono: tutto ciò che scarica dati veri (`aggiorna.py`, lo
+  storico dei voti, la routine «dati di lega», le formazioni dal Chrome) si fa dal
+  PC. Al cloud: logica dell'app, grafica, prove, documentazione, analisi sui dati
+  già su GitHub.
+- **Il ritorno, dal PC al cloud**: tutto finisce su GitHub, che la sessione cloud
+  rilegge ripartendo da `origin/main`. I messaggi puntuali (una patch che non
+  entra, e perché) passano dall'utente o da una nota in `remoto/`, fuori da Git,
+  che il cloud legge quando il PC è collegato.
+- **`dati/` non si tocca mai da una patch**: lo riscrive il giro automatico tre
+  volte al giorno.
+
 **Trappola dei fine riga (CRLF), vista davvero il 15/09/2026.** Il repository sta
 in una cartella OneDrive su Windows. Può capitare di trovare `git status` con
 *tutti* i file modificati — `index.html`, `CLAUDE.md`, `prove/`, tutto — e un
@@ -1008,6 +1033,7 @@ Per le date usare un orologio finto e `TZ=Europe/Rome`: la scadenza dipende
 dall'ora legale.
 
 Lo script si prova in locale con Python 3.14, la stessa versione del workflow.
+Sul PC `python3` è solo l'alias del Microsoft Store e non parte: si usa `python`.
 Sul PC dell'utente Norton Antivirus intercetta le connessioni HTTPS con un suo
 certificato, che Python non riconosce: si lancia con il pacchetto `truststore`,
 senza toccare lo script.
