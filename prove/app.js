@@ -788,19 +788,25 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     ['P', 'D', 'C', 'A'].forEach(r => rosa.filter(p => p.ruolo === r).sort(q).slice(0, r === 'P' ? 1 : 2).forEach(p => f.add(p)));
     return f;
   };
+  const ruoli2 = l => l.map(p => p.ruolo).sort().join('');
   verifica('mercato: 1 contro 1 e 2 contro 2, dai i tuoi e prendi i loro', singoli.length <= 4 && doppi.length <= 3
            && singoli.every(i => i.dai.length === 1 && i.prendi.length === 1) && doppi.every(i => i.dai.length === 2 && i.prendi.length === 2)
            && tuttiMk.every(i => i.dai.every(p => p.team === t.ME) && i.prendi.every(p => p.team === i.squadra) && i.squadra !== t.ME),
            tuttiMk.map(i => i.dai.map(p => p.nome).join('+') + ' per ' + i.prendi.map(p => p.nome).join('+')).join(', ') || 'nessuno');
+  verifica('la rosa resta legale: stesso ruolo nel singolo, stessi due ruoli nel doppio', singoli.every(i => i.dai[0].ruolo === i.prendi[0].ruolo)
+           && doppi.every(i => ruoli2(i.dai) === ruoli2(i.prendi)));
   verifica('alla pari a vista: quotazioni vicine e fantamedia vera non nettamente più bassa', tuttiMk.every(i => {
     const a = fmMedia(i.dai), b = fmMedia(i.prendi);
     return Math.abs(qSomma(i.dai) - qSomma(i.prendi)) <= Math.max(i.dai.length === 1 ? 2 : 3, 0.15 * Math.max(qSomma(i.dai), qSomma(i.prendi)))
         && (a === null || b === null || a >= b - 0.5);
   }));
-  verifica('i pezzi forti non si chiedono: mai i due più quotati del reparto, né i tre della rosa', tuttiMk.every(i => {
-    const f = forti(i.squadra);
-    return i.prendi.every(p => !f.has(p));
+  verifica('un top loro si chiede solo offrendone uno mio', tuttiMk.every(i => {
+    const fLoro = forti(i.squadra);
+    return i.prendi.every(p => !fLoro.has(p)) || i.dai.some(p => forti(t.ME).has(p));
   }));
+  verifica('un top mio contro un top loro: succede davvero, non solo in teoria', doppi.some(i =>
+           i.prendi.some(p => forti(i.squadra).has(p)) && i.dai.some(p => forti(t.ME).has(p))),
+           doppi.filter(i => i.prendi.some(p => forti(i.squadra).has(p))).map(i => i.dai.map(p=>p.nome)+' per '+i.prendi.map(p=>p.nome)).join(', '));
   verifica('serve a tutti e due: il tuo undici migliora, chi dai entra nel loro', tuttiMk.every(i =>
            i.perMe >= (i.dai.length === 1 ? 0.3 : 0.5) && i.perLoro >= 0 && i.entranoLoro.length > 0));
   verifica('un 2 contro 2 solo se rende più del miglior scambio singolo tra quei giocatori', doppi.every(i => i.perMe >= i.meglioSingolo + 0.2));

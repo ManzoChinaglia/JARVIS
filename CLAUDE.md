@@ -348,10 +348,20 @@ Dal 15/09/2026 (quattro idee approvate dall'utente, fatte tutte insieme):
   il primo proponeva di prendere senza dare («Dinastia Fontana non mi darebbe mai
   Malen»), e di nuovo lo stesso giorno perché «ragiona troppo per numeri»: deve
   pensare come una persona in un fantacalcio vero («Palle Sudate non mi darà mai
-  uno dei suoi due top attaccanti per Hermoso»). Scambi **1 contro 1, anche tra
-  ruoli diversi** (regola della lega, confermata dall'utente; niente crediti):
-  nessuno cede i pezzi forti (`intoccabili`: i due più quotati di ogni reparto, il
-  portiere più quotato, i tre più quotati della rosa); alla pari a vista, perché
+  uno dei suoi due top attaccanti per Hermoso»). **La rosa resta legale** (regola
+  corretta il 15/09, lavoro da remoto: la lega è ad asta a ruoli, rosa fissa 3
+  portieri-8 difensori-8 centrocampisti-6 attaccanti, uguale su tutte e 10 le
+  squadre in `dati/base.json` — verificato sui dati veri, non un'ipotesi. Prima
+  qui c'era scritto «1 contro 1 anche tra ruoli diversi»: sbagliato, un pezzo
+  solo per lato non può cambiare la composizione senza sbilanciare la rosa):
+  **1 contro 1 sempre stesso ruolo**; **2 contro 2 stessi due ruoli dati e
+  ricevuti** (uguali, D+D per D+D, o diversi, C+A per C+A, mai un ruolo che
+  compare solo da un lato) — è così che un top di un reparto si scambia con un
+  top di un altro reparto, col secondo giocatore di ogni lato scelto apposta a
+  pareggiare il ruolo, non a caso. Un top (`intoccabili`: i due più quotati di
+  ogni reparto, il portiere più quotato, i tre più quotati della rosa) **si può
+  chiedere solo offrendone anche uno dei miei** (prima era sempre escluso: troppo
+  rigido, un top per un top è una proposta vera); alla pari a vista, perché
   l'altro guarda quotazione e fantamedia (quotazioni entro il 15% o 2 punti, e chi
   dai non ha una fantamedia vera più bassa di oltre 0,5); serve a tutti e due (il
   tuo undici migliora di almeno 0,3, chi dai entra nel loro undici e il loro non
@@ -361,15 +371,15 @@ Dal 15/09/2026 (quattro idee approvate dall'utente, fatte tutte insieme):
   `valore11`, `valoreDopo`). Anche **2 contro 2** (scelta dell'utente del 15/09): somme
   delle quotazioni vicine (15% o 3 punti), fantamedia vera media non più bassa di 0,5,
   il tuo undici migliora di almeno 0,5 e di almeno 0,2 più del miglior scambio singolo
-  tra quegli stessi giocatori che si potrebbe fare davvero (alla pari e buono anche per
-  loro): il 15/09 il confronto con tutti i singoli, anche quelli impossibili, non
-  lasciava passare nessun 2 contro 2, mentre spesso il secondo giocatore serve proprio
-  a pareggiare le quotazioni. Al massimo 4 singoli e 3 doppi, mai lo stesso giocatore
-  chiesto due volte; il risultato si tiene in memoria (`mercatoMemo`) finché non
-  cambiano i dati o la giornata. Nella pagina una riga; in sovraimpressione (`apriMercato`) per
-  ogni scambio chi dai e chi prendi, «per te» e «per loro», chi entra negli undici e
-  la tabella voce per voce (per i 2 contro 2 i due insieme), in due gruppi: «1 contro
-  1» e «2 contro 2».
+  **legale** (stesso ruolo) tra quegli stessi giocatori che si potrebbe fare davvero
+  (alla pari e buono anche per loro): il 15/09 il confronto con tutti i singoli, anche
+  quelli impossibili, non lasciava passare nessun 2 contro 2, mentre spesso il secondo
+  giocatore serve proprio a pareggiare le quotazioni. Al massimo 4 singoli e 3 doppi,
+  mai lo stesso giocatore chiesto due volte; il risultato si tiene in memoria
+  (`mercatoMemo`) finché non cambiano i dati o la giornata. Nella pagina una riga; in
+  sovraimpressione (`apriMercato`) per ogni scambio chi dai e chi prendi, «per te» e
+  «per loro», chi entra negli undici e la tabella voce per voce (per i 2 contro 2 i due
+  insieme), in due gruppi: «1 contro 1» e «2 contro 2».
 - **La stagione** (`stagione`, riga in cima alla Rosa, `apriStagione`): in cima il
   grafico giornata per giornata dei fantapunti dei tuoi migliori 11 (`graficoStagione`:
   una colonna per giornata, ★ sulla migliore, linea della media), che si tocca per
@@ -619,7 +629,11 @@ lato, e il risultato sarebbe una precisione finta.
 4. **Rivedere con l'utente le quattro funzioni del 15/09** (com'è andata,
    andamento, calendario dei tuoi, mercato): le ha volute tutte insieme per
    guardarle in una volta e dire se «abbiamo esagerato». Niente quinta scheda in
-   basso: sull'iPhone finiva fuori schermo.
+   basso: sull'iPhone finiva fuori schermo. **Mercato**, rivisto (15/09, lavoro
+   da remoto): la rosa restava sbilanciabile (1 contro 1 tra ruoli diversi
+   rompeva i 3-8-8-6 fissi) e i top erano sempre esclusi anche da un'offerta
+   valida — vedi «Mercato, sulla carta» più sopra. Restano com'è andata,
+   andamento, calendario dei tuoi da rivedere con l'utente.
 
 ## Come si prova
 

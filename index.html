@@ -1693,9 +1693,21 @@ function pallini3(p, g){
 }
 
 /* ---------- mercato, sulla carta ---------- */
-/* Scambi 1 contro 1, anche tra ruoli diversi, come li farebbe una persona:
-   - nessuno cede i pezzi forti: mai i due più quotati di un reparto nella loro rosa (il
-     portiere più quotato), né i tre più quotati della rosa;
+/* Scambi che restano legali: la lega è ad asta a ruoli, rosa fissa 3 portieri, 8
+   difensori, 8 centrocampisti, 6 attaccanti, uguale su tutte e 10 le squadre (verificato
+   su dati/base.json). Dopo lo scambio la composizione per ruolo deve restare la stessa
+   di prima, su entrambi i lati:
+   - 1 contro 1: per forza stesso ruolo, perché un solo pezzo per lato non può cambiare
+     la composizione in nessun altro modo (dare un difensore e prendere un centrocampista
+     lascerebbe 7 difensori e 9 centrocampisti: illegale).
+   - 2 contro 2: gli stessi due ruoli dati e ricevuti, anche uguali (D+D per D+D) o
+     diversi (C+A per C+A) ma mai un ruolo che compare solo da un lato. È così che un top
+     di un reparto si scambia con un top di un altro reparto (un centrocampista mio contro
+     un attaccante loro): il secondo giocatore di ogni lato è scelto apposta a pareggiare
+     il ruolo che altrimenti sbilancerebbe la rosa, non un terzo pezzo a caso.
+   - un top loro (`intoccabili`: i due più quotati del reparto, il portiere più quotato, i
+     tre più quotati della rosa) si può chiedere solo offrendone anche uno dei miei: mai un
+     top loro per pezzi qualunque, anche se il conto tornerebbe a quotazione.
    - alla pari a vista, perché l'altro guarda quotazione e fantamedia: quotazioni entro il
      15% (o 2 punti) e chi dai non ha una fantamedia vera nettamente più bassa (0,5);
    - serve a tutti e due: il tuo undici migliora di almeno 0,3, chi dai entra nel loro
@@ -1763,13 +1775,17 @@ function mercato(g){
   const somma = l => l.reduce((s,p)=>s + p.quot, 0);
   const fmVera = l => l.every(p=>p.pgv >= 2) ? l.reduce((s,p)=>s + p.fm, 0)/l.length : null;
   const coppie = l => l.flatMap((a,i)=>l.slice(i + 1).map(b=>[a, b]));
+  const ruoli2 = l => l.map(p=>p.ruolo).sort().join('');       // per confrontare i ruoli di due giocatori, in ordine
   const mia0 = rosaDi(ME), mioR = perReparto(mia0, val), mioBase = valore11(mioR), mieCoppie = coppie(mia0);
+  const forteMie = intoccabili(ME);
   const singoli = [], doppi = [], squadre = {};
   [...new Set(players.map(p=>p.team))].filter(t=>t!==ME).forEach(t=>{
     const loro0 = rosaDi(t), loroR = perReparto(loro0, val), loroBase = valore11(loroR), forti = intoccabili(t);
-    const titolari = migliori11(loro0, val).ids, cedibili = loro0.filter(y=>!forti.has(y.id));
+    const titolari = migliori11(loro0, val).ids;
     squadre[t] = loro0;
     const prova = (dai, prendi, minimo, scarto) => {
+      // un loro top si può chiedere solo offrendone anche uno dei miei
+      if(prendi.some(p=>forti.has(p.id)) && !dai.some(p=>forteMie.has(p.id))) return null;
       const qd = somma(dai), qp = somma(prendi);
       if(Math.abs(qd - qp) > Math.max(scarto, 0.15*Math.max(qd, qp))) return null;
       const fd = fmVera(dai), fp = fmVera(prendi);
@@ -1779,13 +1795,17 @@ function mercato(g){
       const perLoro = valoreDopo(loroR, prendi, dai, val) - loroBase;
       return perLoro < 0 ? null : {dai, prendi, squadra: t, perMe, perLoro, esubero: prendi.every(p=>!titolari.has(p.id))};
     };
-    cedibili.forEach(y=>mia0.forEach(x=>{ const i = prova([x], [y], 0.3, 2); if(i) singoli.push(i); }));
-    coppie(cedibili).forEach(py=>mieCoppie.forEach(px=>{
+    // 1 contro 1: per forza stesso ruolo (vedi sopra)
+    loro0.forEach(y=>mia0.filter(x=>x.ruolo===y.ruolo).forEach(x=>{ const i = prova([x], [y], 0.3, 2); if(i) singoli.push(i); }));
+    // 2 contro 2: gli stessi due ruoli dati e ricevuti, altrimenti la rosa si sbilancia
+    coppie(loro0).forEach(py=>mieCoppie.forEach(px=>{
+      if(ruoli2(px)!==ruoli2(py)) return;
       const i = prova(px, py, 0.5, 3);
       if(!i) return;
-      /* il confronto è con i singoli che si potrebbero fare davvero (alla pari, buoni anche per
-         loro): spesso il secondo giocatore serve proprio a pareggiare le quotazioni */
-      const fattibili = px.flatMap(x=>py.map(y=>prova([x], [y], -Infinity, 2))).filter(Boolean);
+      /* il confronto è con i singoli che si potrebbero fare davvero (stesso ruolo, alla
+         pari, buoni anche per loro): spesso il secondo giocatore serve proprio a
+         pareggiare le quotazioni o a completare il ruolo del primo */
+      const fattibili = px.flatMap(x=>py.filter(y=>y.ruolo===x.ruolo).map(y=>prova([x], [y], -Infinity, 2))).filter(Boolean);
       i.meglioSingolo = fattibili.length ? Math.max(...fattibili.map(s=>s.perMe)) : 0;
       if(i.perMe >= i.meglioSingolo + 0.2) doppi.push(i);
     }));
