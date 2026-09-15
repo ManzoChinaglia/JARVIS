@@ -66,9 +66,9 @@ storico dei voti. Non riaprire la caccia alle fonti xG senza un motivo nuovo.
 voti di fantacalcio.it — la fonte che `aggiorna.py` già raschia ogni giorno per la
 giornata corrente — è pubblico, senza login, e i menù di stagione arrivano indietro
 fino al **2015/16**. Sono ~38 giornate × ~290 giocatori × 11 stagioni ≈ **120.000
-righe giocatore-partita**. È la materia prima per il fantavoto atteso, e il parser
-esiste già (`voti_giornata`): serve solo parametrizzare la stagione nell'URL, che
-oggi ha `2026-27` fisso in `URL_VOTI`. Da fare nella patch successiva.
+righe giocatore-partita**. È la materia prima per il fantavoto atteso: il parser
+c'è (`righe_voti`, che dal 15/09 legge l'Id anche dai link delle stagioni passate)
+e il giro si fa con `scripts/storico.py`. Vedi B1 più sotto.
 
 ## Lavoro da remoto (sessioni cloud)
 
@@ -195,6 +195,8 @@ dati/notifiche.json     codici degli avvisi già inviati, per non mandarli due v
 dati/lega.json          classifica della lega (a mano, con la routine «dati di lega»)
 dati/voti.json          aggiornato automaticamente: voto e fantavoto di ogni giornata di Serie A finita
 dati/consigli.json      l'undici consigliato, salvato dal giro automatico prima di ogni scadenza
+dati/storico/           lo storico dei voti dal 2015-16, una stagione per file compresso (B1, non per l'iPhone)
+scripts/storico.py      giro una tantum e ripartibile che riempie dati/storico/
 archivio/               file di rose, calendario e classifica già importati (solo sul PC, escluso da Git)
 prove/                  prove automatiche (vedi «Come si prova»)
 .github/workflows/aggiorna.yml   esegue lo script tre volte al giorno, dopo gli aggiornamenti
@@ -826,25 +828,34 @@ stanno sopra, B4 è indipendente e può andare quando si vuole.
 L'archivio di fantacalcio.it arriva al 2015/16, pubblico e senza login (verificato
 il 15/09). ~120.000 righe giocatore-partita.
 
-- `URL_VOTI` in `scripts/aggiorna.py` ha `2026-27` fisso: parametrizzare la
-  stagione. Il parser `voti_giornata()` **non va riscritto**, funziona già su
-  queste pagine — cambia solo l'indirizzo. Attenzione: la struttura delle pagine
-  vecchie non è stata verificata (dalla sessione cloud la rete verso
-  fantacalcio.it è chiusa), quindi **provare su una giornata sola prima di
-  lanciare il giro intero**, e far fallire in modo pulito se la tabella non torna.
-- Nuovo `scripts/storico.py`: giro una tantum, **ripartibile** (salta le giornate
-  già prese, così un'interruzione non fa ricominciare), educato con la fonte (una
-  pausa tra le richieste; sono 418 pagine, ~20 minuti). Stessi controlli di
-  plausibilità di `voti()`: sotto 200 voti la giornata non si salva.
-- Dove metterlo: **una stagione per file, compresso** (`dati/storico/2021-22.json.gz`
-  o simile). Le stagioni chiuse non cambiano più, quindi si scrivono una volta e
+- **Verificato dal PC il 15/09/2026, prima del giro intero** (su 2024-25 G20,
+  2021-22 G10, 2015-16 G1): le pagine vecchie hanno la stessa struttura di quelle
+  correnti **tranne il link del giocatore**, che finisce con la stagione
+  (`.../musso/2792/2021-22`): il parser di prima ci leggeva 0 voti, quindi «cambia
+  solo l'indirizzo» non era vero. Corretto con `ID_GIOCATORE` in `aggiorna.py`; la
+  lettura delle righe ora è `righe_voti()`, usata sia da `voti_giornata()` (per
+  l'app, invariata) sia dallo storico. Ogni riga ha anche squadra, ruolo e **gli 8
+  bonus e malus della giornata** (`BONUS_VOTI`: gol, gol subiti, autoreti, rigori
+  segnati, sbagliati e parati, assist, migliore in campo), anche nella stagione in
+  corso: per B3 le frequenze dei bonus non vanno più ricavate dai totali di
+  stagione. Il `robots.txt` di fantacalcio.it non vieta le pagine dei voti
+  (controllato lo stesso giorno).
+- **Id stabili tra le stagioni, verificato**: sulle tre giornate di prova tutti gli
+  Id presenti anche nel listone di oggi (170, 83 e 13) portano allo stesso
+  giocatore nel link, nessun Id riusato per un altro. `storico.py` stampa alla
+  fine, per ogni stagione, quanti giocatori con voto sono ancora nel listone di oggi.
+- **`scripts/storico.py`** (fatto il 15/09): giro una tantum, **ripartibile** (salta
+  le giornate già prese e salva dopo ognuna, così un'interruzione non fa
+  ricominciare), educato con la fonte (2 secondi tra le richieste; 418 pagine, ~20
+  minuti). Stesso controllo di plausibilità di `voti()`: sotto 200 voti la giornata
+  non si salva. `--prova <stagione> <giornata>` legge una giornata e non scrive
+  niente. Provato in `prove/script.py` (6quater) con pagine finte.
+- Dove sta: **una stagione per file, compresso** (`dati/storico/<stagione>.json.gz`),
+  per ogni giornata e ogni Id una riga nell'ordine di `CAMPI` (voto, fantavoto,
+  ruolo, squadra, poi i bonus). Lo zip non contiene date né nomi di file: lo stesso
+  contenuto dà sempre lo stesso file, e le stagioni chiuse si scrivono una volta e
   non gonfiano la storia di git. Lo storico grezzo **non va servito all'iPhone**:
   resta materia prima per l'addestramento.
-- Verifica da fare al primo giro, e da riportare all'utente con i numeri veri:
-  quanti degli Id del listone di oggi compaiono nelle stagioni passate. Gli Id di
-  fantacalcio.it dovrebbero essere stabili per giocatore, **ma non è verificato**:
-  se non lo fossero, tutto il collegamento storia-giocatore salta ed è meglio
-  scoprirlo subito.
 
 ### B2 — Il fantavoto atteso (l'equivalente dell'xG, su misura)
 

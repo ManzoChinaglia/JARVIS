@@ -265,6 +265,55 @@ mod.requests.get = lambda url, *a, **k: pagina_voti({1: ('6', '6')})
 r = mod.voti(g_orari, {}, ora)
 verifica('pagina con meno di 200 voti: la giornata non si salva', '4' not in r['giornate'] and '3' not in r['giornate'])
 
+print('\n6quater. Storico dei voti (B1)')
+def pagina_storico(quanti, stagione='2021-22'):
+    """Pagina finta di una stagione passata: il link del giocatore finisce con la
+    stagione, e ogni riga ha ruolo, voto e fantavoto di due redazioni e i bonus."""
+    righe = ''.join(
+        f'<tr><td><span class="role" data-value="d"></span>'
+        f'<a href="https://www.fantacalcio.it/serie-a/squadre/atalanta/nome/{7000 + k}/{stagione}">n</a></td>'
+        f'<td><div class="pill"><span class="player-grade" data-value="6,5"></span><span class="player-fanta-grade" data-value="9,5"></span></div>'
+        f'<div class="pill"><span class="player-grade" data-value="5"></span><span class="player-fanta-grade" data-value="5"></span></div></td>'
+        f'<td><span class="player-bonus" title="Gol segnati" data-value="1"></span>'
+        f'<span class="player-bonus" title="Gol subiti" data-value="0"></span>'
+        f'<span class="player-bonus" title="Assist" data-value="0"></span></td></tr>' for k in range(quanti))
+    return Risposta(f'<table class="grades-table"><thead><tr><th>Atalanta</th><th>Voto</th></tr></thead><tbody>{righe}</tbody></table>')
+rs = mod.righe_voti(pagina_storico(2).text)
+verifica('stagioni passate: l\'Id anche dal link che finisce con la stagione', [x['id'] for x in rs] == ['7000', '7001'], rs[:1])
+verifica('squadra, ruolo, voto e fantavoto della prima redazione, bonus in ordine fisso', rs[0]['squadra'] == 'Atalanta'
+         and rs[0]['ruolo'] == 'D' and rs[0]['voto'] == 6.5 and rs[0]['fantavoto'] == 9.5
+         and rs[0]['bonus'][mod.BONUS_VOTI.index('Gol segnati')] == 1 and rs[0]['bonus'][mod.BONUS_VOTI.index('Autoreti')] is None,
+         rs[0]['bonus'])
+spec_s = importlib.util.spec_from_file_location('storico', os.path.join(REPO, 'scripts', 'storico.py'))
+sto = importlib.util.module_from_spec(spec_s)
+spec_s.loader.exec_module(sto)
+verifica('stagioni dalla 2015-16 alla 2025-26', sto.STAGIONI[0] == '2015-16' and sto.STAGIONI[-1] == '2025-26' and len(sto.STAGIONI) == 11)
+sto.GIORNATE = 5
+chieste_s = []
+def finto_storico(url, *a, **k):
+    chieste_s.append(url)
+    n = int(url.rstrip('/').rsplit('/', 1)[1])
+    if n == 5:
+        raise sto.aggiorna.requests.ConnectionError('rete giù')
+    return pagina_storico(250 if n <= 3 else 10)
+sto.aggiorna.requests.get = finto_storico
+with tempfile.TemporaryDirectory() as cartella:
+    sto.scarica(['2021-22'], cartella=cartella, dormi=lambda s: None)
+    d = sto.leggi('2021-22', cartella)
+    verifica('giornate buone salvate; con meno di 200 voti o senza rete, no',
+             sorted(d['giornate'], key=int) == ['1', '2', '3'], sorted(d['giornate']))
+    riga = d['giornate']['1']['7000']
+    verifica('una riga per giocatore: voto, fantavoto, ruolo, squadra e bonus, nell\'ordine dei campi',
+             d['campi'] == sto.CAMPI and len(riga) == len(sto.CAMPI) and riga[:4] == [6.5, 9.5, 'D', 'Atalanta'], riga)
+    chieste_s.clear()
+    sto.scarica(['2021-22'], cartella=cartella, dormi=lambda s: None)
+    verifica('ripartibile: la seconda volta chiede solo le giornate che mancano',
+             [u.rsplit('/', 1)[1] for u in chieste_s] == ['4', '5'], [u.rsplit('/', 1)[1] for u in chieste_s])
+    prima = open(sto.percorso('2021-22', cartella), 'rb').read()
+    sto.salva(sto.leggi('2021-22', cartella), cartella)
+    verifica('stesso contenuto, stesso file compresso (niente data nello zip)',
+             open(sto.percorso('2021-22', cartella), 'rb').read() == prima)
+
 print('\n7. Calendario')
 base_finta = {'me': 'BURKINA FASO', 'g': [
     [1, 5, '2026-09-20', [['CF FRINGUELLI', 'As Quel'], ['God Bless The Doc', 'BURKINA FASO']]],

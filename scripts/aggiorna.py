@@ -369,28 +369,56 @@ def statistiche():
     return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'giocatori': giocatori}
 
 
-def voti_giornata(n):
-    """Voto e fantavoto della redazione Fantacalcio di ogni giocatore della giornata n di
-    Serie A, per Id (dal link del giocatore). Chi non ha preso voto non c'è. Nella riga
-    il primo voto e il primo fantavoto sono della redazione Fantacalcio; poi vengono i
-    voti di altre redazioni, che qui non servono."""
-    r = requests.get(URL_VOTI.format(n), headers=UA, timeout=TIMEOUT)
-    r.raise_for_status()
-    voti = {}
-    for tr in BeautifulSoup(r.text, 'lxml').select('table.grades-table tbody tr'):
-        a = tr.find('a', href=re.compile(r'/\d+/?$'))
-        v, fv = tr.find('span', class_='player-grade'), tr.find('span', class_='player-fanta-grade')
-        if not (a and v and fv):
-            continue
+# l'Id dal link del giocatore; nelle stagioni passate il link finisce con la stagione
+# («.../musso/2792/2021-22»), in quella in corso no («.../carnesecchi/4431»)
+ID_GIOCATORE = re.compile(r'/(\d+)(?:/\d{4}-\d{2})?/?$')
+# bonus e malus di ogni giocatore nella pagina dei voti, per titolo, in quest'ordine fisso
+BONUS_VOTI = ['Gol segnati', 'Gol subiti', 'Autoreti', 'Rigori segnati', 'Rigori sbagliati',
+              'Rigori parati', 'Assist', 'Player of the match']
+
+
+def righe_voti(testo):
+    """Ogni giocatore con voto nella pagina dei voti di una giornata: Id, squadra
+    (l'intestazione della sua tabella), ruolo, voto e fantavoto della redazione Fantacalcio
+    (i primi della riga; poi vengono altre redazioni, che qui non servono) e i bonus e
+    malus nell'ordine di BONUS_VOTI (None dove la pagina non li ha). Chi non ha preso
+    voto non c'è."""
+    def intero(x):
         try:
-            voto = float(v.get('data-value', '').replace(',', '.'))
-            fanta = float(fv.get('data-value', '').replace(',', '.'))
-        except ValueError:
-            continue                              # senza voto
-        if not 1 <= voto <= 10:
-            continue                              # «s.v.»: la pagina lo scrive come 55
-        voti[str(int(a['href'].rstrip('/').rsplit('/', 1)[1]))] = [voto, fanta]
-    return voti
+            return int(x)
+        except (TypeError, ValueError):
+            return None
+    righe = []
+    for tabella in BeautifulSoup(testo, 'lxml').select('table.grades-table'):
+        th = tabella.select_one('thead th')
+        squadra = th.get_text(strip=True) if th else None
+        for tr in tabella.select('tbody tr'):
+            a = tr.find('a', href=ID_GIOCATORE)
+            v, fv = tr.find('span', class_='player-grade'), tr.find('span', class_='player-fanta-grade')
+            if not (a and v and fv):
+                continue
+            try:
+                voto = float(v.get('data-value', '').replace(',', '.'))
+                fanta = float(fv.get('data-value', '').replace(',', '.'))
+            except ValueError:
+                continue                              # senza voto
+            if not 1 <= voto <= 10:
+                continue                              # «s.v.»: la pagina lo scrive come 55
+            ruolo = tr.select_one('span.role')
+            bonus = {sp.get('title'): sp.get('data-value') for sp in tr.select('span.player-bonus')}
+            righe.append({'id': ID_GIOCATORE.search(a['href']).group(1), 'squadra': squadra,
+                          'ruolo': (ruolo.get('data-value') or '').upper() or None if ruolo else None,
+                          'voto': voto, 'fantavoto': fanta,
+                          'bonus': [intero(bonus.get(k)) for k in BONUS_VOTI]})
+    return righe
+
+
+def voti_giornata(n, url=URL_VOTI):
+    """Voto e fantavoto della redazione Fantacalcio di ogni giocatore della giornata n di
+    Serie A, per Id; url ha {} al posto della giornata (di norma la stagione in corso)."""
+    r = requests.get(url.format(n), headers=UA, timeout=TIMEOUT)
+    r.raise_for_status()
+    return {x['id']: [x['voto'], x['fantavoto']] for x in righe_voti(r.text)}
 
 
 def voti(giornate_orari, vecchie, ora=None):
