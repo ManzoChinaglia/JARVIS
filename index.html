@@ -486,22 +486,113 @@
   .luce::after{opacity:1; transition:none;}
   .importa-lega{margin-top:12px;}
 
-  /* ---- com'è andata, andamento, calendario dei tuoi, mercato ---- */
-  .ca{margin:14px 0 4px; padding:14px 16px 12px; cursor:pointer;}
-  .ca-testa{display:flex; flex-direction:column; gap:2px; margin-bottom:10px;}
-  .ca-testa .k, .ca-nomi .k{font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--dim);}
-  .ca-testa b{font-size:20px; font-weight:700;}
-  .ca-numeri{display:flex; gap:10px; margin-bottom:10px;}
-  .ca-numeri div{flex:1; padding:10px 6px; border-radius:14px; text-align:center; background:rgba(255,255,255,.05); border:1px solid var(--bordo);}
-  .ca-numeri b{display:block; font-size:26px; font-weight:700; color:var(--oro-chiaro);}
-  .ca-numeri span{font-size:11px; color:var(--dim);}
-  .ca-nomi{margin-top:4px; font-size:13px; line-height:1.5;}
-  .ca-nomi .k{margin-right:6px;}
-  .ca-tutti{margin-top:8px; padding:0; border:0; background:none; font-size:13px; font-weight:600; color:var(--oro-chiaro);}
-  .seg-j, .seg-m{margin-left:5px; font-style:normal; font-size:10px; font-weight:700;}
-  .seg-j{padding:1px 5px; border-radius:6px; background:rgba(252,209,22,.18); color:var(--oro-chiaro);}
-  .seg-m{color:var(--bf-stella);}
-  .fv{font-weight:700; color:var(--oro-chiaro);}
+  /* ---- inviti: una riga nella pagina, il resto in sovraimpressione ---- */
+  .invito{display:flex; align-items:center; gap:14px; width:100%; margin:14px 0 4px; padding:14px 14px 14px 16px;
+          text-align:left; font:inherit; color:var(--ink); border-radius:var(--r);
+          background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.02)), var(--vetro);
+          border:1px solid rgba(255,255,255,.12); box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 10px 26px rgba(0,0,0,.28);
+          -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);}
+  .invito:active{transform:scale(.98);}
+  .invito-icona{width:44px; height:44px; flex-shrink:0; display:grid; place-items:center; border-radius:15px; color:var(--oro-chiaro);
+                background:linear-gradient(180deg,rgba(255,240,190,.22),rgba(228,180,81,.06)); border:1px solid rgba(252,209,22,.32);
+                box-shadow:inset 0 1px 0 rgba(255,255,255,.3);}
+  .invito-icona svg{width:22px; height:22px;}
+  .invito-testo{flex:1; min-width:0;}
+  .invito-testo .k{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--oro);}
+  .invito-testo b{display:block; margin-top:3px; font-size:17px; font-weight:600; line-height:1.2;}
+  .invito-testo small{display:block; margin-top:3px; font-size:12.5px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .invito-freccia{flex-shrink:0; font-size:26px; line-height:1; color:var(--oro);}
+  #mercato .invito{margin-top:22px;}
+
+  /* ---- sovraimpressione: le sezioni che chiedono spazio, a tutto schermo, con l'app sfocata dietro ---- */
+  .sovra{position:fixed; inset:0; z-index:15; background:rgba(5,7,6,.55);
+         -webkit-backdrop-filter:blur(22px) saturate(1.3); backdrop-filter:blur(22px) saturate(1.3);
+         opacity:0; visibility:hidden; transition:opacity .3s, visibility 0s linear .3s;}
+  .sovra.aperto{opacity:1; visibility:visible; transition:opacity .3s, visibility 0s;}
+  .sovra-foglio{height:100%; display:flex; flex-direction:column; padding-top:env(safe-area-inset-top);
+                transform:translateY(28px) scale(.98); transition:transform .45s var(--morbida);}
+  .sovra.aperto .sovra-foglio{transform:none;}
+  .sovra-testa{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:16px 18px 12px;}
+  .sovra-testa .k{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--oro);}
+  .sovra-testa h2{margin:4px 0 0; font-family:"Barlow Condensed",sans-serif; font-size:31px; font-weight:700; line-height:1.05;
+                  letter-spacing:.01em; text-transform:none; color:var(--ink);}
+  .sovra-corpo{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+               padding:4px 14px calc(34px + env(safe-area-inset-bottom));
+               -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 16px); mask-image:linear-gradient(to bottom, transparent 0, #000 16px);}
+  .sovra.aperto .sovra-corpo > *{animation:sale .5s var(--morbida) both;}
+  .sovra.aperto .sovra-corpo > :nth-child(2){animation-delay:.06s;} .sovra.aperto .sovra-corpo > :nth-child(3){animation-delay:.12s;}
+  .sovra.aperto .sovra-corpo > :nth-child(n+4){animation-delay:.18s;}
+  .sovra-intro{margin:0 4px 14px; font-size:14px; line-height:1.5; color:var(--dim);}
+  .sez{margin:24px 4px 2px; font-family:"Barlow Condensed",sans-serif; font-size:23px; font-weight:700; color:var(--ink);}
+  .sovra-intro + .sez{margin-top:6px;}
+  .sez + .reparto-t{margin-top:8px;}
+  .blocco{margin-bottom:14px; padding:16px; border-radius:24px;
+          background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.025)); border:1px solid rgba(255,255,255,.11);
+          box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 12px 30px rgba(0,0,0,.25);}
+  .blocco-t{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;
+            font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.1em; color:var(--oro);}
+  .blocco-t small{font-size:10px; letter-spacing:.08em; color:var(--dim);}
+  .blocco p{margin:12px 0 0; font-size:14px; line-height:1.5;}
+  .blocco p.nota, .come-si-legge p{font-size:12.5px; color:var(--dim);}
+  .come-si-legge p b{color:var(--ink); font-weight:600;}
+  .blocco .reparto-t{margin:16px 0 2px;}
+  .fvn{font-family:"Barlow Condensed",sans-serif; font-weight:700; color:var(--oro-chiaro); font-variant-numeric:tabular-nums;}
+  .fvn.alto{color:#43E08F;} .fvn.basso{color:#FF7A7A;}
+  .chip{display:inline-block; margin-left:6px; padding:1px 6px; border-radius:7px; font-style:normal; font-size:10px;
+        font-weight:700; letter-spacing:.02em; vertical-align:2px;}
+  .chip.j{background:rgba(252,209,22,.14); border:1px solid rgba(252,209,22,.38); color:var(--oro-chiaro);}
+  .chip.m{background:rgba(67,224,143,.1); border:1px solid rgba(67,224,143,.38); color:#8FF0B8;}
+  .legenda-chip{margin:6px 0 0 !important; font-size:12px !important; color:var(--dim);}
+  .legenda-chip .chip{margin:0 4px 0 0;}
+  /* com'è andata */
+  .ca-due{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .ca-due > div, .ca-uno{padding:14px 6px 12px; border-radius:18px; text-align:center; background:rgba(0,0,0,.22);}
+  .ca-due span, .ca-uno span{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);}
+  .ca-due b, .ca-uno b{display:block; margin-top:6px; font-size:42px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
+  .ca-due > div:first-child b{color:var(--ink);}
+  .ca-uno b{font-size:56px;}
+  .ca-due small{display:block; margin-top:5px; font-size:12px; color:var(--dim);}
+  .ca-barra{height:8px; margin-top:14px; border-radius:4px; overflow:hidden; background:rgba(255,255,255,.08);}
+  .ca-barra i{display:block; height:100%; border-radius:4px; transform-origin:left;
+              background:linear-gradient(90deg,var(--oro),var(--oro-chiaro)); animation:cresce 1s var(--morbida) both .25s;}
+  .ca-evid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;}
+  .ca-tess{display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; padding:14px 8px 12px; margin:0; text-align:center;}
+  .ca-tess .maglia{width:48px; height:48px; margin-bottom:4px; filter:drop-shadow(0 6px 8px rgba(0,0,0,.45));}
+  .ca-tess .k{font-size:10.5px; text-transform:uppercase; letter-spacing:.09em; color:var(--dim);}
+  .ca-tess b{max-width:100%; font-size:15px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .ca-tess strong{font-size:38px; line-height:1.05;}
+  .ca-tess small{font-size:11.5px; line-height:1.35; color:var(--dim);}
+  .vr{display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line);}
+  .vr:last-child{border-bottom:0;}
+  .vr .maglia{width:34px; height:34px; flex-shrink:0;}
+  .vr-nome{flex:1; min-width:0;}
+  .vr-nome b{display:block; font-size:15px; font-weight:600;}
+  .vr-nome small{display:block; margin-top:2px; font-size:12px; color:var(--dim);}
+  .vr strong{min-width:46px; font-size:27px; text-align:right;}
+  .vr.sv{opacity:.55;}
+  .vr.sv strong{font-size:16px; color:var(--dim);}
+  /* mercato */
+  .mk-testa{display:flex; align-items:center; gap:12px;}
+  .mk-testa .maglia{width:46px; height:46px; flex-shrink:0; filter:drop-shadow(0 6px 8px rgba(0,0,0,.45));}
+  .mk-nome{flex:1; min-width:0;}
+  .mk-nome b{display:block; font-size:18px; font-weight:600;}
+  .mk-nome small{display:block; margin-top:2px; font-size:12px; color:var(--dim);}
+  .mk-guad{flex-shrink:0; text-align:right;}
+  .mk-guad b{display:block; font-size:32px; line-height:1; color:#43E08F;}
+  .mk-guad.q b{color:var(--oro-chiaro);}
+  .mk-guad small{font-size:10.5px; color:var(--dim);}
+  .blocco p.mk-perche{font-size:13px; color:var(--dim);}
+  .mk-perche b{color:var(--ink); font-weight:600;}
+  .mk-tab{width:100%; margin-top:10px; border-collapse:collapse; font-size:14px;}
+  .mk-tab th{padding:9px 0; text-align:left; font-size:12.5px; font-weight:400; color:var(--dim);}
+  .mk-tab td{width:31%; padding:9px 4px; text-align:center; font-variant-numeric:tabular-nums;}
+  .mk-tab thead td{padding-top:0; font-size:12px; font-weight:600; color:var(--ink);}
+  .mk-tab thead td small{display:block; font-size:10px; font-weight:400; color:var(--dim);}
+  .mk-tab tbody tr{border-top:1px solid var(--line);}
+  .mk-tab td small{display:block; font-size:10.5px; color:var(--dim);}
+  .mk-tab td.meglio{color:#43E08F; font-weight:700;}
+  .mk-tab tr.tot td{font-family:"Barlow Condensed",sans-serif; font-size:20px; font-weight:700;}
+  .mk-tab .cal3{margin:0;}
   .andamento{margin:0 0 10px; padding:12px 12px 8px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid var(--bordo);}
   .andamento .k{font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--dim);}
   .andamento svg{display:block; width:100%; height:auto; margin-top:6px;}
@@ -518,8 +609,6 @@
   .cal3-testo{display:flex; flex-wrap:wrap; justify-content:flex-end; gap:4px;}
   .cal3-testo span{padding:2px 7px; border-radius:8px; font-size:12px; background:rgba(255,255,255,.06);}
   .cal3-testo .facile{color:#43E08F;} .cal3-testo .media{color:var(--bf-stella);} .cal3-testo .dura{color:#FF6B6B;}
-  .team .nome small.inline{display:inline; margin-left:6px;}
-  .team .nome small .cal3{display:inline-flex; margin:0 0 0 6px; vertical-align:middle;}
 
   /* ---- rosa: maglie per reparto o elenco, con i filtri ---- */
   .rosa-testa{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:22px 0 10px;}
@@ -742,6 +831,16 @@
   </div>
   <div id="foglio-corpo"></div>
 </aside>
+<!-- sovraimpressione: le sezioni che hanno bisogno di spazio, con l'app sfocata dietro -->
+<div class="sovra" id="sovra" role="dialog" aria-modal="true" aria-labelledby="sovra-titolo">
+  <div class="sovra-foglio" id="sovra-foglio">
+    <div class="sovra-testa">
+      <div><span class="k" id="sovra-k"></span><h2 id="sovra-titolo"></h2></div>
+      <button class="chiudi" id="chiudi-sovra" aria-label="Chiudi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="sovra-corpo" id="sovra-corpo"></div>
+  </div>
+</div>
 
 <script>
 let D=null, players=[], mia=[];
@@ -1391,46 +1490,84 @@ function comeAndata(){
     ? Object.assign({modulo}, puntiUndici(c.undici[modulo], (c.panchina || {})[modulo], sa)) : null;
   return {sa, g, miei, migliore: miglioreUndici(sa), consiglio, salvato: !!c};
 }
+/* nella pagina una riga sola, che apre la sezione in sovraimpressione */
+const ICONA_CA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5.5-5.5 4 3.5L20 7"/><path d="M15 7h5v5"/></svg>';
+const ICONA_MERCATO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h15l-4-4M20 16H5l4 4"/></svg>';
+function invito(icona, k, titolo, sotto){
+  return '<button class="invito"><span class="invito-icona">'+icona+'</span>'+
+    '<span class="invito-testo"><span class="k">'+k+'</span><b>'+titolo+'</b>'+(sotto ? '<small>'+sotto+'</small>' : '')+'</span>'+
+    '<span class="invito-freccia" aria-hidden="true">›</span></button>';
+}
+/* fantavoto: verde da 7, rosso sotto il 6, come nel grafico dell'andamento */
+const classeFv = fv => fv >= 7 ? 'alto' : fv < 6 ? 'basso' : '';
+/* il fantavoto spiegato: il voto della redazione, più i bonus o meno i malus */
+function spiegaVoto(v){
+  const d = Math.round((v[1] - v[0])*10)/10;
+  return 'voto '+num(v[0])+(d > 0 ? ' · +'+num(d)+' di bonus' : d < 0 ? ' · −'+num(-d)+' di malus' : ' · senza bonus né malus');
+}
+const titoloCa = ca => ca.g ? 'Giornata '+ca.g[0]+' contro '+avversarioLega(ca.g).nome : 'Serie A, giornata '+ca.sa;
 let caDisegnata = '';
 function renderComeAndata(){
   const ca = comeAndata();
   let html = '';
   if(ca){
-    const titolo = ca.g ? 'Giornata '+ca.g[0]+' · contro '+avversarioLega(ca.g).nome : 'Serie A, giornata '+ca.sa+' · prima della lega';
-    const nome = p => '<span data-id="'+p.id+'">'+cognome(p)+' '+num(votoDi(p, ca.sa)[1], 1)+'</span>';
-    html = '<div class="carta ca" id="ca"><div class="ca-testa"><span class="k">Com\'è andata</span><b class="cond">'+titolo+'</b></div>'+
-      '<div class="ca-numeri">'+
-        (ca.consiglio ? '<div><b class="cond">'+num(ca.consiglio.tot, 1)+'</b><span>l\'undici di Jarvis ('+ca.consiglio.modulo+
-          (ca.consiglio.cambi ? ', '+ca.consiglio.cambi+(ca.consiglio.cambi===1 ? ' cambio' : ' cambi') : '')+')</span></div>' : '')+
-        '<div><b class="cond">'+num(ca.migliore.tot, 1)+'</b><span>il migliore possibile ('+ca.migliore.modulo+')</span></div>'+
-      '</div>'+
-      '<div class="ca-nomi"><span class="k">I migliori</span>'+ca.miei.slice(0, 3).map(nome).join(', ')+'</div>'+
-      '<div class="ca-nomi"><span class="k">I peggiori</span>'+ca.miei.slice(-3).reverse().map(nome).join(', ')+'</div>'+
-      (ca.g && !ca.salvato ? '<p class="nota-lega">L\'undici consigliato di quella giornata non era stato salvato.</p>' : '')+
-      '<button class="ca-tutti">Tutti i voti ›</button>'+
-      '<p class="nota-lega">Fantavoti della redazione Fantacalcio, senza modificatore difesa.</p></div>';
+    const top = ca.miei[0];
+    html = invito(ICONA_CA, 'Com\'è andata', titoloCa(ca), ca.consiglio
+      ? 'Undici di Jarvis '+num(ca.consiglio.tot)+' su '+num(ca.migliore.tot)+' possibili'
+      : 'Il migliore dei tuoi: '+top.nome+', '+num(votoDi(top, ca.sa)[1]));
   }
   if(html !== caDisegnata){ caDisegnata = html; document.getElementById('comeandata').innerHTML = html; }
 }
-/* tutti i voti dei tuoi in quella giornata: J nell'undici di Jarvis, ★ nel migliore possibile */
-function apriVoti(){
+/* in sovraimpressione: il punteggio spiegato, il migliore e il peggiore, e tutti i tuoi con
+   voto e bonus. «Jarvis» nell'undici consigliato, «Top 11» nei migliori 11 possibili */
+function apriComeAndata(){
   const ca = comeAndata();
   if(!ca) return;
-  const nelMigliore = new Set(ca.migliore.scelti.map(p=>p.id));
   const c = ca.g && D.consigli && D.consigli[String(ca.g[0])];
-  const diJarvis = new Set(c && c.undici && c.undici[modulo] || []);
-  const valore = p => (votoDi(p, ca.sa) || [0, -99])[1];
-  const righe = r => mia.filter(p=>p.ruolo===r).sort((a,b)=>valore(b)-valore(a)).map(p=>{
-    const v = votoDi(p, ca.sa);
-    return '<div class="gio-riga"><span>'+p.nome+(diJarvis.has(p.id) ? '<i class="seg-j">J</i>' : '')+
-      (nelMigliore.has(p.id) ? '<i class="seg-m">★</i>' : '')+'</span><b>'+
-      (v ? num(v[0], 1)+' · <span class="fv">'+num(v[1], 1)+'</span>' : '<span class="nodata">s.v.</span>')+'</b></div>';
-  }).join('');
-  document.getElementById('foglio-corpo').innerHTML =
-    '<div class="gio-nome cond">'+(ca.g ? 'Giornata '+ca.g[0] : 'Serie A, giornata '+ca.sa)+'</div>'+
-    '<div class="gio-sub">Voto · fantavoto dei tuoi. J nell\'undici di Jarvis, ★ nel migliore possibile.</div>'+
-    ['P','D','C','A'].map(r=>'<h3 class="reparto-t">'+PLURALI[r]+'</h3>'+righe(r)).join('');
-  apriFoglio('foglio');
+  const diJarvis = new Set(c && c.undici && c.undici[modulo] || []), nelMassimo = new Set(ca.migliore.scelti.map(p=>p.id));
+  const v = p => votoDi(p, ca.sa), k = ca.consiglio, max = ca.migliore;
+  let eroe;
+  if(k){
+    const perc = Math.round(100*k.tot/max.tot), resto = max.tot - k.tot;
+    eroe = '<div class="blocco">'+
+      '<div class="ca-due"><div><span>Undici di Jarvis</span><b class="cond">'+num(k.tot)+'</b><small>'+k.modulo+'</small></div>'+
+      '<div><span>Il massimo possibile</span><b class="cond">'+num(max.tot)+'</b><small>'+max.modulo+'</small></div></div>'+
+      '<div class="ca-barra"><i style="width:'+Math.min(100, perc)+'%"></i></div>'+
+      '<p>Con l\'undici consigliato da Jarvis avresti fatto <b>'+num(k.tot)+'</b>, il '+perc+'% del massimo'+
+        (resto >= 0.05 ? ': '+num(resto)+' punti sono rimasti in panchina.' : ': meglio di così non si poteva.')+'</p>'+
+      (k.cambi ? '<p>'+(k.cambi===1 ? '1 titolare senza voto, sostituito' : k.cambi+' titolari senza voto, sostituiti')+
+        ' dalla panchina, come vuole la lega.</p>' : '')+
+      (k.vuoti ? '<p>'+(k.vuoti===1 ? '1 titolare senza voto e nessuno in panchina per sostituirlo'
+                                   : k.vuoti+' titolari senza voto e nessuno in panchina per sostituirli')+': zero punti.</p>' : '')+
+      '<p class="nota">È l\'undici che ti aveva consigliato Jarvis, non la formazione schierata su Leghe.</p></div>';
+  } else {
+    eroe = '<div class="blocco"><div class="ca-uno"><span>Il massimo possibile</span><b class="cond">'+num(max.tot)+'</b></div>'+
+      '<p>La somma dei fantavoti dei tuoi 11 migliori di quella giornata, in '+max.modulo+' (la difesa resta a quattro).</p>'+
+      '<p class="nota">'+(ca.g ? 'L\'undici consigliato di quella giornata non era stato salvato: il confronto con Jarvis non c\'è.'
+                              : 'La lega non era ancora iniziata: questa giornata non contava, serve a vedere come sono andati i tuoi.')+'</p></div>';
+  }
+  const tessera = (etichetta, p) => '<div class="blocco ca-tess" data-id="'+p.id+'">'+maglia(p.club)+'<span class="k">'+etichetta+'</span>'+
+    '<b>'+p.nome+'</b><strong class="fvn '+classeFv(v(p)[1])+'">'+num(v(p)[1])+'</strong><small>'+spiegaVoto(v(p))+'</small></div>';
+  const evid = ca.miei.length > 1
+    ? '<div class="ca-evid">'+tessera('Il migliore', ca.miei[0])+tessera('Il peggiore', ca.miei[ca.miei.length - 1])+'</div>' : '';
+  const riga = p => {
+    const x = v(p);
+    return '<div class="vr'+(x ? '' : ' sv')+'" data-id="'+p.id+'">'+maglia(p.club)+
+      '<div class="vr-nome"><b>'+p.nome+(diJarvis.has(p.id) ? '<i class="chip j">Jarvis</i>' : '')+
+        (nelMassimo.has(p.id) ? '<i class="chip m">Top 11</i>' : '')+'</b>'+
+      '<small>'+(x ? spiegaVoto(x) : avversarioClub(p.club, ca.sa) ? 'senza voto: non ha giocato o troppo poco' : 'la sua squadra non giocava')+'</small></div>'+
+      '<strong class="fvn '+(x ? classeFv(x[1]) : '')+'">'+(x ? num(x[1]) : 's.v.')+'</strong></div>';
+  };
+  const valore = p => (v(p) || [0, -99])[1];
+  const tutti = '<div class="blocco"><div class="blocco-t">Tutti i tuoi<small>fantavoto</small></div>'+
+    '<p class="legenda-chip">'+(diJarvis.size ? '<i class="chip j">Jarvis</i>nell\'undici consigliato · ' : '')+
+      '<i class="chip m">Top 11</i>nei migliori 11 possibili</p>'+
+    ['P','D','C','A'].map(r=>'<h3 class="reparto-t">'+PLURALI[r]+'</h3>'+
+      mia.filter(p=>p.ruolo===r).sort((a,b)=>valore(b)-valore(a)).map(riga).join('')).join('')+'</div>';
+  const nota = '<div class="blocco come-si-legge"><div class="blocco-t">Come si legge</div>'+
+    '<p>Il <b>fantavoto</b> è il voto della redazione Fantacalcio più bonus e malus: gol +3, assist +1, gol subito −1, '+
+    'ammonizione −0,5, espulsione −1. Il modificatore difesa della lega non è compreso.</p></div>';
+  apriSovra('Com\'è andata', titoloCa(ca), eroe+evid+tutti+nota);
 }
 
 /* ---------- andamento del giocatore ---------- */
@@ -1491,39 +1628,89 @@ function pallini3(p, g){
    i prossimi 3 avversari. Da prendere: chi, nelle altre rose, vale più del tuo ultimo
    titolare dello stesso ruolo; da proporre: i tuoi fuori dall'undici con quotazione alta. */
 const POSTI = {P:1, D:4, C:4, A:3};
-function valoreMercato(p, g){
-  const t = titolarita(p, g), cal = prossimi3(p, g).map(x=>forzaSa(p, x.sa)).filter(Boolean);
-  return fmStimata(p) + (t ? -0.4 + 1.6*t.perc/100 : 0) +
-    (cal.length ? cal.reduce((s,f)=>s + PESI[p.ruolo]*f.delta, 0)/cal.length : 0);
+/* le tre parti del valore, con gli stessi conti del consiglio: fantamedia stimata,
+   titolarità e la media dei prossimi 3 avversari */
+function partiMercato(p, g){
+  const t = titolarita(p, g), cal = prossimi3(p, g), forze = cal.map(x=>forzaSa(p, x.sa)).filter(Boolean);
+  const fm = fmStimata(p), tit = t ? -0.4 + 1.6*t.perc/100 : 0;
+  const avv = forze.length ? forze.reduce((s,f)=>s + PESI[p.ruolo]*f.delta, 0)/forze.length : 0;
+  return {fm, t, tit, cal, avv, tot: fm + tit + avv};
 }
+function valoreMercato(p, g){ return partiMercato(p, g).tot; }
+/* da prendere: {p, guadagno, alPosto: il tuo ultimo titolare del ruolo, posto: il suo numero};
+   da proporre: {p, pos: il suo numero tra i tuoi del ruolo, per: chi potresti chiedere in cambio} */
 function mercato(g){
   const prendere = [], cedere = [];
   ['P','D','C','A'].forEach(r=>{
     const miei = mia.filter(p=>p.ruolo===r && disponibile(p, g[2])).map(p=>({p, v: valoreMercato(p, g)})).sort((a,b)=>b.v-a.v);
-    const ultimo = miei[Math.min(POSTI[r], miei.length) - 1];
+    const posto = Math.min(POSTI[r], miei.length), ultimo = miei[posto - 1];
     if(!ultimo) return;
-    players.filter(p=>p.team!==ME && p.ruolo===r && disponibile(p, g[2])).map(p=>({p, v: valoreMercato(p, g)}))
-      .filter(x=>x.v >= ultimo.v + 0.3).sort((a,b)=>b.v-a.v).slice(0, 2)
-      .forEach(x=>prendere.push({p: x.p, guadagno: x.v - ultimo.v, alPosto: ultimo.p}));
-    miei.slice(POSTI[r]).filter(x=>x.p.quot >= 10).sort((a,b)=>b.p.quot-a.p.quot).slice(0, 1).forEach(x=>cedere.push(x.p));
+    const altri = players.filter(p=>p.team!==ME && p.ruolo===r && disponibile(p, g[2])).map(p=>({p, v: valoreMercato(p, g)}))
+      .filter(x=>x.v >= ultimo.v + 0.3).sort((a,b)=>b.v-a.v).slice(0, 2);
+    altri.forEach(x=>prendere.push({p: x.p, guadagno: x.v - ultimo.v, alPosto: ultimo.p, posto}));
+    miei.slice(POSTI[r]).filter(x=>x.p.quot >= 10).sort((a,b)=>b.p.quot-a.p.quot).slice(0, 1)
+      .forEach(x=>cedere.push({p: x.p, pos: miei.indexOf(x) + 1, per: altri.length ? altri[0].p : null}));
   });
   return {prendere, cedere};
 }
 let mercatoDisegnato = '';
 function renderMercato(g){
-  const mk = mercato(g);
-  const riga = (p, destra, sotto) => '<div class="team" data-id="'+p.id+'">'+stemma(p.team)+
-    '<span class="nome">'+p.nome+'<small class="inline">'+p.ruolo+' · '+p.club+'</small><small>'+sotto+'</small></span>'+
-    '<span class="val cond">'+destra+'</span></div>';
-  const html = '<h2>Mercato, sulla carta</h2>'+
-    (mk.prendere.length ? '<h3 class="reparto-t">Da prendere</h3><div class="lista">'+mk.prendere.map(x=>
-        riga(x.p, '+'+num(x.guadagno, 1), 'da '+x.p.team+' · meglio di '+cognome(x.alPosto)+pallini3(x.p, g))).join('')+'</div>'
-      : '<p class="nota-lega">Nelle altre rose nessuno vale nettamente più dei tuoi titolari.</p>')+
-    (mk.cedere.length ? '<h3 class="reparto-t">Da proporre in uno scambio</h3><div class="lista">'+mk.cedere.map(p=>
-        riga(p, 'Q '+p.quot, 'fuori dal tuo undici, ma con una quotazione che interessa')).join('')+'</div>' : '')+
-    '<p class="nota-lega">Stima di Jarvis su fantamedia, titolarità e prossimi 3 avversari: un\'idea da trattare, '+
-    'non una certezza. Gli scambi si aprono nelle soste per le nazionali e a gennaio.</p>';
+  const mk = mercato(g), colpo = mk.prendere.slice().sort((a,b)=>b.guadagno-a.guadagno)[0];
+  const conta = [mk.prendere.length ? mk.prendere.length+' da cercare' : '', mk.cedere.length ? mk.cedere.length+' da proporre' : '']
+    .filter(Boolean).join(' · ') || 'Nessuno scambio da proporre';
+  const html = invito(ICONA_MERCATO, 'Mercato, sulla carta', conta, colpo
+    ? 'Il colpo: '+colpo.p.nome+', +'+num(colpo.guadagno)+' a partita'
+    : 'Nelle altre rose nessuno vale nettamente più dei tuoi titolari');
   if(html !== mercatoDisegnato){ mercatoDisegnato = html; document.getElementById('mercato').innerHTML = html; }
+}
+/* in sovraimpressione: ogni idea con il confronto voce per voce contro il tuo giocatore */
+function apriMercato(g){
+  g = g || prossima();
+  const mk = mercato(g);
+  const tit = t => !t ? '–' : t.perc+'%';
+  const vera = p => '<small>vera '+(p.pgv ? num(p.fm) : '–')+'</small>';
+  const riga = (k, x, y, a, b, cl) => {
+    const m = a > b + 0.05 ? [' class="meglio"', ''] : b > a + 0.05 ? ['', ' class="meglio"'] : ['', ''];
+    return '<tr'+(cl ? ' class="'+cl+'"' : '')+'><th>'+k+'</th><td'+m[0]+'>'+x+'</td><td'+m[1]+'>'+y+'</td></tr>';
+  };
+  const confronto = (a, b) => {
+    const A = partiMercato(a, g), B = partiMercato(b, g);
+    return '<table class="mk-tab"><thead><tr><th></th><td>'+cognome(a)+'</td><td>'+cognome(b)+'<small>il tuo</small></td></tr></thead><tbody>'+
+      riga('Fantamedia', num(A.fm)+vera(a), num(B.fm)+vera(b), A.fm, B.fm)+
+      riga('Titolarità', tit(A.t), tit(B.t), A.tit, B.tit)+
+      riga('Prossime 3', pallini3(a, g), pallini3(b, g), A.avv, B.avv)+
+      riga('Valore Jarvis', num(A.tot), num(B.tot), A.tot, B.tot, 'tot')+'</tbody></table>';
+  };
+  const chi = x => x.p.ruolo==='P' ? 'il tuo portiere titolare' : 'il tuo '+x.posto+'° '+RUOLI[x.p.ruolo].toLowerCase();
+  let reparto = '';
+  const prendi = mk.prendere.map(x=>{
+    const testa = x.p.ruolo !== reparto ? '<h3 class="reparto-t">'+REPARTI[x.p.ruolo]+'</h3>' : '';
+    reparto = x.p.ruolo;
+    return testa+'<div class="blocco mk" data-id="'+x.p.id+'"><div class="mk-testa">'+maglia(x.p.club)+
+      '<div class="mk-nome"><b>'+x.p.nome+'</b><small>'+x.p.club+' · nella rosa di '+x.p.team+'</small></div>'+
+      '<div class="mk-guad"><b class="cond">+'+num(x.guadagno)+'</b><small>a partita</small></div></div>'+
+      '<p class="mk-perche">Rende più di <b>'+x.alPosto.nome+'</b>, '+chi(x)+' per Jarvis.</p>'+confronto(x.p, x.alPosto)+'</div>';
+  }).join('');
+  const cedi = mk.cedere.map(x=>'<div class="blocco mk" data-id="'+x.p.id+'"><div class="mk-testa">'+maglia(x.p.club)+
+      '<div class="mk-nome"><b>'+x.p.nome+'</b><small>'+RUOLI[x.p.ruolo]+' · '+x.p.club+'</small></div>'+
+      '<div class="mk-guad q"><b class="cond">'+x.p.quot+'</b><small>quotazione</small></div></div>'+
+      '<p class="mk-perche">Per Jarvis è il tuo '+x.pos+'° '+RUOLI[x.p.ruolo].toLowerCase()+': di solito resta fuori dall\'undici, '+
+      'ma con quotazione '+x.p.quot+' può interessare agli altri.'+
+      (x.per ? ' Un\'idea: offrilo per <b>'+x.per.nome+'</b> ('+x.per.team+').' : '')+'</p></div>').join('');
+  apriSovra('Mercato, sulla carta', 'Idee di scambio',
+    '<p class="sovra-intro">Chi, nelle altre rose, renderebbe più dei tuoi titolari nelle prossime 3 giornate, e chi dei tuoi '+
+      'potresti offrire. Gli scambi si aprono nelle soste per le nazionali e a gennaio.</p>'+
+    (prendi ? '<h3 class="sez">Da cercare</h3>'+prendi
+            : '<div class="blocco"><p>Nelle altre rose nessuno vale nettamente più dei tuoi titolari.</p></div>')+
+    (cedi ? '<h3 class="sez">Da proporre in uno scambio</h3>'+cedi : '')+
+    '<div class="blocco come-si-legge"><div class="blocco-t">Come si legge</div>'+
+    '<p><b>Valore Jarvis</b>: fantamedia stimata + titolarità + prossimi 3 avversari, con gli stessi conti dell\'undici '+
+      'consigliato. Il numero verde in alto è la differenza con il tuo giocatore, in punti a partita.</p>'+
+    '<p><b>Fantamedia</b>: quella stimata; con poche partite Jarvis la avvicina a quella attesa per la quotazione. '+
+      'Sotto c\'è quella vera.</p>'+
+    '<p><b>Titolarità</b>: dalle probabili della giornata; finché non escono, dalle partite giocate su quelle della squadra.</p>'+
+    '<p><b>Prossime 3</b>: verde facile, giallo nella media, rosso difficile. Nella tabella, in verde chi è meglio voce per voce.</p>'+
+    '<p>È una stima di Jarvis: un\'idea da trattare, non una certezza.</p></div>');
 }
 
 /* ---------- scheda del giocatore ---------- */
@@ -1925,7 +2112,22 @@ function apriFoglio(id){
 function chiudiFogli(){
   ['pannello','foglio'].forEach(x=>document.getElementById(x).classList.remove('aperto'));
   document.getElementById('velo').classList.remove('aperto');
-  if(document.body) document.body.classList.remove('bloccato');
+  if(document.body && !document.getElementById('sovra').classList.contains('aperto')) document.body.classList.remove('bloccato');
+}
+/* sovraimpressione a tutto schermo per le sezioni che chiedono spazio (com'è andata, mercato):
+   l'app resta dietro, sfocata; un giocatore toccato qui apre la sua scheda sopra */
+function apriSovra(k, titolo, html){
+  document.getElementById('sovra-k').textContent = k;
+  document.getElementById('sovra-titolo').textContent = titolo;
+  const corpo = document.getElementById('sovra-corpo');
+  corpo.innerHTML = html;
+  corpo.scrollTop = 0;
+  document.getElementById('sovra').classList.add('aperto');
+  if(document.body) document.body.classList.add('bloccato');
+}
+function chiudiSovra(){
+  document.getElementById('sovra').classList.remove('aperto');
+  if(document.body && !document.getElementById('velo').classList.contains('aperto')) document.body.classList.remove('bloccato');
 }
 function apriPannello(){ cartaAperta = false; apriFoglio('pannello'); apriAvvisi(); statoPush(); }
 /* messaggio breve in alto, per esempio dopo «tira giù per aggiornare» */
@@ -2146,12 +2348,11 @@ function toccaGiocatore(ev){
   const n = ev.target && ev.target.closest ? ev.target.closest('[data-id]') : null;
   if(n) apriGiocatore(+n.dataset.id);
 }
-['campo','sfida','quando','panchina','kobox','rosa','mercato'].forEach(id=>{ document.getElementById(id).onclick = toccaGiocatore; });
-/* com'è andata: un nome apre il giocatore, il resto della scheda tutti i voti */
-document.getElementById('comeandata').onclick = ev=>{
-  const n = ev.target && ev.target.closest ? ev.target.closest('[data-id]') : null;
-  if(n) apriGiocatore(+n.dataset.id); else apriVoti();
-};
+['campo','sfida','quando','panchina','kobox','rosa','sovra-corpo'].forEach(id=>{ document.getElementById(id).onclick = toccaGiocatore; });
+/* com'è andata e mercato: nella pagina una riga, che apre la sovraimpressione */
+document.getElementById('comeandata').onclick = apriComeAndata;
+document.getElementById('mercato').onclick = ()=>apriMercato();
+document.getElementById('chiudi-sovra').onclick = chiudiSovra;
 /* rosa: filtri (sotto il titolo) e vista, maglie o elenco (accanto al titolo) */
 function comandiRosa(ev){
   const b = ev.target && ev.target.closest ? ev.target.closest('button') : null;
@@ -2164,9 +2365,9 @@ document.getElementById('rosa-comandi').onclick = document.getElementById('rosa-
 
 /* ---------- gesti da iPhone ---------- */
 /* i pannelli si chiudono trascinandoli in giù, dalla maniglia o dall'inizio del contenuto */
-function trascinaPerChiudere(f){
+function trascinaPerChiudere(f, chiudi = chiudiFogli, scorre = f){
   let y0 = null, dy = 0;
-  f.addEventListener('touchstart', e=>{ y0 = f.scrollTop<=0 ? e.touches[0].clientY : null; dy = 0; }, {passive:true});
+  f.addEventListener('touchstart', e=>{ y0 = scorre.scrollTop<=0 ? e.touches[0].clientY : null; dy = 0; }, {passive:true});
   f.addEventListener('touchmove', e=>{
     if(y0===null) return;
     dy = Math.max(0, e.touches[0].clientY - y0);
@@ -2175,12 +2376,18 @@ function trascinaPerChiudere(f){
   f.addEventListener('touchend', ()=>{
     if(y0===null) return;
     f.style.transition = ''; f.style.transform = '';
-    if(dy > 90) chiudiFogli();
+    if(dy > 90) chiudi();
     y0 = null; dy = 0;
   });
 }
 if(typeof window.addEventListener==='function'){
   ['pannello','foglio'].forEach(id=>trascinaPerChiudere(document.getElementById(id)));
+  trascinaPerChiudere(document.getElementById('sovra-foglio'), chiudiSovra, document.getElementById('sovra-corpo'));
+  /* dal computer: Esc chiude prima la scheda del giocatore, poi la sovraimpressione */
+  window.addEventListener('keydown', e=>{
+    if(e.key!=='Escape') return;
+    if(document.getElementById('velo').classList.contains('aperto')) chiudiFogli(); else chiudiSovra();
+  });
   /* scorrendo col dito a destra o a sinistra si passa alla scheda vicina (non sul campo,
      non sui campi di testo, non dal bordo, che su iPhone serve per tornare indietro) */
   let x0 = null, y0 = 0;

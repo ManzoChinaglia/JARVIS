@@ -68,7 +68,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -674,6 +674,20 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   let ca = t.comeAndata();
   verifica('prima della lega: com\'è andata la giornata 4 di Serie A', ca && ca.sa === 4 && !ca.g
            && /Serie A, giornata 4/.test(el.comeandata.innerHTML));
+  verifica('nella Giornata solo una riga, che invita ad aprire', /class="invito"/.test(el.comeandata.innerHTML)
+           && !/class="vr/.test(el.comeandata.innerHTML) && /Il migliore dei tuoi: .*, [\d,]+</.test(el.comeandata.innerHTML));
+  t.apriComeAndata();
+  let sc = el['sovra-corpo'].innerHTML;
+  verifica('toccandola si apre in sovraimpressione, con tutti i tuoi', el.sovra.classList.contains('aperto')
+           && (sc.match(/class="vr[ "]/g) || []).length === t.mia.length, (sc.match(/class="vr[ "]/g) || []).length);
+  const conMalus = t.mia.find(p => sa4[p.id] && sa4[p.id][1] < sa4[p.id][0]);
+  const f1 = x => x.toFixed(1).replace('.', ',');
+  verifica('ogni fantavoto spiegato: voto e bonus o malus', conMalus
+           && sc.includes('voto ' + f1(sa4[conMalus.id][0]) + ' · −' + f1(sa4[conMalus.id][0] - sa4[conMalus.id][1]) + ' di malus'), conMalus && conMalus.nome);
+  verifica('prima della lega: il massimo possibile, e perché la giornata non contava', /Il massimo possibile/.test(sc)
+           && /non era ancora iniziata/.test(sc) && !/class="chip j"/.test(sc) && /class="chip m"/.test(sc));
+  t.chiudiSovra();
+  verifica('e si chiude', !el.sovra.classList.contains('aperto'));
   const QM = [{ D: 4, C: 3, A: 3 }, { D: 4, C: 4, A: 2 }, { D: 4, C: 5, A: 1 }];
   const meglioAtteso = Math.max(...QM.map(q => ['P', 'D', 'C', 'A'].reduce((s, r) => s + t.mia
     .filter(p => p.ruolo === r && sa4[p.id]).map(p => sa4[p.id][1]).sort((a, b) => b - a)
@@ -707,8 +721,13 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   ca = t.comeAndata();
   verifica('giornata 1 di lega: l\'undici di Jarvis con la sostituzione della lega', ca && ca.g && ca.g[0] === 1 && ca.consiglio
            && Math.abs(ca.consiglio.tot - attesoJ) < 1e-9 && ca.consiglio.cambi === 1, ca && ca.consiglio && ca.consiglio.tot);
-  verifica('nella scheda l\'undici di Jarvis e il migliore possibile', /undici di Jarvis \(4-3-3, 1 cambio\)/.test(el.comeandata.innerHTML)
-           && /il migliore possibile/.test(el.comeandata.innerHTML));
+  verifica('nella Giornata: Jarvis su massimo, in una riga', /Undici di Jarvis [\d,]+ su [\d,]+ possibili/.test(el.comeandata.innerHTML),
+           (el.comeandata.innerHTML.match(/Undici di Jarvis [^<]*/) || [])[0]);
+  t.apriComeAndata();
+  sc = el['sovra-corpo'].innerHTML;
+  verifica('in sovraimpressione: undici di Jarvis contro il massimo, con la sostituzione spiegata', /Undici di Jarvis/.test(sc)
+           && /Il massimo possibile/.test(sc) && /1 titolare senza voto, sostituito dalla panchina/.test(sc)
+           && (sc.match(/class="chip j"/g) || []).length === 12);   // gli 11 e la legenda
   verifica('e la notifica «com\'è andata»', t.avvisi(t.prossima()).some(a => a.id === 'voti-5' && /^Giornata 1: com'è andata/.test(a.titolo)));
   // calendario dei tuoi e mercato
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'infortuni.json': null, 'squadre.json': sq2 } }));
@@ -723,8 +742,17 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const mk = t.mercato(g);
   verifica('mercato: da prendere solo dalle altre rose, stesso ruolo, meglio del tuo ultimo titolare', mk.prendere.every(x =>
            x.p.team !== t.ME && x.p.ruolo === x.alPosto.ruolo && x.guadagno >= 0.3), mk.prendere.length + ' da prendere');
-  verifica('da proporre: solo tuoi', mk.cedere.every(p => p.team === t.ME));
-  verifica('sezione Mercato nella Lega, detta come stima', /Mercato, sulla carta/.test(el.mercato.innerHTML) && /Stima di Jarvis/.test(el.mercato.innerHTML));
+  verifica('da proporre: solo tuoi, fuori dai titolari', mk.cedere.every(x => x.p.team === t.ME && x.pos > { P: 1, D: 4, C: 4, A: 3 }[x.p.ruolo]));
+  verifica('nella Lega solo una riga, che invita ad aprire', /class="invito"/.test(el.mercato.innerHTML)
+           && /Mercato, sulla carta/.test(el.mercato.innerHTML) && !/mk-tab/.test(el.mercato.innerHTML));
+  t.apriMercato(g);
+  sc = el['sovra-corpo'].innerHTML;
+  verifica('in sovraimpressione: ogni idea con il confronto voce per voce', el.sovra.classList.contains('aperto')
+           && (sc.match(/class="mk-tab"/g) || []).length === mk.prendere.length
+           && (sc.match(/class="blocco mk"/g) || []).length === mk.prendere.length + mk.cedere.length, mk.prendere.length + ' confronti');
+  verifica('con le voci del valore, detto come stima', ['Fantamedia', 'Titolarità', 'Prossime 3', 'Valore Jarvis'].every(k => sc.includes(k))
+           && /stima di Jarvis/i.test(sc));
+  verifica('il numero in alto è la differenza dei valori nella tabella', mk.prendere.every(x => sc.includes('+' + f1(x.guadagno))));
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);

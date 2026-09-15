@@ -254,13 +254,16 @@ Dal 15/09/2026 (quattro idee approvate dall'utente, fatte tutte insieme):
   `dati/consigli.json` undici e panchina della giornata per i tre moduli; dopo la
   scadenza resta quello dell'ultimo giro prima.
 - **Com'è andata** (`comeAndata`, in cima alla Giornata): l'ultima giornata con i
-  voti, fino alla scadenza della successiva. Il punteggio dell'undici di Jarvis nel
+  voti, fino alla scadenza della successiva. Nella pagina una riga sola; toccandola,
+  in sovraimpressione (`apriComeAndata`): il punteggio dell'undici di Jarvis nel
   modulo scelto (`puntiUndici`, con la regola della lega: chi non prende voto lascia
-  il posto al primo panchinaro dello stesso ruolo), il migliore possibile
-  (`miglioreUndici`, sempre con la difesa a quattro), migliori e peggiori;
-  toccandola, tutti i voti (`apriVoti`). Senza modificatore difesa, e lo dice. Per le
-  giornate di lega arriva la notifica «Giornata N: com'è andata»; prima della lega
-  mostra le giornate di sola Serie A. Servirà alla verifica dei `PESI` (lavoro 1).
+  il posto al primo panchinaro dello stesso ruolo) contro il massimo possibile
+  (`miglioreUndici`, sempre con la difesa a quattro), con la barra e la frase che li
+  spiega; il migliore e il peggiore; tutti i tuoi con voto e bonus o malus
+  (`spiegaVoto`: «voto 6,5 · +3,5 di bonus») e i segni «Jarvis» e «Top 11». Senza
+  modificatore difesa, e lo dice. Per le giornate di lega arriva la notifica
+  «Giornata N: com'è andata»; prima della lega mostra le giornate di sola Serie A.
+  Servirà alla verifica dei `PESI` (lavoro 1).
 - **Andamento** (`graficoVoti` nella scheda, `miniLinea` nell'elenco della Rosa):
   fantavoto giornata per giornata; «s.v.» se la sua squadra ha giocato e lui non ha
   preso voto.
@@ -269,9 +272,17 @@ Dal 15/09/2026 (quattro idee approvate dall'utente, fatte tutte insieme):
   media, rosso difficile, con lo stesso calcolo dell'avversario nel consiglio
   (`forzaSa`).
 - **Mercato, sulla carta** (`mercato`, nella scheda Lega): chi nelle altre rose vale
-  almeno 0,3 più del tuo ultimo titolare dello stesso ruolo (fantamedia stimata,
-  titolarità, prossimi 3 avversari) e i tuoi fuori dall'undici con una quotazione
-  che interessa. È una stima e la pagina lo dice.
+  almeno 0,3 più del tuo ultimo titolare dello stesso ruolo (`partiMercato`:
+  fantamedia stimata, titolarità, prossimi 3 avversari) e i tuoi fuori dall'undici
+  con una quotazione che interessa, con l'idea di chi chiedere in cambio. Nella
+  pagina una riga; in sovraimpressione (`apriMercato`) ogni idea con la tabella voce
+  per voce contro il tuo giocatore e «Come si legge». È una stima e la pagina lo dice.
+
+**Sovraimpressione** (15/09/2026, scelta dell'utente, da usare per ogni sezione che
+chiede spazio): nella pagina solo una riga-invito (`invito`); toccandola la sezione
+si apre a tutto schermo (`apriSovra`, `chiudiSovra`), con l'app sfocata dietro, che
+si chiude con la X, trascinando in giù o con Esc. Un giocatore toccato lì apre la sua
+scheda sopra. Niente da incastrare nella pagina: più spazio, più chiarezza.
 
 ## Movimento e senza rete
 
