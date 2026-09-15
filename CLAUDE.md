@@ -29,6 +29,17 @@ Indirizzo: https://manzochinaglia.github.io/JARVIS/
 6. **Provare prima di consegnare.** Questo progetto nasce dopo due app
    consegnate senza test sufficienti e rivelatesi difettose all'uso reale.
 
+**Supabase, valutato e scartato (15/09/2026, lavoro da remoto).** L'utente ha
+chiesto se integrarlo, per «alleggerire o boostare» il progetto, avendo già un
+account. Controllato: `.git` pesa 3,2 MB con 47 commit, e `aggiorna.yml`
+committa `dati/` solo se cambia qualcosa — la storia cresce di pochissimo,
+niente da alleggerire oggi. In più richiederebbe una chiave (anche solo
+«publishable», con RLS) lato client, contro la regola 2 qui sopra. Se un
+giorno la storia diventasse davvero un problema, la via che resta senza
+backend è spostare `dati/` su un branch separato azzerato periodicamente
+(commit orfano), non Supabase. Non riaprire senza un problema vero da
+risolvere.
+
 ## Lavoro da remoto (sessioni cloud)
 
 Dal 15/09/2026. Oltre a Claude Code sul PC, il progetto si porta avanti anche
