@@ -68,7 +68,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,apriStagione,scegliGiornata,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,apriStagione,scegliGiornata,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,forma,risultatoLega,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -816,6 +816,47 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
              && /1 contro 1/.test(sc) === singoli.length > 0 && /2 contro 2/.test(sc) === doppi.length > 0
            : /Nessuno scambio/.test(sc)), singoli.length + ' singoli, ' + doppi.length + ' doppi');
   verifica('niente tutorial', !/Come si legge|stima di Jarvis|sovra-intro/i.test(sc));
+
+  console.log('\n29. Tabellone e forma della lega');
+  const sfidaG = gio => BASE0.g[gio - 1][3].find(([a, b]) => a === BASE0.me || b === BASE0.me);
+  const risultatoG = (gio, fpMio, fpAvv, golMio = 1, golAvv = 1) => {
+    const [a, b] = sfidaG(gio), casaMe = a === BASE0.me;
+    return casaMe ? [a, fpMio, b, fpAvv, golMio, golAvv] : [a, fpAvv, b, fpMio, golAvv, golMio];
+  };
+  const vittoriaG1 = risultatoG(1, 70.5, 66, 2, 1), sconfittaG1 = risultatoG(1, 60, 75, 0, 3), pariG1 = risultatoG(1, 65, 65, 1, 1);
+  const seiGiornate = { 1: [vittoriaG1], 2: [risultatoG(2, 60, 60, 1, 1)], 3: [risultatoG(3, 55, 65, 0, 2)],
+    4: [risultatoG(4, 68, 50, 3, 1)], 5: [risultatoG(5, 72, 71, 1, 1)], 6: [risultatoG(6, 64, 64, 2, 2)] };
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'lega.json': { aggiornato: 'x', classifica: finta, risultati: seiGiornate } } }));
+  verifica('la forma: esiti delle ultime 5 giornate già giocate, dalla più vecchia alla più recente',
+           t.forma(t.ME).join('') === 'NPVVN', t.forma(t.ME).join(''));
+  verifica('una squadra senza risultati: forma vuota, niente inventato', t.forma('Squadra Mai Vista').length === 0);
+  verifica('i pallini della forma in classifica', (el.classifica.innerHTML.match(/class="forma"/g) || []).length > 0
+           && /class="fp v"/.test(el.classifica.innerHTML) && /class="fp n"/.test(el.classifica.innerHTML)
+           && /class="fp p"/.test(el.classifica.innerHTML));
+
+  // il tabellone: il punteggio vero al posto di «VS» nella testata, finché resta questa la giornata mostrata
+  ({ el } = await avvia({ adesso: '2026-09-20T22:40:00+02:00',
+    dati: { 'lega.json': { aggiornato: 'x', classifica: finta, risultati: { 1: [vittoriaG1] } } } }));
+  verifica('ancora giornata 1: il punteggio vero al posto di «VS»', el.vs.textContent === '70,5 - 66,0', el.vs.textContent);
+  verifica('hai vinto: la testata festeggia', el['vs-riga'].classList.contains('vinta') && !el['vs-riga'].classList.contains('persa'));
+
+  ({ el } = await avvia({ adesso: '2026-09-20T22:40:00+02:00',
+    dati: { 'lega.json': { aggiornato: 'x', classifica: finta, risultati: { 1: [sconfittaG1] } } } }));
+  verifica('hai perso: niente festeggiamento', el.vs.textContent === '60,0 - 75,0'
+           && !el['vs-riga'].classList.contains('vinta') && el['vs-riga'].classList.contains('persa'), el.vs.textContent);
+
+  ({ el } = await avvia({ adesso: '2026-09-20T22:40:00+02:00',
+    dati: { 'lega.json': { aggiornato: 'x', classifica: finta, risultati: { 1: [pariG1] } } } }));
+  verifica('pareggio: il punteggio si vede, né vinta né persa', el.vs.textContent === '65,0 - 65,0'
+           && !el['vs-riga'].classList.contains('vinta') && !el['vs-riga'].classList.contains('persa'));
+
+  ({ el } = await avvia({ adesso: '2026-09-20T22:50:00+02:00',
+    dati: { 'lega.json': { aggiornato: 'x', classifica: finta, risultati: { 1: [vittoriaG1] } } } }));
+  verifica('passata alla giornata 2, senza un suo risultato: torna «VS»', el.vs.textContent === 'VS'
+           && !el['vs-riga'].classList.contains('vinta') && !el['vs-riga'].classList.contains('persa'), el.vs.textContent);
+
+  ({ el } = await avvia({ adesso: giovedi, dati: { 'lega.json': null } }));
+  verifica('senza il file della lega: niente forma, niente tabellone', el.vs.textContent === 'VS' && el.classifica.innerHTML === '');
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);

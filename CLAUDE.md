@@ -114,7 +114,9 @@ I pulsanti si cliccano sulle coordinate (il clic sul riferimento dell'albero non
 scarica). Durante «Esporta XLSX» non fare screenshot per ~15 secondi: il 14/09 la
 pagina si è bloccata ed è servita una scheda nuova. Poi `importa_rose.py --prova`
 (e senza, se ci sono scambi) e `importa_lega.py`: classifica in `dati/lega.json`,
-mostrata nella scheda Lega; il file e il calendario scaricato insieme passano in
+mostrata nella scheda Lega, e — dal 15/09/2026, vedi «Risultati, forma e
+tabellone» più sotto — anche i risultati delle giornate già giocate, dallo
+stesso calendario. Il file e il calendario scaricato insieme passano in
 `archivio/lega`, con la data nel nome. I crediti rimasti (500 − totale nel file
 delle rose) all'utente non interessano: non si mostrano (scelta del 14/09/2026).
 
@@ -144,6 +146,42 @@ pubblico di fixturedownload.com. La fonte mette a mezzanotte UTC le partite
 senza orario ufficiale: quelle giornate sono salvate come `"ufficiale": false`,
 senza orario, e l'app scrive «orario non ancora ufficiale» invece di stimare.
 La giornata mostrata passa alla successiva due ore dopo l'ultimo calcio d'inizio.
+
+## Risultati, forma e tabellone
+
+Dal 15/09/2026. La routine «dati di lega» (sopra) legge anche il calendario
+scaricato insieme alla classifica: le giornate già giocate finiscono in
+`dati/lega.json` → `risultati`, `{"<giornata>": [[casa, fantapunti, fuori,
+fantapunti, gol casa, gol fuori], ...]}` (`scripts/importa_lega.py`,
+`leggi_calendario` + `risultati_da_calendario`). Un aggiornamento non svuota mai
+le giornate già salvate: si legge il `lega.json` esistente e si aggiungono solo
+le giornate nuove (upsert). Il calendario può usare nomi diversi da quelli
+dell'app per più squadre insieme, non solo una come nella classifica: si
+ricavano dalla posizione di ogni partita, confrontata con `dati/base.json`
+(`mappa_nomi_calendario`); una squadra nota trovata dove non ci si aspettava è
+un errore vero (calendario cambiato), non una ridenominazione. Un calendario non
+leggibile non blocca la classifica, che si salva comunque.
+
+**Il formato del «risultato» (i gol) non è mai stato visto su una giornata
+vera**: il file scaricato il 14/09/2026, prima dell'inizio stagione
+(20/09/2026), ha tutte le partite ancora a «0, 0, -». Si accetta solo un
+risultato scritto «N-N»; altrimenti l'import dei risultati si ferma con un
+messaggio chiaro invece di indovinare. **Da controllare al primo giro dopo la
+prima giornata vera.**
+
+**Forma** (`forma` in `index.html`): gli esiti (V/N/P) delle ultime 5 giornate
+di lega già giocate per una squadra, dalla più vecchia alla più recente,
+confrontando i fantapunti di quella giornata. In classifica, sotto ogni
+squadra, come pallini (verde/giallo/rosso, `.forma .fp`).
+
+**Tabellone**: nella testata della Giornata, il punteggio vero al posto di
+«VS» (`renderGiornata`, `risultatoLega(g[0])`), con un festeggiamento se hai
+vinto (`.vs-riga.vinta`, animazione `festeggia`) e un colore spento se hai
+perso. Resta finché quella resta la giornata mostrata: passata alla giornata
+successiva (di solito senza ancora un suo risultato) torna «VS» da solo.
+
+Non ancora fatto: leggere dal Chrome dell'utente la formazione schierata in
+ogni giornata, per «La stagione» (lavoro aperto più sotto).
 
 ## Calendario
 
@@ -514,23 +552,15 @@ lato, e il risultato sarebbe una precisione finta.
    campo con le maglie dei club, schede dei giocatori, vetro e animazioni. Altre
    migliorie si concordano con l'utente.
 
-3. **Risultati e forma nella scheda Lega.** La classifica c'è (14/09/2026,
-   `importa_lega.py` → `dati/lega.json`, routine «dati di lega», ricordata dal
-   promemoria del martedì). Mancano i risultati di ogni giornata e la forma delle
-   squadre, dal calendario scaricato insieme. Il file (`Calendario_<lega>.xlsx`)
-   ha per ogni partita: squadra, due numeri, squadra, risultato; prima della
-   prima giornata (20/09/2026) sono solo 0 e «-», quindi l'import va scritto sul
-   primo file vero, senza indovinare le colonne. Può contenere nomi di persone
-   (una squadra si chiamava «Francesco e Fabrizio Fontana»): il file resta in
-   `archivio/`, nel repository vanno solo i dati, con i nomi dell'app. Formato già
-   usato dall'app: in `dati/lega.json` `"risultati": {"<giornata>": [[casa,
-   fantapunti, fuori, fantapunti, gol casa, gol fuori], ...]}` (Com'è andata lo
-   legge già). Con i risultati, il **tabellone**: il punteggio della tua sfida nella
-   testata della Giornata, al posto del «VS», con un festeggiamento se vinci.
-   Nella stessa routine, scelta dell'utente del 15/09: leggere dal suo Chrome la
-   **formazione schierata** in ogni giornata (pagina delle formazioni di Leghe, da
-   vedere sul primo caso vero), per «La stagione»: chi era schierato e chi ha
-   prodotto il totale.
+3. **Formazione schierata dal Chrome dell'utente, per «La stagione».** Risultati,
+   forma e tabellone sono fatti (15/09/2026: vedi «Risultati, forma e tabellone»
+   più sopra) e provati, ma il formato del «risultato» del calendario (i gol) non
+   è ancora stato visto su una giornata vera: **da controllare al primo giro dopo
+   la prima giornata (20/09/2026)**, con l'import che si ferma da solo se il
+   formato non torna. Resta da leggere dal Chrome dell'utente (già collegato a
+   Leghe, come per la routine «dati di lega») la **formazione schierata** in ogni
+   giornata (pagina delle formazioni di Leghe, da vedere sul primo caso vero), per
+   «La stagione»: chi era schierato e chi ha prodotto il totale.
 
 4. **Rivedere con l'utente le quattro funzioni del 15/09** (com'è andata,
    andamento, calendario dei tuoi, mercato): le ha volute tutte insieme per
