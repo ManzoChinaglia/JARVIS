@@ -1066,19 +1066,16 @@ async function carica(){
       return null;
     }
   };
+  /* i file si leggono tutti insieme, non uno dopo l'altro (17/09/2026): misurato con 80 ms
+     di rete per file, come sul telefono, gli 11 file in fila costavano ~1 secondo, insieme
+     ~0,2. Quelli pubblici partono subito; quelli chiusi appena c'è la chiave. */
+  const pubblici = ['infortuni.json', 'titolari.json', 'orari.json', 'squadre.json', 'statistiche.json', 'voti.json', 'modello.json']
+    .map(f=>leggi(f, false));
   /* il lucchetto: senza dati/lucchetto.json tutto in chiaro, come prima */
   LUCCHETTO = await leggi('lucchetto.json', false);
   if(LUCCHETTO && !CHIAVE) CHIAVE = await chiaveSalvata(LUCCHETTO) || await chiediPassword(LUCCHETTO);
-  const base = await leggi('base.json', true);
-  const inf  = await leggi('infortuni.json', false);
-  const tit  = await leggi('titolari.json', false);
-  const ora  = await leggi('orari.json', false);
-  const sq   = await leggi('squadre.json', false);
-  const st   = await leggi('statistiche.json', false);
-  const lg   = await leggi('lega.json', false);
-  const vt   = await leggi('voti.json', false);
-  const cs   = await leggi('consigli.json', false);
-  const md   = await leggi('modello.json', false);
+  const [base, lg, cs] = await Promise.all([leggi('base.json', true), leggi('lega.json', false), leggi('consigli.json', false)]);
+  const [inf, tit, ora, sq, st, vt, md] = await Promise.all(pubblici);
 
   D = base;
   ME = D.me;

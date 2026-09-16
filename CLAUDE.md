@@ -908,10 +908,15 @@ in pagina): in locale **598 → 321 ms**, 4G buono (80 ms / 25 Mbps) **925 → 6
 lento (80 ms / 4 Mbps) **1779 → 1501**, rete lenta (150 ms / 10 Mbps) **1340 → 1090**.
 
 Due strade **provate e scartate**, per non rifarle:
-- *Leggere gli 11 file di dati in parallelo invece che in fila.* Sembra ovvio, non serve:
-  misurato, ±30 ms (rumore), e su banda stretta **peggiora** (1779 → 1850), perché i dati
-  finiscono a competere con lo sfondo e l'icona. L'avvio qui non è limitato dalla
-  latenza ma dal lavoro della macchina.
+- *Leggere gli 11 file di dati in parallelo invece che in fila.* Scartata il 16/09 (±30 ms,
+  «l'avvio è limitato dalla CPU»), **ripresa e fatta il 17/09/2026** dopo che l'utente
+  trovava l'avvio ancora lento. Rimisurata dal PC: il disegno costa in tutto ~25 ms, il
+  tempo va nei file. Con un server locale che ritarda ogni risposta di 80 ms (la rete del
+  telefono): gli 11 file in fila ~1,03 s, insieme ~0,19 s; nell'apertura vera la finestra
+  dei dati è passata **da 1,08 a 0,32 s**. In `carica` i file pubblici partono subito,
+  quelli chiusi (rose, classifica, consigli) insieme appena c'è la chiave. La misura del
+  16/09 era probabilmente falsata dal limitatore di rete del browser, che strozza anche
+  le connessioni in parallelo.
 - *Ricomprimere `img/icona-180.png`* (71 KB, alfa sprecata, scaricata due volte). A
   tavolozza scende a 29 KB con uno scarto medio dell'1%, ma su 767 KB totali e con
   l'avvio limitato dalla CPU sarebbe un guadagno da briciole in cambio di un'immagine
