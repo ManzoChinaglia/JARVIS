@@ -99,7 +99,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.createContext(ctx);
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
-    'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,baseStagione,apriConsiglio,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
+    'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,baseStagione,apriConsiglio,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
     'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,apriStagione,scegliGiornata,accuratezzaConsiglio,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,forma,risultatoLega,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
@@ -307,6 +307,20 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('motivo nella rosa', el.rosa.innerHTML.includes('Squalificato, salta questa giornata'));
   verifica('infortunato dalla pagina di giornata, con la data', el.rosa.innerHTML.includes('Infortunato fino al 28/10'));
   verifica('«chi è infortunato?» li elenca', /Squalificato/.test(t.rispondi('chi è infortunato')) && /28\/10/.test(t.rispondi('chi è infortunato')));
+  verifica('«Non disponibili» con due o più: una riga sola, che apre la finestra', /data-ko-tutti/.test(el.kobox.innerHTML)
+           && /giocatori/.test(el.kobox.innerHTML) && !/class="ko-carta"/.test(el.kobox.innerHTML));
+  t.apriNonDisponibili();
+  const sko = el['sovra-corpo'].innerHTML, skoN = (sko.match(/class="ko-carta"/g) || []).length;
+  verifica('nella finestra un riquadro per ognuno, col motivo in vista e i dettagli da aprire',
+           skoN === t.mia.filter(p => !t.disponibile(p, g[2])).length && /Squalificato · salta la giornata 1/.test(sko)
+           && /Infortunato · fino al 28\/10/.test(sko) && /class="ko-dett"/.test(sko), skoN + ' riquadri');
+  verifica('quello che le fonti non dicono si scrive che manca, e le fonti ci sono', /non indicata dalle fonti/.test(sko) && /Fonti/.test(sko)
+           && /Scheda del giocatore/.test(sko));
+  t.chiudiSovra();
+  ({ el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': { ...indisp5, indisponibili: { [d1]: { motivo: 'Squalificato' } } },
+          'squadre.json': null, 'infortuni.json': null } }));
+  verifica('con uno solo, il suo riquadro direttamente nella pagina', /class="ko-carta"/.test(el.kobox.innerHTML)
+           && !/data-ko-tutti/.test(el.kobox.innerHTML));
   verifica('solo indisponibili: le probabili risultano non uscite', /probabili non ancora uscite/.test(el.stamp.textContent), el.stamp.textContent);
   ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': { ...indisp5, giornata: 4 }, 'squadre.json': null, 'infortuni.json': null } }));
   g = t.prossima();
@@ -333,6 +347,9 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('tutti gli altri disponibili, nessun indisponibile', banco.length === 25 - 11 - koN && banco.every(p => t.disponibile(p, g[2])),
            banco.length + ' in panchina, ' + koN + ' fuori');
   verifica('numerata per ruolo', /<small>1°<\/small>/.test(el.panchina.innerHTML) && /<small>2°<\/small>/.test(el.panchina.innerHTML));
+  verifica('un riquadro per reparto, con una riga e la maglia per ogni panchinaro', /class="pb-reparto"/.test(el.panchina.innerHTML)
+           && (el.panchina.innerHTML.match(/class="pb-riga"/g) || []).length === banco.length
+           && (el.panchina.innerHTML.match(/class="maglia"/g) || []).length === banco.length, banco.length);
   verifica('«chi schiero?» dice anche la panchina', /\nPanchina, in ordine: P /.test(t.rispondi('chi schiero')),
            t.rispondi('chi schiero').split('\n').find(r => r.startsWith('Panchina')));
 
@@ -630,6 +647,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('sotto la maglia il giorno e l\'ora della partita', el.campo.innerHTML.includes('<span class="ora">sab 18:00</span>'));
   verifica('«Quando giocano i tuoi»: scadenza in cima, poi la partita con i tuoi', /Quando giocano i tuoi/.test(el.quando.innerHTML)
            && el.quando.innerHTML.indexOf('Scadenza della formazione') < el.quando.innerHTML.indexOf(portiereU.nome), portiereU.nome);
+  verifica('per giorno, con le maglie delle squadre e quanti dei tuoi sono in campo', /class="qg-giorno"/.test(el.quando.innerHTML)
+           && /class="maglia"/.test(el.quando.innerHTML) && /in campo|solo panchina/.test(el.quando.innerHTML));
   t.apriGiocatore(portiereU.id);
   verifica('nella scheda anche l\'orario', /sab 18:00/.test(el['foglio-corpo'].innerHTML));
   ({ el } = await avvia({ adesso: giovedi, dati: { ...senzaSorprese, 'orari.json': { ...orariVeri, aggiornato: '2026-09-17T08:00:00+00:00',

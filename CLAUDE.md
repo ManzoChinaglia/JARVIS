@@ -496,23 +496,33 @@ CRLF: `.gitattributes` impedisce a Git di convertirlo.
   Per quel riquadro c'è `.blocco.scuro`, con base scura e sfocatura. Se un domani
   altre schede finiscono su zone chiare, la stessa classe è già pronta; non è stata
   applicata a tutte per non cambiare l'aspetto dell'app intera senza chiederlo.
-- **Panchina compatta** (16/09/2026, lavoro da remoto, scelta dell'utente): ogni
-  panchinaro prendeva quattro o cinque righe, con dentro la frase lunga
-  sull'avversario («Frosinone (4-2-3-1) segna 1,0 gol a partita in casa, media 1,3 ·
-  neopromossa, stima») e la barra della titolarità. Otto giocatori così erano una parete
-  di testo per una lista che si guarda di sfuggita — e quel ragionamento **c'è già** in
-  «Il consiglio» e nella scheda del giocatore, quindi lì era ripetizione. Ora `riga()`
-  accetta `magra`: niente frase dell'avversario, niente barra, niente miniatura
-  dell'andamento, e la forma breve «vs Genoa» invece di «in casa con Genoa», che mandava
-  a capo mezza lista. Misurato sulla lega finta: **da 873 a 413 pixel**, meno della metà.
-  Il resto della sezione (`kobox`, «Non disponibili») è rimasto com'era: proposto
-  all'utente e non voluto.
-- **«Quando giocano i tuoi», proposta respinta** (16/09, stesso giro): provata una
-  versione raggruppata per giorno, con i nomi dei tuoi in evidenza e la partita come
-  contorno. La prima stesura era pure **più alta** dell'originale (688 contro 582 px: le
-  intestazioni dei giorni costavano più della ripetizione che toglievano), la seconda
-  arrivava a 550. All'utente non è piaciuta: lasciata com'era. Non riproporla senza una
-  richiesta nuova.
+- **Panchina, indisponibili e «Quando giocano i tuoi», rifatti** (17/09/2026, scelta
+  dell'utente, decisi su mockup). Il 16/09 una sessione cloud aveva compattato la panchina
+  togliendo troppo (niente avversario, titolarità, gare, andamento) e scritto qui che
+  indisponibili e partite per giorno «non erano voluti»: **era un equivoco**, l'utente li
+  voleva, purché con le informazioni complete. Ora:
+  - **panchina** (`rigaPanchina`): un riquadro di vetro per reparto (`.pb-reparto`, appena
+    dorato), sigla del ruolo nel suo colore; per ognuno ordine d'ingresso, maglia, partita
+    e orario, titolarità con barra, avversario colorato (duro rosso, morbido verde, con il
+    dato in breve), e a destra il **fantavoto atteso se gioca ± quanto balla** (senza il
+    modello la fantamedia), sotto fantamedia, gare e le ultime quattro giornate. Niente
+    scritte di spiegazione («atteso se gioca», «entra il 1°»: tolte su richiesta).
+  - **non disponibili** (`cartaKo`, `apriNonDisponibili`): il motivo sempre in vista, i
+    dettagli si aprono toccando (diagnosi, rientro con le giornate di lega saltate, partita,
+    «senza l'assenza» cioè il suo atteso contro il meno forte dei titolari del ruolo, atteso
+    se giocasse, fonti con la data). Quello che le fonti non dicono è **scritto che manca**:
+    l'utente non deve sentire il bisogno di controllare altrove. Uno solo sta nella pagina;
+    con due o più una riga che apre la sovraimpressione. Si ridisegna solo se cambia, così
+    un dettaglio aperto non si richiude all'aggiornamento del minuto.
+  - **quando giocano i tuoi** (`renderQuando`): per giorno, con un colore leggero per giorno
+    (`COLORI_GIORNI`, sull'etichetta e sull'orario), le maglie delle due squadre, i tuoi in
+    oro se nell'undici, «N in campo» o «solo panchina», e la partita con tre o più titolari
+    appena dorata; in cima la scadenza col tempo che manca.
+- **Liquid Glass ovunque** (17/09/2026, scelta dell'utente): `.carta`, `.lista`, `.blocco`,
+  `.invito` e i riquadri nuovi usano lo stesso vetro della barra (`--vetro-liquido`,
+  `--vetro-bordo`, `--vetro-luce`, `--vetro-sfoca`: più trasparente, sfocatura 22 px con
+  saturazione, riflesso in alto). `.blocco.scuro` resta più opaco: cade sul centro chiaro
+  dello stemma.
 - **Sfocatura vetro (`backdrop-filter`), lasciata com'è** (15/09, stesso giro): idea
   valutata insieme alle altre due ma non applicata. Su iPhone più vecchi molte
   sfocature sovrapposte possono pesare sul render, ma sull'iPhone 16 Pro dell'utente
@@ -571,8 +581,8 @@ sfida, in classifica e nel calendario. Scelti dall'utente il 14/09/2026.
 `[casa, fuori, calcio d'inizio]` in ordine di orario (dal 14/09/2026). L'app lo usa
 (`oraPartita`, `oraBreve`) sotto ogni maglia («sab 18:00»), nella scheda del
 giocatore e in «Quando giocano i tuoi» (`renderQuando`): la scadenza in cima, poi
-le partite dove gioca almeno un tuo giocatore disponibile, in grassetto chi è
-nell'undici. Senza orari ufficiali non si mostra niente.
+le partite dove gioca almeno un tuo giocatore disponibile, per giorno, in oro chi è
+nell'undici (dal 17/09/2026, vedi «Grafica»). Senza orari ufficiali non si mostra niente.
 
 «Copia la formazione» è stata tolta il 14/09/2026, lo stesso giorno in cui era
 nata: per l'utente è più veloce passare da un'app all'altra, e Leghe non riceve
@@ -1259,8 +1269,10 @@ del push. `remoto/patch/` resta la cassetta della posta.
 - **Il lucchetto**, attivo: dati della lega cifrati, nomi delle altre squadre fuori dai
   file pubblici (controllato da `prove/privacy.py`, dal 16/09 sera anche dentro i file
   Excel), storia azzerata (copia sul PC).
-- **Avvio più svelto** (patch 0016): il mercato fuori dal primo disegno, da 598 a 321 ms
-  in locale. **Panchina compatta** (patch 0017), una riga per giocatore.
+- **Avvio più svelto**: il mercato fuori dal primo disegno (patch 0016) e, il 17/09, i file
+  di dati letti tutti insieme (da 1,08 a 0,32 s con la rete del telefono).
+- **Grafica del 17/09**: panchina per reparto con maglie e fantavoto atteso, indisponibili
+  con dettagli da aprire, partite per giorno, Liquid Glass ovunque (vedi «Grafica»).
 - Verificato il 16/09: le prove su GitHub aprono il lucchetto col Secret; l'utente è
   entrato dall'iPhone con la password; **il primo giro di `aggiorna.yml` col lucchetto
   (12:45) ha aperto e richiuso**, e nel commit non c'era nessun file della lega in chiaro.
@@ -1276,9 +1288,9 @@ del push. `remoto/patch/` resta la cassetta della posta.
 2. **Il parere dell'utente** su com'è andata, andamento e calendario dei tuoi (funzioni
    del 15/09; il mercato è già stato rivisto), su «Il consiglio», sull'avvio e sulla
    panchina nuova, e sulla scheda col fantavoto atteso.
-3. **La grafica**: il piano del 13-14/09 è completo; altre migliorie si concordano (non
-   riproporre «Non disponibili» compatti né «Quando giocano i tuoi» per giorno: l'utente
-   li ha già scartati, vedi la sezione della patch 0017).
+3. **La grafica**: panchina, indisponibili, «Quando giocano i tuoi» e Liquid Glass ovunque
+   rifatti il 17/09 (vedi «Grafica»); altre migliorie si concordano, con un mockup prima
+   di scrivere il codice (l'utente vuole vederlo e decidere in corso d'opera).
 
 ### Da vedere nel tempo
 - **B4, livello 4: l'autocalibrazione dei `PESI`**, non prima di mezza stagione (fine
@@ -1322,9 +1334,9 @@ python prove/modello.py
 15/09/2026). Alcune prove girano solo se ci sono i file veri esportati da Leghe,
 che stanno in `archivio/` e sono fuori da Git. Quindi:
 
-- **sul PC dell'utente** (che ha `archivio/`): `prove/app.js` 307/307 e
+- **sul PC dell'utente** (che ha `archivio/`): `prove/app.js` 313/313 e
   `prove/lega.py` 34/34 (dal 16/09 sera: la voce tolta ha portato via 13 verifiche)
-- **su un clone pulito o nella CI** (senza `archivio/`): 306/306 e 31/31, perché
+- **su un clone pulito o nella CI** (senza `archivio/`): 312/312 e 31/31, perché
   saltano «il file vero di Leghe si legge uguale (solo sul PC)» e le tre di
   `lega.py` sulla stessa cosa
 - `prove/privacy.py` 5/5 finché il lucchetto non è attivo, 8/8 dopo (le tre sul

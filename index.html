@@ -106,9 +106,14 @@
 
   h2{font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim); font-weight:600; margin:26px 2px 10px;}
   .reparto-t{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--oro); font-weight:600; margin:18px 2px 8px;}
-  .carta, .lista{background:var(--vetro); border:1px solid var(--bordo); border-radius:var(--r);
-                 -webkit-backdrop-filter:blur(16px) saturate(1.3); backdrop-filter:blur(16px) saturate(1.3);
-                 box-shadow:0 10px 30px rgba(0,0,0,.28);}
+  /* Liquid Glass di iOS 26 su tutti i riquadri (17/09/2026, scelta dell'utente): vetro più
+     trasparente e più sfocato, con il riflesso in alto e il bordo chiaro, come barra e lente */
+  :root{--vetro-liquido:rgba(20,26,23,.5); --vetro-bordo:rgba(255,255,255,.16);
+        --vetro-luce:inset 0 1px 0 rgba(255,255,255,.24), inset 0 -1px 1px rgba(255,255,255,.04);
+        --vetro-sfoca:blur(22px) saturate(1.8);}
+  .carta, .lista{background:var(--vetro-liquido); border:1px solid var(--vetro-bordo); border-radius:var(--r);
+                 -webkit-backdrop-filter:var(--vetro-sfoca); backdrop-filter:var(--vetro-sfoca);
+                 box-shadow:var(--vetro-luce), 0 10px 30px rgba(0,0,0,.3);}
 
   /* ---- testata giornata ---- */
   .sfida{margin:16px 0 16px;}
@@ -250,16 +255,55 @@
   .sf-nota{margin:10px 0 0; font-size:11px; line-height:1.45; color:var(--dim);}
 
   /* ---- quando giocano i tuoi, formazione da copiare ---- */
-  .qg{padding:4px 14px;}
-  .qg-riga{display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--line);}
-  .qg-riga:last-child{border-bottom:none;}
-  .qg-ora{flex-shrink:0; width:76px; font-size:15px; font-weight:700; color:var(--oro-chiaro);}
-  .qg-riga.scad .qg-ora, .qg-riga.scad b{color:#FF6B6B;}
-  .qg-dett{flex:1; min-width:0; font-size:13.5px;}
-  .qg-nomi{margin-top:3px; font-size:12.5px; line-height:1.45; color:var(--dim);}
-  .qg-nomi .in{color:var(--ink); font-weight:600;}
-  .qg-nomi span{cursor:pointer;}
-  .qg-riga.passata{opacity:.45;}
+  /* «Quando giocano i tuoi», per giorno (17/09/2026, scelta dell'utente): un colore leggero per
+     giorno (etichetta e orario), le maglie delle due squadre, i tuoi in oro se sono nell'undici,
+     e la partita con tre o più titolari un poco dorata: si legge a colpo d'occhio */
+  .qg-scad{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:4px; padding:12px 16px;
+           border-radius:var(--r); font-size:14px; background:rgba(233,185,73,.1); border:1px solid rgba(233,185,73,.35);
+           -webkit-backdrop-filter:var(--vetro-sfoca); backdrop-filter:var(--vetro-sfoca); box-shadow:var(--vetro-luce);}
+  .qg-scad b{font-size:18px; color:var(--oro-chiaro); white-space:nowrap;}
+  .qg-scad.chiusa b{color:var(--dim);}
+  .qg-giorno{display:flex; align-items:center; gap:8px; margin:14px 4px 6px; color:var(--c);
+             font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:16px; text-transform:uppercase; letter-spacing:.04em;}
+  .qg-giorno i{flex:1; height:1px; background:currentColor; opacity:.35;}
+  .qg-partita{margin-bottom:7px; padding:10px 12px; border-radius:18px; background:var(--vetro-liquido); border:1px solid var(--vetro-bordo);
+              -webkit-backdrop-filter:var(--vetro-sfoca); backdrop-filter:var(--vetro-sfoca); box-shadow:var(--vetro-luce), 0 8px 22px rgba(0,0,0,.25);}
+  .qg-partita.forte{background:rgba(233,185,73,.12); border-color:rgba(233,185,73,.4);}
+  .qg-partita.passata{opacity:.5;}
+  .qg-testa{display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center;}
+  .qg-maglie{display:flex;}
+  .qg-maglie .maglia{width:22px; height:22px; margin-right:-5px; filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));}
+  .qg-testa b{font-size:14px; font-weight:600; min-width:0;}
+  .qg-ora{font-size:16px; padding:1px 9px; border-radius:999px; color:var(--c); background:rgba(255,255,255,.08);
+          background:color-mix(in srgb, var(--c) 14%, transparent);}
+  .qg-nomi{display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin-top:7px;}
+  .qg-nomi span{font-size:12.5px; padding:2px 9px; border-radius:999px; border:1px solid rgba(255,255,255,.2);
+                color:rgba(243,239,230,.82); cursor:pointer;}
+  .qg-nomi span.in{background:var(--oro); border-color:var(--oro); color:#1a1406; font-weight:600;}
+  .qg-nomi em{margin-left:auto; font-style:normal; font-size:11px; color:var(--dim);}
+  /* «Non disponibili» (17/09/2026, scelta dell'utente): il motivo sempre in vista, i dettagli si
+     aprono toccando; titolo di ogni voce piccolo in oro, l'informazione chiara sotto */
+  .ko-carta{margin-bottom:8px; border-radius:20px; overflow:hidden; background:var(--vetro-liquido);
+            border:1px solid rgba(255,122,122,.3); -webkit-backdrop-filter:var(--vetro-sfoca); backdrop-filter:var(--vetro-sfoca);
+            box-shadow:var(--vetro-luce), 0 10px 26px rgba(0,0,0,.28);}
+  .ko-testa{display:grid; grid-template-columns:34px 1fr auto; gap:10px; align-items:center; padding:12px 14px; cursor:pointer;}
+  .ko-testa .maglia{width:34px; height:34px; filter:drop-shadow(0 3px 3px rgba(0,0,0,.45));}
+  .ko-chi{min-width:0;}
+  .ko-chi b{display:block; font-size:15px; font-weight:600;}
+  .ko-chi small{font-size:11.5px; font-weight:400; color:var(--dim);}
+  .ko-chi span{display:block; margin-top:2px; font-size:13px; font-weight:500; color:#FF8A8A;}
+  .ko-freccia{font-style:normal; font-size:18px; color:var(--dim); transition:transform .2s;}
+  .ko-carta.aperta .ko-freccia{transform:rotate(90deg);}
+  .ko-dett{display:none; padding:4px 14px 12px; border-top:1px solid rgba(255,255,255,.08);}
+  .ko-carta.aperta .ko-dett{display:block;}
+  .ko-voce{padding:8px 0; border-bottom:1px solid rgba(255,255,255,.06);}
+  .ko-voce span{display:block; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--oro); opacity:.9;}
+  .ko-voce b{display:block; margin-top:1px; font-size:14px; font-weight:400; line-height:1.35; color:var(--ink);}
+  .ko-voce b i{font-style:normal; color:var(--dim);}
+  .ko-voce b.vuoto{color:var(--dim);}
+  .ko-scheda{margin-top:10px; padding:8px 12px; border-radius:12px; font:inherit; font-size:13px; color:var(--oro-chiaro);
+             background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); cursor:pointer;}
+  .ko-conta{font-size:22px; color:#FF8A8A;}
   .gioc .ora{max-width:100%; font-size:9px; line-height:1.15; color:var(--oro-chiaro);
              white-space:nowrap; text-shadow:0 1px 3px rgba(0,0,0,.9);}
 
@@ -512,8 +556,8 @@
   /* ---- inviti: una riga nella pagina, il resto in sovraimpressione ---- */
   .invito{display:flex; align-items:center; gap:14px; width:100%; margin:14px 0 4px; padding:14px 14px 14px 16px;
           text-align:left; font:inherit; color:var(--ink); border-radius:var(--r);
-          background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.02)), var(--vetro);
-          border:1px solid rgba(255,255,255,.12); box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 10px 26px rgba(0,0,0,.28);
+          background:var(--vetro-liquido); -webkit-backdrop-filter:var(--vetro-sfoca); backdrop-filter:var(--vetro-sfoca);
+          border:1px solid var(--vetro-bordo); box-shadow:var(--vetro-luce), 0 10px 26px rgba(0,0,0,.3);
           -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);}
   .invito:active{transform:scale(.98);}
   .invito-icona{width:44px; height:44px; flex-shrink:0; display:grid; place-items:center; border-radius:15px; color:var(--oro-chiaro);
@@ -563,8 +607,9 @@
   .sovra.aperto .sovra-corpo > :nth-child(2){animation-delay:.06s;} .sovra.aperto .sovra-corpo > :nth-child(3){animation-delay:.12s;}
   .sovra.aperto .sovra-corpo > :nth-child(n+4){animation-delay:.18s;}
   .blocco{margin-bottom:14px; padding:16px; border-radius:24px;
-          background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.025)); border:1px solid rgba(255,255,255,.11);
-          box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 12px 30px rgba(0,0,0,.25);}
+          background:rgba(255,255,255,.07); border:1px solid var(--vetro-bordo);
+          -webkit-backdrop-filter:var(--vetro-sfoca); backdrop-filter:var(--vetro-sfoca);
+          box-shadow:var(--vetro-luce), 0 12px 30px rgba(0,0,0,.28);}
   .blocco-t{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;
             font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.1em; color:var(--oro);}
   .blocco-t small{font-size:10px; letter-spacing:.08em; color:var(--dim);}
@@ -622,8 +667,9 @@
   /* .blocco sovrappone un velo bianco: sta bene sulle zone scure dello sfondo, ma il
      riquadro della difesa cade sul centro chiaro dello stemma e il testo si perdeva.
      Qui sotto va una base scura, così si legge dovunque finisca lo scorrimento. */
-  .blocco.scuro{background:linear-gradient(180deg,rgba(14,17,15,.9),rgba(14,17,15,.82));
-                -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);}
+  /* più scuro del vetro normale: cade sul centro chiaro dello stemma, il testo deve leggersi */
+  .blocco.scuro{background:linear-gradient(180deg,rgba(14,17,15,.88),rgba(14,17,15,.78));
+                -webkit-backdrop-filter:var(--vetro-sfoca); backdrop-filter:var(--vetro-sfoca);}
   /* il modificatore di difesa: il numero atteso e, sotto, dove può davvero cadere.
      Una riga per fascia, con l'etichetta accanto alla sua barra: prima erano una
      barra unica e una legenda separate, e l'occhio doveva accoppiarle da sé.
@@ -643,11 +689,44 @@
   .md-r.sel{color:var(--ink);}
   .md-r.sel .md-f{color:var(--oro-chiaro);}
   .md-r.sel i em{background:var(--oro);}
-  /* la panchina, compatta (16/09/2026, scelta dell'utente): una riga per giocatore.
-     Il ragionamento sull'avversario resta nella scheda e in «Il consiglio»: qui, su una
-     lista che si guarda di sfuggita, era ripetizione e faceva una parete di testo. */
-  .lista.magra .riga{padding-top:8px; padding-bottom:8px;}
-  .lista.magra .sotto{font-size:11.5px;}
+  /* la panchina (17/09/2026, scelta dell'utente, dopo la versione compatta del 16/09 che aveva
+     tolto troppo): un riquadro di vetro per reparto, appena dorato, con le maglie. Per ognuno
+     partita e orario, titolarità, avversario; a destra il fantavoto atteso se gioca e quanto
+     balla, sotto fantamedia, gare e le ultime quattro giornate */
+  .pb-reparto{margin-bottom:10px; border-radius:var(--r); overflow:hidden; background:rgba(233,185,73,.07);
+              border:1px solid rgba(233,185,73,.22); -webkit-backdrop-filter:var(--vetro-sfoca); backdrop-filter:var(--vetro-sfoca);
+              box-shadow:var(--vetro-luce), 0 10px 26px rgba(0,0,0,.28);}
+  .pb-testa{display:flex; align-items:center; gap:8px; padding:10px 14px 4px; font-size:11px; letter-spacing:.12em;
+            text-transform:uppercase; color:rgba(243,239,230,.72);}
+  .pb-sigla{width:22px; height:22px; border-radius:7px; display:grid; place-items:center; letter-spacing:0;
+            font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:13px;}
+  .pb-riga{display:grid; grid-template-columns:20px 34px 1fr auto; gap:9px; align-items:center; padding:8px 14px;
+           border-top:1px solid rgba(255,255,255,.07); cursor:pointer;}
+  .pb-riga:active{opacity:.65;}
+  .pb-ord small{display:block; text-align:center; font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:15px;}
+  .pb-riga .maglia{width:34px; height:34px; filter:drop-shadow(0 3px 3px rgba(0,0,0,.45));}
+  .pb-chi{min-width:0;}
+  .pb-chi b{display:block; font-size:15px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .pb-chips{display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;}
+  .pb-chip{padding:2px 7px; border-radius:999px; font-size:11px; white-space:nowrap; color:rgba(243,239,230,.78);
+           background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1);}
+  .pb-chip.verde{color:#5BE3A0; background:rgba(67,224,143,.12);}
+  .pb-chip.giallo{color:#F2C94C; background:rgba(242,201,76,.12);}
+  .pb-chip.rosso{color:#FF8A8A; background:rgba(255,122,122,.12);}
+  .pb-barra{display:inline-block; width:22px; height:4px; margin-left:4px; vertical-align:1px; border-radius:2px;
+            overflow:hidden; background:rgba(255,255,255,.14);}
+  .pb-barra i{display:block; height:100%; background:currentColor;}
+  .pb-num{text-align:right; line-height:1;}
+  .pb-num b{font-size:22px; color:var(--oro-chiaro);}
+  .pb-num em{margin-left:2px; font-style:normal; font-size:11px; color:var(--dim);}
+  .pb-num small{display:block; margin-top:4px; font-size:10.5px; color:var(--dim); white-space:nowrap;}
+  .pb-andamento{display:inline-flex; gap:2px; align-items:flex-end; height:11px; margin-left:4px; vertical-align:-1px;}
+  .pb-andamento i{width:3px; border-radius:1px; background:rgba(240,199,94,.85);}
+  .pb-andamento i.sv{height:3px; background:rgba(255,255,255,.2);}
+  .ruolo-P{color:#E4B451;} .ruolo-D{color:#7FB3D5;} .ruolo-C{color:#71C295;} .ruolo-A{color:#E0605C;}
+  .pb-sigla.ruolo-P{background:#E4B451;} .pb-sigla.ruolo-D{background:#7FB3D5;}
+  .pb-sigla.ruolo-C{background:#71C295;} .pb-sigla.ruolo-A{background:#E0605C;}
+  .pb-sigla{color:#10150F;}
   .sc-conti{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;}
   .sc-conti div{min-width:0; padding:9px 6px; border-radius:14px; text-align:center; background:rgba(0,0,0,.22);}
   .sc-conti span{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
@@ -1683,17 +1762,23 @@ function disegnaCampo(g){
     setTimeout(()=>campo.classList.remove('entra'), 2400);
   }
 
-  const numero = {};
-  document.getElementById('panchina').innerHTML =
-    '<h2>Panchina, in quest\'ordine</h2><div class="lista magra">' + panchina(g).map(p=>{
-      numero[p.ruolo] = (numero[p.ruolo]||0) + 1;
-      return riga(p, g, numero[p.ruolo]+'°', true);
-    }).join('') + '</div>';
+  const banco = panchina(g);
+  document.getElementById('panchina').innerHTML = !banco.length ? '' :
+    '<h2>Panchina, in quest\'ordine</h2>'+['P','D','C','A'].map(r=>{
+      const l = banco.filter(p=>p.ruolo===r);
+      return !l.length ? '' : '<div class="pb-reparto"><div class="pb-testa"><span class="pb-sigla ruolo-'+r+'">'+r+'</span>'+PLURALI[r]+'</div>'+
+        l.map((p, k)=>rigaPanchina(p, g, k + 1)).join('')+'</div>';
+    }).join('');
 
+  /* uno solo sta nella pagina; con due o più una riga che apre la sovraimpressione. Si ridisegna
+     solo se cambia: un dettaglio aperto non si richiude all'aggiornamento del minuto */
   const ko = mia.filter(p=>!disponibile(p,g[2]));
-  document.getElementById('kobox').innerHTML = ko.length
-    ? '<h2>Non disponibili</h2><div class="lista">' + ko.map(p=>riga(p,g)).join('') + '</div>' : '';
+  const koHtml = !ko.length ? '' : '<h2>Non disponibili</h2>'+(ko.length === 1 ? cartaKo(ko[0], g)
+    : '<div data-ko-tutti>'+invito('<b class="cond ko-conta">'+ko.length+'</b>', ko.length+' giocatori', ko.map(p=>p.nome).join(', '),
+        ko.map(p=>{ const v = fuoriGiornata(p, g[2]); return v ? v.motivo : p.motivo || 'fuori'; }).join(' · '))+'</div>');
+  if(koHtml !== koDisegnato){ koDisegnato = koHtml; document.getElementById('kobox').innerHTML = koHtml; }
 }
+let koDisegnato = null;
 /* panchina nell'ordine da inserire: nella lega entra il primo panchinaro dello
    stesso ruolo, quindi per ogni ruolo prima chi rende di più */
 function panchina(g){
@@ -1749,18 +1834,70 @@ function perche(p, isoData){
   if(v) return v.motivo+(v.fino ? ' fino al '+v.fino : ', salta questa giornata');
   return 'Fuori fino al '+p.out+(p.motivo ? ' — '+p.motivo : '');
 }
+/* «Non disponibili» (17/09/2026, scelta dell'utente): il motivo sempre in vista, il resto da
+   aprire. Tutto quello che le fonti dicono, detto com'è; quello che non dicono si scrive che
+   manca, così non viene voglia di andare a controllare altrove */
+function cartaKo(p, g){
+  const v = fuoriGiornata(p, g[2]), m = avversarioClub(p.club, g[1]), o = oraPartita(p.club, g[1]);
+  const rientroIso = p.out ? p.out.split('/').reverse().join('-') : null;
+  const salta = rientroIso ? D.g.filter(x=>x[2] >= g[2] && x[2] < rientroIso).length : 0;
+  const breve = v ? v.motivo+(v.fino ? ' · fino al '+v.fino : ' · salta la giornata '+g[0])
+                  : (p.motivo || 'Fuori')+' · fino al '+p.out;
+  const vuoto = t => '<b class="vuoto">'+t+'</b>', pieno = (t, nota) => '<b>'+t+(nota ? ' <i>· '+nota+'</i>' : '')+'</b>';
+  const voci = [['Diagnosi', p.motivo ? pieno(p.motivo) : vuoto('non indicata dalle fonti')],
+    ['Rientro', p.out ? pieno(p.out, salta+(salta === 1 ? ' giornata di lega' : ' giornate di lega'))
+              : v && v.fino ? pieno('fino al '+v.fino) : vuoto('nessuna data ufficiale')]];
+  if(m) voci.push(['Salta', pieno(m.casa ? p.club+' – '+m.avv : m.avv+' – '+p.club, o ? oraBreve(o) : '')]);
+  /* se non fosse fuori: il suo fantavoto atteso contro il meno forte dei titolari del suo ruolo */
+  const u = undici(g), stima = x => { const a = attesoModello('fantavoto', x, g); return a ? a.media : fmStimata(x); };
+  const ultimo = (u[p.ruolo] || []).slice().sort((a, b)=>stima(a) - stima(b))[0];
+  if(ultimo) voci.push(['Senza l\'assenza', pieno(stima(p) > stima(ultimo) ? 'sarebbe tra i titolari' : 'resterebbe in panchina',
+    'atteso '+num(stima(p))+' contro '+num(stima(ultimo))+' di '+ultimo.nome)]);
+  const a = attesoModello('fantavoto', p, g);
+  if(a) voci.push(['Atteso se giocasse', pieno(num(a.media), '±'+num(a.sd))]);
+  const fonti = [v && D.tit_v ? 'probabili del '+dataIt(D.tit_v) : null,
+    D.inf_v ? (p.out ? 'elenco infortuni del '+dataIt(D.inf_v) : 'non è nell\'elenco infortuni del '+dataIt(D.inf_v)) : null].filter(Boolean);
+  if(fonti.length) voci.push(['Fonti', pieno(fonti.join(' · '))]);
+  return '<div class="ko-carta"><div class="ko-testa" data-apri>'+maglia(p.club)+
+    '<div class="ko-chi"><b>'+p.nome+' <small>'+p.club+' · '+RUOLI[p.ruolo]+'</small></b><span>'+breve+'</span></div>'+
+    '<i class="ko-freccia" aria-hidden="true">›</i></div>'+
+    '<div class="ko-dett">'+voci.map(([k, x])=>'<div class="ko-voce"><span>'+k+'</span>'+x+'</div>').join('')+
+    '<button class="ko-scheda" data-id="'+p.id+'">Scheda del giocatore ›</button></div></div>';
+}
+function apriNonDisponibili(){
+  const g = prossima(), ko = mia.filter(p=>!disponibile(p, g[2]));
+  apriSovra('Non disponibili', ko.length+' giocatori · giornata '+g[0], ko.map(p=>cartaKo(p, g)).join(''));
+}
 function disponibile(p, isoData){
   if(fuoriGiornata(p, isoData)) return false;
   if(!p.out) return true;
   const [g,m,a] = p.out.split('/');
   return (a+'-'+m+'-'+g) <= isoData;   // rientra entro la giornata
 }
-function riga(p, g, ordine, magra){
+/* un panchinaro, nel suo riquadro di reparto (17/09/2026): n è l'ordine d'ingresso nel ruolo */
+function rigaPanchina(p, g, n){
+  const m = avversarioClub(p.club, g[1]), o = oraPartita(p.club, g[1]), t = titolarita(p, g), f = forza(p, g);
+  const a = attesoModello('fantavoto', p, g), n1 = x => x.toFixed(1).replace('.', ','), fm = p.pgv ? p.fm.toFixed(2).replace('.', ',') : '—';
+  const partita = m ? (m.casa ? 'vs ' : 'a ')+m.avv+(o ? ' · '+oraBreve(o) : '') : p.club;
+  const tit = !t ? '' : t.stato==='s' ? '<span class="pb-chip">presenze '+t.giocate+'/'+t.di+'</span>'
+    : '<span class="pb-chip '+(t.stato==='t' && t.perc >= 70 ? 'verde' : t.stato==='r' ? 'rosso' : 'giallo')+'">'+
+      (t.stato==='t' ? 'titolare '+t.perc+'%' : t.stato==='c' ? 'in panchina'+(t.perc ? ' '+t.perc+'%' : '') : 'non nelle probabili')+
+      '<i class="pb-barra"><i style="width:'+t.perc+'%"></i></i></span>';
+  const avv = !f ? '' : '<span class="pb-chip'+(f.delta <= -0.2 ? ' rosso' : f.delta >= 0.2 ? ' verde' : '')+'">'+
+    (Math.abs(f.delta) < 0.2 ? 'avversario nella media'
+      : f.avv+(f.dietro ? ' segna ' : ' subisce ')+n1(f.val)+(f.campo==='casa' ? ' in casa' : ' fuori'))+(f.stima ? ' · stima' : '')+'</span>';
+  const ultime = andamento(p).slice(-4);
+  const barrette = !ultime.length ? '' : '<span class="pb-andamento">'+ultime.map(s=>s.v
+    ? '<i style="height:'+Math.max(3, Math.min(11, Math.round(s.v[1]*0.9)))+'px"></i>' : '<i class="sv"></i>').join('')+'</span>';
+  return '<div class="pb-riga" data-id="'+p.id+'"><span class="pb-ord ruolo-'+p.ruolo+'"><small>'+n+'°</small></span>'+maglia(p.club)+
+    '<div class="pb-chi"><b>'+p.nome+'</b><div class="pb-chips"><span class="pb-chip">'+partita+'</span>'+tit+avv+'</div></div>'+
+    '<div class="pb-num"><b class="cond">'+(a ? n1(a.media)+'</b><em>±'+n1(a.sd)+'</em>' : fm+'</b>')+
+    '<small>FM '+fm+' · '+(p.pgv || 0)+(p.pgv === 1 ? ' gara' : ' gare')+barrette+'</small></div></div>';
+}
+function riga(p, g, ordine){
   const m = avversarioClub(p.club, g[1]);
   const ko = !disponibile(p, g[2]);
-  /* nella riga magra la forma breve, la stessa delle maglie in Rosa: «in casa con X»
-     mandava a capo mezza panchina */
-  const sfida = m ? (magra ? (m.casa?'vs ':'a ') : (m.casa?'in casa con ':'a ')) + m.avv : '';
+  const sfida = m ? (m.casa?'in casa con ':'a ') + m.avv : '';
   const t = titolarita(p, g), f = forza(p, g);
   const stato = !t ? '' : t.stato==='s' ? '<span class="nodata">presenze '+t.giocate+'/'+t.di+'</span>'
               : t.stato==='t' ? '<span class="tit">titolare '+t.perc+'%</span>'
@@ -1774,10 +1911,9 @@ function riga(p, g, ordine, magra){
     (ordine ? '<small>'+ordine+'</small>' : '')+'</div>'+
     '<span class="mini">'+maglia(p.club)+'</span>'+
     '<div class="chi"><div class="n">'+p.nome+'</div><div class="sotto">'+sotto+'</div>'+
-    (f && !ko && !magra ? '<div class="sotto">'+motivoAvv(f)+'</div>' : '')+
-    (t && !ko && !magra ? '<div class="barra b-'+t.stato+'"><i style="width:'+t.perc+'%"></i></div>' : '')+'</div>'+
-    '<div class="fm '+(p.pgv?'':'nodata')+'">'+fm+
-      (magra ? '' : '<small>'+(p.pgv||0)+' gare</small>'+miniLinea(p))+'</div></div>';
+    (f && !ko ? '<div class="sotto">'+motivoAvv(f)+'</div>' : '')+
+    (t && !ko ? '<div class="barra b-'+t.stato+'"><i style="width:'+t.perc+'%"></i></div>' : '')+'</div>'+
+    '<div class="fm '+(p.pgv?'':'nodata')+'">'+fm+'<small>'+(p.pgv||0)+' gare</small>'+miniLinea(p)+'</div></div>';
 }
 
 /* ---------- maglie ---------- */
@@ -1985,26 +2121,36 @@ function oraPartita(club, sa){
 function oraBreve(d){
   return d.toLocaleString('it-IT',{weekday:'short', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Rome'});
 }
-/* le partite della giornata in cui gioca almeno un tuo giocatore disponibile, in ordine di
-   orario, con in cima la scadenza: in grassetto chi è nell'undici consigliato */
+/* le partite della giornata in cui gioca almeno un tuo giocatore disponibile, per giorno e in
+   ordine di orario, con in cima la scadenza: in oro chi è nell'undici consigliato.
+   Rifatta il 17/09/2026 (scelta dell'utente): stesse informazioni, a colpo d'occhio */
+const COLORI_GIORNI = {lun:'#8FB8FF', mar:'#FF9FB2', mer:'#9FE07A', gio:'#F7A072', ven:'#F2B35B', sab:'#5FD3C0', dom:'#B79CFF'};
+const traQuanto = ms => { const h = Math.floor(ms/3600000);
+  return h >= 24 ? 'tra '+Math.floor(h/24)+'g '+(h%24)+'h' : h >= 1 ? 'tra '+h+'h' : 'tra '+Math.max(1, Math.ceil(ms/60000))+' min'; };
 function renderQuando(g){
   const box = document.getElementById('quando'), o = orario(g);
   if(!o || !o.partite){ box.innerHTML = ''; return; }
   const u = undici(g), scelti = new Set([].concat(u.P,u.D,u.C,u.A).map(p=>p.id));
   const disp = mia.filter(p=>disponibile(p, g[2])), ora = oggi().getTime();
-  const righe = o.partite.map(([casa, fuori, iso])=>{
+  let giorno = '', partite = '';
+  o.partite.forEach(([casa, fuori, iso])=>{
     const miei = disp.filter(p=>p.club===casa || p.club===fuori)
                      .sort((a,b)=>scelti.has(b.id)-scelti.has(a.id) || ORD[a.ruolo]-ORD[b.ruolo]);
-    if(!miei.length) return '';
-    const d = new Date(iso);
-    return '<div class="qg-riga'+(d.getTime()+2*3600000 < ora ? ' passata' : '')+'"><span class="qg-ora cond">'+oraBreve(d)+'</span>'+
-      '<div class="qg-dett"><b>'+casa+' – '+fuori+'</b><div class="qg-nomi">'+
-      miei.map(p=>'<span data-id="'+p.id+'"'+(scelti.has(p.id) ? ' class="in"' : '')+'>'+p.nome+'</span>').join(', ')+'</div></div></div>';
-  }).join('');
+    if(!miei.length) return;
+    const d = new Date(iso), [gg, hh] = oraBreve(d).split(' '), colore = COLORI_GIORNI[gg] || '#E4B451';
+    const inCampo = miei.filter(p=>scelti.has(p.id)).length;
+    if(gg !== giorno){ giorno = gg; partite += '<div class="qg-giorno" style="--c:'+colore+'">'+gg+'<i></i></div>'; }
+    partite += '<div class="qg-partita'+(inCampo >= 3 ? ' forte' : '')+(d.getTime()+2*3600000 < ora ? ' passata' : '')+'" style="--c:'+colore+'">'+
+      '<div class="qg-testa"><span class="qg-maglie">'+maglia(casa)+maglia(fuori)+'</span><b>'+casa+' – '+fuori+'</b>'+
+      '<span class="qg-ora cond">'+hh+'</span></div>'+
+      '<div class="qg-nomi">'+miei.map(p=>'<span data-id="'+p.id+'"'+(scelti.has(p.id) ? ' class="in"' : '')+'>'+p.nome+'</span>').join('')+
+      '<em>'+(inCampo ? inCampo+' in campo' : 'solo panchina')+'</em></div></div>';
+  });
   const sc = scadenza(g);
-  box.innerHTML = !righe ? '' : '<h2>Quando giocano i tuoi</h2><div class="lista qg">'+
-    (sc ? '<div class="qg-riga scad"><span class="qg-ora cond">'+oraBreve(sc)+'</span><div class="qg-dett"><b>Scadenza della formazione</b></div></div>' : '')+
-    righe+'</div>';
+  box.innerHTML = !partite ? '' : '<h2>Quando giocano i tuoi</h2>'+
+    (sc ? '<div class="qg-scad'+(sc.getTime() <= ora ? ' chiusa' : '')+'"><span>Scadenza della formazione</span>'+
+          '<b class="cond">'+oraBreve(sc)+(sc.getTime() > ora ? ' · '+traQuanto(sc.getTime() - ora) : ' · chiusa')+'</b></div>' : '')+
+    partite;
 }
 
 /* ---------- importa da Leghe, sul telefono ---------- */
@@ -3309,8 +3455,12 @@ document.getElementById('push-copia').onclick = copiaCodice;
 document.getElementById('push-mostra').onclick = ()=>{ cartaAperta = true; statoPush(); };
 /* toccare un giocatore, in campo o in una lista, apre la sua scheda */
 function toccaGiocatore(ev){
-  const n = ev.target && ev.target.closest ? ev.target.closest('[data-id]') : null;
-  if(n) apriGiocatore(+n.dataset.id);
+  const t = ev.target && ev.target.closest ? ev.target : null;
+  if(t && t.closest('[data-ko-tutti]')){ apriNonDisponibili(); return; }
+  const n = t ? t.closest('[data-id]') : null;
+  if(n){ apriGiocatore(+n.dataset.id); return; }
+  const testa = t ? t.closest('[data-apri]') : null;          // i dettagli di un indisponibile, aperti e chiusi
+  if(testa) testa.parentNode.classList.toggle('aperta');
 }
 ['campo','sfida','quando','panchina','kobox','rosa'].forEach(id=>{ document.getElementById(id).onclick = toccaGiocatore; });
 document.getElementById('sovra-corpo').onclick = toccaSovra;
