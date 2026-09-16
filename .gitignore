@@ -1,0 +1,12 @@
+__pycache__/
+# web-push, installato dal workflow solo per mandare le notifiche
+node_modules/
+# file delle rose già importati: restano solo sul PC
+archivio/
+# patch dal lavoro da remoto (sessioni cloud): smistamento, non fa parte della storia
+remoto/
+# il lucchetto (16/09/2026): i dati della lega in chiaro stanno solo sul PC e nei giri di
+# GitHub; nel repository ci sono le copie chiuse (dati/*.chiuso.json)
+dati/base.json
+dati/lega.json
+dati/consigli.json

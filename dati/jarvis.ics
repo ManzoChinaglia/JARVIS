@@ -1,0 +1,151 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Jarvis//Fantacalcio//IT
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Jarvis · fantacalcio
+X-WR-TIMEZONE:Europe/Rome
+REFRESH-INTERVAL;VALUE=DURATION:PT6H
+X-PUBLISHED-TTL:PT6H
+BEGIN:VTIMEZONE
+TZID:Europe/Rome
+BEGIN:DAYLIGHT
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+DTSTART:19700329T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+DTSTART:19701025T030000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:jarvis-scadenza-g1@manzochinaglia.github.io
+DTSTAMP:20260916T185113Z
+DTSTART:20260918T183000Z
+DTEND:20260918T184500Z
+SUMMARY:Schiera la formazione · G1
+DESCRIPTION:Si chiude 15 minuti prima del primo anticipo\, Monza-Sassuolo.\
+ nGiochi in trasferta.\nApri Jarvis: https://manzochinaglia.github.io/JARVI
+ S/
+URL:https://manzochinaglia.github.io/JARVIS/
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT2H
+DESCRIPTION:Tra 2 ore si chiude la formazione
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:jarvis-scadenza-g2@manzochinaglia.github.io
+DTSTAMP:20260916T185113Z
+DTSTART:20261010T124500Z
+DTEND:20261010T130000Z
+SUMMARY:Schiera la formazione · G2
+DESCRIPTION:Si chiude 15 minuti prima del primo anticipo\, Genoa-Fiorentina
+ .\nGiochi in casa.\nApri Jarvis: https://manzochinaglia.github.io/JARVIS/
+URL:https://manzochinaglia.github.io/JARVIS/
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT2H
+DESCRIPTION:Tra 2 ore si chiude la formazione
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:jarvis-scadenza-g3@manzochinaglia.github.io
+DTSTAMP:20260916T185113Z
+DTSTART:20261016T183000Z
+DTEND:20261016T184500Z
+SUMMARY:Schiera la formazione · G3
+DESCRIPTION:Si chiude 15 minuti prima del primo anticipo\, Frosinone-Sassuo
+ lo.\nGiochi in trasferta.\nApri Jarvis: https://manzochinaglia.github.io/J
+ ARVIS/
+URL:https://manzochinaglia.github.io/JARVIS/
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT2H
+DESCRIPTION:Tra 2 ore si chiude la formazione
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:jarvis-scadenza-g4@manzochinaglia.github.io
+DTSTAMP:20260916T185113Z
+DTSTART:20261023T183000Z
+DTEND:20261023T184500Z
+SUMMARY:Schiera la formazione · G4
+DESCRIPTION:Si chiude 15 minuti prima del primo anticipo\, Torino-Monza.\nG
+ iochi in casa.\nApri Jarvis: https://manzochinaglia.github.io/JARVIS/
+URL:https://manzochinaglia.github.io/JARVIS/
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT2H
+DESCRIPTION:Tra 2 ore si chiude la formazione
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:jarvis-scadenza-g5@manzochinaglia.github.io
+DTSTAMP:20260916T185113Z
+DTSTART:20261027T171500Z
+DTEND:20261027T173000Z
+SUMMARY:Schiera la formazione · G5
+DESCRIPTION:Si chiude 15 minuti prima del primo anticipo\, Sassuolo-Lazio.\
+ nGiochi in trasferta.\nApri Jarvis: https://manzochinaglia.github.io/JARVI
+ S/
+URL:https://manzochinaglia.github.io/JARVIS/
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT2H
+DESCRIPTION:Tra 2 ore si chiude la formazione
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:jarvis-scadenza-g6@manzochinaglia.github.io
+DTSTAMP:20260916T185113Z
+DTSTART:20261031T134500Z
+DTEND:20261031T140000Z
+SUMMARY:Schiera la formazione · G6
+DESCRIPTION:Si chiude 15 minuti prima del primo anticipo\, Bologna-Monza.\n
+ Giochi in casa.\nApri Jarvis: https://manzochinaglia.github.io/JARVIS/
+URL:https://manzochinaglia.github.io/JARVIS/
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT2H
+DESCRIPTION:Tra 2 ore si chiude la formazione
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:jarvis-scadenza-g7@manzochinaglia.github.io
+DTSTAMP:20260916T185113Z
+DTSTART:20261106T193000Z
+DTEND:20261106T194500Z
+SUMMARY:Schiera la formazione · G7
+DESCRIPTION:Si chiude 15 minuti prima del primo anticipo\, Venezia-Udinese.
+ \nGiochi in trasferta.\nApri Jarvis: https://manzochinaglia.github.io/JARV
+ IS/
+URL:https://manzochinaglia.github.io/JARVIS/
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT2H
+DESCRIPTION:Tra 2 ore si chiude la formazione
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:jarvis-scadenza-g8@manzochinaglia.github.io
+DTSTAMP:20260916T185113Z
+DTSTART:20261121T134500Z
+DTEND:20261121T140000Z
+SUMMARY:Schiera la formazione · G8
+DESCRIPTION:Si chiude 15 minuti prima del primo anticipo\, Como-Cagliari.\n
+ Giochi in casa.\nApri Jarvis: https://manzochinaglia.github.io/JARVIS/
+URL:https://manzochinaglia.github.io/JARVIS/
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT2H
+DESCRIPTION:Tra 2 ore si chiude la formazione
+END:VALARM
+END:VEVENT
+END:VCALENDAR

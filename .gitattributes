@@ -1,0 +1,6 @@
+# fine riga: in Git sempre LF, anche lavorando da Windows. Senza questa riga i file
+# riscritti da un editor Windows tornano CRLF e git segna TUTTO il repository come
+# modificato, con lo stesso numero di righe aggiunte e tolte (visto il 15/09/2026).
+* text=auto eol=lf
+# il calendario va servito con le righe CRLF (RFC 5545): Git non deve convertirle
+dati/*.ics -text

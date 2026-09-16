@@ -1,0 +1,93 @@
+name: Aggiorna Jarvis
+
+on:
+  schedule:
+    # ogni giorno, dopo gli aggiornamenti delle probabili (11:30 e 19:30 in Italia),
+    # così prima di qualunque scadenza, anche infrasettimanale, i dati sono freschi.
+    # Orari in UTC: il giro della sera è doppio perché con l'ora legale e con quella
+    # solare è un giro diverso a cadere dopo le 19:30 italiane.
+    - cron: '45 10 * * *'   # 12:45 con l'ora legale, 11:45 con la solare
+    - cron: '45 17 * * *'   # 19:45 con l'ora legale, 18:45 con la solare
+    - cron: '45 18 * * *'   # 20:45 con l'ora legale, 19:45 con la solare
+  workflow_dispatch:
+    inputs:
+      prova:
+        description: 'Manda anche una notifica di prova'
+        type: boolean
+        default: false
+
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      # il lucchetto (16/09/2026): i dati della lega nel repository sono chiusi a chiave;
+      # si aprono per il giro e si richiudono prima del salvataggio. Senza dati/lucchetto.json
+      # non fa niente. Se fallisce (password mancante) i dati pubblici si aggiornano lo stesso.
+      - name: Apri il lucchetto
+        env:
+          JARVIS_CHIAVE: ${{ secrets.JARVIS_CHIAVE }}
+        run: node scripts/lucchetto.js apri
+
+      - uses: actions/setup-python@v7
+        if: always()
+        with:
+          python-version: '3.14'
+
+      - name: Installa dipendenze
+        if: always()
+        run: pip install requests beautifulsoup4 lxml
+
+      - name: Scarica i dati e genera il calendario
+        if: always()
+        run: python scripts/aggiorna.py
+
+      # il modello del fantavoto atteso (B2): si riaddestra con i voti nuovi, in Python
+      # puro, in pochi secondi. Se il risultato non è plausibile resta il file di prima.
+      - name: Aggiorna il modello del fantavoto
+        if: always()
+        run: python scripts/modello.py
+
+      # gli avvisi nuovi arrivano sull'iPhone da Jarvis (Web Push) o, di riserva, con
+      # ntfy. Iscrizione, chiave privata e argomento stanno nei Secrets di GitHub, mai
+      # nel codice. Se web-push non si installa resta ntfy. Non fa mai fallire il giro.
+      - name: Manda le notifiche
+        if: always()
+        env:
+          NTFY_ARGOMENTO: ${{ secrets.NTFY_ARGOMENTO }}
+          PUSH_ISCRIZIONE: ${{ secrets.PUSH_ISCRIZIONE }}
+          PUSH_CHIAVE: ${{ secrets.PUSH_CHIAVE }}
+          PROVA_NOTIFICHE: ${{ inputs.prova }}
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund web-push@3.6.7 || echo "web-push non installato: solo ntfy"
+          node scripts/notifiche.js
+
+      # le copie in chiaro sono in .gitignore: nel commit vanno solo quelle chiuse
+      - name: Richiudi il lucchetto
+        if: always()
+        env:
+          JARVIS_CHIAVE: ${{ secrets.JARVIS_CHIAVE }}
+        run: node scripts/lucchetto.js chiudi
+
+      # si salva anche se una fonte è fallita: i dati buoni restano, ma il giro
+      # risulta rosso su GitHub (che di norma avvisa per email). Se nel frattempo è
+      # arrivato un altro commit, ci si allinea prima di spingere.
+      - name: Salva i dati aggiornati
+        if: always()
+        run: |
+          if [ -n "$(git status --porcelain dati/)" ]; then
+            git config user.name  "Jarvis"
+            git config user.email "jarvis@users.noreply.github.com"
+            git add dati/
+            git commit -m "Aggiornamento dati $(date -u +'%Y-%m-%d %H:%M')"
+            git pull --rebase && git push || { sleep 5; git pull --rebase && git push; }
+          else
+            echo "Nessuna variazione: niente da salvare."
+          fi
