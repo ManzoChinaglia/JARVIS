@@ -645,8 +645,9 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     '5': { ...orariVeri.giornate['5'], partite: [[portiereU.club, 'Squadra finta', '2026-09-19T16:00:00+00:00']] } } };
   ({ t, el } = await avvia({ adesso: giovedi, dati: { ...senzaSorprese, 'orari.json': conPartite } }));
   verifica('sotto la maglia il giorno e l\'ora della partita', el.campo.innerHTML.includes('<span class="ora">sab 18:00</span>'));
-  verifica('«Quando giocano i tuoi»: scadenza in cima, poi la partita con i tuoi', /Quando giocano i tuoi/.test(el.quando.innerHTML)
-           && el.quando.innerHTML.indexOf('Scadenza della formazione') < el.quando.innerHTML.indexOf(portiereU.nome), portiereU.nome);
+  verifica('«Quando giocano i tuoi»: la partita con i tuoi, senza ripetere la scadenza (è già in cima alla Giornata)',
+           /Quando giocano i tuoi/.test(el.quando.innerHTML) && el.quando.innerHTML.includes(portiereU.nome)
+           && !/Scadenza della formazione/.test(el.quando.innerHTML), portiereU.nome);
   verifica('per giorno, con le maglie delle squadre e quanti dei tuoi sono in campo', /class="qg-giorno"/.test(el.quando.innerHTML)
            && /class="maglia"/.test(el.quando.innerHTML) && /in campo|solo panchina/.test(el.quando.innerHTML));
   t.apriGiocatore(portiereU.id);

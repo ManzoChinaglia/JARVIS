@@ -517,7 +517,9 @@ CRLF: `.gitattributes` impedisce a Git di convertirlo.
   - **quando giocano i tuoi** (`renderQuando`): per giorno, con un colore leggero per giorno
     (`COLORI_GIORNI`, sull'etichetta e sull'orario), le maglie delle due squadre, i tuoi in
     oro se nell'undici, «N in campo» o «solo panchina», e la partita con tre o più titolari
-    appena dorata; in cima la scadenza col tempo che manca.
+    appena dorata. Il riquadro della scadenza in cima è stato tolto lo stesso giorno, su
+    richiesta dell'utente: ripeteva il conto alla rovescia, che è già la prima cosa della
+    Giornata. Non rimetterlo.
 - **Liquid Glass ovunque** (17/09/2026, scelta dell'utente): `.carta`, `.lista`, `.blocco`,
   `.invito` e i riquadri nuovi usano lo stesso vetro della barra (`--vetro-liquido`,
   `--vetro-bordo`, `--vetro-luce`, `--vetro-sfoca`: più trasparente, sfocatura 22 px con
@@ -580,8 +582,8 @@ sfida, in classifica e nel calendario. Scelti dall'utente il 14/09/2026.
 `orari.json` ha, per ogni giornata con orario ufficiale, anche `partite`:
 `[casa, fuori, calcio d'inizio]` in ordine di orario (dal 14/09/2026). L'app lo usa
 (`oraPartita`, `oraBreve`) sotto ogni maglia («sab 18:00»), nella scheda del
-giocatore e in «Quando giocano i tuoi» (`renderQuando`): la scadenza in cima, poi
-le partite dove gioca almeno un tuo giocatore disponibile, per giorno, in oro chi è
+giocatore e in «Quando giocano i tuoi» (`renderQuando`): le partite dove gioca
+almeno un tuo giocatore disponibile, per giorno, in oro chi è
 nell'undici (dal 17/09/2026, vedi «Grafica»). Senza orari ufficiali non si mostra niente.
 
 «Copia la formazione» è stata tolta il 14/09/2026, lo stesso giorno in cui era

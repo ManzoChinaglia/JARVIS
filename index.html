@@ -258,11 +258,6 @@
   /* «Quando giocano i tuoi», per giorno (17/09/2026, scelta dell'utente): un colore leggero per
      giorno (etichetta e orario), le maglie delle due squadre, i tuoi in oro se sono nell'undici,
      e la partita con tre o più titolari un poco dorata: si legge a colpo d'occhio */
-  .qg-scad{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:4px; padding:12px 16px;
-           border-radius:var(--r); font-size:14px; background:rgba(233,185,73,.1); border:1px solid rgba(233,185,73,.35);
-           -webkit-backdrop-filter:var(--vetro-sfoca); backdrop-filter:var(--vetro-sfoca); box-shadow:var(--vetro-luce);}
-  .qg-scad b{font-size:18px; color:var(--oro-chiaro); white-space:nowrap;}
-  .qg-scad.chiusa b{color:var(--dim);}
   .qg-giorno{display:flex; align-items:center; gap:8px; margin:14px 4px 6px; color:var(--c);
              font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:16px; text-transform:uppercase; letter-spacing:.04em;}
   .qg-giorno i{flex:1; height:1px; background:currentColor; opacity:.35;}
@@ -2122,11 +2117,10 @@ function oraBreve(d){
   return d.toLocaleString('it-IT',{weekday:'short', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Rome'});
 }
 /* le partite della giornata in cui gioca almeno un tuo giocatore disponibile, per giorno e in
-   ordine di orario, con in cima la scadenza: in oro chi è nell'undici consigliato.
-   Rifatta il 17/09/2026 (scelta dell'utente): stesse informazioni, a colpo d'occhio */
+   ordine di orario: in oro chi è nell'undici consigliato.
+   Rifatta il 17/09/2026 (scelta dell'utente): stesse informazioni, a colpo d'occhio. Niente
+   riquadro della scadenza (tolto lo stesso giorno): è già la prima cosa in cima alla Giornata */
 const COLORI_GIORNI = {lun:'#8FB8FF', mar:'#FF9FB2', mer:'#9FE07A', gio:'#F7A072', ven:'#F2B35B', sab:'#5FD3C0', dom:'#B79CFF'};
-const traQuanto = ms => { const h = Math.floor(ms/3600000);
-  return h >= 24 ? 'tra '+Math.floor(h/24)+'g '+(h%24)+'h' : h >= 1 ? 'tra '+h+'h' : 'tra '+Math.max(1, Math.ceil(ms/60000))+' min'; };
 function renderQuando(g){
   const box = document.getElementById('quando'), o = orario(g);
   if(!o || !o.partite){ box.innerHTML = ''; return; }
@@ -2146,11 +2140,7 @@ function renderQuando(g){
       '<div class="qg-nomi">'+miei.map(p=>'<span data-id="'+p.id+'"'+(scelti.has(p.id) ? ' class="in"' : '')+'>'+p.nome+'</span>').join('')+
       '<em>'+(inCampo ? inCampo+' in campo' : 'solo panchina')+'</em></div></div>';
   });
-  const sc = scadenza(g);
-  box.innerHTML = !partite ? '' : '<h2>Quando giocano i tuoi</h2>'+
-    (sc ? '<div class="qg-scad'+(sc.getTime() <= ora ? ' chiusa' : '')+'"><span>Scadenza della formazione</span>'+
-          '<b class="cond">'+oraBreve(sc)+(sc.getTime() > ora ? ' · '+traQuanto(sc.getTime() - ora) : ' · chiusa')+'</b></div>' : '')+
-    partite;
+  box.innerHTML = !partite ? '' : '<h2>Quando giocano i tuoi</h2>'+partite;
 }
 
 /* ---------- importa da Leghe, sul telefono ---------- */
