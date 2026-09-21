@@ -1,4 +1,4 @@
-"""Il modello del fantavoto atteso (CLAUDE.md, «Da fare: il cervello di Jarvis», B2).
+"""Il modello del fantavoto atteso (STORIA.md, «Da fare: il cervello di Jarvis», B2).
 
 Impara dallo storico dei voti (dati/storico/) quanto contano, ruolo per ruolo, la storia
 del giocatore, la sua quotazione, il giocare in casa, l'avversario e la forza della sua

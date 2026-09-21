@@ -1,5 +1,5 @@
 """Lo storico dei voti di fantacalcio.it, dalla stagione 2015-16 alla 2025-26: la
-materia prima per il fantavoto atteso (CLAUDE.md, «Da fare: il cervello di Jarvis», B1).
+materia prima per il fantavoto atteso (STORIA.md, «Da fare: il cervello di Jarvis», B1).
 
 Una stagione per file, compresso: dati/storico/<stagione>.json.gz, con per ogni
 giornata e ogni giocatore (per Id) voto, fantavoto, ruolo, squadra e bonus e malus
