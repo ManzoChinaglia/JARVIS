@@ -143,9 +143,10 @@ Dopo ogni giornata, fino alla scadenza della prossima, in cima alla Giornata c'�
 **Com'è andata**: toccala e si apre a tutto schermo, con l'app sfocata dietro. Dentro:
 il risultato vero della tua sfida e quanto avrebbe fatto l'undici di Jarvis, il
 migliore e il peggiore, tutti i tuoi con voto e bonus o malus. La scheda
-**Stagione** (in basso, tra Rosa e Lega): posizione in classifica, quanto si avvicina
-Jarvis al massimo possibile, il grafico giornata per giornata (tocca una colonna per
-vederla), gol, assist e ammonizioni della rosa e chi produce di più. Nella scheda di ogni giocatore
+**Stagione** (in basso, tra Rosa e Lega): l'affidabilità di Jarvis con le giornate già
+calcolate, posizione e forma in lega, il tuo punteggio accanto a quello di Jarvis e al
+massimo possibile, le giornate di lega colorate per esito (tocca una colonna per vederla)
+e chi produce di più. Gol, assist e ammonizioni della rosa sono in fondo alla Rosa. Nella scheda di ogni giocatore
 c'è l'andamento dei fantavoti e ci sono i prossimi 3 avversari (anche come pallini
 sotto le maglie della Rosa). Nella scheda Lega il **Mercato, sulla carta**: scambi 1
 contro 1 alla pari, che convengono a te senza togliere niente all'altro. Si chiude

@@ -399,8 +399,9 @@ prova nuova deve fare lo stesso.
 
 **Forma** (`forma` in `index.html`): gli esiti (V/N/P) delle ultime 5 giornate
 di lega già giocate per una squadra, dalla più vecchia alla più recente,
-confrontando i fantapunti di quella giornata. In classifica, sotto ogni
-squadra, come pallini (verde/giallo/rosso, `.forma .fp`).
+**dai gol, come la classifica** (`esitoLega`; dal 21/09/2026: prima dai fantapunti, e il
+1-1 della giornata 1, 66 a 68, usciva come sconfitta); senza gol, dai fantapunti. In
+classifica, sotto ogni squadra, come pallini (verde/giallo/rosso, `.forma .fp`).
 
 **Tabellone**: nella testata della Giornata, il punteggio vero al posto di
 «VS» (`renderGiornata`, `risultatoLega(g[0])`), con un festeggiamento se hai
@@ -823,18 +824,37 @@ tutte già visibili nella Giornata, nella Rosa e nelle schede dei giocatori.
 
 Al suo posto la scheda **Stagione** (barra in basso: Giornata · Rosa · Stagione · Lega,
 icona a colonne), approvata su mockup lo stesso giorno. La riga «La stagione» in cima alla
-Rosa non c'è più. Dentro (`renderStagione` → `htmlStagione`, in `#s-stagione`):
-- **In lega**: posizione in classifica e punti, V · N · P coi gol, e «Jarvis N% del
-  massimo» (`accuratezzaConsiglio`), con sotto una nota: consigliato su massimo possibile
-  e, se c'è, il calcolo di prima (serve all'autocalibrazione dei `PESI`).
-- **Giornata per giornata**: il grafico (`graficoStagione`, sotto la colonna scelta anche
-  «· G1» se è una giornata di lega), aperto sull'**ultima** giornata (`stagioneSel`); sotto,
-  in breve (`dettaglioBreve`): «Giornata 1 di lega: vero 66 a 68, 1-1 · Jarvis 70 ·
-  migliori 11 77» e i quattro reparti; «gli 11 della giornata ›» apre la giornata intera in
-  sovraimpressione (`apriUndiciGiornata`, `dettaglioGiornata` senza frecce).
-- **La rosa in numeri**: gol, assist, ammonizioni.
+Rosa non c'è più. Rifatta lo stesso giorno su un secondo mockup («poco grafica, troppo
+testo»), e questo è l'ordine di oggi (`renderStagione` → `htmlStagione`, in `#s-stagione`):
+- **Affidabilità di Jarvis** (`bloccoAffidabilita`, voluta dall'utente come prima cosa):
+  un anello con la percentuale (`accuratezzaConsiglio`: punti del consiglio salvato sui
+  migliori 11 a posteriori), accanto «70 su 77 possibili», e un livello: **indicativa**
+  sotto le 5 giornate calcolate, **attendibile** da 5, **solida** da 15
+  (`LIVELLI_AFFIDABILITA`: soglie scelte da Claude e approvate, non misurate). Sotto lo
+  «stato di ingestione»: «Giornate calcolate N di 34», una tacca per giornata di lega
+  (accese quelle calcolate, un po' più chiare la 5ª e la 15ª). Senza giornate: «Ancora
+  niente», anello vuoto.
+- **In lega** (`bloccoLega`): la posizione grande, i punti, i pallini della forma dai gol
+  (`formaGol`; tratteggiati quelli da giocare), V N P coi gol e una linea della posizione
+  giornata per giornata (`posizioniLega`: ricostruita dai risultati, 3 punti a vittoria, a
+  parità vale chi ha più fantapunti; l'ultima è quella vera di Leghe).
+- **Tu, Jarvis e il massimo** (`confrontoGiornata`, della giornata scelta): una barra con
+  tre segni e due pillole, «+4 seguendo Jarvis» e «11 punti lasciati in panchina». Solo
+  per le giornate di lega con il risultato importato.
+- **Giornate di lega** (`graficoLega`): una colonna per giornata di lega, il tuo punteggio
+  vero colorato per esito (verde, giallo, rosso), dietro il massimo tratteggiato in verde,
+  una tacca dorata dove sarebbe arrivato Jarvis; le giornate da giocare vuote (almeno 8
+  colonne, poi quelle giocate più 3). Aperto sull'ultima giocata (`stagioneSel`); toccando
+  una colonna cambiano grafico, confronto e sotto (`giornataLega`): risultato, i reparti dei
+  migliori 11 in una barra coi colori dei ruoli, e «gli 11 della giornata ›» (in
+  sovraimpressione, `apriUndiciGiornata`, `dettaglioGiornata` senza frecce). Le giornate di
+  sola Serie A prima della lega non sono più nel grafico: servono ancora a «Chi produce».
 - **Chi produce**: i primi cinque; «tutti i 25 ›» apre l'elenco intero in sovraimpressione
   (`apriProduttori`, con il testo da condividere).
+
+«La rosa in numeri» (gol, assist, ammonizioni) è in fondo alla scheda **Rosa**
+(`#rosa-numeri`), su scelta dell'utente. La nota col calcolo di prima è tolta: il confronto
+resta nella giornata aperta («Con il calcolo di prima»).
 
 I tocchi passano da `toccaStagione` (colonna o freccia, «tutti», «gli 11», giocatore). I
 numeri interi si scrivono senza «,0» (`numCorto`). **Da fare con l'utente**: snellire le
@@ -1385,10 +1405,10 @@ python prove/modello.py
 15/09/2026). Alcune prove girano solo se ci sono i file veri esportati da Leghe,
 che stanno in `archivio/` e sono fuori da Git. Quindi:
 
-- **sul PC dell'utente** (che ha `archivio/`): `prove/app.js` 304/304 e
+- **sul PC dell'utente** (che ha `archivio/`): `prove/app.js` 308/308 e
   `prove/lega.py` 34/34 (dal 21/09: «Chiedi» tolta ha portato via le sue verifiche,
   i moduli e la scheda Stagione ne hanno aggiunte)
-- **su un clone pulito o nella CI** (senza `archivio/`): 303/303 e 31/31, perché
+- **su un clone pulito o nella CI** (senza `archivio/`): 307/307 e 31/31, perché
   saltano «il file vero di Leghe si legge uguale (solo sul PC)» e le tre di
   `lega.py` sulla stessa cosa
 - `prove/privacy.py` 5/5 finché il lucchetto non è attivo, 8/8 dopo (le tre sul

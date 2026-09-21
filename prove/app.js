@@ -720,7 +720,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('chi produce: i primi cinque nella scheda, dal più prolifico', (sst0.match(/class="vr prod"/g) || []).length === 5
            && Math.abs(st.righe[0].tot - piuAlto) < 1e-9 && st.righe.every((x, i) => !i || st.righe[i - 1].tot >= x.tot)
            && sst0.includes('tutti i ' + t.mia.length + ' ›'), st.righe[0].p.nome);
-  verifica('con gol, assist e ammonizioni dei tuoi', ['Gol', 'Assist', 'Ammonizioni'].every(k => sst0.includes(k)));
+  verifica('gol, assist e ammonizioni dei tuoi in fondo alla Rosa, non nella Stagione', ['Gol', 'Assist', 'Ammonizioni'].every(k => el['rosa-numeri'].innerHTML.includes(k))
+           && !/La rosa in numeri/.test(sst0));
   t.apriProduttori();
   verifica('«tutti»: in sovraimpressione tutti i tuoi', (el['sovra-corpo'].innerHTML.match(/class="vr prod"/g) || []).length === t.mia.length);
   t.chiudiSovra();
@@ -732,14 +733,11 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('giornata per giornata: i migliori 11 di ogni giornata, reparto per reparto', st2.per.length === 2 && st2.per.every(x =>
            x.scelti.length === 11 && x.scelti.filter(p => p.ruolo === 'D').length === 4
            && Math.abs(x.tot - ['P', 'D', 'C', 'A'].reduce((s, r) => s + x.reparti[r], 0)) < 1e-9), st2.per.map(x => x.tot).join(' e '));
-  const ultimaSt = st2.per[st2.per.length - 1], piccoSt = st2.per.reduce((a, b) => b.tot > a.tot ? b : a), altraSt = st2.per[0].sa;
+  const altraSt = st2.per[0].sa;
   sc = el['s-stagione'].innerHTML;
-  verifica('il grafico: una colonna per giornata, si apre sull\'ultima, la migliore con la stella', (sc.match(/class="st-col[ "]/g) || []).length === 2
-           && sc.includes('class="st-col sel" data-sa="' + ultimaSt.sa + '"') && /★/.test(sc), 'giornata ' + ultimaSt.sa + ', migliore ' + piccoSt.sa);
-  t.scegliGiornata(altraSt);
-  verifica('toccando un\'altra giornata: i migliori 11 e i reparti di quel giorno', el['st-grafico'].innerHTML.includes('class="st-col sel" data-sa="' + altraSt + '"')
-           && /migliori 11 <b>/.test(el['st-giornata'].innerHTML)
-           && ['Porta', 'Difesa', 'Centro', 'Attacco'].every(k => el['st-giornata'].innerHTML.includes(k)));
+  verifica('prima della lega: il grafico ha solo le giornate da giocare, vuote', (sc.match(/class="lg-vuota"/g) || []).length === 8
+           && !/lg-col fatta/.test(sc) && /0 di 34/.test(sc));
+  verifica('e l\'affidabilità dice che non c\'è ancora niente', /Affidabilità di Jarvis/.test(sc) && /Ancora niente/.test(sc) && /<b>0<\/b> di 34/.test(sc));
   t.apriUndiciGiornata(altraSt);
   sc = el['sovra-corpo'].innerHTML;
   verifica('«gli 11 della giornata»: uno per uno in sovraimpressione', (sc.match(/class="vr"/g) || []).length === 11
@@ -864,8 +862,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const seiGiornate = { 1: [vittoriaG1], 2: [risultatoG(2, 60, 60, 1, 1)], 3: [risultatoG(3, 55, 65, 0, 2)],
     4: [risultatoG(4, 68, 50, 3, 1)], 5: [risultatoG(5, 72, 71, 1, 1)], 6: [risultatoG(6, 64, 64, 2, 2)] };
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'lega.json': { aggiornato: 'x', classifica: finta, risultati: seiGiornate } } }));
-  verifica('la forma: esiti delle ultime 5 giornate già giocate, dalla più vecchia alla più recente',
-           t.forma(t.ME).join('') === 'NPVVN', t.forma(t.ME).join(''));
+  verifica('la forma: esiti delle ultime 5 giornate già giocate, dai gol come la classifica (72 a 71 ma 1-1 è un pari)',
+           t.forma(t.ME).join('') === 'NPVNN', t.forma(t.ME).join(''));
   verifica('una squadra senza risultati: forma vuota, niente inventato', t.forma('Squadra Mai Vista').length === 0);
   verifica('i pallini della forma in classifica', (el.classifica.innerHTML.match(/class="forma"/g) || []).length > 0
            && /class="fp v"/.test(el.classifica.innerHTML) && /class="fp n"/.test(el.classifica.innerHTML)
@@ -904,8 +902,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     'consigli.json': null };
   ({ t, el } = await avvia({ adesso: giovedi, dati: senzaConsiglio2 }));
   verifica('senza nessun consiglio salvato: niente da valutare', t.accuratezzaConsiglio(t.stagione().per) === null);
-  verifica('niente numeri di Jarvis se non c\'è niente da valutare',
-           !/Il consiglio di Jarvis:|del massimo/.test(el['s-stagione'].innerHTML));
+  verifica('niente percentuale di Jarvis se non c\'è niente da valutare',
+           /Ancora niente/.test(el['s-stagione'].innerHTML) && !/possibili<\/b>/.test(el['s-stagione'].innerHTML));
   // giornata 1: il consiglio salvato con la sostituzione della lega (sotto il massimo);
   // giornata 2: il consiglio coincide esattamente col migliore possibile, preso da lì
   const conSoloG1 = Object.assign({}, senzaConsiglio2, { 'consigli.json': { giornate: consigliG1 } });
@@ -914,7 +912,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('giornata di lega senza un suo consiglio: nessun valore, non zero', g2prima && g2prima.consiglio === null);
   const consigliG1eG2 = Object.assign({}, consigliG1, { '2': { sa: 6,
     undici: { [g2prima.modulo]: g2prima.scelti.map(p => p.id) }, panchina: { [g2prima.modulo]: [] } } });
-  ({ t, el } = await avvia({ adesso: giovedi, dati: Object.assign({}, senzaConsiglio2, { 'consigli.json': { giornate: consigliG1eG2 } }) }));
+  const legaG1G2 = { aggiornato: 'x', classifica: finta, risultati: { 1: [risultatoG(1, 66, 68, 1, 1)], 2: [risultatoG(2, 70, 60, 2, 0)] } };
+  ({ t, el } = await avvia({ adesso: giovedi, dati: Object.assign({}, senzaConsiglio2, { 'consigli.json': { giornate: consigliG1eG2 }, 'lega.json': legaG1G2 }) }));
   let s = t.stagione();
   const g1 = s.per.find(x => x.g && x.g[0] === 1), g2 = s.per.find(x => x.g && x.g[0] === 2);
   verifica('il consiglio di giornata 1: gli stessi punti visti in «Com\'è andata»', g1 && circa(g1.consiglio, attesoJ), g1 && g1.consiglio);
@@ -926,19 +925,31 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            && circa(acc.media, 100 * (g1.consiglio + g2.consiglio) / (g1.tot + g2.tot)), acc);
   sc = el['s-stagione'].innerHTML;
   const corto = x => Math.abs(x - Math.round(x)) < 0.05 ? String(Math.round(x)) : f1(x);
-  verifica('nella scheda: vicinanza, consigliato e massimo possibile',
-           sc.includes(Math.round(acc.media) + '%') && /2 giornate di lega/.test(sc)
-           && sc.includes('Il consiglio di Jarvis: ' + corto(acc.consiglio) + ' su ' + corto(acc.massimo)), sc.match(/Il consiglio di Jarvis[^<]*/));
+  verifica('affidabilità: la percentuale, i punti su quelli possibili e le giornate calcolate',
+           sc.includes(Math.round(acc.media) + '%') && sc.includes(corto(acc.consiglio) + ' su ' + corto(acc.massimo) + ' possibili')
+           && /<b>2<\/b> di 34/.test(sc) && (sc.match(/<i class="fatta">/g) || []).length === 2 && /class="af-livello">indicativa/.test(sc));
+  const ioF = finta.find(r => r[1] === t.ME);
+  verifica('in lega: posizione, forma dai gol (pari e vittoria) e andamento', sc.includes('<div class="lg-pos cond">' + ioF[0] + '°</div>')
+           && /<div class="lg-forma"><i class="n"><\/i><i class="v"><\/i><i class=""><\/i>/.test(sc) && /class="lg-trend"/.test(sc));
+  verifica('il grafico: le due giornate di lega, colorate per esito, aperto sull\'ultima', (sc.match(/lg-col fatta/g) || []).length === 2
+           && sc.includes('lg-col fatta sel" data-sa="' + g2.sa + '"') && /class="lg-bar n"/.test(sc) && /class="lg-bar v"/.test(sc)
+           && (sc.match(/class="lg-jarvis"/g) || []).length === 2 && (sc.match(/class="lg-vuota"/g) || []).length === 6);
+  verifica('tu, Jarvis e il massimo della giornata 2', sc.includes('Tu 70') && sc.includes('Jarvis ' + corto(g2.consiglio)) && sc.includes('Max ' + corto(g2.tot)));
+  t.scegliGiornata(g1.sa);
+  const cf1 = el['st-confronto'].innerHTML;
+  verifica('toccando la giornata 1: tu, Jarvis, il massimo e le pillole', cf1.includes('Tu 66') && cf1.includes('Jarvis ' + corto(g1.consiglio))
+           && cf1.includes(corto(g1.tot - 66) + ' punti lasciati in panchina')
+           && (g1.consiglio > 66 ? cf1.includes('+' + corto(g1.consiglio - 66) + ' seguendo Jarvis') : true), cf1.match(/<span>[^<]*<\/span>/g));
+  verifica('e sotto il risultato e i reparti in una barra', /<b class="n">1-1<\/b>/.test(el['st-giornata'].innerHTML) && /class="rp"/.test(el['st-giornata'].innerHTML)
+           && el['st-grafico'].innerHTML.includes('lg-col fatta sel" data-sa="' + g1.sa + '"'));
   t.apriUndiciGiornata(g1.sa);
   verifica('nella giornata sotto il massimo: quanto in meno', /Il consiglio di Jarvis: .*in meno del massimo/.test(el['sovra-corpo'].innerHTML)
            && el['sovra-corpo'].innerHTML.includes(f1(Math.abs(g1.consiglio - g1.tot))), el['sovra-corpo'].innerHTML.match(/Il consiglio[^<]*/));
-  t.scegliGiornata(g1.sa);
-  verifica('e nella scheda, in breve: Jarvis accanto ai migliori 11', el['st-giornata'].innerHTML.includes('Jarvis <b>' + corto(g1.consiglio) + '</b>'));
   t.apriUndiciGiornata(g2.sa);
   verifica('nella giornata al massimo: come il massimo possibile', /Il consiglio di Jarvis: .*come il massimo possibile/.test(el['sovra-corpo'].innerHTML)
            && !/in meno del massimo/.test(el['sovra-corpo'].innerHTML));
-  t.scegliGiornata(4);   // Serie A 4: prima della lega, nessun consiglio possibile
-  verifica('prima della lega: niente riga del consiglio', !/Jarvis <b>/.test(el['st-giornata'].innerHTML));
+  t.scegliGiornata(4);   // Serie A 4: prima della lega, non è una colonna del grafico
+  verifica('una giornata di sola Serie A non si sceglie', el['st-grafico'].innerHTML.includes('lg-col fatta sel" data-sa="' + g1.sa + '"'));
   t.chiudiSovra();
 
   console.log('\n31. Il modificatore di difesa (portiere + i 3 migliori difensori)');
@@ -1091,7 +1102,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const somma31 = l => l.reduce((s, id) => s + v5[id][1], 0);
   verifica('per ogni giornata anche il consiglio del calcolo di prima', x31 && circa(x31.consiglio, somma31(und31))
            && circa(x31.consiglioPrima, somma31(vec31)), x31 && (x31.consiglio + ' e ' + x31.consiglioPrima));
-  verifica('e nella stagione il confronto', acc31 && circa(acc31.prima, somma31(vec31)) && /calcolo di prima/.test(el['s-stagione'].innerHTML));
+  t.apriUndiciGiornata(x31.sa);
+  verifica('e nella stagione il confronto', acc31 && circa(acc31.prima, somma31(vec31)) && /Con il calcolo di prima/.test(el['sovra-corpo'].innerHTML));
 
   console.log('\n33. La probabilità di vincere la sfida (B3)');
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31 } }));

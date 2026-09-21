@@ -714,8 +714,8 @@
   .st-numeri span{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);}
   .st-numeri b{display:block; margin-top:4px; font-size:34px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
   .st-numeri small{display:block; margin-top:5px; font-size:11px; color:var(--dim);}
-  #s-stagione .st-numeri b{font-size:28px;}
-  #st-giornata .st-ris b{color:var(--oro-chiaro); font-weight:600;}
+  #s-stagione .st-numeri b, #rosa-numeri .st-numeri b{font-size:28px;}
+  #rosa-numeri .blocco{margin-top:18px;}
   #s-stagione .blocco{margin-top:14px;}
   .st-tutti{display:block; width:100%; margin-top:8px; padding:10px; border:0; border-radius:12px; background:rgba(255,255,255,.06);
             color:var(--oro-chiaro); font-size:13px; font-weight:600;}
@@ -725,16 +725,81 @@
   .chip.su{background:rgba(67,224,143,.1); border:1px solid rgba(67,224,143,.38); color:#8FF0B8;}
   .chip.giu{background:rgba(239,107,107,.1); border:1px solid rgba(239,107,107,.38); color:#FF9A9A;}
   .st-svg{display:block; width:100%; height:auto; margin-top:10px; overflow:visible;}
-  .st-col{cursor:pointer;}
-  .st-col .hit{fill:transparent;}
-  .st-col .bar{fill:rgba(255,255,255,.17); transform-box:fill-box; transform-origin:bottom; transition:fill .25s;
-               animation:cresceSu .7s var(--morbida) both; animation-delay:calc(var(--i) * .05s);}
-  #st-grafico.fermo .bar{animation:none;}
-  .st-col.sel .bar{fill:var(--oro); filter:drop-shadow(0 0 8px rgba(228,180,81,.55));}
-  .st-svg .val{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:14px; fill:var(--oro-chiaro); text-anchor:middle;}
-  .st-svg .num{font-size:10px; fill:var(--dim); text-anchor:middle;}
-  .st-col.sel .num{fill:var(--ink); font-weight:700;}
-  .st-svg .media{stroke:rgba(255,255,255,.28); stroke-dasharray:3 4;}
+  /* affidabilità di Jarvis: anello, livello e giornate calcolate */
+  .af{display:flex; align-items:center; gap:14px; margin-top:10px;}
+  .af svg{width:96px; height:96px; flex:none;}
+  .af-anello{fill:none; stroke:rgba(255,255,255,.1); stroke-width:9;}
+  .af-pieno{fill:none; stroke:var(--oro); stroke-width:9; stroke-linecap:round; filter:drop-shadow(0 0 6px rgba(228,180,81,.45));}
+  .af-n{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:26px; fill:var(--oro-chiaro); text-anchor:middle;}
+  .af-t{flex:1; min-width:0;}
+  .af-t b{display:block; font-size:20px; font-weight:700; line-height:1.1;}
+  .af-t small{display:block; margin-top:3px; font-size:12.5px; color:var(--dim);}
+  .af-livello{display:inline-block; margin-top:8px; padding:2px 9px; border-radius:999px; font-size:11px; background:rgba(233,185,73,.16); color:var(--oro-chiaro);}
+  .af-riga{display:flex; justify-content:space-between; margin-top:14px; font-size:11.5px; color:var(--dim);}
+  .af-riga b{color:var(--ink);}
+  .af-tacche{display:grid; grid-template-columns:repeat(var(--n),1fr); gap:2px; margin-top:6px;}
+  .af-tacche i{height:7px; border-radius:2px; background:rgba(255,255,255,.1);}
+  .af-tacche i.soglia{background:rgba(255,255,255,.28);}
+  .af-tacche i.fatta{background:var(--oro); box-shadow:0 0 6px rgba(228,180,81,.5);}
+  .af-soglie{display:flex; justify-content:space-between; margin-top:5px; font-size:10.5px; color:var(--dim);}
+  /* in lega: posizione, forma e andamento */
+  .lg-testa{display:flex; align-items:center; gap:14px; margin-top:10px;}
+  .lg-pos{width:64px; height:64px; flex:none; display:grid; place-items:center; border-radius:18px; font-size:34px; font-weight:700;
+          color:var(--oro-chiaro); background:rgba(233,185,73,.14); border:1px solid rgba(233,185,73,.5);
+          box-shadow:inset 0 1px 0 rgba(255,255,255,.25);}
+  .lg-dati{flex:1; min-width:0;}
+  .lg-dati b{display:block; font-size:20px; font-weight:700;}
+  .lg-forma{display:flex; align-items:center; gap:5px; margin-top:5px; font-size:12px; color:var(--dim);}
+  .lg-forma i{width:12px; height:12px; flex:none; border-radius:50%; border:1px dashed rgba(255,255,255,.25);}
+  .lg-forma i.v{background:var(--bf-verde); border:0;} .lg-forma i.n{background:var(--bf-stella); border:0;} .lg-forma i.p{background:var(--bf-rosso); border:0;}
+  .lg-forma span{margin-left:4px; white-space:nowrap;}
+  .lg-trend{width:70px; height:48px; flex:none; overflow:visible;}
+  .lg-trend line{stroke:rgba(255,255,255,.08);}
+  .lg-trend polyline{fill:none; stroke:var(--oro); stroke-width:2; stroke-linejoin:round;}
+  .lg-trend .resto{stroke:rgba(255,255,255,.18); stroke-dasharray:2 4;}
+  .lg-trend circle{fill:var(--oro-chiaro);}
+  .lg-trend text{font-size:9px; fill:var(--dim); text-anchor:end;}
+  /* tu, Jarvis e il massimo */
+  .cf{position:relative; height:64px; margin:14px 4px 0;}
+  .cf-linea, .cf-spazio{position:absolute; top:27px; height:10px; border-radius:5px;}
+  .cf-linea{left:0; right:0; background:rgba(255,255,255,.08);}
+  .cf-spazio{background:rgba(67,224,143,.18);}
+  .cf-m{position:absolute; transform:translateX(-50%); text-align:center; white-space:nowrap; font-size:15px; font-weight:700;}
+  .cf-m i{display:block; width:4px; height:26px; margin:0 auto; border-radius:2px; background:var(--ink);}
+  .cf-m.tu, .cf-m.max{top:19px;} .cf-m.jarvis{top:0;}
+  .cf-m.jarvis{color:var(--oro-chiaro);} .cf-m.jarvis i{background:var(--oro); box-shadow:0 0 8px rgba(228,180,81,.5);}
+  .cf-m.max{color:#43E08F;} .cf-m.max i{background:#43E08F;}
+  .cf-pillole{display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;}
+  .cf-pillole span{padding:2px 9px; border-radius:999px; font-size:11px; background:rgba(233,185,73,.16); color:var(--oro-chiaro);}
+  .cf-pillole span.verde{background:rgba(67,224,143,.14); color:#6FE8A8;}
+  /* le giornate di lega */
+  .lg-base{stroke:rgba(255,255,255,.12);}
+  .lg-col.fatta{cursor:pointer;}
+  .lg-col .hit{fill:transparent;}
+  .lg-max{fill:rgba(67,224,143,.12); stroke:rgba(67,224,143,.4); stroke-dasharray:3 3;}
+  .lg-col.sel .lg-max{stroke:rgba(67,224,143,.85);}
+  .lg-bar{fill:rgba(255,255,255,.3); transform-box:fill-box; transform-origin:bottom;
+          animation:cresceSu .7s var(--morbida) both; animation-delay:calc(var(--i) * .05s);}
+  #st-grafico.fermo .lg-bar{animation:none;}
+  .lg-bar.v{fill:var(--bf-verde);} .lg-bar.n{fill:var(--bf-stella);} .lg-bar.p{fill:var(--bf-rosso);}
+  .lg-col.sel .lg-bar{filter:drop-shadow(0 0 8px rgba(255,255,255,.25));}
+  .lg-jarvis{stroke:var(--oro); stroke-width:3; stroke-linecap:round;}
+  .lg-val{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:15px; text-anchor:middle; fill:#fff;}
+  .lg-val.n{fill:#3A2F05;}
+  .lg-vuota{fill:none; stroke:rgba(255,255,255,.14); stroke-dasharray:3 4;}
+  .lg-g{font-size:10px; text-anchor:middle; fill:rgba(243,239,230,.35);}
+  .lg-col.fatta .lg-g{fill:var(--dim);} .lg-col.sel .lg-g{fill:var(--ink); font-weight:700;}
+  .lg-ris{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-top:10px; padding-top:10px;
+          border-top:.5px solid rgba(255,255,255,.08); font-size:13.5px;}
+  .lg-ris b{font-size:20px; font-weight:700;} .lg-ris b.v{color:#43E08F;} .lg-ris b.n{color:var(--bf-stella);} .lg-ris b.p{color:#FF7A7A;}
+  .lg-ris small{font-size:15px; color:var(--dim);}
+  .rp-k{margin:10px 0 5px; font-size:11.5px; color:var(--dim);}
+  .rp{display:flex; height:22px; border-radius:7px; overflow:hidden; font-size:11px; font-weight:600;}
+  .rp div{display:flex; align-items:center; justify-content:center; min-width:0; overflow:hidden;
+          transform-origin:left; animation:cresce .7s var(--morbida) both;}
+  .rp .P{background:#E4B451; color:#3A2A06;} .rp .D{background:#7FB3D5; color:#0F2C40;}
+  .rp .C{background:#71C295; color:#0F3321;} .rp .A{background:#E0605C; color:#3D0E0C;}
+  .rp-n{display:flex; justify-content:space-between; margin-top:4px; font-size:10.5px; color:var(--dim);}
   /* View Transitions (Safari dal 2024): il grafico ha un nome tutto suo così la
      dissolvenza riguarda solo lui; senza «root» azzerato l'intera pagina (nav, testata,
      tutto) entrerebbe nella stessa dissolvenza, con un effetto sfarfallio indesiderato. */
@@ -938,6 +1003,7 @@
     <div class="rosa-testa"><h2>La tua rosa</h2><div class="vista" id="rosa-vista"></div></div>
     <div class="rosa-comandi" id="rosa-comandi"></div>
     <div id="rosa"></div>
+    <div id="rosa-numeri"></div>
   </section>
 
   <section id="s-lega">
@@ -2299,16 +2365,16 @@ function risultatoLega(gio){
 }
 /* la forma di una squadra: esito delle ultime 5 giornate di lega già giocate (le
    uniche presenti in dati/lega.json → risultati), dalla più vecchia alla più
-   recente. V se ha più fantapunti dell'avversario in quella giornata, N a
-   parità, P altrimenti. */
+   recente, dai gol come la classifica (dal 21/09/2026: prima dai fantapunti, e un 1-1
+   da 66 a 68 risultava una sconfitta); senza gol, dai fantapunti. */
 function forma(squadra){
   if(!D.lega || !D.lega.risultati) return [];
   const esiti = [];
   Object.keys(D.lega.risultati).map(Number).sort((a,b)=>a-b).forEach(g=>{
     const m = D.lega.risultati[g].find(x=>x[0]===squadra || x[2]===squadra);
     if(!m) return;
-    const mio = m[0]===squadra ? m[1] : m[3], loro = m[0]===squadra ? m[3] : m[1];
-    esiti.push(mio>loro ? 'V' : mio<loro ? 'P' : 'N');
+    const casa = m[0]===squadra;
+    esiti.push(esitoLega({mio: casa ? m[1] : m[3], loro: casa ? m[3] : m[1], golMio: casa ? m[4] : m[5], golLoro: casa ? m[5] : m[4]}).toUpperCase());
   });
   return esiti.slice(-5);
 }
@@ -2696,25 +2762,6 @@ function accuratezzaConsiglio(per){
     ? valutate.reduce((s,x)=>s+x.consiglioPrima, 0) : null;
   return {n: valutate.length, consiglio, massimo, prima, media: massimo ? 100*consiglio/massimo : null};
 }
-/* il grafico: una colonna per giornata, la migliore con la stella, la linea della media;
-   la colonna scelta è dorata. Si tocca per vedere la giornata sotto */
-function graficoStagione(s, sel){
-  const W = 320, H = 150, alto = 20, basso = 20, n = s.per.length;
-  const tot = s.per.map(x=>x.tot), max = Math.max(...tot), min = Math.min(...tot), media = tot.reduce((a,b)=>a+b, 0)/n;
-  const fondo = Math.max(0, min - Math.max(8, (max - min)*0.8));
-  const y = v => alto + (1 - (v - fondo)/Math.max(1, max - fondo))*(H - alto - basso);
-  const passo = W/n, largo = Math.min(34, passo*0.62), picco = s.per.reduce((a,b)=>b.tot > a.tot ? b : a), ym = y(media);
-  return '<svg class="st-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Fantapunti dei migliori 11, giornata per giornata">'+
-    '<line class="media" x1="0" x2="'+W+'" y1="'+ym.toFixed(1)+'" y2="'+ym.toFixed(1)+'"/>'+
-    s.per.map((x,i)=>{
-      const cx = passo*(i + 0.5), yy = y(x.tot);
-      return '<g class="st-col'+(x.sa===sel ? ' sel' : '')+'" data-sa="'+x.sa+'" style="--i:'+i+'">'+
-        '<rect class="hit" x="'+(cx - passo/2).toFixed(1)+'" y="0" width="'+passo.toFixed(1)+'" height="'+H+'"/>'+
-        '<rect class="bar" x="'+(cx - largo/2).toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+largo.toFixed(1)+'" height="'+(H - basso - yy).toFixed(1)+'" rx="5"/>'+
-        (x.sa===sel || x===picco ? '<text class="val" x="'+cx.toFixed(1)+'" y="'+(yy - 6).toFixed(1)+'">'+(x===picco && n > 1 ? '★ ' : '')+numCorto(x.tot)+'</text>' : '')+
-        (n <= 19 || i%2===0 || x.sa===sel ? '<text class="num" x="'+cx.toFixed(1)+'" y="'+(H - 5)+'">'+x.sa+(x.sa===sel && x.g ? ' · G'+x.g[0] : '')+'</text>' : '')+'</g>';
-    }).join('')+'</svg>';
-}
 /* la giornata scelta: totale, reparti e gli 11 con voto e bonus; frecce per le altre */
 function dettaglioGiornata(s, sa, senzaFrecce){
   const i = s.per.findIndex(x=>x.sa===sa), x = s.per[i];
@@ -2740,13 +2787,14 @@ function dettaglioGiornata(s, sa, senzaFrecce){
 }
 function scegliGiornata(sa){
   const s = stagione();
-  if(!s || !s.per.some(x=>x.sa===sa)) return;
+  if(!s || !s.per.some(x=>x.sa===sa && x.g)) return;       // solo le giornate di lega
   stagioneSel = sa;
   const aggiorna = () => {
     const gr = document.getElementById('st-grafico');
     gr.classList.add('fermo');                  // le colonne crescono solo all'apertura
-    gr.innerHTML = graficoStagione(s, sa);
-    document.getElementById('st-giornata').innerHTML = dettaglioBreve(s, sa);
+    gr.innerHTML = graficoLega(s, sa);
+    document.getElementById('st-giornata').innerHTML = giornataLega(s, sa);
+    document.getElementById('st-confronto').innerHTML = confrontoGiornata(s, sa);
     stagioneDisegnata = htmlStagione(s);      // il prossimo giro non ridisegna la stessa cosa
   };
   /* il grafico si sostituisce di netto (nuovo <svg> a ogni tocco): con la View Transitions
@@ -2754,8 +2802,10 @@ function scegliGiornata(sa){
      più vecchio) o l'utente ha scelto «riduci movimento», si aggiorna senza transizione:
      mai un errore, mai un'attesa. */
   const vaPiano = typeof matchMedia!=='undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(!vaPiano && typeof document.startViewTransition==='function') document.startViewTransition(aggiorna);
-  else aggiorna();
+  if(!vaPiano && typeof document.startViewTransition==='function'){
+    const t = document.startViewTransition(aggiorna);
+    if(t && t.ready) t.ready.catch(()=>{});      // una transizione interrotta non è un errore
+  } else aggiorna();
 }
 const quanteGiornate = n => n+(n===1 ? ' giornata' : ' giornate');
 /* La scheda Stagione (21/09/2026, al posto di «Chiedi», scelta dell'utente su mockup): la
@@ -2770,43 +2820,150 @@ function rigaProduce(x, max){
       '<i class="pr-barra"><i style="width:'+(100*Math.max(0, x.tot)/max).toFixed(0)+'%"></i></i></div>'+
     '<strong class="fvn">'+numCorto(x.tot)+'</strong></div>';
 }
+/* esito di una giornata di lega: dai gol, come la classifica (fantapunti solo se i gol mancano) */
+function esitoLega(r){
+  const a = typeof r.golMio==='number' ? r.golMio : r.mio, b = typeof r.golLoro==='number' ? r.golLoro : r.loro;
+  return a > b ? 'v' : a < b ? 'p' : 'n';
+}
+/* la tua posizione dopo ogni giornata giocata, ricostruita dai risultati: 3 punti a
+   vittoria e 1 a pareggio, a parità di punti vale chi ha più fantapunti. L'ultima è quella
+   vera della classifica di Leghe, se c'è. */
+function posizioniLega(io){
+  const ris = D.lega && D.lega.risultati;
+  if(!ris) return [];
+  const pt = {}, fp = {}, out = [];
+  Object.keys(ris).map(Number).sort((a,b)=>a-b).forEach(gio=>{
+    ris[gio].forEach(m=>[[m[0], m[1], m[4], m[5]], [m[2], m[3], m[5], m[4]]].forEach(([t, f, gf, gs])=>{
+      pt[t] = (pt[t] || 0) + (gf > gs ? 3 : gf === gs ? 1 : 0); fp[t] = (fp[t] || 0) + f;
+    }));
+    const k = Object.keys(pt).sort((a,b)=>pt[b]-pt[a] || fp[b]-fp[a]).indexOf(ME);
+    if(k >= 0) out.push({gio, pos:k + 1});
+  });
+  if(io && out.length && out[out.length - 1].gio === io[2]) out[out.length - 1].pos = io[0];
+  return out;
+}
+/* «Affidabilità di Jarvis» (scelta dell'utente del 21/09/2026): quanto dei punti possibili
+   avrebbe fatto il consiglio, e sotto quante giornate sono già calcolate. Con poche giornate
+   il numero balla: il livello lo dice invece di farlo sembrare sicuro. */
+const LIVELLI_AFFIDABILITA = [[15, 'solida'], [5, 'attendibile'], [0, 'indicativa']];
+function bloccoAffidabilita(s){
+  const acc = accuratezzaConsiglio(s.per), tot = D.g.length, n = acc ? acc.n : 0;
+  const media = acc && acc.media!==null ? acc.media : null, giro = 2*Math.PI*40;
+  const livello = LIVELLI_AFFIDABILITA.find(l=>n >= l[0])[1];
+  return '<div class="blocco"><div class="blocco-t">Affidabilità di Jarvis<small>'+quanteGiornate(n)+'</small></div>'+
+    '<div class="af"><svg viewBox="0 0 96 96" aria-hidden="true"><circle class="af-anello" cx="48" cy="48" r="40"/>'+
+      (media===null ? '' : '<circle class="af-pieno" cx="48" cy="48" r="40" stroke-dasharray="'+(giro*Math.min(100, media)/100).toFixed(1)+' '+giro.toFixed(1)+'" transform="rotate(-90 48 48)"/>')+
+      '<text class="af-n" x="48" y="56">'+(media===null ? '–' : num(media, 0)+'%')+'</text></svg>'+
+    '<div class="af-t">'+(acc ? '<b class="cond">'+numCorto(acc.consiglio)+' su '+numCorto(acc.massimo)+' possibili</b><small>punti del consiglio sui migliori 11</small>'
+                            : '<b class="cond">Ancora niente</b><small>si calcola dopo la prima giornata di lega col consiglio salvato</small>')+
+      '<span class="af-livello">'+livello+'</span></div></div>'+
+    '<div class="af-riga"><span>Giornate calcolate</span><span><b>'+n+'</b> di '+tot+'</span></div>'+
+    '<div class="af-tacche" style="--n:'+tot+'">'+Array.from({length:tot}, (_, k)=>'<i class="'+(k < n ? 'fatta' : k===4 || k===14 ? 'soglia' : '')+'"></i>').join('')+'</div>'+
+    '<div class="af-soglie"><span>indicativa</span><span>attendibile da G5</span><span>solida da G15</span></div></div>';
+}
+function bloccoLega(){
+  const io = D.lega && D.lega.classifica ? D.lega.classifica.find(r=>r[1]===ME) : null;
+  if(!io) return '';
+  const n1 = x => Number.isInteger(x) ? String(x) : num(x, 1), f = formaGol(ME), tot = D.g.length;
+  const squadre = D.lega.classifica.length, pos = posizioniLega(io);
+  const x = gio => 6 + (gio - 1)*58/Math.max(1, tot - 1), y = p => 6 + (p - 1)*36/Math.max(1, squadre - 1);
+  const ultimo = pos[pos.length - 1];
+  const trend = '<svg class="lg-trend" viewBox="0 0 70 48" role="img" aria-label="La tua posizione giornata per giornata">'+
+    '<line x1="0" x2="70" y1="6" y2="6"/><line x1="0" x2="70" y1="42" y2="42"/>'+
+    (pos.length > 1 ? '<polyline points="'+pos.map(q=>x(q.gio).toFixed(1)+','+y(q.pos).toFixed(1)).join(' ')+'"/>' : '')+
+    (ultimo ? '<path class="resto" d="M'+(x(ultimo.gio) + 4).toFixed(1)+' '+y(ultimo.pos).toFixed(1)+' H64"/><circle cx="'+x(ultimo.gio).toFixed(1)+'" cy="'+y(ultimo.pos).toFixed(1)+'" r="4"/>' : '')+
+    '<text x="66" y="14">1°</text><text x="66" y="39">'+squadre+'°</text></svg>';
+  return '<div class="blocco"><div class="blocco-t">In lega<small>dopo la giornata '+io[2]+'</small></div><div class="lg-testa">'+
+    '<div class="lg-pos cond">'+io[0]+'°</div>'+
+    '<div class="lg-dati"><b class="cond">'+n1(io[9])+(io[9]===1 ? ' punto' : ' punti')+'</b>'+
+      '<div class="lg-forma">'+[0,1,2,3,4].map(k=>'<i class="'+(f[k] || '')+'"></i>').join('')+
+      '<span>'+io[3]+'V '+io[4]+'N '+io[5]+'P · gol '+io[6]+'-'+io[7]+'</span></div></div>'+trend+'</div></div>';
+}
+/* gli esiti delle ultime 5 giornate, dai gol (per i pallini della scheda Stagione) */
+function formaGol(squadra){
+  const ris = D.lega && D.lega.risultati;
+  if(!ris) return [];
+  return Object.keys(ris).map(Number).sort((a,b)=>a-b).map(gio=>{
+    const m = ris[gio].find(x=>x[0]===squadra || x[2]===squadra);
+    if(!m) return null;
+    const casa = m[0]===squadra;
+    return esitoLega({mio: casa ? m[1] : m[3], loro: casa ? m[3] : m[1], golMio: casa ? m[4] : m[5], golLoro: casa ? m[5] : m[4]});
+  }).filter(Boolean).slice(-5);
+}
+/* tu, Jarvis e il massimo di una giornata di lega, su una barra sola */
+function confrontoGiornata(s, sa){
+  const x = s.per.find(z=>z.sa===sa), r = x && x.risultato;
+  if(!x || !x.g || !r) return '';
+  const valori = [r.mio, x.tot].concat(x.consiglio===null ? [] : [x.consiglio]);
+  const basso = Math.min(...valori) - 3, alto = Math.max(...valori) + 2;
+  const dove = v => Math.max(6, Math.min(94, 100*(v - basso)/(alto - basso))).toFixed(1)+'%';
+  const segno = (cl, testo, v) => '<div class="cf-m '+cl+'" style="left:'+dove(v)+'">'+
+    (cl==='jarvis' ? '<span class="cond">'+testo+'</span><i></i>' : '<i></i><span class="cond">'+testo+'</span>')+'</div>';
+  const pillole = [];
+  if(x.consiglio!==null){
+    const d = x.consiglio - r.mio;
+    pillole.push(Math.abs(d) < 0.05 ? '<span>come Jarvis</span>' : d > 0 ? '<span>+'+numCorto(d)+' seguendo Jarvis</span>'
+                                    : '<span>'+numCorto(-d)+' in più di Jarvis</span>');
+  }
+  if(x.tot - r.mio >= 0.05) pillole.push('<span class="verde">'+numCorto(x.tot - r.mio)+' punti lasciati in panchina</span>');
+  return '<div class="blocco"><div class="blocco-t">Tu, Jarvis e il massimo<small>giornata '+x.g[0]+'</small></div>'+
+    '<div class="cf"><div class="cf-linea"></div><div class="cf-spazio" style="left:'+dove(Math.min(r.mio, x.tot))+';right:calc(100% - '+dove(Math.max(r.mio, x.tot))+')"></div>'+
+    segno('tu', 'Tu '+numCorto(r.mio), r.mio)+(x.consiglio===null ? '' : segno('jarvis', 'Jarvis '+numCorto(x.consiglio), x.consiglio))+
+    segno('max', 'Max '+numCorto(x.tot), x.tot)+'</div>'+
+    (pillole.length ? '<div class="cf-pillole">'+pillole.join('')+'</div>' : '')+'</div>';
+}
+/* le giornate di lega: la colonna è il tuo punteggio vero, colorata per esito; dietro il
+   massimo possibile, tratteggiato; la tacca dorata dove sarebbe arrivato Jarvis. Le
+   giornate ancora da giocare restano vuote. */
+function graficoLega(s, sel){
+  const tot = D.g.length, lega = s.per.filter(x=>x.g), giocate = lega.length ? Math.max(...lega.map(x=>x.g[0])) : 0;
+  const n = Math.min(tot, Math.max(8, giocate + 3)), W = 320, H = 140, base = 118, alto = 106, passo = W/n, largo = Math.min(30, passo*0.75);
+  const massimo = Math.max(1, ...lega.map(x=>Math.max(x.tot, x.risultato ? x.risultato.mio : 0)));
+  const h = v => alto*Math.max(0, v)/massimo;
+  return '<svg class="st-svg lg-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Le tue giornate di lega: punteggio vero, massimo possibile e consiglio di Jarvis">'+
+    '<line class="lg-base" x1="0" x2="'+W+'" y1="'+base+'" y2="'+base+'"/>'+
+    Array.from({length:n}, (_, k)=>{
+      const gio = k + 1, x = lega.find(z=>z.g[0]===gio), cx = passo*(k + 0.5), sx = (cx - largo/2).toFixed(1);
+      if(!x) return '<g class="lg-col"><rect class="lg-vuota" x="'+sx+'" y="'+(base - 58)+'" width="'+largo.toFixed(1)+'" height="58" rx="6"/>'+
+        '<text class="lg-g" x="'+cx.toFixed(1)+'" y="'+(H - 7)+'">G'+gio+'</text></g>';
+      const r = x.risultato, e = r ? esitoLega(r) : '', hm = h(x.tot), hv = r ? h(r.mio) : 0;
+      return '<g class="lg-col fatta'+(x.sa===sel ? ' sel' : '')+'" data-sa="'+x.sa+'" style="--i:'+k+'">'+
+        '<rect class="hit" x="'+(cx - passo/2).toFixed(1)+'" y="0" width="'+passo.toFixed(1)+'" height="'+H+'"/>'+
+        '<rect class="lg-max" x="'+sx+'" y="'+(base - hm).toFixed(1)+'" width="'+largo.toFixed(1)+'" height="'+hm.toFixed(1)+'" rx="6"/>'+
+        (r ? '<rect class="lg-bar '+e+'" x="'+sx+'" y="'+(base - hv).toFixed(1)+'" width="'+largo.toFixed(1)+'" height="'+hv.toFixed(1)+'" rx="6"/>' : '')+
+        (x.consiglio===null ? '' : '<line class="lg-jarvis" x1="'+(cx - largo/2 - 4).toFixed(1)+'" x2="'+(cx + largo/2 + 4).toFixed(1)+'" y1="'+(base - h(x.consiglio)).toFixed(1)+'" y2="'+(base - h(x.consiglio)).toFixed(1)+'"/>')+
+        (r && hv > 26 && largo >= 20 ? '<text class="lg-val '+e+'" x="'+cx.toFixed(1)+'" y="'+(base - hv + 19).toFixed(1)+'">'+numCorto(r.mio)+'</text>' : '')+
+        '<text class="lg-g" x="'+cx.toFixed(1)+'" y="'+(H - 7)+'">G'+gio+'</text></g>';
+    }).join('')+'</svg>';
+}
+/* la giornata scelta: il risultato e da dove arrivano i punti dei migliori 11 */
+const REPARTO_BREVE = {P:'porta', D:'difesa', C:'centro', A:'attacco'};
+function giornataLega(s, sa){
+  const x = s.per.find(z=>z.sa===sa);
+  if(!x || !x.g) return '';
+  const r = x.risultato, e = r ? esitoLega(r) : '';
+  return '<div class="st-dentro"><div class="lg-ris"><span>G'+x.g[0]+(r ? ' · contro '+r.avv : '')+'</span>'+
+      (r ? '<span class="cond"><b class="'+e+'">'+r.golMio+'-'+r.golLoro+'</b> <small>'+numCorto(r.mio)+' a '+numCorto(r.loro)+'</small></span>' : '<small>risultato non ancora importato</small>')+'</div>'+
+    '<div class="rp-k">da dove arrivano i punti (migliori 11)</div>'+
+    '<div class="rp">'+['P','D','C','A'].map(k=>'<div class="'+k+'" style="width:'+(100*x.reparti[k]/Math.max(1, x.tot)).toFixed(1)+'%">'+numCorto(x.reparti[k])+'</div>').join('')+'</div>'+
+    '<div class="rp-n">'+['P','D','C','A'].map(k=>'<span>'+REPARTO_BREVE[k]+'</span>').join('')+'</div>'+
+    '<button class="st-tutti" data-undici="'+sa+'">gli 11 della giornata ›</button></div>';
+}
 function htmlStagione(s){
   if(!s) return '<h2>La stagione</h2><div class="blocco"><p>I voti arrivano a giornata finita: qui ancora niente.</p></div>';
-  if(!s.per.some(x=>x.sa===stagioneSel)) stagioneSel = s.per[s.per.length - 1].sa;   // di norma l'ultima giocata
-  const n1 = x => Number.isInteger(x) ? String(x) : num(x, 1);
-  const io = D.lega && D.lega.classifica ? D.lega.classifica.find(r=>r[1]===ME) : null, acc = accuratezzaConsiglio(s.per);
-  const lega = io || acc ? '<div class="blocco"><div class="blocco-t">In lega<small>'+(io ? quanteGiornate(io[2]) : '')+'</small></div><div class="st-numeri">'+
-      (io ? tesseraSt('Classifica', io[0]+'°', n1(io[9])+(io[9]===1 ? ' punto' : ' punti'))+
-            tesseraSt('V · N · P', io[3]+'·'+io[4]+'·'+io[5], 'gol '+io[6]+'-'+io[7]) : '')+
-      (acc && acc.media!==null ? tesseraSt('Jarvis', num(acc.media, 0)+'%', 'del massimo') : '')+'</div>'+
-      /* quanto si avvicina Jarvis, in numeri: per la taratura dei PESI (B4, livello 4) */
-      (acc ? '<p class="nota">Il consiglio di Jarvis: '+numCorto(acc.consiglio)+' su '+numCorto(acc.massimo)+' possibili in '+
-        quanteGiornate(acc.n)+' di lega'+(acc.prima===null ? '' : ' · calcolo di prima '+numCorto(acc.prima))+'.</p>' : '')+'</div>' : '';
-  const somma = k => mia.some(p=>typeof p[k]==='number') ? mia.reduce((t,p)=>t + (p[k] || 0), 0) : '–';
+  const lega = s.per.filter(x=>x.g);
+  if(!lega.some(x=>x.sa===stagioneSel)){
+    const conRis = lega.filter(x=>x.risultato);
+    stagioneSel = (conRis.length ? conRis[conRis.length - 1] : lega[lega.length - 1] || {}).sa || null;   // l'ultima giocata
+  }
   const max = Math.max(1, ...s.righe.map(x=>x.tot));
-  return '<h2>La stagione</h2>'+lega+
-    '<div class="blocco"><div class="blocco-t">Giornata per giornata<small>media '+
-      num(s.per.reduce((t,x)=>t + x.tot, 0)/s.per.length)+'</small></div>'+
-      '<div id="st-grafico">'+graficoStagione(s, stagioneSel)+'</div>'+
-      '<div id="st-giornata">'+dettaglioBreve(s, stagioneSel)+'</div></div>'+
-    '<div class="blocco"><div class="blocco-t">La rosa in numeri</div><div class="st-numeri">'+tesseraSt('Gol', somma('gol'))+
-      tesseraSt('Assist', somma('ass'))+tesseraSt('Ammonizioni', somma('amm'))+'</div></div>'+
+  return '<h2>La stagione</h2>'+bloccoAffidabilita(s)+bloccoLega()+
+    '<div id="st-confronto">'+(stagioneSel ? confrontoGiornata(s, stagioneSel) : '')+'</div>'+
+    '<div class="blocco"><div class="blocco-t">Giornate di lega<small>'+lega.length+' di '+D.g.length+'</small></div>'+
+      '<div id="st-grafico">'+graficoLega(s, stagioneSel)+'</div>'+
+      '<div id="st-giornata">'+(stagioneSel ? giornataLega(s, stagioneSel) : '')+'</div></div>'+
     '<div class="blocco"><div class="blocco-t">Chi produce<small>fantapunti</small></div>'+s.righe.slice(0, 5).map(x=>rigaProduce(x, max)).join('')+
       (s.righe.length > 5 ? '<button class="st-tutti" data-tutti="1">tutti i '+s.righe.length+' ›</button>' : '')+'</div>';
-}
-/* la giornata scelta, in breve: risultato vero, consiglio di Jarvis, migliori 11 e reparti;
-   gli 11 uno per uno in sovraimpressione */
-const REPARTO_BREVE = {P:'Porta', D:'Difesa', C:'Centro', A:'Attacco'};
-function dettaglioBreve(s, sa){
-  const x = s.per.find(z=>z.sa===sa);
-  if(!x) return '';
-  const r = x.risultato, pezzi = [];
-  if(r) pezzi.push('vero <b>'+numCorto(r.mio)+' a '+numCorto(r.loro)+', '+r.golMio+'-'+r.golLoro+'</b>');
-  if(x.consiglio!==null) pezzi.push('Jarvis <b>'+numCorto(x.consiglio)+'</b>');
-  pezzi.push('migliori 11 <b>'+numCorto(x.tot)+'</b>');
-  return '<div class="st-dentro"><p class="st-ris">'+(x.g ? 'Giornata '+x.g[0]+' di lega' : 'Giornata '+sa+' di Serie A')+': '+pezzi.join(' · ')+'</p>'+
-    '<div class="st-reparti">'+['P','D','C','A'].map(k=>'<div><span>'+REPARTO_BREVE[k]+'</span><b class="cond">'+numCorto(x.reparti[k])+'</b></div>').join('')+'</div>'+
-    '<button class="st-tutti" data-undici="'+sa+'">gli 11 della giornata ›</button></div>';
 }
 function apriUndiciGiornata(sa){
   const s = stagione(), x = s && s.per.find(z=>z.sa===sa);
@@ -2924,6 +3081,10 @@ function renderRosa(){
   }).join('');
   const nome = (FILTRI_ROSA.find(f=>f[0]===filtroRosa) || ['', ''])[1].toLowerCase();
   rosa.innerHTML = html || '<div class="vuoto">Nessun giocatore «'+nome+'» per questa giornata.</div>';
+  /* la rosa in numeri, in fondo (21/09/2026: spostata qui dalla scheda Stagione) */
+  const somma = k => mia.some(p=>typeof p[k]==='number') ? mia.reduce((t,p)=>t + (p[k] || 0), 0) : '–';
+  document.getElementById('rosa-numeri').innerHTML = '<div class="blocco"><div class="blocco-t">La rosa in numeri</div><div class="st-numeri">'+
+    tesseraSt('Gol', somma('gol'))+tesseraSt('Assist', somma('ass'))+tesseraSt('Ammonizioni', somma('amm'))+'</div></div>';
 }
 
 /* ---------- lega ---------- */
