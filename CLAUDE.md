@@ -385,12 +385,14 @@ ricavano dalla posizione di ogni partita, confrontata con `dati/base.json`
 un errore vero (calendario cambiato), non una ridenominazione. Un calendario non
 leggibile non blocca la classifica, che si salva comunque.
 
-**Il formato del «risultato» (i gol) non è mai stato visto su una giornata
-vera**: il file scaricato il 14/09/2026, prima dell'inizio stagione
-(20/09/2026), ha tutte le partite ancora a «0, 0, -». Si accetta solo un
-risultato scritto «N-N»; altrimenti l'import dei risultati si ferma con un
-messaggio chiaro invece di indovinare. **Da controllare al primo giro dopo la
-prima giornata vera.**
+**Il formato del «risultato» (i gol), verificato il 21/09/2026** sul calendario
+scaricato dopo la prima giornata vera: il file di Leghe lo scrive come Jarvis si
+aspettava, e l'import ha letto le 5 partite della giornata 1 con fantapunti e gol
+(la partita dell'utente: 66 contro 68, 1-1). Si accetta solo un risultato scritto
+«N-N»; se un giorno cambiasse, l'import dei risultati si ferma con un messaggio
+chiaro invece di indovinare. Due prove di `prove/app.js` leggevano il `lega.json`
+vero e si sono rotte appena ha avuto dati veri: ora passano i loro dati, e ogni
+prova nuova deve fare lo stesso.
 
 **Forma** (`forma` in `index.html`): gli esiti (V/N/P) delle ultime 5 giornate
 di lega già giocate per una squadra, dalla più vecchia alla più recente,
@@ -404,7 +406,12 @@ perso. Resta finché quella resta la giornata mostrata: passata alla giornata
 successiva (di solito senza ancora un suo risultato) torna «VS» da solo.
 
 Non ancora fatto: leggere dal Chrome dell'utente la formazione schierata in
-ogni giornata, per «La stagione» (vedi «Stato dei lavori», aperti, punto 4).
+ogni giornata, per «La stagione» (vedi «Stato dei lavori», aperti, punto 1). Provato il
+21/09/2026: **tutte le pagine «Formazioni» di Leghe rispondevano 404**, sia
+`/rivoluzione-fantacalcio/formazioni`, sia `/formazioni/1` (il titolo della giornata nel
+calendario), sia `/formazioni/?t=<id squadra>` (i nomi delle squadre nella partita del
+calendario), aprendole e anche cliccandole dal sito. Da riprovare più avanti; se restano
+rotte, chiedere all'utente dove le vede lui (l'app di Leghe non esporta niente).
 
 ## Calendario
 
@@ -664,7 +671,7 @@ Dal 15/09/2026 (quattro idee approvate dall'utente, fatte tutte insieme):
   migliore»/«la peggiore», porta, difesa, centrocampo, attacco e gli 11 con voto e
   bonus; frecce per le altre). Poi gol, assist, ammonizioni dei tuoi e «chi produce»,
   i fantapunti di ognuno in tutte le giornate, con media e bonus e malus. Scelta dell'utente: con le formazioni vere
-  («Stato dei lavori», aperti, punto 4) dirà anche chi era schierato e chi ha prodotto il totale vero.
+  («Stato dei lavori», aperti, punto 1) dirà anche chi era schierato e chi ha prodotto il totale vero.
   **«Quanto si avvicina Jarvis»** (lavoro da remoto, 15/09/2026, uno dei consigli
   proposti dalla sessione cloud e approvati dall'utente insieme agli altri tre di
   questo elenco): per ogni giornata di lega con un consiglio salvato (`dati/consigli.json`,
@@ -1282,11 +1289,12 @@ del push. `remoto/patch/` resta la cassetta della posta.
   poteva coprire (mercato, import della classifica).
 
 ### Aperti, in ordine
-1. **Dopo la prima giornata (20/09)**: al primo «dati di lega», il formato dei risultati
-   del calendario (i gol, mai visto su una giornata vera; l'import si ferma da solo se non
-   torna); poi la **formazione schierata** dal Chrome dell'utente, per «La stagione». Ora
-   conta di più: è il dato su cui poggia l'idea che ha preso il posto della voce (vedi B4).
-   Col lucchetto: `apri` prima, `chiudi` dopo gli import e prima del commit.
+1. **La formazione schierata** dal Chrome dell'utente, per «La stagione»: il 21/09 le
+   pagine «Formazioni» di Leghe davano 404 (vedi «Risultati, forma e tabellone»). Conta:
+   è il dato su cui poggia l'idea che ha preso il posto della voce (vedi B4). Il formato
+   dei risultati invece è verificato (21/09, primo «dati di lega» dopo la giornata 1).
+   Ricordare all'utente: «Importa da Leghe» sul telefono salva solo sul telefono; perché
+   i risultati arrivino a GitHub (notifiche, «Com'è andata») serve «dati di lega» dal PC.
 2. **Il parere dell'utente** su com'è andata, andamento e calendario dei tuoi (funzioni
    del 15/09; il mercato è già stato rivisto), su «Il consiglio», sull'avvio e sulla
    panchina nuova, e sulla scheda col fantavoto atteso.

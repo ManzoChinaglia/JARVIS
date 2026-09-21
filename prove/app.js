@@ -674,7 +674,9 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('si vede subito nella scheda Lega, detto che viene dal telefono', el.classifica.innerHTML.includes('150,5 fantapunti')
            && /Importata sul telefono/.test(el.classifica.innerHTML));
   verifica('resta sul telefono', !!memLega['jarvis-lega'] && JSON.parse(memLega['jarvis-lega']).origine === 'telefono');
-  ({ el } = await avvia({ adesso: giovedi, memoria: memLega }));
+  // la classifica del PC più vecchia di quella del telefono (non quella vera del giorno, che può essere più nuova)
+  ({ el } = await avvia({ adesso: giovedi, memoria: memLega, dati: { 'lega.json': { aggiornato: '2026-09-14T10:00:00+00:00',
+          classifica: squadreLega.map((s, k) => [k + 1, s, 0, 0, 0, 0, 0, 0, 0, 0, 0]) } } }));
   verifica('riaprendo l\'app vale la più recente: quella del telefono', el.classifica.innerHTML.includes('150,5 fantapunti'));
   ({ el } = await avvia({ adesso: giovedi, memoria: memLega, dati: { 'lega.json': { aggiornato: '2026-09-30T10:00:00+00:00',
           classifica: squadreLega.map((s, k) => [k + 1, s, 0, 0, 0, 0, 0, 0, 0, 0, 0]) } } }));
@@ -801,7 +803,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   delete sa5[titolariG1[1].id];
   const entra = panchinaG1.find(p => p.ruolo === 'D');
   const attesoJ = titolariG1.filter(p => sa5[p.id]).reduce((s, p) => s + sa5[p.id][1], 0) + sa5[entra.id][1];
-  ({ t, el } = await avvia({ adesso: '2026-09-22T12:00:00+02:00', dati: { 'titolari.json': null, 'infortuni.json': null,
+  // senza il risultato vero della lega (dal 21/09 il file vero lo ha): qui si prova solo l'undici di Jarvis
+  ({ t, el } = await avvia({ adesso: '2026-09-22T12:00:00+02:00', dati: { 'titolari.json': null, 'infortuni.json': null, 'lega.json': null,
           'voti.json': { aggiornato: 'x', giornate: { '4': sa4, '5': sa5 } },
           'consigli.json': { giornate: { '1': { sa: 5, undici: { '4-3-3': titolariG1.map(p => p.id) }, panchina: { '4-3-3': panchinaG1.map(p => p.id) } } } } } }));
   ca = t.comeAndata();
