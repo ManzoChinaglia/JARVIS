@@ -401,7 +401,13 @@ prova nuova deve fare lo stesso.
 di lega già giocate per una squadra, dalla più vecchia alla più recente,
 **dai gol, come la classifica** (`esitoLega`; dal 21/09/2026: prima dai fantapunti, e il
 1-1 della giornata 1, 66 a 68, usciva come sconfitta); senza gol, dai fantapunti. In
-classifica, sotto ogni squadra, come pallini (verde/giallo/rosso, `.forma .fp`).
+classifica, sotto ogni squadra, come pallini con la lettera dentro (`pallinoForma`,
+`LETTERA_FORMA`, scelta dell'utente del 21/09): **W** verde, **=** giallo, **L** rosso;
+tratteggiati quelli ancora da giocare, fino a 5. Sotto il nome il dettaglio con le sue
+piccole intestazioni (G, V, N, P, GF, GS, e staccati FP, i fantapunti totali), e a destra i
+punti in un riquadro di vetro loro (`.cl-pt`, dorato per la tua squadra): prima punti e
+fantapunti stavano uno sopra l'altro e si confondevano. Proposta ancora aperta: accanto
+alla posizione una freccia con i posti guadagnati o persi dalla giornata prima.
 
 **Tabellone**: nella testata della Giornata, il punteggio vero al posto di
 «VS» (`renderGiornata`, `risultatoLega(g[0])`), con un festeggiamento se hai
@@ -846,9 +852,18 @@ testo»), e questo è l'ordine di oggi (`renderStagione` → `htmlStagione`, in 
   una tacca dorata dove sarebbe arrivato Jarvis; le giornate da giocare vuote (almeno 8
   colonne, poi quelle giocate più 3). Aperto sull'ultima giocata (`stagioneSel`); toccando
   una colonna cambiano grafico, confronto e sotto (`giornataLega`): risultato, i reparti dei
-  migliori 11 in una barra coi colori dei ruoli, e «gli 11 della giornata ›» (in
-  sovraimpressione, `apriUndiciGiornata`, `dettaglioGiornata` senza frecce). Le giornate di
+  migliori 11 in una barra coi colori dei ruoli, e «gli 11 della giornata ›». Le giornate di
   sola Serie A prima della lega non sono più nel grafico: servono ancora a «Chi produce».
+- **Gli 11 della giornata** (`apriUndiciGiornata`, rifatta su mockup il 21/09 sera: «meno
+  letterale, più d'effetto, come la prima pagina»): in sovraimpressione il totale grande con
+  le pillole «Jarvis 70» e «Tu 66 · 1-1», poi i migliori 11 **sul campo** come nella
+  Giornata (`cellaVoto`: maglia, fantavoto sulla maglia verde da 7, bianco, rosso sotto il 6,
+  e il bonus o malus in punti, «+3», senza icone: il file dei voti dice quanto, non per
+  cosa), con l'**anello dorato** su chi era anche nel consiglio di Jarvis (nel modulo
+  scelto), «N su 11 erano nel consiglio di Jarvis» e «Jarvis aveva anche» con le altre sue
+  scelte e il loro voto. Tolti l'elenco scritto e i riquadri dei reparti (già nella barra)
+  e il calcolo di prima, che resta nei dati (`accuratezzaConsiglio().prima`) per tarare i
+  `PESI`.
 - **Chi produce**: i primi cinque; «tutti i 25 ›» apre l'elenco intero in sovraimpressione
   (`apriProduttori`, con il testo da condividere).
 
@@ -1405,10 +1420,10 @@ python prove/modello.py
 15/09/2026). Alcune prove girano solo se ci sono i file veri esportati da Leghe,
 che stanno in `archivio/` e sono fuori da Git. Quindi:
 
-- **sul PC dell'utente** (che ha `archivio/`): `prove/app.js` 308/308 e
+- **sul PC dell'utente** (che ha `archivio/`): `prove/app.js` 311/311 e
   `prove/lega.py` 34/34 (dal 21/09: «Chiedi» tolta ha portato via le sue verifiche,
   i moduli e la scheda Stagione ne hanno aggiunte)
-- **su un clone pulito o nella CI** (senza `archivio/`): 307/307 e 31/31, perché
+- **su un clone pulito o nella CI** (senza `archivio/`): 310/310 e 31/31, perché
   saltano «il file vero di Leghe si legge uguale (solo sul PC)» e le tre di
   `lega.py` sulla stessa cosa
 - `prove/privacy.py` 5/5 finché il lucchetto non è attivo, 8/8 dopo (le tre sul

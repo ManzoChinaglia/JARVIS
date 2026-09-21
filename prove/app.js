@@ -582,8 +582,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'lega.json': { aggiornato: '2026-09-22T10:00:00+00:00', classifica: finta } } }));
   const cla = el.classifica.innerHTML;
   verifica('classifica vera: 10 squadre in ordine, con stemma, punti e fantapunti', (cla.match(/class="stemma"/g) || []).length === 10
-           && cla.indexOf(squadreLega[0]) < cla.indexOf(squadreLega[9]) && cla.includes('70,5 fantapunti') && cla.includes('1 partita'));
-  verifica('la tua squadra in evidenza', new RegExp('<div class="team io"><span class="pos cond">\\d+</span>').test(cla));
+           && cla.indexOf(squadreLega[0]) < cla.indexOf(squadreLega[9]) && cla.includes('<i>FP</i><b>70,5</b>') && cla.includes('<i>G</i><b>1</b>'));
+  verifica('la tua squadra in evidenza', new RegExp('<div class="team cl io"><span class="pos cond">\\d+</span>').test(cla));
   verifica('nessun credito mostrato', !/credit/i.test(cla));
   ({ el } = await avvia({ adesso: giovedi, dati: { 'lega.json': { aggiornato: '2026-09-14T10:00:00+00:00',
           classifica: squadreLega.map((s, k) => [k + 1, s, 0, 0, 0, 0, 0, 0, 0, 0, 0]) } } }));
@@ -634,13 +634,13 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const importata = await t.importaClassifica(buf(esempioXlsx));
   verifica('classifica importata: 10 squadre in ordine, con i numeri del file', importata.length === 10
            && importata[0].slice(2).join() === '2,2,0,0,5,1,4,6,150.5', importata[0].join(' '));
-  verifica('si vede subito nella scheda Lega, detto che viene dal telefono', el.classifica.innerHTML.includes('150,5 fantapunti')
+  verifica('si vede subito nella scheda Lega, detto che viene dal telefono', el.classifica.innerHTML.includes('<i>FP</i><b>150,5</b>')
            && /Importata sul telefono/.test(el.classifica.innerHTML));
   verifica('resta sul telefono', !!memLega['jarvis-lega'] && JSON.parse(memLega['jarvis-lega']).origine === 'telefono');
   // la classifica del PC più vecchia di quella del telefono (non quella vera del giorno, che può essere più nuova)
   ({ el } = await avvia({ adesso: giovedi, memoria: memLega, dati: { 'lega.json': { aggiornato: '2026-09-14T10:00:00+00:00',
           classifica: squadreLega.map((s, k) => [k + 1, s, 0, 0, 0, 0, 0, 0, 0, 0, 0]) } } }));
-  verifica('riaprendo l\'app vale la più recente: quella del telefono', el.classifica.innerHTML.includes('150,5 fantapunti'));
+  verifica('riaprendo l\'app vale la più recente: quella del telefono', el.classifica.innerHTML.includes('<i>FP</i><b>150,5</b>'));
   ({ el } = await avvia({ adesso: giovedi, memoria: memLega, dati: { 'lega.json': { aggiornato: '2026-09-30T10:00:00+00:00',
           classifica: squadreLega.map((s, k) => [k + 1, s, 0, 0, 0, 0, 0, 0, 0, 0, 0]) } } }));
   verifica('se quella del PC è più nuova vale quella', !el.classifica.innerHTML.includes('150,5'));
@@ -740,8 +740,9 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('e l\'affidabilità dice che non c\'è ancora niente', /Affidabilità di Jarvis/.test(sc) && /Ancora niente/.test(sc) && /<b>0<\/b> di 34/.test(sc));
   t.apriUndiciGiornata(altraSt);
   sc = el['sovra-corpo'].innerHTML;
-  verifica('«gli 11 della giornata»: uno per uno in sovraimpressione', (sc.match(/class="vr"/g) || []).length === 11
-           && /la (migliore|peggiore)/.test(sc) && !/class="st-nav"/.test(sc));
+  verifica('«gli 11 della giornata»: sul campo, una maglia col fantavoto per ognuno', /class="campo entra campo-voti"/.test(sc)
+           && (sc.match(/<button class="gioc/g) || []).length === 11 && (sc.match(/class="voto fv-/g) || []).length === 11
+           && !/Jarvis aveva anche|nel consiglio di Jarvis/.test(sc));
   t.chiudiSovra();
   ({ t, el } = await avvia({ adesso: martedi, dati: conVoti }));    // di nuovo una giornata sola, per le prove che seguono
   const QM = [{ D: 4, C: 3, A: 3 }, { D: 4, C: 4, A: 2 }, { D: 4, C: 5, A: 1 }];
@@ -868,6 +869,12 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('i pallini della forma in classifica', (el.classifica.innerHTML.match(/class="forma"/g) || []).length > 0
            && /class="fp v"/.test(el.classifica.innerHTML) && /class="fp n"/.test(el.classifica.innerHTML)
            && /class="fp p"/.test(el.classifica.innerHTML));
+  verifica('nel pallino la lettera: W vinta, = pari, L persa', />W<\/i>/.test(el.classifica.innerHTML) && />=<\/i>/.test(el.classifica.innerHTML)
+           && />L<\/i>/.test(el.classifica.innerHTML));
+  verifica('sotto ogni squadra il dettaglio con le intestazioni, e i punti in un riquadro loro',
+           (el.classifica.innerHTML.match(/class="cl-st"/g) || []).length === finta.length
+           && ['G', 'V', 'N', 'P', 'GF', 'GS', 'FP'].every(k => el.classifica.innerHTML.includes('<i>' + k + '</i>'))
+           && (el.classifica.innerHTML.match(/<i>PT<\/i>/g) || []).length === finta.length);
 
   // il tabellone: il punteggio vero al posto di «VS» nella testata, finché resta questa la giornata mostrata
   ({ el } = await avvia({ adesso: '2026-09-20T22:40:00+02:00',
@@ -930,7 +937,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            && /<b>2<\/b> di 34/.test(sc) && (sc.match(/<i class="fatta">/g) || []).length === 2 && /class="af-livello">indicativa/.test(sc));
   const ioF = finta.find(r => r[1] === t.ME);
   verifica('in lega: posizione, forma dai gol (pari e vittoria) e andamento', sc.includes('<div class="lg-pos cond">' + ioF[0] + '°</div>')
-           && /<div class="lg-forma"><i class="n"><\/i><i class="v"><\/i><i class=""><\/i>/.test(sc) && /class="lg-trend"/.test(sc));
+           && /<div class="lg-forma"><i class="n">=<\/i><i class="v">W<\/i><i class=""><\/i>/.test(sc) && /class="lg-trend"/.test(sc));
   verifica('il grafico: le due giornate di lega, colorate per esito, aperto sull\'ultima', (sc.match(/lg-col fatta/g) || []).length === 2
            && sc.includes('lg-col fatta sel" data-sa="' + g2.sa + '"') && /class="lg-bar n"/.test(sc) && /class="lg-bar v"/.test(sc)
            && (sc.match(/class="lg-jarvis"/g) || []).length === 2 && (sc.match(/class="lg-vuota"/g) || []).length === 6);
@@ -943,11 +950,16 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('e sotto il risultato e i reparti in una barra', /<b class="n">1-1<\/b>/.test(el['st-giornata'].innerHTML) && /class="rp"/.test(el['st-giornata'].innerHTML)
            && el['st-grafico'].innerHTML.includes('lg-col fatta sel" data-sa="' + g1.sa + '"'));
   t.apriUndiciGiornata(g1.sa);
-  verifica('nella giornata sotto il massimo: quanto in meno', /Il consiglio di Jarvis: .*in meno del massimo/.test(el['sovra-corpo'].innerHTML)
-           && el['sovra-corpo'].innerHTML.includes(f1(Math.abs(g1.consiglio - g1.tot))), el['sovra-corpo'].innerHTML.match(/Il consiglio[^<]*/));
+  sc = el['sovra-corpo'].innerHTML;
+  const idG1 = titolariG1.map(p => p.id), presiG1 = g1.scelti.filter(p => idG1.includes(p.id)).length, altriG1 = titolariG1.filter(p => !g1.scelti.some(q => q.id === p.id));
+  verifica('gli 11 della giornata 1: Jarvis e il tuo punteggio in cima, l\'anello su chi Jarvis aveva scelto',
+           sc.includes('Jarvis ' + corto(g1.consiglio)) && sc.includes('Tu 66') && (sc.match(/class="gioc jarvis"/g) || []).length === presiG1
+           && sc.includes('<b>' + presiG1 + ' su 11</b>'), presiG1 + ' su 11');
+  verifica('e sotto le altre scelte di Jarvis, col loro voto', altriG1.length === 0 ? !/Jarvis aveva anche/.test(sc)
+           : /Jarvis aveva anche/.test(sc) && altriG1.every(p => sc.includes('<button class="u11-alt" data-id="' + p.id + '"')), altriG1.length);
   t.apriUndiciGiornata(g2.sa);
-  verifica('nella giornata al massimo: come il massimo possibile', /Il consiglio di Jarvis: .*come il massimo possibile/.test(el['sovra-corpo'].innerHTML)
-           && !/in meno del massimo/.test(el['sovra-corpo'].innerHTML));
+  verifica('gli 11 della giornata 2, dove Jarvis ha preso il massimo: 11 su 11, nessun altro', el['sovra-corpo'].innerHTML.includes('<b>11 su 11</b>')
+           && !/Jarvis aveva anche/.test(el['sovra-corpo'].innerHTML));
   t.scegliGiornata(4);   // Serie A 4: prima della lega, non è una colonna del grafico
   verifica('una giornata di sola Serie A non si sceglie', el['st-grafico'].innerHTML.includes('lg-col fatta sel" data-sa="' + g1.sa + '"'));
   t.chiudiSovra();
@@ -1102,8 +1114,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const somma31 = l => l.reduce((s, id) => s + v5[id][1], 0);
   verifica('per ogni giornata anche il consiglio del calcolo di prima', x31 && circa(x31.consiglio, somma31(und31))
            && circa(x31.consiglioPrima, somma31(vec31)), x31 && (x31.consiglio + ' e ' + x31.consiglioPrima));
-  t.apriUndiciGiornata(x31.sa);
-  verifica('e nella stagione il confronto', acc31 && circa(acc31.prima, somma31(vec31)) && /Con il calcolo di prima/.test(el['sovra-corpo'].innerHTML));
+  verifica('e nell\'accuratezza il totale del calcolo di prima (per tarare i pesi)', acc31 && circa(acc31.prima, somma31(vec31)));
 
   console.log('\n33. La probabilità di vincere la sfida (B3)');
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31 } }));

@@ -371,9 +371,29 @@
   .team .val{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:19px; text-align:right;}
   .team .nome small{display:block; margin-top:3px; font-size:11px; font-weight:400; color:var(--dim);}
   /* forma: le ultime 5 giornate di lega già giocate, dalla più vecchia (a sinistra) alla più recente */
-  .forma{display:flex; gap:4px; margin-top:5px;}
-  .forma .fp{width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.14); flex:none;}
-  .forma .fp.v{background:var(--bf-verde);} .forma .fp.n{background:var(--bf-stella);} .forma .fp.p{background:var(--bf-rosso);}
+  .forma{display:flex; gap:4px; margin-top:6px;}
+  .forma .fp{width:16px; height:16px; flex:none; display:grid; place-items:center; border-radius:50%; font-style:normal;
+             font-family:"Barlow Condensed",sans-serif; font-size:11px; font-weight:700; line-height:1;}
+  .forma .fp.v{background:var(--bf-verde); color:#EFFFF4;} .forma .fp.n{background:var(--bf-stella); color:#3A2F05;}
+  .forma .fp.p{background:var(--bf-rosso); color:#FFF1F1;}
+  .forma .fp.da-giocare{border:1px dashed rgba(255,255,255,.22);}
+  /* classifica: dettaglio con le intestazioni, punti in un riquadro loro */
+  .team.cl{align-items:flex-start;}
+  .team.cl .pos, .team.cl .stemma{margin-top:4px;}
+  .cl-nome{display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600;}
+  .cl-st{display:grid; grid-template-columns:repeat(6,minmax(0,1fr)) minmax(0,1.5fr); gap:2px; max-width:230px; margin-top:7px;}
+  .cl-st span{text-align:center;}
+  .cl-st i{display:block; font-style:normal; font-size:9px; letter-spacing:.06em; color:rgba(243,239,230,.42);}
+  .cl-st b{font-size:12.5px; font-weight:600; font-variant-numeric:tabular-nums;}
+  .cl-st .fp-tot{margin-left:4px; padding-left:6px; border-left:1px solid rgba(255,255,255,.1);}
+  .cl-st .fp-tot b{color:var(--dim); font-weight:500;}
+  .cl-pt{flex:none; min-width:46px; margin-top:2px; padding:6px 8px 5px; border-radius:14px; text-align:center;
+         background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.16);
+         box-shadow:inset 0 1px 0 rgba(255,255,255,.25);}
+  .cl-pt b{display:block; font-size:24px; font-weight:700; line-height:1;}
+  .cl-pt i{display:block; margin-top:2px; font-style:normal; font-size:8.5px; letter-spacing:.12em; color:var(--dim);}
+  .team.cl.io .cl-pt{background:linear-gradient(180deg,rgba(252,209,22,.26),rgba(252,209,22,.08)); border-color:rgba(252,209,22,.55);}
+  .team.cl.io .cl-pt b{color:var(--oro-chiaro);}
   .team .val small{display:block; font-family:-apple-system,sans-serif; font-weight:400; font-size:10px; color:var(--dim); letter-spacing:0;}
   .nota-lega{margin:8px 2px 0; font-size:11.5px; line-height:1.45; color:var(--dim);}
   .nota-lega:empty{display:none;}
@@ -750,8 +770,10 @@
   .lg-dati{flex:1; min-width:0;}
   .lg-dati b{display:block; font-size:20px; font-weight:700;}
   .lg-forma{display:flex; align-items:center; gap:5px; margin-top:5px; font-size:12px; color:var(--dim);}
-  .lg-forma i{width:12px; height:12px; flex:none; border-radius:50%; border:1px dashed rgba(255,255,255,.25);}
-  .lg-forma i.v{background:var(--bf-verde); border:0;} .lg-forma i.n{background:var(--bf-stella); border:0;} .lg-forma i.p{background:var(--bf-rosso); border:0;}
+  .lg-forma i{width:16px; height:16px; flex:none; display:grid; place-items:center; border-radius:50%; border:1px dashed rgba(255,255,255,.25);
+             font-style:normal; font-family:"Barlow Condensed",sans-serif; font-size:11px; font-weight:700; line-height:1;}
+  .lg-forma i.v{background:var(--bf-verde); border:0; color:#EFFFF4;} .lg-forma i.n{background:var(--bf-stella); border:0; color:#3A2F05;}
+  .lg-forma i.p{background:var(--bf-rosso); border:0; color:#FFF1F1;}
   .lg-forma span{margin-left:4px; white-space:nowrap;}
   .lg-trend{width:70px; height:48px; flex:none; overflow:visible;}
   .lg-trend line{stroke:rgba(255,255,255,.08);}
@@ -807,20 +829,32 @@
   ::view-transition-group(root){animation:none;}
   @keyframes cresceSu{from{transform:scaleY(0);}}
   .st-dentro{animation:sale .35s var(--morbida) both;}
-  .st-testa{display:flex; align-items:center; justify-content:space-between; gap:10px;}
-  .st-titolo{flex:1; min-width:0; text-align:center;}
-  .st-titolo .k{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.09em; color:var(--dim);}
-  .st-titolo b{display:block; margin-top:4px; font-size:48px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
-  .st-titolo small{display:block; margin-top:4px; font-size:12px; color:var(--dim);}
-  .st-titolo .chip{margin:8px 0 0;}
-  .st-nav{width:42px; height:42px; flex-shrink:0; padding:0; border-radius:50%; font-size:26px; line-height:1; color:var(--oro-chiaro);
-          background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14);}
-  .st-nav:disabled{opacity:.25;}
-  .st-reparti{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:14px 0 6px;}
-  .st-reparti div{min-width:0; padding:9px 2px; border-radius:12px; text-align:center; background:rgba(0,0,0,.22);}
-  .st-reparti span{display:block; font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--dim);}
-  .st-reparti b{display:block; margin-top:3px; font-size:21px; font-weight:700; color:var(--ink);}
-  .blocco p.st-ris{margin-top:10px; text-align:center; font-size:13px;}
+  /* gli 11 della giornata */
+  .u11-testa{display:flex; align-items:flex-end; justify-content:space-between; gap:10px; margin:2px 4px 12px;}
+  .u11-testa .k{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.09em; color:var(--dim);}
+  .u11-testa b.cond{display:block; font-size:46px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
+  .u11-chip{display:flex; flex-direction:column; align-items:flex-end; gap:5px;}
+  .u11-chip span{padding:3px 10px; border-radius:999px; font-size:12px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);}
+  .u11-chip span.oro{background:rgba(233,185,73,.16); border-color:rgba(233,185,73,.4); color:var(--oro-chiaro);}
+  .u11-chip b.v{color:#43E08F;} .u11-chip b.n{color:var(--bf-stella);} .u11-chip b.p{color:#FF7A7A;}
+  .campo-voti{margin-top:0;}
+  .campo-voti .voto{color:#1A1A1A; background:#F3EFE6;}
+  .campo-voti .voto.fv-alto{background:#43E08F; color:#0C2A19;}
+  .campo-voti .voto.fv-basso{background:var(--bf-rosso); color:#fff;}
+  .campo-voti .bonus{position:absolute; left:-10px; top:0; padding:1px 5px; border-radius:7px; font-style:normal;
+                     font-size:10.5px; font-weight:700; line-height:1.3; box-shadow:0 2px 5px rgba(0,0,0,.4);}
+  .campo-voti .bonus.su{background:#0C2A19; color:#6FE8A8;} .campo-voti .bonus.giu{background:#3D0E0C; color:#FF9A9A;}
+  .campo-voti .gioc.jarvis .sagoma::before{content:''; position:absolute; inset:-5px; border-radius:50%;
+                     border:2px solid var(--oro); box-shadow:0 0 10px rgba(233,185,73,.6);}
+  .u11-presi{display:flex; align-items:center; gap:8px; margin:12px 4px 4px; font-size:13px; color:var(--dim);}
+  .u11-presi i{width:14px; height:14px; flex:none; border-radius:50%; border:2px solid var(--oro);}
+  .u11-presi b{color:var(--ink);}
+  .u11-k{margin:14px 4px 6px; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);}
+  .u11-altri{display:flex; flex-wrap:wrap; gap:6px;}
+  .u11-alt{display:inline-flex; align-items:center; gap:5px; padding:3px 10px 3px 4px; border-radius:999px; font-size:12.5px;
+           color:var(--ink); background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);}
+  .u11-alt .maglia{width:20px; height:20px;}
+  .u11-alt b.fv-alto{color:#43E08F;} .u11-alt b.fv-basso{color:#FF8A8A;} .u11-alt b.sv{color:var(--dim); font-weight:400;}
   .mk-tab{width:100%; margin-top:10px; border-collapse:collapse; font-size:14px;}
   .mk-tab th{padding:9px 0; text-align:left; font-size:12.5px; font-weight:400; color:var(--dim);}
   .mk-tab td{width:31%; padding:9px 4px; text-align:center; font-variant-numeric:tabular-nums;}
@@ -2378,7 +2412,8 @@ function forma(squadra){
   });
   return esiti.slice(-5);
 }
-const pallinoForma = e => '<i class="fp '+(e==='V'?'v':e==='N'?'n':'p')+'" aria-hidden="true"></i>';
+const LETTERA_FORMA = {V:'W', N:'=', P:'L'};     // come si scrive nel pallino (scelta dell'utente)
+const pallinoForma = e => '<i class="fp '+(e==='V'?'v':e==='N'?'n':'p')+'" aria-label="'+(e==='V'?'vinta':e==='N'?'pari':'persa')+'">'+LETTERA_FORMA[e]+'</i>';
 /* nella pagina una riga sola, che apre la sezione in sovraimpressione */
 const ICONA_CA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5.5-5.5 4 3.5L20 7"/><path d="M15 7h5v5"/></svg>';
 const ICONA_MERCATO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h15l-4-4M20 16H5l4 4"/></svg>';
@@ -2722,7 +2757,6 @@ function apriMercato(g){
 /* giornata per giornata i fantapunti dei tuoi migliori 11 (voti veri, difesa a quattro), da
    navigare: chi ha fatto cosa, reparto per reparto. Sotto, chi produce: i fantapunti di
    ognuno in tutte le giornate, con media e bonus e malus; gol, assist e ammonizioni */
-const NOMI_REPARTO = {P:'Porta', D:'Difesa', C:'Centrocampo', A:'Attacco'};
 const numCorto = x => Math.abs(x - Math.round(x)) < 0.05 ? String(Math.round(x)) : num(x);   // 66, non 66,0
 function stagione(){
   const giornate = D.voti ? Object.keys(D.voti).map(Number).sort((a,b)=>a-b) : [];
@@ -2763,28 +2797,6 @@ function accuratezzaConsiglio(per){
   return {n: valutate.length, consiglio, massimo, prima, media: massimo ? 100*consiglio/massimo : null};
 }
 /* la giornata scelta: totale, reparti e gli 11 con voto e bonus; frecce per le altre */
-function dettaglioGiornata(s, sa, senzaFrecce){
-  const i = s.per.findIndex(x=>x.sa===sa), x = s.per[i];
-  if(!x) return '';
-  const tutti = s.per.map(z=>z.tot), tag = s.per.length < 2 ? ''
-    : x.tot===Math.max(...tutti) ? '<i class="chip su">la migliore</i>' : x.tot===Math.min(...tutti) ? '<i class="chip giu">la peggiore</i>' : '';
-  const freccia = (z, segno, etichetta) => senzaFrecce ? '' : '<button class="st-nav"'+(z ? ' data-sa="'+z.sa+'"' : ' disabled')+' aria-label="'+etichetta+'">'+segno+'</button>';
-  const r = x.risultato, diff = x.consiglio===null ? null : x.consiglio - x.tot;
-  return '<div class="st-dentro"><div class="st-testa">'+freccia(s.per[i - 1], '‹', 'Giornata prima')+
-      '<div class="st-titolo"><span class="k">'+(x.g ? 'Giornata '+x.g[0]+' di lega' : 'Giornata '+sa+' di Serie A')+'</span>'+
-        '<b class="cond">'+num(x.tot)+'</b><small>i migliori 11 · '+x.modulo+'</small>'+tag+'</div>'+
-      freccia(s.per[i + 1], '›', 'Giornata dopo')+'</div>'+
-    (r ? '<p class="st-ris">Risultato vero: '+num(r.mio)+' a '+num(r.loro)+', '+r.golMio+'-'+r.golLoro+' contro '+r.avv+'</p>' : '')+
-    (diff===null ? '' : '<p class="st-ris">Il consiglio di Jarvis: '+num(x.consiglio)+
-      (Math.abs(diff) < 0.05 ? ', come il massimo possibile' : ', '+num(Math.abs(diff))+' in meno del massimo')+'</p>')+
-    (x.consiglioPrima===null || x.consiglioPrima===undefined ? '' : '<p class="st-ris">Con il calcolo di prima: '+num(x.consiglioPrima)+'</p>')+
-    '<div class="st-reparti">'+['P','D','C','A'].map(k=>'<div><span>'+NOMI_REPARTO[k]+'</span><b class="cond">'+num(x.reparti[k])+'</b></div>').join('')+'</div>'+
-    x.scelti.slice().sort((a,b)=>votoDi(b, sa)[1] - votoDi(a, sa)[1]).map(p=>{
-      const v = votoDi(p, sa);
-      return '<div class="vr" data-id="'+p.id+'">'+maglia(p.club)+'<div class="vr-nome"><b>'+p.nome+'</b><small>'+RUOLI[p.ruolo]+' · '+spiegaVoto(v)+'</small></div>'+
-        '<strong class="fvn '+classeFv(v[1])+'">'+num(v[1])+'</strong></div>';
-    }).join('')+'</div>';
-}
 function scegliGiornata(sa){
   const s = stagione();
   if(!s || !s.per.some(x=>x.sa===sa && x.g)) return;       // solo le giornate di lega
@@ -2876,7 +2888,7 @@ function bloccoLega(){
   return '<div class="blocco"><div class="blocco-t">In lega<small>dopo la giornata '+io[2]+'</small></div><div class="lg-testa">'+
     '<div class="lg-pos cond">'+io[0]+'°</div>'+
     '<div class="lg-dati"><b class="cond">'+n1(io[9])+(io[9]===1 ? ' punto' : ' punti')+'</b>'+
-      '<div class="lg-forma">'+[0,1,2,3,4].map(k=>'<i class="'+(f[k] || '')+'"></i>').join('')+
+      '<div class="lg-forma">'+[0,1,2,3,4].map(k=>'<i class="'+(f[k] || '')+'">'+(f[k] ? LETTERA_FORMA[f[k].toUpperCase()] : '')+'</i>').join('')+
       '<span>'+io[3]+'V '+io[4]+'N '+io[5]+'P · gol '+io[6]+'-'+io[7]+'</span></div></div>'+trend+'</div></div>';
 }
 /* gli esiti delle ultime 5 giornate, dai gol (per i pallini della scheda Stagione) */
@@ -2965,11 +2977,43 @@ function htmlStagione(s){
     '<div class="blocco"><div class="blocco-t">Chi produce<small>fantapunti</small></div>'+s.righe.slice(0, 5).map(x=>rigaProduce(x, max)).join('')+
       (s.righe.length > 5 ? '<button class="st-tutti" data-tutti="1">tutti i '+s.righe.length+' ›</button>' : '')+'</div>';
 }
+/* gli 11 della giornata (21/09/2026, su mockup): i migliori 11 sul campo, come nella
+   Giornata, col fantavoto sulla maglia (verde da 7, rosso sotto il 6), i bonus o malus, e
+   l'anello dorato su chi era anche nel consiglio di Jarvis; sotto, le altre scelte di
+   Jarvis col loro voto. Il bonus si scrive in punti, senza icone: il file dei voti dice
+   quanto, non per cosa. */
+function cellaVoto(p, sa, pos, i, jarvis){
+  const v = votoDi(p, sa), b = Math.round((v[1] - v[0])*10)/10;
+  return '<button class="gioc'+(jarvis ? ' jarvis' : '')+'" data-id="'+p.id+'" style="left:'+pos.x+'%;top:'+pos.y+'%;width:'+pos.w+'%;--i:'+i+'">'+
+    '<span class="sagoma">'+maglia(p.club)+
+      (Math.abs(b) >= 0.5 ? '<i class="bonus '+(b > 0 ? 'su' : 'giu')+'">'+(b > 0 ? '+' : '−')+numCorto(Math.abs(b))+'</i>' : '')+
+      '<b class="voto fv-'+(v[1] >= 7 ? 'alto' : v[1] < 6 ? 'basso' : 'medio')+'">'+num(v[1])+'</b></span>'+
+    '<span class="nm">'+p.nome+'</span></button>';
+}
 function apriUndiciGiornata(sa){
   const s = stagione(), x = s && s.per.find(z=>z.sa===sa);
   if(!x) return;
-  apriSovra(x.g ? 'Giornata '+x.g[0]+' di lega' : 'Giornata '+sa+' di Serie A', 'I migliori 11',
-    '<div class="blocco">'+dettaglioGiornata(s, sa, true)+'</div>');
+  const c = x.g && D.consigli && D.consigli[String(x.g[0])];
+  const ids = c && c.undici && c.undici[modulo] ? c.undici[modulo] : null, dentro = new Set(ids || []);
+  const r = x.risultato;
+  let i = 0;
+  const campo = '<div class="campo entra campo-voti">'+LINEE_CAMPO+['P','D','C','A'].map(k=>{
+    const l = x.scelti.filter(p=>p.ruolo===k);
+    return l.map((p, n)=>cellaVoto(p, sa, posizione(k, n, l.length), i++, dentro.has(p.id))).join('');
+  }).join('')+'</div>';
+  const altri = ids ? ids.map(id=>players.find(p=>p.id===id)).filter(p=>p && !x.scelti.includes(p)) : [];
+  const presi = ids ? x.scelti.filter(p=>dentro.has(p.id)).length : 0;
+  apriSovra('Gli 11 della giornata', x.g ? 'Giornata '+x.g[0]+' di lega · '+x.modulo : 'Giornata '+sa+' di Serie A · '+x.modulo,
+    '<div class="u11-testa"><div><span class="k">i migliori 11</span><b class="cond">'+numCorto(x.tot)+'</b></div><div class="u11-chip">'+
+      (x.consiglio===null ? '' : '<span class="oro">Jarvis '+numCorto(x.consiglio)+'</span>')+
+      (r ? '<span>Tu '+numCorto(r.mio)+' · <b class="'+esitoLega(r)+'">'+r.golMio+'-'+r.golLoro+'</b></span>' : '')+
+'</div></div>'+
+    campo+
+    (ids ? '<p class="u11-presi"><i></i><span><b>'+presi+' su 11</b> erano nel consiglio di Jarvis</span></p>' : '')+
+    (altri.length ? '<div class="u11-k">Jarvis aveva anche</div><div class="u11-altri">'+altri.map(p=>{
+        const v = votoDi(p, sa);
+        return '<button class="u11-alt" data-id="'+p.id+'">'+maglia(p.club)+p.nome+' <b class="'+(v ? 'fv-'+(v[1] >= 7 ? 'alto' : v[1] < 6 ? 'basso' : 'medio') : 'sv')+'">'+(v ? num(v[1]) : 's.v.')+'</b></button>';
+      }).join('')+'</div>' : ''));
 }
 function renderStagione(){
   const box = document.getElementById('s-stagione');
@@ -3094,12 +3138,16 @@ function renderLega(){
   const cl = document.getElementById('classifica');
   if(D.lega){
     const n1 = x => Number.isInteger(x) ? String(x) : num(x, 1);
+    /* sotto il nome la forma (W, =, L) e il dettaglio con le sue intestazioni; a destra i
+       punti in un riquadro loro, staccati dai fantapunti, che stanno nel dettaglio (21/09/2026) */
     cl.innerHTML = '<h2>Classifica</h2><div class="lista">'+D.lega.classifica.map(r=>{
       const f = forma(r[1]);
-      return '<div class="team'+(r[1]===ME?' io':'')+'"><span class="pos cond">'+r[0]+'</span>'+stemma(r[1])+
-      '<span class="nome">'+r[1]+'<small>'+r[2]+(r[2]===1?' partita':' partite')+' · '+r[3]+' V · '+r[4]+' N · '+r[5]+
-      ' P · gol '+r[6]+'-'+r[7]+'</small>'+(f.length ? '<span class="forma">'+f.map(pallinoForma).join('')+'</span>' : '')+'</span>'+
-      '<span class="val cond">'+n1(r[9])+'<small>'+n1(r[10])+' fantapunti</small></span></div>';
+      return '<div class="team cl'+(r[1]===ME?' io':'')+'"><span class="pos cond">'+r[0]+'</span>'+stemma(r[1])+
+      '<span class="nome"><span class="cl-nome">'+r[1]+'</span>'+
+      '<span class="forma">'+[0,1,2,3,4].map(k=>f[k] ? pallinoForma(f[k]) : '<i class="fp da-giocare" aria-hidden="true"></i>').join('')+'</span>'+
+      '<span class="cl-st">'+[['G', r[2]], ['V', r[3]], ['N', r[4]], ['P', r[5]], ['GF', r[6]], ['GS', r[7]], ['FP', n1(r[10])]]
+        .map(([k, v])=>'<span'+(k==='FP' ? ' class="fp-tot"' : '')+'><i>'+k+'</i><b>'+v+'</b></span>').join('')+'</span></span>'+
+      '<span class="cl-pt"><b class="cond">'+n1(r[9])+'</b><i>PT</i></span></div>';
     }).join('')+'</div>'+
       '<p class="nota-lega">'+(D.lega.origine==='telefono' ? 'Importata sul telefono ' : 'Aggiornata ')+dataIt(D.lega.aggiornato.slice(0,10))+'.</p>';
   } else cl.innerHTML = '';
