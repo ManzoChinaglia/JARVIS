@@ -17,7 +17,10 @@ Indirizzo: https://manzochinaglia.github.io/JARVIS/
 
 ## Regole del progetto, non negoziabili
 
-1. **La difesa è sempre a quattro.** Il modulo cambia solo nei reparti avanzati.
+1. **Cinque moduli: 4-3-3, 4-4-2, 4-5-1, 3-5-2, 3-4-3.** Fino al 21/09/2026 la difesa
+   era sempre a quattro; da allora ci sono anche i due con la difesa a tre (scelta
+   dell'utente), che la lega ammette ma **senza modificatore**: scatta solo con quattro
+   difensori. La difesa a cinque no, per ora.
 2. **Niente chiavi API nel codice.** Il repository è pubblico: qualunque chiave
    verrebbe trovata e usata a spese dell'utente.
 3. **Nessun dato inventato.** Se una statistica non c'è, si dice che non c'è.
@@ -441,7 +444,7 @@ CRLF: `.gitattributes` impedisce a Git di convertirlo.
   dice se l'iPhone ha l'ultima versione o una copia vecchia.
 - Icona per la Home: **Re Guyzo**, il busto dorato in basso nello stemma
   (`img/icona-180.png`, `img/icona-512.png`, `manifest.webmanifest`). La stessa
-  immagine è lo stemmino accanto a BURKINA FASO e l'avatar di «Chiedi». iOS non
+  immagine è lo stemmino accanto a BURKINA FASO. iOS non
   aggiorna l'icona da solo: bisogna togliere Jarvis dalla Home e rimetterlo.
 - Sfondo: `img/sfondo.jpg`, lo stemma intero adattato allo schermo dell'iPhone
   (1080 × 2340, sopra e sotto la tinta scura della foto). Un velo scuro in CSS
@@ -459,9 +462,6 @@ CRLF: `.gitattributes` impedisce a Git di convertirlo.
   dell'accento e della stella, rosso e verde di forma e disponibilità — e su un
   controllo con le 10 squadre vere una usciva con un ambra quasi identico
   all'oro. La nuova tavolozza tiene ogni colore lontano da quei quattro.
-- **Focus visibile su «Chiedi»** (15/09, stesso giro): il campo toglie il proprio
-  contorno (taglierebbe lo spigolo del vetro), ma `.chiedi-in:focus-within` illumina
-  tutto il pillolo — prima non c'era nessun segno del fuoco.
 - **Mercato, «per loro» sempre verde** (15/09, stesso giro): `perMe` e `perLoro` sono
   sempre ≥ 0 quando arrivano fin qui (`mercato()` scarta prima gli scambi che non
   convengono a uno dei due), ma un valore vicino allo zero restava bianco invece che
@@ -556,8 +556,29 @@ Toccando un giocatore, in campo o in una lista, sale la sua scheda
 della sua squadra, gol e assist (per i portieri gol subiti e rigori parati),
 cartellini, punteggio del consiglio, titolarità, partita e avversario, e la data
 delle statistiche. Senza i bonus della fonte compare un trattino. Sotto il campo
-nessuna scritta «tocca un giocatore»: per l'utente è intuitivo (14/09/2026). Il
-modulo si sceglie con tre pulsanti sopra il campo.
+nessuna scritta «tocca un giocatore»: per l'utente è intuitivo (14/09/2026).
+
+**Il modulo** (21/09/2026, scelta dell'utente su mockup, «cinque tessere»): sopra il
+campo cinque tessere di vetro (`renderModuli`), una per modulo di `MODULI`, ognuna con la
+formazione disegnata in piccolo coi colori dei ruoli (`disegnoModulo`, `COLORI_RUOLO`),
+il nome e il **totale atteso** (`totaleModulo`: fantavoto atteso degli undici, senza
+modello la fantamedia stimata, più il modificatore atteso). Su quella che rende di più
+il nastrino verde «consigliato» (`moduloConsigliato`; a parità vince la prima). Le due
+con la difesa a tre sono appena azzurre e hanno «NO MOD.» in maiuscolo; nessuna legenda
+dei colori (tolta su richiesta). Si sceglie toccando: la lente da trascinare di prima non
+c'è più. All'apertura resta 4-3-3, anche se il consigliato è un altro: la scelta è
+dell'utente. Perché è nato: alla giornata 1 l'utente ha perso il modificatore senza
+saperlo (conta il voto, non il fantavoto), e voleva vedere a colpo d'occhio quanto vale
+ogni modulo.
+
+Con la difesa a tre (`conModificatore(mod)` falso): `undiciDi` sceglie i difensori uno per
+uno (niente `bloccoDifensivo`), `bloccoDifesa`/«La difesa» spariscono, `totaliSquadra`
+non aggiunge il modificatore (serve `cd.length >= 4`). I conti che non simulano il
+modificatore — il migliore a posteriori (`miglioreUndici`, quindi «Com'è andata» e «La
+stagione») e il mercato (`migliori11`, `valore11`) — restano sui soli moduli a quattro
+(`MODULI_4`): senza il modificatore la difesa a tre sembrerebbe sempre meglio, ed è
+falso. Per l'avversario in «La sfida» il modulo si sceglie coi punteggi più il
+modificatore atteso (`vale`), così un 3-4-3 vince solo se rende davvero di più.
 
 ## Rosa
 
@@ -574,8 +595,8 @@ Scelta dell'utente del 15/09/2026.
 
 Sotto il campo, «La sfida, sulla carta» (`sfidaDati`, `renderSfida`): il tuo
 undici contro il migliore dell'avversario della giornata, calcolato con lo stesso
-motore sulle rose (`undiciDi`; per loro il modulo che rende di più, sempre con la
-difesa a quattro), reparto per reparto, con la somma dei punteggi del consiglio e
+motore sulle rose (`undiciDi`; per loro il modulo che rende di più tra i cinque,
+modificatore compreso), reparto per reparto, con la somma dei punteggi del consiglio e
 un verdetto «sulla carta», e sotto i due moduli. Toccando un nome si apre la scheda
 del giocatore.
 
@@ -607,7 +628,7 @@ Dal 15/09/2026 (quattro idee approvate dall'utente, fatte tutte insieme):
   redazioni). Per tre giorni dalla fine si riscarica (i voti si assestano); una
   giornata con meno di 200 voti non si salva; il file si riscrive solo se cambia.
 - **Consiglio salvato**: `notifiche.js`, a ogni giro prima della scadenza, salva in
-  `dati/consigli.json` undici e panchina della giornata per i tre moduli; dopo la
+  `dati/consigli.json` undici e panchina della giornata per i cinque moduli; dopo la
   scadenza resta quello dell'ultimo giro prima.
 - **Com'è andata** (`comeAndata`, in cima alla Giornata): l'ultima giornata con i
   voti, fino alla scadenza della successiva. Nella pagina una riga sola; toccandola,
@@ -664,7 +685,9 @@ Dal 15/09/2026 (quattro idee approvate dall'utente, fatte tutte insieme):
   sovraimpressione (`apriMercato`) per ogni scambio chi dai e chi prendi, «per te» e
   «per loro», chi entra negli undici e la tabella voce per voce (per i 2 contro 2 i due
   insieme), in due gruppi: «1 contro 1» e «2 contro 2».
-- **La stagione** (`stagione`, riga in cima alla Rosa, `apriStagione`): in cima il
+- **La stagione** — dal 21/09/2026 è **una scheda sua**, al posto di «Chiedi» (vedi la
+  sezione «La scheda Stagione» più sotto); quello che segue è il motore, ancora valido.
+  (`stagione`): in cima il
   grafico giornata per giornata dei fantapunti dei tuoi migliori 11 (`graficoStagione`:
   una colonna per giornata, ★ sulla migliore, linea della media), che si tocca per
   aprire sotto la giornata (`scegliGiornata`, `dettaglioGiornata`: totale, «la
@@ -733,8 +756,8 @@ richiesta dell'utente. La rifrazione
 vera del vetro sul web non si può fare (Safari non applica filtri SVG allo sfondo):
 la lente la imita con sfocatura, saturazione, luminosità e riflessi.
 
-Stesso stile, scelto dall'utente per il resto dell'app: selettore del modulo con
-la lente da trascinare (`scegliModulo`), pannelli di vetro staccati dai bordi,
+Stesso stile, scelto dall'utente per il resto dell'app: tessere di vetro per il
+modulo (dal 21/09, prima una lente da trascinare), pannelli di vetro staccati dai bordi,
 pulsanti di vetro che si illuminano nel punto toccato (`.luce`, `--gx`/`--gy`). Il
 vetro va sui controlli che galleggiano, non sui contenuti. L'intestazione a
 capsula che si stringeva scorrendo è stata tolta lo stesso giorno (non piaceva):
@@ -791,19 +814,31 @@ nessun canale non invia e non segna niente; un errore non fa mai fallire il giro
 Per provare: Actions → *Aggiorna Jarvis* → *Run workflow*, con «Manda anche una
 notifica di prova».
 
-## Chiedi
+## La scheda Stagione (al posto di «Chiedi»)
 
-La pagina risponde a: «chi schiero?» (l'undici in poche righe e le cose da
-tenere d'occhio), un ruolo (chi gioca nel modulo scelto con il motivo, gli altri
-solo per nome), un confronto «A o B?», un giocatore (anche senza accenti o con
-parte del cognome; con più omonimi chiede quale), «chi affronto?», «infortunati»,
-«aggiorna i dati». Le domande pronte si generano dai dati: una è sempre il
-ballottaggio vero in difesa.
+«Chiedi» è stata **tolta il 21/09/2026**, su scelta dell'utente: non la usava e non gli
+aggiungeva niente. Via la pagina, le domande pronte, `rispondi` e tutto il riconoscimento
+vocale; restano `num`, `cognome` e `breve`, che servono altrove. Le sue risposte erano
+tutte già visibili nella Giornata, nella Rosa e nelle schede dei giocatori.
 
-Microfono: su scelta dell'utente si usa il riconoscimento vocale del browser,
-che su iPhone è poco affidabile, soprattutto dall'icona sulla Home. Ogni errore
-ha un messaggio che dice il perché e ricorda la dettatura della tastiera, che
-funziona sempre: dal messaggio riportato dall'utente si capisce la causa.
+Al suo posto la scheda **Stagione** (barra in basso: Giornata · Rosa · Stagione · Lega,
+icona a colonne), approvata su mockup lo stesso giorno. La riga «La stagione» in cima alla
+Rosa non c'è più. Dentro (`renderStagione` → `htmlStagione`, in `#s-stagione`):
+- **In lega**: posizione in classifica e punti, V · N · P coi gol, e «Jarvis N% del
+  massimo» (`accuratezzaConsiglio`), con sotto una nota: consigliato su massimo possibile
+  e, se c'è, il calcolo di prima (serve all'autocalibrazione dei `PESI`).
+- **Giornata per giornata**: il grafico (`graficoStagione`, sotto la colonna scelta anche
+  «· G1» se è una giornata di lega), aperto sull'**ultima** giornata (`stagioneSel`); sotto,
+  in breve (`dettaglioBreve`): «Giornata 1 di lega: vero 66 a 68, 1-1 · Jarvis 70 ·
+  migliori 11 77» e i quattro reparti; «gli 11 della giornata ›» apre la giornata intera in
+  sovraimpressione (`apriUndiciGiornata`, `dettaglioGiornata` senza frecce).
+- **La rosa in numeri**: gol, assist, ammonizioni.
+- **Chi produce**: i primi cinque; «tutti i 25 ›» apre l'elenco intero in sovraimpressione
+  (`apriProduttori`, con il testo da condividere).
+
+I tocchi passano da `toccaStagione` (colonna o freccia, «tutti», «gli 11», giocatore). I
+numeri interi si scrivono senza «,0» (`numCorto`). **Da fare con l'utente**: snellire le
+altre pagine dove ripetono cose che ora stanno qui (ne ha parlato lui, 21/09).
 
 ## Dati vecchi
 
@@ -1100,8 +1135,8 @@ Dato giocatore, ruolo, avversario, casa/fuori, forma e squadra intorno →
     giocare in casa, che prima non contava, vale +0,14/+0,18.
   - chiuso il 15/09 sera: anche il mercato (`valoreStagione` → `baseStagione`, il
     fantavoto atteso senza la partita; nella tabella «Base Jarvis» con la fantamedia
-    vera sotto) e «come sta X» in «Chiedi» («atteso se gioca 6,41 ± 1,2») usano il
-    modello. `fmStimata` resta solo nel calcolo di prima.
+    vera sotto) e «come sta X» in «Chiedi» («atteso se gioca 6,41 ± 1,2», Chiedi tolta il
+    21/09) usano il modello. `fmStimata` resta solo nel calcolo di prima.
 
 ### B3 — Centrocampo e attacco: **probabilità di vittoria**, non punti attesi
 
@@ -1254,7 +1289,7 @@ Con il pulsante di condivisione: undici, modificatore atteso e probabilità in t
 I contributi che arrotondano a zero si scrivono «0,0» senza segno (anche nella
 scheda del giocatore): «−0,0» sembrava un malus.
 
-## Stato dei lavori (aggiornato al 16/09/2026, notte)
+## Stato dei lavori (aggiornato al 21/09/2026)
 
 **Per chi riprende, sul PC o da una sessione cloud (Cowork)**: leggere prima questa
 sezione, poi «Il lucchetto» e «Lavoro da remoto». La storia di git è ripartita il 16/09
@@ -1268,7 +1303,7 @@ del push. `remoto/patch/` resta la cassetta della posta.
 ### Fatto (pubblicato e verificato)
 - **B1** lo storico dei voti dal 2015-16 (`dati/storico/`, 114.111 righe).
 - **B2** il fantavoto atteso: `scripts/modello.py` → `dati/modello.json`, riaddestrato a
-  ogni giro; lo usano consiglio, voto del modificatore, mercato e «Chiedi».
+  ogni giro; lo usano consiglio, voto del modificatore e mercato.
 - **B3** la probabilità di vittoria nella sfida (fasce dei gol della lega: 1° a 66, poi
   uno ogni 5, verificate dall'utente) e il suggerimento per varianza.
 - **B5** «Il consiglio» a tutto schermo (difesa, sfida, perché dell'undici); nella
@@ -1282,6 +1317,9 @@ del push. `remoto/patch/` resta la cassetta della posta.
   di dati letti tutti insieme (da 1,08 a 0,32 s con la rete del telefono).
 - **Grafica del 17/09**: panchina per reparto con maglie e fantavoto atteso, indisponibili
   con dettagli da aprire, partite per giorno, Liquid Glass ovunque (vedi «Grafica»).
+- **21/09**: cinque moduli (3-5-2 e 3-4-3, senza modificatore) con le tessere, il totale
+  atteso e «consigliato»; «Chiedi» tolta, al suo posto la scheda Stagione (vedi «Campo,
+  maglie e schede» e «La scheda Stagione»).
 - Verificato il 16/09: le prove su GitHub aprono il lucchetto col Secret; l'utente è
   entrato dall'iPhone con la password; **il primo giro di `aggiorna.yml` col lucchetto
   (12:45) ha aperto e richiuso**, e nel commit non c'era nessun file della lega in chiaro.
@@ -1295,10 +1333,13 @@ del push. `remoto/patch/` resta la cassetta della posta.
    dei risultati invece è verificato (21/09, primo «dati di lega» dopo la giornata 1).
    Ricordare all'utente: «Importa da Leghe» sul telefono salva solo sul telefono; perché
    i risultati arrivino a GitHub (notifiche, «Com'è andata») serve «dati di lega» dal PC.
-2. **Il parere dell'utente** su com'è andata, andamento e calendario dei tuoi (funzioni
+2. **Snellire le pagine** che ripetono quello che ora sta nella scheda Stagione (per
+   esempio la classifica nella Lega, o i totali in «Com'è andata»): da decidere con
+   l'utente, con un mockup.
+3. **Il parere dell'utente** su com'è andata, andamento e calendario dei tuoi (funzioni
    del 15/09; il mercato è già stato rivisto), su «Il consiglio», sull'avvio e sulla
    panchina nuova, e sulla scheda col fantavoto atteso.
-3. **La grafica**: panchina, indisponibili, «Quando giocano i tuoi» e Liquid Glass ovunque
+4. **La grafica**: panchina, indisponibili, «Quando giocano i tuoi» e Liquid Glass ovunque
    rifatti il 17/09 (vedi «Grafica»); altre migliorie si concordano, con un mockup prima
    di scrivere il codice (l'utente vuole vederlo e decidere in corso d'opera).
 
@@ -1344,9 +1385,10 @@ python prove/modello.py
 15/09/2026). Alcune prove girano solo se ci sono i file veri esportati da Leghe,
 che stanno in `archivio/` e sono fuori da Git. Quindi:
 
-- **sul PC dell'utente** (che ha `archivio/`): `prove/app.js` 313/313 e
-  `prove/lega.py` 34/34 (dal 16/09 sera: la voce tolta ha portato via 13 verifiche)
-- **su un clone pulito o nella CI** (senza `archivio/`): 312/312 e 31/31, perché
+- **sul PC dell'utente** (che ha `archivio/`): `prove/app.js` 304/304 e
+  `prove/lega.py` 34/34 (dal 21/09: «Chiedi» tolta ha portato via le sue verifiche,
+  i moduli e la scheda Stagione ne hanno aggiunte)
+- **su un clone pulito o nella CI** (senza `archivio/`): 303/303 e 31/31, perché
   saltano «il file vero di Leghe si legge uguale (solo sul PC)» e le tre di
   `lega.py` sulla stessa cosa
 - `prove/privacy.py` 5/5 finché il lucchetto non è attivo, 8/8 dopo (le tre sul

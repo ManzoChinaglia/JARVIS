@@ -174,16 +174,30 @@
   /* ---- modulo ---- */
   .modrow{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:24px;}
   .modrow h2{margin:0 2px;}
-  .moduli{position:relative; display:grid; grid-template-columns:repeat(3,1fr); padding:3px; border-radius:13px;
-          background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.02)), rgba(14,18,16,.4);
-          border:1px solid rgba(255,255,255,.16); box-shadow:inset 0 1px 0 rgba(255,255,255,.25);
-          -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);}
-  .moduli button{position:relative; z-index:1; padding:6px 11px; border:0; background:none; color:var(--dim);
-                 font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:15px; transition:color .25s;}
-  .moduli button.on{color:#1A1405;}
-  .moduli-cursore{position:absolute; top:3px; bottom:3px; left:3px; width:calc((100% - 6px)/3); border-radius:10px;
-                  background:linear-gradient(135deg,var(--oro-chiaro),var(--oro)); box-shadow:0 2px 10px rgba(228,180,81,.4);
-                  transform:translateX(calc(var(--k,0) * 100%)); transition:transform .4s var(--molla);}
+  /* cinque tessere di vetro: la formazione disegnata coi colori dei ruoli, il totale atteso
+     (fantavoto più modificatore) e «consigliato» sul modulo che rende di più */
+  .moduli{display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:14px;}
+  .moduli button{position:relative; display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0;
+                 padding:14px 2px 8px; border-radius:14px; color:var(--ink);
+                 background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.02)), rgba(255,255,255,.04);
+                 border:1px solid rgba(255,255,255,.16);
+                 box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 4px 14px rgba(0,0,0,.18);
+                 -webkit-backdrop-filter:var(--vetro-sfoca); backdrop-filter:var(--vetro-sfoca);
+                 transition:transform .3s var(--molla), background .25s, border-color .25s, box-shadow .25s;}
+  .moduli button:active{transform:scale(.95);}
+  .moduli button.tre{background:linear-gradient(180deg,rgba(127,179,213,.13),rgba(127,179,213,.04)); border-color:rgba(127,179,213,.3);}
+  .moduli button.on{background:linear-gradient(180deg,rgba(233,185,73,.26),rgba(233,185,73,.08)); border-color:rgba(233,185,73,.75);
+                    box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 0 0 3px rgba(233,185,73,.16), 0 6px 18px rgba(233,185,73,.2);}
+  .moduli svg{width:36px; height:29px; display:block;}
+  .moduli .mn{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:17px; line-height:1; letter-spacing:.2px;}
+  .moduli button.on .mn{color:var(--accento);}
+  .moduli .mt{font-family:"Barlow Condensed",sans-serif; font-weight:600; font-size:14px; line-height:1; color:var(--dim);}
+  .moduli button.on .mt{color:var(--ink);}
+  .moduli .nomod{margin-top:1px; padding:2px 5px; border-radius:6px; font-family:"Barlow Condensed",sans-serif; font-weight:700;
+                 font-size:11px; letter-spacing:.6px; line-height:1.1; color:#BFDDF0; background:rgba(127,179,213,.2);}
+  .moduli .cons{position:absolute; top:-7px; left:50%; transform:translateX(-50%); padding:1px 6px; border-radius:7px;
+                white-space:nowrap; font-style:normal; font-size:9.5px; font-weight:700; letter-spacing:.3px; text-transform:uppercase;
+                background:#43e08f; color:#0c2a19; box-shadow:0 2px 8px rgba(67,224,143,.35);}
 
   /* ---- campo ---- */
   /* proporzioni di un campo vero, erba tagliata a strisce, luci da stadio */
@@ -363,7 +377,6 @@
   .team .val small{display:block; font-family:-apple-system,sans-serif; font-weight:400; font-size:10px; color:var(--dim); letter-spacing:0;}
   .nota-lega{margin:8px 2px 0; font-size:11.5px; line-height:1.45; color:var(--dim);}
   .nota-lega:empty{display:none;}
-  .dialogo:has(.risposta:empty){display:none;}
   .cal{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);}
   .cal:last-child{border-bottom:none;}
   .cal .d{display:flex; align-items:baseline; gap:7px; width:90px; flex-shrink:0; font-size:12px; color:var(--dim);}
@@ -374,30 +387,6 @@
   .cal.io{margin:0 -14px; padding:10px 14px; background:linear-gradient(90deg,rgba(252,209,22,.16),transparent);}
   .cal.io .m, .cal.io .d b{color:var(--accento); font-weight:600;}
   .cal.passata{opacity:.45;}
-
-  /* ---- chiedi ---- */
-  .chiedi-in{display:flex; gap:6px; margin-bottom:14px; padding:6px; border-radius:18px;
-             background:var(--vetro); border:1px solid var(--bordo); transition:border-color .2s, box-shadow .2s;
-             -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);}
-  /* il campo toglie il proprio contorno (taglierebbe lo spigolo arrotondato del vetro): il
-     fuoco si vede sul pillolo intero, coerente con lo stile, non perso */
-  .chiedi-in:focus-within{border-color:rgba(252,209,22,.55); box-shadow:0 0 0 3px rgba(252,209,22,.18);}
-  .chiedi-in input{flex:1; min-width:0; padding:10px 8px; border:0; outline:none; background:transparent; color:var(--ink);}
-  .mic{width:44px; height:44px; flex-shrink:0; padding:0; border:0; border-radius:14px;
-       display:grid; place-items:center; background:rgba(255,255,255,.07); color:var(--oro-chiaro);}
-  .mic svg{width:20px; height:20px;}
-  #invia{background:linear-gradient(135deg,var(--oro-chiaro),var(--oro)); color:#1A1405;}
-  .mic.ascolto{background:var(--bf-rosso); color:#fff; animation:ascolta 1.2s ease-out infinite;}
-  .esempi{display:flex; flex-wrap:wrap; gap:7px; margin:0 0 16px;}
-  .esempi button{padding:8px 13px; border-radius:16px; font-size:13px; color:var(--oro-chiaro);
-                 background:rgba(252,209,22,.07); border:1px solid rgba(252,209,22,.26);}
-  .dialogo{display:flex; align-items:flex-start; gap:10px;}
-  .avatar{width:40px; height:40px; flex-shrink:0; border-radius:50%; object-fit:cover;
-          border:2px solid var(--oro); box-shadow:0 4px 12px rgba(0,0,0,.4);}
-  .risposta{flex:1; min-width:0; padding:14px 16px; border-radius:4px 18px 18px 18px;
-            background:var(--vetro); border:1px solid var(--bordo);
-            -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
-            font-size:15px; line-height:1.55; white-space:pre-line;}
 
   /* ---- barra in basso, come il Liquid Glass di iOS 26 ---- */
   /* vetro chiaro con riflessi; la «lente» della scheda attiva si trascina col dito da una
@@ -509,15 +498,6 @@
   .gio-nota.dura{border-left-color:var(--bf-rosso);}
 
   /* ---- Liquid Glass (iOS 26) su intestazione, modulo, pannelli e pulsanti ---- */
-  /* modulo: la lente di vetro si trascina col dito, come nella barra in basso */
-  .moduli{touch-action:none; user-select:none; -webkit-user-select:none;}
-  .moduli-cursore{background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.06)), rgba(252,209,22,.18);
-                  border:1px solid rgba(255,255,255,.35);
-                  box-shadow:inset 0 1px 1px rgba(255,255,255,.55), inset 0 -2px 6px rgba(0,0,0,.2), 0 4px 12px rgba(0,0,0,.3);
-                  -webkit-backdrop-filter:blur(2px) saturate(2) brightness(1.25); backdrop-filter:blur(2px) saturate(2) brightness(1.25);
-                  transition:transform .45s var(--molla), scale .3s var(--molla);}
-  .moduli.trascina .moduli-cursore{scale:1.1 1.25;}
-  .moduli button.on{color:var(--accento); text-shadow:0 1px 6px rgba(0,0,0,.4);}
 
   /* pannelli di vetro, staccati dai bordi come su iOS 26 */
   .velo{background:rgba(0,0,0,.35); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);}
@@ -529,7 +509,7 @@
           transform:translateY(calc(100% + 40px));}
 
   /* pulsanti di vetro: pillole trasparenti con un filo di luce, che si illuminano dove li tocchi */
-  .aggiorna, .countdown a.ics, .esempi button, .mic, .chiudi{position:relative;
+  .aggiorna, .countdown a.ics, .chiudi{position:relative;
      background:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.03)), rgba(14,18,16,.4);
      border:1px solid rgba(255,255,255,.18); color:var(--oro-chiaro);
      box-shadow:inset 0 1px 0 rgba(255,255,255,.3), inset 0 -1px 2px rgba(0,0,0,.15), 0 6px 16px rgba(0,0,0,.3);
@@ -539,10 +519,8 @@
      border-color:rgba(252,209,22,.45); box-shadow:inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 6px rgba(0,0,0,.2), 0 8px 20px rgba(0,0,0,.35);}
   .aggiorna.fatto{background:linear-gradient(180deg,rgba(190,255,215,.3),rgba(0,158,73,.18)), rgba(8,40,22,.5);
      border-color:rgba(67,224,143,.5); color:#8FF0B8;}
-  .countdown a.ics, .esempi button{border-radius:20px;}
-  .mic{border-radius:16px;}
-  #invia{background:linear-gradient(180deg,rgba(255,240,190,.32),rgba(228,180,81,.14)), rgba(46,36,10,.45); border-color:rgba(252,209,22,.45);}
-  .aggiorna::after, .countdown a.ics::after, .esempi button::after, .mic::after, .chiudi::after, .campanella::after{
+  .countdown a.ics{border-radius:20px;}
+  .aggiorna::after, .countdown a.ics::after, .chiudi::after, .campanella::after{
      content:''; position:absolute; inset:0; border-radius:inherit; pointer-events:none; opacity:0; transition:opacity .45s ease;
      background:radial-gradient(circle at var(--gx,50%) var(--gy,50%), rgba(255,255,255,.45), transparent 60%);}
   .luce::after{opacity:1; transition:none;}
@@ -735,6 +713,12 @@
   .st-numeri div{padding:12px 4px 10px; border-radius:16px; text-align:center; background:rgba(0,0,0,.22);}
   .st-numeri span{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);}
   .st-numeri b{display:block; margin-top:4px; font-size:34px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
+  .st-numeri small{display:block; margin-top:5px; font-size:11px; color:var(--dim);}
+  #s-stagione .st-numeri b{font-size:28px;}
+  #st-giornata .st-ris b{color:var(--oro-chiaro); font-weight:600;}
+  #s-stagione .blocco{margin-top:14px;}
+  .st-tutti{display:block; width:100%; margin-top:8px; padding:10px; border:0; border-radius:12px; background:rgba(255,255,255,.06);
+            color:var(--oro-chiaro); font-size:13px; font-weight:600;}
   .pr-barra{display:block; height:4px; margin-top:6px; border-radius:2px; overflow:hidden; background:rgba(255,255,255,.07);}
   .pr-barra i{display:block; height:100%; border-radius:2px; transform-origin:left;
               background:linear-gradient(90deg,var(--oro),var(--oro-chiaro)); animation:cresce .8s var(--morbida) both .2s;}
@@ -859,7 +843,6 @@
   @keyframes suona{0%,100%{transform:rotate(0);} 15%{transform:rotate(16deg);} 30%{transform:rotate(-14deg);}
                    45%{transform:rotate(10deg);} 60%{transform:rotate(-6deg);} 75%{transform:rotate(3deg);}}
   @keyframes gira{to{transform:rotate(360deg);}}
-  @keyframes ascolta{from{box-shadow:0 0 0 0 rgba(239,43,45,.6);} to{box-shadow:0 0 0 14px rgba(239,43,45,0);}}
   @keyframes luccica{from{background-position:-300px 0;} to{background-position:300px 0;}}
   button{transition:transform .1s;}
   button:active{transform:scale(.95);}
@@ -940,11 +923,8 @@
     </div>
     <div class="modrow">
       <h2>Undici consigliato</h2>
-      <div class="moduli" id="modulo">
-        <span class="moduli-cursore"></span>
-        <button class="on" data-m="4-3-3">4-3-3</button><button data-m="4-4-2">4-4-2</button><button data-m="4-5-1">4-5-1</button>
-      </div>
     </div>
+    <div class="moduli" id="modulo"></div>
     <div class="campo" id="campo"></div>
     <div id="difesa"></div>
     <div id="sfida"></div>
@@ -955,7 +935,6 @@
   </section>
 
   <section id="s-rosa">
-    <div id="stagione"></div>
     <div class="rosa-testa"><h2>La tua rosa</h2><div class="vista" id="rosa-vista"></div></div>
     <div class="rosa-comandi" id="rosa-comandi"></div>
     <div id="rosa"></div>
@@ -975,28 +954,15 @@
     <div id="calendario"></div>
   </section>
 
-  <section id="s-chiedi">
-    <h2>Chiedi a Jarvis</h2>
-    <div class="chiedi-in">
-      <input type="text" id="q" placeholder="Scrivi o detta la domanda" autocomplete="off"
-             autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="send">
-      <button class="mic" id="mic" aria-label="Parla"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
-      <button class="mic" id="invia" aria-label="Chiedi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-    </div>
-    <div class="esempi" id="esempi"></div>
-    <div class="dialogo">
-      <img class="avatar" src="img/icona-180.png" alt="">
-      <div class="risposta" id="risposta"></div>
-    </div>
-  </section>
+  <section id="s-stagione"></section>
 </main>
 
 <nav>
   <span class="cursore" id="cursore"></span>
   <button class="on" data-s="giornata"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M4 12h16"/><circle cx="12" cy="12" r="2.6"/><path d="M8.5 2.5v3h7v-3M8.5 21.5v-3h7v3"/></svg><span>Giornata</span></button>
   <button data-s="rosa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M8 3 3.5 5.5 2 10l3.5 1.5L7 10v11h10V10l1.5 1.5L22 10l-1.5-4.5L16 3c-.8 1.6-2.2 2.4-4 2.4S8.8 4.6 8 3Z"/></svg><span>Rosa</span></button>
+  <button data-s="stagione"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20.5h18"/><rect x="4.5" y="12" width="3.4" height="8.5" rx="1"/><rect x="10.3" y="5" width="3.4" height="15.5" rx="1"/><rect x="16.1" y="9" width="3.4" height="11.5" rx="1"/></svg><span>Stagione</span></button>
   <button data-s="lega"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8v6a4 4 0 0 1-8 0V3ZM8 5H4.5A3 3 0 0 0 8 9M16 5h3.5A3 3 0 0 1 16 9M12 13v4M8 21h8M9.5 17h5"/></svg><span>Lega</span></button>
-  <button data-s="chiedi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 4v-4h-1a.5.5 0 0 1-.5-.5Z"/><path d="M8.5 9.5h.01M12 9.5h.01M15.5 9.5h.01" stroke-width="2.4" stroke-linecap="round"/></svg><span>Chiedi</span></button>
 </nav>
 
 <!-- pannelli che salgono dal basso -->
@@ -1297,6 +1263,7 @@ function renderGiornata(){
   document.getElementById('cd').classList.toggle('urgente', ms>0 && ms<86400000);
 
   const sa = g[1], iso = g[2];
+  renderModuli(g);
   disegnaCampo(g);
   renderDifesa(g);
   renderSfida(g);
@@ -1305,8 +1272,13 @@ function renderGiornata(){
   renderAvvisi();
 }
 
-/* difesa sempre a 4; reparti avanzati secondo il modulo scelto */
-const MODULI = {'4-3-3':{D:4,C:3,A:3}, '4-4-2':{D:4,C:4,A:2}, '4-5-1':{D:4,C:5,A:1}};
+/* con la difesa a tre il modificatore non scatta: nella lega vale solo con quattro difensori
+   (confermato dall'utente il 21/09/2026) */
+const MODULI = {'4-3-3':{D:4,C:3,A:3}, '4-4-2':{D:4,C:4,A:2}, '4-5-1':{D:4,C:5,A:1}, '3-5-2':{D:3,C:5,A:2}, '3-4-3':{D:3,C:4,A:3}};
+const conModificatore = mod => MODULI[mod] && MODULI[mod].D >= 4;
+/* per i conti che non simulano il modificatore (il migliore a posteriori, il mercato) solo
+   la difesa a quattro: senza il modificatore la difesa a tre sembrerebbe sempre meglio */
+const MODULI_4 = Object.keys(MODULI).filter(conModificatore);
 let modulo = '4-3-3';
 let campoDisegnato = '';
 
@@ -1645,7 +1617,8 @@ function bloccoDifensivo(disp, g, quanti){
      difesa), non per le dieci rose avversarie. La chiede chi la usa, con modificatoreAtteso. */
   return (BLOCCHI[chiave] = meglio);
 }
-/* l'undici migliore di una rosa per un modulo: la difesa resta sempre a quattro */
+/* l'undici migliore di una rosa per un modulo: con la difesa a quattro portiere e difesa
+   si scelgono a blocco per il modificatore, con la difesa a tre uno per uno */
 function undiciDi(rosa, g, mod){
   const iso = g[2];
   const q = Object.assign({P:1}, MODULI[mod]);
@@ -1658,9 +1631,44 @@ function undiciDi(rosa, g, mod){
   });
   /* portiere e difesa, se il modificatore è misurabile, si rifanno a blocco;
      altrimenti restano quelli scelti uno per uno, come prima */
-  const b = bloccoDifensivo(disp, g, q.D);
+  const b = q.D >= 4 ? bloccoDifensivo(disp, g, q.D) : null;
   if(b){ out.P = [b.P]; out.D = b.D.slice().sort((x,y)=>punteggio(y,g)-punteggio(x,g)); }
   return out;
+}
+/* quanto rende ogni modulo: il fantavoto atteso dei suoi undici (senza modello la
+   fantamedia stimata) più il modificatore atteso, che c'è solo con la difesa a quattro.
+   Il modulo che rende di più è «consigliato»; a parità vince il primo dell'elenco. */
+function totaleModulo(g, mod){
+  const u = undiciDi(mia, g, mod), tutti = [].concat(u.P, u.D, u.C, u.A);
+  const fv = tutti.reduce((s,p)=>{ const a = attesoModello('fantavoto', p, g); return s + (a ? a.media : fmStimata(p)); }, 0);
+  const m = conModificatore(mod) && u.P.length && u.D.length >= 4 ? modificatoreAtteso(u.P[0], u.D, SIMULAZIONI, g) : null;
+  return {fv, mod: m ? m.atteso : 0, tot: fv + (m ? m.atteso : 0)};
+}
+function moduloConsigliato(g){
+  let meglio = null;
+  Object.keys(MODULI).forEach(m=>{ const t = totaleModulo(g, m).tot; if(!meglio || t > meglio.tot + 1e-9) meglio = {m, tot:t}; });
+  return meglio && meglio.m;
+}
+/* la formazione in piccolo: portiere in basso, poi difesa, centrocampo e attacco, coi colori dei ruoli */
+const COLORI_RUOLO = {P:'#E4B451', D:'#7FB3D5', C:'#71C295', A:'#E0605C'};
+function disegnoModulo(q){
+  const fila = (n, y, c) => Array.from({length:n}, (_, i)=>'<circle cx="'+(15 + (i - (n - 1)/2)*(n > 4 ? 5.4 : 6.4)).toFixed(1)+
+    '" cy="'+y+'" r="2.2" fill="'+c+'"/>').join('');
+  return '<svg viewBox="0 0 30 24" aria-hidden="true"><rect x=".5" y=".5" width="29" height="23" rx="3" fill="none" stroke="rgba(255,255,255,.18)"/>'+
+    fila(1, 21.3, COLORI_RUOLO.P)+fila(q.D, 17, COLORI_RUOLO.D)+fila(q.C, 11.5, COLORI_RUOLO.C)+fila(q.A, 6, COLORI_RUOLO.A)+'</svg>';
+}
+let moduliDisegnati = '';
+function renderModuli(g){
+  const box = document.getElementById('modulo');
+  if(!box) return;
+  const cons = moduloConsigliato(g);
+  const html = Object.keys(MODULI).map(m=>{
+    const t = totaleModulo(g, m), tre = !conModificatore(m);
+    return '<button data-m="'+m+'" class="'+(m===modulo ? 'on' : '')+(tre ? ' tre' : '')+'" aria-pressed="'+(m===modulo)+'">'+
+      (m===cons ? '<i class="cons">consigliato</i>' : '')+disegnoModulo(MODULI[m])+
+      '<b class="mn">'+m+'</b><span class="mt">'+num(t.tot)+'</span>'+(tre ? '<span class="nomod">NO MOD.</span>' : '')+'</button>';
+  }).join('');
+  if(html !== moduliDisegnati){ moduliDisegnati = html; box.innerHTML = html; }
 }
 /* La difesa di oggi, in chiaro. Si mostra la distribuzione e non solo il numero
    perché sugli scalini la media non capita mai davvero: un blocco «da 2,8» non
@@ -1678,7 +1686,7 @@ const etichettaFascia = b => b ? '+'+String(b).replace('.',',') : '0';
    Senza voti misurati niente riquadro: niente numero inventato. */
 function bloccoDifesa(g){
   const u = undici(g);
-  const m = u.P.length && u.D.length >= 3 ? modificatoreAtteso(u.P[0], u.D, SIMULAZIONI, g) : null;
+  const m = u.P.length && u.D.length >= 4 ? modificatoreAtteso(u.P[0], u.D, SIMULAZIONI, g) : null;
   if(!m) return null;
   const alta = m.fasce.slice().sort((a,b)=>b.prob-a.prob)[0];
   /* quanto manca allo scalino sopra: è l'informazione che fa cambiare un difensore */
@@ -1971,14 +1979,16 @@ function stemma(nome){
 /* ---------- la sfida della giornata ---------- */
 /* il tuo undici contro il migliore dell'avversario per la stessa giornata, con la somma dei
    punteggi del consiglio: una stima di Jarvis sulle rose, non un pronostico del risultato.
-   Per loro vale il modulo che rende di più, sempre con la difesa a quattro. */
+   Per loro vale il modulo che rende di più, modificatore compreso (solo con la difesa a quattro). */
 function sfidaDati(g){
   const av = avversarioLega(g);
   const somma = u => [].concat(u.P,u.D,u.C,u.A).reduce((s,p)=>s+punteggio(p,g), 0);
   const mio = undiciDi(mia, g, modulo);
   const rosaLoro = players.filter(p=>p.team===av.nome);
-  const loro = Object.keys(MODULI).map(m=>{ const u = undiciDi(rosaLoro, g, m); return {modulo:m, u, tot:somma(u)}; })
-                     .sort((a,b)=>b.tot-a.tot)[0];
+  const conMod = (u, m) => { if(!conModificatore(m) || !u.P.length || u.D.length < 4) return 0;
+                             const x = modificatoreAtteso(u.P[0], u.D, SIMULAZIONI_SCELTA, g); return x ? x.atteso : 0; };
+  const loro = Object.keys(MODULI).map(m=>{ const u = undiciDi(rosaLoro, g, m), t = somma(u); return {modulo:m, u, tot:t, vale:t + conMod(u, m)}; })
+                     .sort((a,b)=>b.vale-a.vale)[0];
   return {avv:av.nome, mio:{modulo, u:mio, tot:somma(mio)}, loro};
 }
 /* ── B3: la probabilità di vincere la sfida ─────────────────────────────────────
@@ -2009,7 +2019,7 @@ function totaliSquadra(u, g, n){
   const tutti = [].concat(u.P, u.D, u.C, u.A), fv = tutti.map(p=>campioneFantavoti(p, n, g));
   if(!tutti.length || fv.some(x=>!x)) return null;
   const cp = u.P.length ? campioneVoti(u.P[0], n, g) : null, cd = u.D.map(p=>campioneVoti(p, n, g));
-  const conMod = cp && cd.length >= 3 && cd.every(Boolean), out = new Float64Array(n);
+  const conMod = cp && cd.length >= 4 && cd.every(Boolean), out = new Float64Array(n);
   for(let i = 0; i < n; i++){
     let s = 0;
     for(let k = 0; k < fv.length; k++) s += fv[k][i];
@@ -2252,7 +2262,7 @@ function puntiUndici(ids, panchina, sa){
 /* l'undici migliore a posteriori, con i fantavoti veri, sempre con la difesa a quattro */
 function miglioreUndici(sa){
   let meglio = null;
-  Object.keys(MODULI).forEach(m=>{
+  MODULI_4.forEach(m=>{
     const q = Object.assign({P:1}, MODULI[m]), scelti = [];
     ['P','D','C','A'].forEach(r=>scelti.push(...mia.filter(p=>p.ruolo===r && votoDi(p, sa))
       .sort((a,b)=>votoDi(b, sa)[1]-votoDi(a, sa)[1]).slice(0, q[r])));
@@ -2472,7 +2482,7 @@ function valoreStagione(p){
 /* l'undici migliore di una rosa con quei valori, nel modulo che rende di più (difesa a quattro) */
 function migliori11(rosa, val){
   let meglio = null;
-  Object.values(MODULI).forEach(q=>{
+  MODULI_4.map(m=>MODULI[m]).forEach(q=>{
     const ids = new Set();
     let tot = 0;
     [['P',1],['D',q.D],['C',q.C],['A',q.A]].forEach(([r,n])=>rosa.filter(p=>p.ruolo===r)
@@ -2499,7 +2509,7 @@ function perReparto(rosa, val){
 }
 function valore11(r){
   const s = (k, n) => { let t = 0; for(let i = 0; i < n && i < r[k].length; i++) t += r[k][i]; return t; };
-  return Math.max(...Object.values(MODULI).map(q=>s('P', 1) + s('D', q.D) + s('C', q.C) + s('A', q.A)));
+  return Math.max(...MODULI_4.map(m=>MODULI[m]).map(q=>s('P', 1) + s('D', q.D) + s('C', q.C) + s('A', q.A)));
 }
 /* il valore dell'undici dopo uno scambio: fuori quelli che dai, dentro quelli che prendi */
 function valoreDopo(r, via, dentro, val){
@@ -2646,8 +2656,8 @@ function apriMercato(g){
 /* giornata per giornata i fantapunti dei tuoi migliori 11 (voti veri, difesa a quattro), da
    navigare: chi ha fatto cosa, reparto per reparto. Sotto, chi produce: i fantapunti di
    ognuno in tutte le giornate, con media e bonus e malus; gol, assist e ammonizioni */
-const ICONA_STAGIONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M6 16v-5M11 16V6M16 16v-8M21 16v-3"/></svg>';
 const NOMI_REPARTO = {P:'Porta', D:'Difesa', C:'Centrocampo', A:'Attacco'};
+const numCorto = x => Math.abs(x - Math.round(x)) < 0.05 ? String(Math.round(x)) : num(x);   // 66, non 66,0
 function stagione(){
   const giornate = D.voti ? Object.keys(D.voti).map(Number).sort((a,b)=>a-b) : [];
   if(!giornate.length) return null;
@@ -2674,7 +2684,7 @@ function stagione(){
 }
 /* quanto si avvicina il consiglio di Jarvis al massimo possibile, sulle giornate di
    lega dove c'è un consiglio salvato: per il lavoro aperto di tarare i PESI (in
-   CLAUDE.md) e per la vista in apriStagione. Nessun dato inventato: se non c'è
+   CLAUDE.md) e per la scheda Stagione. Nessun dato inventato: se non c'è
    nessuna giornata valutabile, null invece di una media su zero valori. */
 function accuratezzaConsiglio(per){
   const valutate = per.filter(x=>x.consiglio!==null);
@@ -2701,17 +2711,17 @@ function graficoStagione(s, sel){
       return '<g class="st-col'+(x.sa===sel ? ' sel' : '')+'" data-sa="'+x.sa+'" style="--i:'+i+'">'+
         '<rect class="hit" x="'+(cx - passo/2).toFixed(1)+'" y="0" width="'+passo.toFixed(1)+'" height="'+H+'"/>'+
         '<rect class="bar" x="'+(cx - largo/2).toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+largo.toFixed(1)+'" height="'+(H - basso - yy).toFixed(1)+'" rx="5"/>'+
-        (x.sa===sel || x===picco ? '<text class="val" x="'+cx.toFixed(1)+'" y="'+(yy - 6).toFixed(1)+'">'+(x===picco && n > 1 ? '★ ' : '')+num(x.tot)+'</text>' : '')+
-        (n <= 19 || i%2===0 || x.sa===sel ? '<text class="num" x="'+cx.toFixed(1)+'" y="'+(H - 5)+'">'+x.sa+'</text>' : '')+'</g>';
+        (x.sa===sel || x===picco ? '<text class="val" x="'+cx.toFixed(1)+'" y="'+(yy - 6).toFixed(1)+'">'+(x===picco && n > 1 ? '★ ' : '')+numCorto(x.tot)+'</text>' : '')+
+        (n <= 19 || i%2===0 || x.sa===sel ? '<text class="num" x="'+cx.toFixed(1)+'" y="'+(H - 5)+'">'+x.sa+(x.sa===sel && x.g ? ' · G'+x.g[0] : '')+'</text>' : '')+'</g>';
     }).join('')+'</svg>';
 }
 /* la giornata scelta: totale, reparti e gli 11 con voto e bonus; frecce per le altre */
-function dettaglioGiornata(s, sa){
+function dettaglioGiornata(s, sa, senzaFrecce){
   const i = s.per.findIndex(x=>x.sa===sa), x = s.per[i];
   if(!x) return '';
   const tutti = s.per.map(z=>z.tot), tag = s.per.length < 2 ? ''
     : x.tot===Math.max(...tutti) ? '<i class="chip su">la migliore</i>' : x.tot===Math.min(...tutti) ? '<i class="chip giu">la peggiore</i>' : '';
-  const freccia = (z, segno, etichetta) => '<button class="st-nav"'+(z ? ' data-sa="'+z.sa+'"' : ' disabled')+' aria-label="'+etichetta+'">'+segno+'</button>';
+  const freccia = (z, segno, etichetta) => senzaFrecce ? '' : '<button class="st-nav"'+(z ? ' data-sa="'+z.sa+'"' : ' disabled')+' aria-label="'+etichetta+'">'+segno+'</button>';
   const r = x.risultato, diff = x.consiglio===null ? null : x.consiglio - x.tot;
   return '<div class="st-dentro"><div class="st-testa">'+freccia(s.per[i - 1], '‹', 'Giornata prima')+
       '<div class="st-titolo"><span class="k">'+(x.g ? 'Giornata '+x.g[0]+' di lega' : 'Giornata '+sa+' di Serie A')+'</span>'+
@@ -2731,11 +2741,13 @@ function dettaglioGiornata(s, sa){
 function scegliGiornata(sa){
   const s = stagione();
   if(!s || !s.per.some(x=>x.sa===sa)) return;
+  stagioneSel = sa;
   const aggiorna = () => {
     const gr = document.getElementById('st-grafico');
     gr.classList.add('fermo');                  // le colonne crescono solo all'apertura
     gr.innerHTML = graficoStagione(s, sa);
-    document.getElementById('st-giornata').innerHTML = dettaglioGiornata(s, sa);
+    document.getElementById('st-giornata').innerHTML = dettaglioBreve(s, sa);
+    stagioneDisegnata = htmlStagione(s);      // il prossimo giro non ridisegna la stessa cosa
   };
   /* il grafico si sostituisce di netto (nuovo <svg> a ogni tocco): con la View Transitions
      API di Safari (dal 2024) diventa una dissolvenza invece di uno scatto. Se manca (Safari
@@ -2745,57 +2757,89 @@ function scegliGiornata(sa){
   if(!vaPiano && typeof document.startViewTransition==='function') document.startViewTransition(aggiorna);
   else aggiorna();
 }
-/* nella sovraimpressione: una colonna del grafico o una freccia sceglie la giornata,
-   un giocatore apre la sua scheda */
-function toccaSovra(ev){
-  const n = ev.target && ev.target.closest ? ev.target.closest('[data-sa]') : null;
-  if(n){ scegliGiornata(+n.getAttribute('data-sa')); return; }
-  toccaGiocatore(ev);
-}
 const quanteGiornate = n => n+(n===1 ? ' giornata' : ' giornate');
-let stagioneDisegnata = '';
-function renderStagione(){
-  const s = stagione(), top = s && s.righe[0];
-  const html = top && top.voti ? invito(ICONA_STAGIONE, 'La stagione', quanteGiornate(s.giornate.length)+' di Serie A',
-    'Chi produce di più: '+top.p.nome+', '+num(top.tot)+' fantapunti') : '';
-  if(html !== stagioneDisegnata){ stagioneDisegnata = html; document.getElementById('stagione').innerHTML = html; }
-}
-function apriStagione(){
-  const s = stagione();
-  if(!s) return;
-  const somma = k => mia.some(p=>typeof p[k]==='number') ? mia.reduce((t,p)=>t + (p[k] || 0), 0) : '–';
-  const max = Math.max(1, ...s.righe.map(x=>x.tot)), picco = s.per.reduce((a,b)=>b.tot > a.tot ? b : a);
-  const tessera = (k, v) => '<div><span>'+k+'</span><b class="cond">'+v+'</b></div>';
-  const riga = x => '<div class="vr prod" data-id="'+x.p.id+'">'+maglia(x.p.club)+
+/* La scheda Stagione (21/09/2026, al posto di «Chiedi», scelta dell'utente su mockup): la
+   lega in tre numeri, il grafico giornata per giornata con la giornata scelta sotto, i
+   numeri della rosa e chi produce (i primi cinque, tutti in sovraimpressione). */
+let stagioneSel = null, stagioneDisegnata = '';
+function tesseraSt(k, v, sotto){ return '<div><span>'+k+'</span><b class="cond">'+v+'</b>'+(sotto ? '<small>'+sotto+'</small>' : '')+'</div>'; }
+function rigaProduce(x, max){
+  return '<div class="vr prod" data-id="'+x.p.id+'">'+maglia(x.p.club)+
     '<div class="vr-nome"><b>'+x.p.nome+'</b><small>'+(x.voti ? 'media '+num(x.media)+' · '+x.voti+(x.voti===1 ? ' voto' : ' voti')+
-      (Math.abs(x.bonus) >= 0.05 ? ' · '+(x.bonus > 0 ? '+' : '−')+num(Math.abs(x.bonus))+' di bonus e malus' : '') : 'nessun voto')+'</small>'+
+      (Math.abs(x.bonus) >= 0.05 ? ' · '+(x.bonus > 0 ? '+'+numCorto(x.bonus)+' di bonus' : '−'+numCorto(-x.bonus)+' di malus') : '') : 'nessun voto')+'</small>'+
       '<i class="pr-barra"><i style="width:'+(100*Math.max(0, x.tot)/max).toFixed(0)+'%"></i></i></div>'+
-    '<strong class="fvn">'+num(x.tot)+'</strong></div>';
-  const acc = accuratezzaConsiglio(s.per);
-  /* quanto si avvicina il consiglio di Jarvis al massimo possibile: per il lavoro
-     aperto di tarare i PESI (CLAUDE.md), e per farsi un'idea di quanto ci si può
-     fidare. Solo dalle giornate di lega con un consiglio salvato: prima non c'è. */
-  const accuratezza = !acc ? '' : '<div class="blocco"><div class="blocco-t">Quanto si avvicina Jarvis<small>'+
-    quanteGiornate(acc.n)+' di lega</small></div><div class="st-numeri">'+
-    tessera('Consigliato', num(acc.consiglio))+tessera('Massimo possibile', num(acc.massimo))+
-    (acc.media===null ? '' : tessera('Vicinanza', num(acc.media, 0)+'%'))+'</div>'+
-    (acc.prima===null ? '' : '<p class="nota">Calcolo di prima: '+num(acc.prima)+
-      (Math.abs(acc.consiglio - acc.prima) < 0.05 ? ', come il modello' : ', '+num(Math.abs(acc.consiglio - acc.prima))+
-        (acc.consiglio > acc.prima ? ' in meno' : ' in più')+' del modello')+'.</p>')+'</div>';
-  const testo = ['La stagione — '+quanteGiornate(s.giornate.length)+' di Serie A',
-    'Chi produce di più: '+s.righe[0].p.nome+', '+num(s.righe[0].tot)+' fantapunti']
-    .concat(acc && acc.media!==null ? ['Quanto si avvicina Jarvis: '+num(acc.media, 0)+'% su '+quanteGiornate(acc.n)+' di lega'] : [])
-    .join('\n');
-  apriSovra('La stagione', quanteGiornate(s.giornate.length)+' di Serie A',
+    '<strong class="fvn">'+numCorto(x.tot)+'</strong></div>';
+}
+function htmlStagione(s){
+  if(!s) return '<h2>La stagione</h2><div class="blocco"><p>I voti arrivano a giornata finita: qui ancora niente.</p></div>';
+  if(!s.per.some(x=>x.sa===stagioneSel)) stagioneSel = s.per[s.per.length - 1].sa;   // di norma l'ultima giocata
+  const n1 = x => Number.isInteger(x) ? String(x) : num(x, 1);
+  const io = D.lega && D.lega.classifica ? D.lega.classifica.find(r=>r[1]===ME) : null, acc = accuratezzaConsiglio(s.per);
+  const lega = io || acc ? '<div class="blocco"><div class="blocco-t">In lega<small>'+(io ? quanteGiornate(io[2]) : '')+'</small></div><div class="st-numeri">'+
+      (io ? tesseraSt('Classifica', io[0]+'°', n1(io[9])+(io[9]===1 ? ' punto' : ' punti'))+
+            tesseraSt('V · N · P', io[3]+'·'+io[4]+'·'+io[5], 'gol '+io[6]+'-'+io[7]) : '')+
+      (acc && acc.media!==null ? tesseraSt('Jarvis', num(acc.media, 0)+'%', 'del massimo') : '')+'</div>'+
+      /* quanto si avvicina Jarvis, in numeri: per la taratura dei PESI (B4, livello 4) */
+      (acc ? '<p class="nota">Il consiglio di Jarvis: '+numCorto(acc.consiglio)+' su '+numCorto(acc.massimo)+' possibili in '+
+        quanteGiornate(acc.n)+' di lega'+(acc.prima===null ? '' : ' · calcolo di prima '+numCorto(acc.prima))+'.</p>' : '')+'</div>' : '';
+  const somma = k => mia.some(p=>typeof p[k]==='number') ? mia.reduce((t,p)=>t + (p[k] || 0), 0) : '–';
+  const max = Math.max(1, ...s.righe.map(x=>x.tot));
+  return '<h2>La stagione</h2>'+lega+
     '<div class="blocco"><div class="blocco-t">Giornata per giornata<small>media '+
       num(s.per.reduce((t,x)=>t + x.tot, 0)/s.per.length)+'</small></div>'+
-      '<div id="st-grafico">'+graficoStagione(s, picco.sa)+'</div></div>'+
-    '<div class="blocco" id="st-giornata">'+dettaglioGiornata(s, picco.sa)+'</div>'+
-    accuratezza+
-    '<div class="blocco"><div class="st-numeri">'+tessera('Gol', somma('gol'))+tessera('Assist', somma('ass'))+
-      tessera('Ammonizioni', somma('amm'))+'</div></div>'+
-    '<div class="blocco"><div class="blocco-t">Chi produce<small>fantapunti</small></div>'+s.righe.map(riga).join('')+'</div>',
-    testo);
+      '<div id="st-grafico">'+graficoStagione(s, stagioneSel)+'</div>'+
+      '<div id="st-giornata">'+dettaglioBreve(s, stagioneSel)+'</div></div>'+
+    '<div class="blocco"><div class="blocco-t">La rosa in numeri</div><div class="st-numeri">'+tesseraSt('Gol', somma('gol'))+
+      tesseraSt('Assist', somma('ass'))+tesseraSt('Ammonizioni', somma('amm'))+'</div></div>'+
+    '<div class="blocco"><div class="blocco-t">Chi produce<small>fantapunti</small></div>'+s.righe.slice(0, 5).map(x=>rigaProduce(x, max)).join('')+
+      (s.righe.length > 5 ? '<button class="st-tutti" data-tutti="1">tutti i '+s.righe.length+' ›</button>' : '')+'</div>';
+}
+/* la giornata scelta, in breve: risultato vero, consiglio di Jarvis, migliori 11 e reparti;
+   gli 11 uno per uno in sovraimpressione */
+const REPARTO_BREVE = {P:'Porta', D:'Difesa', C:'Centro', A:'Attacco'};
+function dettaglioBreve(s, sa){
+  const x = s.per.find(z=>z.sa===sa);
+  if(!x) return '';
+  const r = x.risultato, pezzi = [];
+  if(r) pezzi.push('vero <b>'+numCorto(r.mio)+' a '+numCorto(r.loro)+', '+r.golMio+'-'+r.golLoro+'</b>');
+  if(x.consiglio!==null) pezzi.push('Jarvis <b>'+numCorto(x.consiglio)+'</b>');
+  pezzi.push('migliori 11 <b>'+numCorto(x.tot)+'</b>');
+  return '<div class="st-dentro"><p class="st-ris">'+(x.g ? 'Giornata '+x.g[0]+' di lega' : 'Giornata '+sa+' di Serie A')+': '+pezzi.join(' · ')+'</p>'+
+    '<div class="st-reparti">'+['P','D','C','A'].map(k=>'<div><span>'+REPARTO_BREVE[k]+'</span><b class="cond">'+numCorto(x.reparti[k])+'</b></div>').join('')+'</div>'+
+    '<button class="st-tutti" data-undici="'+sa+'">gli 11 della giornata ›</button></div>';
+}
+function apriUndiciGiornata(sa){
+  const s = stagione(), x = s && s.per.find(z=>z.sa===sa);
+  if(!x) return;
+  apriSovra(x.g ? 'Giornata '+x.g[0]+' di lega' : 'Giornata '+sa+' di Serie A', 'I migliori 11',
+    '<div class="blocco">'+dettaglioGiornata(s, sa, true)+'</div>');
+}
+function renderStagione(){
+  const box = document.getElementById('s-stagione');
+  if(!box) return;
+  const html = htmlStagione(stagione());
+  if(html !== stagioneDisegnata){ stagioneDisegnata = html; box.innerHTML = html; }
+}
+/* chi produce, tutti: in sovraimpressione, con il testo da condividere */
+function apriProduttori(){
+  const s = stagione();
+  if(!s) return;
+  const max = Math.max(1, ...s.righe.map(x=>x.tot));
+  apriSovra('Chi produce', quanteGiornate(s.giornate.length)+' di Serie A',
+    '<div class="blocco">'+s.righe.map(x=>rigaProduce(x, max)).join('')+'</div>',
+    'Chi produce, '+quanteGiornate(s.giornate.length)+' di Serie A\n'+
+      s.righe.filter(x=>x.voti).map((x,i)=>(i + 1)+'. '+x.p.nome+' '+num(x.tot)).join('\n'));
+}
+/* nella scheda: una colonna del grafico o una freccia sceglie la giornata, «tutti» apre
+   l'elenco intero, un giocatore la sua scheda */
+function toccaStagione(ev){
+  const t = ev.target && ev.target.closest ? ev.target : null;
+  if(t && t.closest('[data-tutti]')){ apriProduttori(); return; }
+  const u = t ? t.closest('[data-undici]') : null;
+  if(u){ apriUndiciGiornata(+u.getAttribute('data-undici')); return; }
+  const n = t ? t.closest('[data-sa]') : null;
+  if(n){ scegliGiornata(+n.getAttribute('data-sa')); return; }
+  toccaGiocatore(ev);
 }
 
 /* ---------- scheda del giocatore ---------- */
@@ -2880,7 +2924,6 @@ function renderRosa(){
   }).join('');
   const nome = (FILTRI_ROSA.find(f=>f[0]===filtroRosa) || ['', ''])[1].toLowerCase();
   rosa.innerHTML = html || '<div class="vuoto">Nessun giocatore «'+nome+'» per questa giornata.</div>';
-  renderStagione();
 }
 
 /* ---------- lega ---------- */
@@ -2926,58 +2969,9 @@ function renderLega(){
   dopoIlPrimoDisegno(()=>renderMercato(pr));
 }
 
-/* ---------- chiedi ---------- */
-function normalizza(s){
-  return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
-                  .replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
-}
+/* ---------- testi ---------- */
 const num = (x, c=1) => x.toFixed(c).replace('.', ',');
 const cognome = p => p.nome.replace(/\s+\S{1,3}\.$/, '');
-const REPARTI = {P:'In porta', D:'In difesa', C:'A centrocampo', A:'In attacco'};
-const RIEMPITIVI = /\b(come sta|come stanno|chi e|parlami di|info su|notizie su|meglio|chi schiero tra|schiero|tra|chi|gioca|il|lo|la)\b/g;
-const pulisci = t => t.replace(RIEMPITIVI, ' ').replace(/\s+/g, ' ').trim();
-
-/* giocatori che corrispondono al testo: vale il cognome intero, poi l'inizio di una
-   parola, poi una parte del nome. A parità prima i tuoi, poi i rivali, poi gli altri. */
-function trovaGiocatori(testo, g){
-  const q = normalizza(testo);
-  if(q.length<3) return [];
-  const av = avversarioLega(g), rivali = av ? av.nome : null;
-  const gruppo = p => p.team===ME ? 0 : p.team===rivali ? 1 : 2;
-  let migliori = [], livello = 3;
-  players.forEach(p=>{
-    const tutto = normalizza(p.nome), parole = tutto.split(' ').filter(w=>w.length>1);
-    const l = tutto===q || parole.includes(q) ? 0
-            : parole.some(w=>w.startsWith(q)) ? 1
-            : q.length>=4 && tutto.replace(/ /g,'').includes(q.replace(/ /g,'')) ? 2 : 3;
-    if(l<livello){ livello = l; migliori = [p]; }
-    else if(l===livello && l<3) migliori.push(p);
-  });
-  return migliori.sort((a,b)=>gruppo(a)-gruppo(b));
-}
-/* un solo giocatore, o il solo dei tuoi tra quelli trovati; altrimenti null */
-function scegli(lista){
-  if(lista.length===1) return lista[0];
-  const miei = lista.filter(p=>p.team===ME);
-  return miei.length===1 ? miei[0] : null;
-}
-function quale(lista){
-  return 'Ne ho trovati più di uno: '+lista.slice(0,6).map(p=>p.nome+' ('+p.club+')').join(', ')+
-         '.\nQuale? Scrivilo come appare qui.';
-}
-
-/* poche righe su un giocatore, per la giornata mostrata */
-function scheda(p, g){
-  const m = avversarioClub(p.club, g[1]), f = forza(p, g), a = attesoModello('fantavoto', p, g);
-  const r = [p.nome+' — '+p.club+', '+RUOLI[p.ruolo].toLowerCase()+(p.team===ME ? '' : ' · rosa di '+p.team),
-             (p.pgv ? 'Fantamedia '+num(p.fm,2)+' in '+p.pgv+(p.pgv===1 ? ' gara' : ' gare') : 'Non ha ancora giocato')+
-             (a ? ' · atteso se gioca '+num(a.media,2)+' ± '+num(a.sd)
-                : Math.abs(fmStimata(p)-p.fm)>=0.05 ? ' · per il consiglio '+num(fmStimata(p),2) : ''),
-             !disponibile(p, g[2]) ? perche(p, g[2]) : descriviTit(titolarita(p, g)).trim()];
-  if(m) r.push((m.casa ? 'In casa con ' : 'A ')+m.avv);
-  if(f) r.push(motivoAvv(f));
-  return r.join('\n');
-}
 /* il motivo in poche parole, per le liste */
 function breve(p, g){
   const m = avversarioClub(p.club, g[1]), t = titolarita(p, g), f = forza(p, g);
@@ -2987,123 +2981,6 @@ function breve(p, g){
   if(m) r.push((m.casa ? 'in casa con ' : 'a ')+m.avv);
   if(f && Math.abs(f.delta)>=0.2) r.push(f.delta>0 ? 'avversario favorevole' : 'avversario difficile');
   return r.join(' · ');
-}
-function confronto(a, b, g){
-  const pa = punteggio(a, g), pb = punteggio(b, g);
-  const koA = !disponibile(a, g[2]), koB = !disponibile(b, g[2]);
-  let v;
-  if(koA && koB) v = 'Sono fuori tutti e due.';
-  else if(koA || koB) v = 'Schiera '+(koA ? b : a).nome+': '+(koA ? a : b).nome+' è fuori.';
-  else if(Math.abs(pa-pb)<0.25){
-    const vere = x=>{ const t = titolarita(x, g); return t && t.stato!=='s'; };
-    v = 'Quasi pari ('+num(pa,2)+' contro '+num(pb,2)+').'+
-        (!vere(a) || !vere(b) ? ' Aspetta le probabili: possono decidere loro.' : '');
-  }
-  else v = 'Meglio '+(pa>pb ? a : b).nome+' ('+num(Math.max(pa,pb),2)+' contro '+num(Math.min(pa,pb),2)+').';
-  return v+'\n\n'+scheda(a, g)+'\n\n'+scheda(b, g);
-}
-/* l'undici in poche righe e le cose da tenere d'occhio */
-function riassuntoUndici(g){
-  const av = avversarioLega(g), u = undici(g), sc = scadenza(g);
-  const scelti = [].concat(u.P, u.D, u.C, u.A);
-  const riga = r => r+' '+u[r].map(p=>p.nome).join(', ');
-  const dubbi = [];
-  if(!D.prob || D.prob.giornata!==g[1] || !(D.prob.squadre||[]).length)
-    dubbi.push('Le probabili di questa giornata non sono ancora uscite.');
-  scelti.forEach(p=>{
-    const t = titolarita(p, g);
-    if(t && (t.stato==='c' || t.stato==='r')) dubbi.push(p.nome+': '+(t.stato==='c' ? 'in panchina' : 'non nelle probabili'));
-    else if(t && t.stato==='s' && t.perc<60)
-      dubbi.push(p.nome+': ha giocato '+t.giocate+(t.giocate===1 ? ' partita' : ' partite')+' su '+t.di);
-    else if(t && t.perc<60) dubbi.push(p.nome+': titolare solo al '+t.perc+'%');
-  });
-  ['D','C','A'].forEach(r=>{
-    const dentro = u[r][u[r].length-1];
-    const fuori = mia.filter(p=>p.ruolo===r && disponibile(p, g[2]) && !scelti.includes(p))
-                     .sort((a,b)=>punteggio(b,g)-punteggio(a,g))[0];
-    if(dentro && fuori && punteggio(dentro,g)-punteggio(fuori,g)<0.25)
-      dubbi.push(cognome(dentro)+' o '+cognome(fuori)+': quasi pari');
-  });
-  const ko = mia.filter(p=>!disponibile(p, g[2]));
-  if(ko.length) dubbi.push('Fuori: '+ko.map(p=>p.nome).join(', '));
-  const pb = panchina(g);
-  const inPanchina = ['P','D','C','A'].map(r=>{
-    const l = pb.filter(p=>p.ruolo===r);
-    return l.length ? r+' '+l.map(cognome).join(', ') : '';
-  }).filter(Boolean).join(' · ');
-  return 'Giornata '+g[0]+' contro '+av.nome+', '+modulo+(sc && sc>oggi() ? ', entro '+quando(sc) : '')+'\n'+
-         ['P','D','C','A'].map(riga).join('\n')+
-         (inPanchina ? '\nPanchina, in ordine: '+inPanchina : '')+
-         (dubbi.length ? '\n\nDa tenere d\'occhio:\n· '+dubbi.join('\n· ') : '');
-}
-/* domande pronte dai dati: una è il vero ballottaggio in difesa */
-function disegnaEsempi(){
-  const g = prossima(), u = undici(g), scelti = [].concat(u.D, u.C, u.A);
-  const dentro = u.D[u.D.length-1];
-  const fuori = mia.filter(p=>p.ruolo==='D' && disponibile(p, g[2]) && !scelti.includes(p))
-                   .sort((a,b)=>punteggio(b,g)-punteggio(a,g))[0];
-  const es = ['Chi schiero?'];
-  if(dentro && fuori) es.push(cognome(dentro)+' o '+cognome(fuori)+'?');
-  es.push('Chi affronto?', 'Chi è infortunato?', 'Aggiorna i dati');
-  document.getElementById('esempi').innerHTML = es.map(e=>'<button>'+e+'</button>').join('');
-}
-
-function rispondi(q){
-  const s = normalizza(q);
-  if(!s) return 'Chiedimi qualcosa.';
-  const g = prossima(), av = avversarioLega(g);
-
-  if(/aggiorn|ricarica|dati nuovi|rinfresc/.test(s)){
-    aggiorna(false);
-    return 'Sto cercando dati nuovi…';
-  }
-  if(/chi affront|avversar|contro chi/.test(s)){
-    const sc = scadenza(g);
-    return 'Giornata '+g[0]+', '+dataIt(g[2])+': affronti '+av.nome+' '+
-           (av.casa?'in casa':'in trasferta')+'.\n'+
-           (!sc ? 'L\'orario della prima partita non è ancora ufficiale.'
-            : sc>oggi() ? 'Schieri entro '+quando(sc)+', tra '+fmtDurata(sc-oggi())+'.'
-            : 'Formazione chiusa alle '+quando(sc)+'.');
-  }
-
-  if(/infortun|fuori|indisponib/.test(s)){
-    const ko = mia.filter(p=>!disponibile(p,g[2]));
-    const koAvv = players.filter(p=>p.team===av.nome && !disponibile(p,g[2]));
-    let r = ko.length ? 'Tuoi indisponibili:\n'+ko.map(p=>'· '+p.nome+' — '+perche(p, g[2])).join('\n')
-                      : 'Nessun tuo giocatore è indisponibile per questa giornata.';
-    if(koAvv.length) r += '\n\nIndisponibili di '+av.nome+':\n'+koAvv.map(p=>'· '+p.nome+' — '+perche(p, g[2])).join('\n');
-    return r;
-  }
-
-  // confronto: «Kamara o Valle?»
-  const parti = s.split(/ (?:o|oppure|vs) /);
-  if(parti.length===2){
-    const [la, lb] = parti.map(x=>trovaGiocatori(pulisci(x), g));
-    const a = scegli(la), b = scegli(lb);
-    if(a && b && a!==b) return confronto(a, b, g);
-    if(!a && la.length>1) return quale(la);
-    if(!b && lb.length>1) return quale(lb);
-  }
-
-  const ruolo = /portier|porta/.test(s)?'P': /difens|difesa|dietro/.test(s)?'D':
-                /centrocamp|mediana|centro/.test(s)?'C': /attacc|attacco|avanti|punt/.test(s)?'A': null;
-  if(ruolo){
-    const l = mia.filter(p=>p.ruolo===ruolo && disponibile(p,g[2]))
-                 .sort((a,b)=>punteggio(b,g)-punteggio(a,g));
-    if(!l.length) return 'Nessun '+RUOLI[ruolo].toLowerCase()+' disponibile.';
-    const n = ruolo==='P' ? 1 : MODULI[modulo][ruolo];
-    return REPARTI[ruolo]+(ruolo==='P' ? '' : ' ('+modulo+')')+':\n'+
-      l.slice(0, n).map(p=>'· '+p.nome+' '+num(p.fm,2)+(breve(p,g) ? ' — '+breve(p,g) : '')).join('\n')+
-      (l.length>n ? '\nPoi: '+l.slice(n).map(p=>p.nome).join(', ') : '');
-  }
-
-  if(/schier|formazion|undici|consigl/.test(s)) return riassuntoUndici(g);
-
-  const lista = trovaGiocatori(pulisci(s), g), p = scegli(lista);
-  if(p) return scheda(p, g);
-  if(lista.length>1) return quale(lista);
-  return 'Non ho capito. Prova con «chi schiero?», un ruolo, un confronto come «Kamara o Valle?», '+
-         'il nome di un giocatore o «chi affronto?».';
 }
 
 /* ---------- avvisi ---------- */
@@ -3142,7 +3019,7 @@ function avvisi(g){
       if(t && (t.stato==='c' || t.stato==='r'))
         out.push({id:'dubbio-'+p.id+'-'+g[1], livello:'attenzione',
                   titolo:p.nome+(t.stato==='c' ? ' in panchina' : ' fuori')+' nelle probabili',
-                  testo:'È nell\'undici consigliato: guarda le alternative in «Chiedi».'});
+                  testo:'È nell\'undici consigliato: guarda la panchina nella Giornata.'});
     });
   }
   /* com'è andata: quando escono i voti di una giornata di lega */
@@ -3366,22 +3243,15 @@ async function aggiorna(silenzioso){
   bt.textContent = cambiato ? 'Dati aggiornati' : 'Nessun dato nuovo';
   setTimeout(()=>{ b.classList.remove('fatto'); bt.textContent = 'Aggiorna i dati'; }, 2600);
   mostraData();
-  renderGiornata(); renderRosa(); renderLega(); disegnaEsempi();
-  if(!silenzioso){
-    document.getElementById('risposta').textContent = cambiato
-      ? 'Dati aggiornati: '+document.getElementById('stamp').textContent+'.'
-      : 'Nessun dato nuovo disponibile. Resto su quelli che ho.';
-  }
+  renderGiornata(); renderRosa(); renderStagione(); renderLega();
   return cambiato;
 }
 document.getElementById('refresh').onclick = ()=>aggiorna(true);
-/* modulo: tre pulsanti con una lente di vetro che scorre; la difesa resta a quattro */
+/* modulo: cinque tessere, si sceglie toccandone una */
 function scegliModulo(m){
   if(!MODULI[m] || m===modulo) return;
   modulo = m;
-  document.querySelectorAll('#modulo button').forEach(x=>x.classList.toggle('on', x.dataset.m===m));
-  document.getElementById('modulo').style.setProperty('--k', Object.keys(MODULI).indexOf(m));
-  renderGiornata(); disegnaEsempi();
+  renderGiornata();
 }
 document.getElementById('modulo').onclick = ev=>{
   const b = ev.target && ev.target.closest ? ev.target.closest('button') : null;
@@ -3420,10 +3290,10 @@ function avvia(){
   document.getElementById('ics').href =
     'webcal://'+location.host+location.pathname.replace(/[^/]*$/,'')+'dati/jarvis.ics';
   mostraData();
-  renderGiornata(); renderRosa(); renderLega(); disegnaEsempi();
+  renderGiornata(); renderRosa(); renderStagione(); renderLega();
   setInterval(renderGiornata, 60000);
 }
-const SCHEDE = ['giornata','rosa','lega','chiedi'];
+const SCHEDE = ['giornata','rosa','stagione','lega'];
 document.querySelectorAll('nav button').forEach(b=>{
   b.onclick = ()=>{
     /* i contenuti entrano dal lato verso cui ci si sposta */
@@ -3453,13 +3323,13 @@ function toccaGiocatore(ev){
   if(testa) testa.parentNode.classList.toggle('aperta');
 }
 ['campo','sfida','quando','panchina','kobox','rosa'].forEach(id=>{ document.getElementById(id).onclick = toccaGiocatore; });
-document.getElementById('sovra-corpo').onclick = toccaSovra;
+document.getElementById('sovra-corpo').onclick = toccaGiocatore;
 /* com'è andata e mercato: nella pagina una riga, che apre la sovraimpressione */
 document.getElementById('comeandata').onclick = apriComeAndata;
 document.getElementById('mercato').onclick = ()=>apriMercato();
 document.getElementById('chiudi-sovra').onclick = chiudiSovra;
 document.getElementById('condividi-sovra').onclick = condividi;
-document.getElementById('stagione').onclick = apriStagione;
+document.getElementById('s-stagione').onclick = toccaStagione;
 document.getElementById('difesa').onclick = apriConsiglio;
 /* il lucchetto: la password si prova al tocco di «Apri» */
 document.getElementById('lucchetto-form').onsubmit = ev=>{
@@ -3556,34 +3426,8 @@ if(typeof window.addEventListener==='function'){
     const qui = SCHEDE.indexOf(document.querySelector('section.on').id.slice(2));
     lente.style.transform = 'translateX('+qui*100+'%)';
   });
-  /* il selettore del modulo funziona allo stesso modo: lente da trascinare o tocco */
-  const selettore = document.getElementById('modulo'), lenteM = selettore.querySelector('.moduli-cursore'),
-        opzioni = [...selettore.querySelectorAll('button')];
-  let premutoM = false, mossoM = false, xM = 0;
-  const passoM = () => (selettore.clientWidth - 6) / opzioni.length;
-  const sottoM = x => Math.max(0, Math.min(opzioni.length - 1, Math.floor((x - selettore.getBoundingClientRect().left - 3) / passoM())));
-  selettore.addEventListener('pointerdown', e=>{
-    premutoM = true; mossoM = false; xM = e.clientX;
-    try{ selettore.setPointerCapture(e.pointerId); }catch(_){}
-  });
-  selettore.addEventListener('pointermove', e=>{
-    if(!premutoM || (!mossoM && Math.abs(e.clientX - xM) < 6)) return;
-    mossoM = true;
-    selettore.classList.add('trascina');
-    const x = e.clientX - selettore.getBoundingClientRect().left - 3 - passoM()/2;
-    lenteM.style.transform = 'translateX('+Math.max(0, Math.min(passoM()*(opzioni.length - 1), x))+'px)';
-  });
-  selettore.addEventListener('pointerup', e=>{
-    if(!premutoM) return;
-    premutoM = false;
-    selettore.classList.remove('trascina');
-    lenteM.style.transform = '';
-    scegliModulo(opzioni[sottoM(e.clientX)].dataset.m);
-  });
-  selettore.addEventListener('pointercancel', ()=>{ premutoM = false; selettore.classList.remove('trascina'); lenteM.style.transform = ''; });
-
   /* pulsanti di vetro: si illuminano nel punto in cui li tocchi */
-  const LUMINOSI = '.aggiorna, .countdown a.ics, .esempi button, .mic, .chiudi, .campanella';
+  const LUMINOSI = '.aggiorna, .countdown a.ics, .chiudi, .campanella';
   document.addEventListener('pointerdown', e=>{
     const b = e.target && e.target.closest ? e.target.closest(LUMINOSI) : null;
     if(!b) return;
@@ -3595,72 +3439,6 @@ if(typeof window.addEventListener==='function'){
   });
 
 }
-/* domande pronte: toccarle equivale a scriverle */
-document.getElementById('esempi').onclick = ev=>{
-  const b = ev.target.closest('button');
-  if(b){ document.getElementById('q').value = b.textContent; chiedi(); }
-};
-function scriviRisposta(t){ document.getElementById('risposta').textContent = t; }
-function chiedi(){
-  const campo = document.getElementById('q');
-  scriviRisposta(rispondi(campo.value));
-  campo.blur();                         // chiude la tastiera: la risposta resta in vista
-}
-document.getElementById('q').addEventListener('keydown',e=>{ if(e.key==='Enter') chiedi(); });
-document.getElementById('invia').onclick = chiedi;
-
-/* microfono: riconoscimento vocale del browser. Su iPhone è poco affidabile,
-   soprattutto dall'icona sulla Home: ogni errore dice il perché e ricorda la
-   dettatura della tastiera, che funziona sempre. */
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const mic = document.getElementById('mic');
-const ERRORI_MIC = {
-  'not-allowed': 'Non ho il permesso di usare il microfono. Su iPhone: Impostazioni › App › Safari › Microfono.',
-  'service-not-allowed': 'Da qui il riconoscimento vocale non è disponibile: succede spesso aprendo Jarvis dall\'icona sulla Home. Prova da Safari.',
-  'no-speech': 'Non ho sentito niente. Riprova, parlando subito dopo il tocco.',
-  'audio-capture': 'Non trovo un microfono attivo.',
-  'network': 'Il riconoscimento vocale ha bisogno della connessione.'
-};
-let ascolto = null;
-mic.onclick = ()=>{
-  const campo = document.getElementById('q');
-  if(!SR){
-    campo.focus();
-    scriviRisposta('Qui il microfono dell\'app non è disponibile. Tocca il campo e usa il microfono della tastiera.');
-    return;
-  }
-  if(ascolto){ ascolto.stop(); return; }        // secondo tocco: basta ascoltare
-  const rec = new SR();                         // uno nuovo a ogni tocco: riusarlo su iOS non va
-  rec.lang = 'it-IT'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
-  let errore = false;
-  const timer = setTimeout(()=>{ if(ascolto===rec) rec.stop(); }, 12000);
-  rec.onresult = ev=>{
-    let testo = '';
-    for(let i=0; i<ev.results.length; i++) testo += ev.results[i][0].transcript;
-    campo.value = testo;
-  };
-  rec.onerror = ev=>{
-    if(ev.error==='aborted') return;
-    errore = true;
-    scriviRisposta((ERRORI_MIC[ev.error] || 'Il microfono non ha funzionato ('+ev.error+').')+
-                   '\nPuoi sempre scrivere, o usare il microfono della tastiera.');
-  };
-  rec.onend = ()=>{
-    clearTimeout(timer);
-    ascolto = null; mic.classList.remove('ascolto');
-    if(errore) return;
-    if(campo.value.trim()) chiedi();
-    else scriviRisposta(ERRORI_MIC['no-speech']);
-  };
-  campo.value = '';
-  ascolto = rec; mic.classList.add('ascolto'); scriviRisposta('Ti ascolto…');
-  try{ rec.start(); }
-  catch(e){
-    clearTimeout(timer); ascolto = null; mic.classList.remove('ascolto');
-    scriviRisposta('Non riesco ad avviare il microfono ('+e.message+'). Usa il microfono della tastiera.');
-  }
-};
-
 /* senza «tira giù per aggiornare» (tolto: all'utente disturbava) i dati si aggiornano
    da soli: all'apertura, al ritorno della rete e tornando nell'app dopo mezz'ora */
 if(typeof window.addEventListener==='function'){

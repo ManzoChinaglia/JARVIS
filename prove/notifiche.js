@@ -133,8 +133,8 @@ function ntfyFinto(ok = true) {
   await main({ argomento: '', invia: n.invia, adesso: venerdi, registro, dati: dati(1) });
   let cs = JSON.parse(fs.readFileSync(consigli, 'utf8'));
   const c1 = cs.giornate && cs.giornate['1'];
-  verifica('undici e panchina per ognuno dei tre moduli, anche senza canali di notifica', c1 && c1.sa === 5
-           && Object.keys(c1.undici).length === 3 && c1.undici['4-3-3'].length === 11 && c1.panchina['4-3-3'].length > 0,
+  verifica('undici e panchina per ognuno dei cinque moduli, anche senza canali di notifica', c1 && c1.sa === 5
+           && Object.keys(c1.undici).length === 5 && Object.values(c1.undici).every(u => u.length === 11) && c1.panchina['3-5-2'].length > 0,
            c1 && Object.keys(c1.undici).join(', '));
   verifica('con il modello, anche l\'undici del calcolo di prima (per il confronto)',
            !fs.existsSync(path.join(__dirname, '..', 'dati', 'modello.json'))

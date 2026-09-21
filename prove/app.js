@@ -100,8 +100,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
     'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,baseStagione,apriConsiglio,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
-    'prossima,scadenza,orario,undici,rispondi,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,apriStagione,scegliGiornata,accuratezzaConsiglio,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,forma,risultatoLega,get ME(){return ME}};', ctx);
+    'prossima,scadenza,orario,undici,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,forma,risultatoLega,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (attendi && el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -120,7 +120,6 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('non urgente a 5 giorni', !el.cd.classList.contains('urgente'));
   const u = t.undici(g), n = u.P.length + u.D.length + u.C.length + u.A.length;
   verifica('undici completo, difesa a 4', n === 11 && u.D.length === 4, n + ' giocatori, ' + u.D.length + ' difensori');
-  verifica('risposta "chi affronto"', /Schieri entro ven 18 set/.test(t.rispondi('chi affronto')), t.rispondi('chi affronto').replace(/\n/g, ' / '));
   verifica('date dei dati leggibili in intestazione', !/Invalid/.test(el.stamp.textContent), el.stamp.textContent);
   verifica('link per iscriversi al calendario', el.ics.href === 'webcal://manzochinaglia.github.io/JARVIS/dati/jarvis.ics', el.ics.href);
 
@@ -135,7 +134,6 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('resta la giornata 1', g[0] === 1, 'G' + g[0]);
   verifica('etichetta "Formazione chiusa"', el.cdk.textContent === 'Formazione chiusa', el.cdk.textContent);
   verifica('testo "scaduta"', el.cdt.textContent === 'scaduta', el.cdt.textContent);
-  verifica('risposta a scadenza passata', /Formazione chiusa alle/.test(t.rispondi('chi affronto')), t.rispondi('chi affronto').replace(/\n/g, ' / '));
 
   // ultima partita della SA 5: Milan-Lecce dom 20/9 18:45 UTC; la giornata cambia 2 ore dopo
   console.log('\n4. Cambio di giornata attorno all\'ultima partita');
@@ -161,7 +159,6 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('nessuna scadenza inventata', t.scadenza(g) === null);
   verifica('messaggio', el.cdt.textContent === 'orario non ancora ufficiale', el.cdt.textContent);
   verifica('non urgente', !el.cd.classList.contains('urgente'));
-  verifica('risposta "chi affronto"', /non è ancora ufficiale/.test(t.rispondi('chi affronto')), t.rispondi('chi affronto').replace(/\n/g, ' / '));
 
   console.log('\n7. orari.json assente');
   ({ t, el } = await avvia({ adesso: '2026-09-13T12:00:00+02:00', senzaOrari: true }));
@@ -192,7 +189,6 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('fuori dalle probabili vale −0,40', circa(t.punteggio(P(d3), g) - t.fmStimata(P(d3)), -0.4), (t.punteggio(P(d3), g) - t.fmStimata(P(d3))).toFixed(2));
   verifica('la rosa mostra la percentuale', el.rosa.innerHTML.includes('titolare 95%'));
   verifica('intestazione', /probabili del/.test(el.stamp.textContent), el.stamp.textContent);
-  verifica('risposta su un giocatore', /Titolare al 95%/.test(t.rispondi('come sta ' + P(d1).nome)), t.rispondi('come sta ' + P(d1).nome).replace(/\n/g, ' / '));
 
   console.log('\n9. Probabili di un\'altra giornata, o nel vecchio formato');
   for (const [nome, file] of [['giornata 4', { ...prob5, giornata: 4 }],
@@ -233,7 +229,6 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('attaccante: l\'avversario subisce 0,4·0 + 0,6·1 = 0,6', circa(f.val, 0.6), f.val);
   verifica('attaccante: 0,8 · (0,6 − 1) = −0,32', circa(t.punteggio(att, g) - base1(att), -0.32), (t.punteggio(att, g) - base1(att)).toFixed(2));
   verifica('motivo leggibile nella rosa', el.rosa.innerHTML.includes(avvD.avv + ' (4-3-3) segna 2,4 gol a partita'), avvD.avv);
-  verifica('domanda sui difensori', /^In difesa/.test(t.rispondi('chi schiero in difesa')), t.rispondi('chi schiero in difesa').split('\n')[0]);
   squadre[avvD.avv] = { ...forte, attuale: { casa: [5, 15, 0, 5], fuori: [5, 15, 0, 5] } };
   ({ t } = await avvia({ adesso: giovedi, dati: senzaTit }));
   verifica('dalla decima partita conta solo quest\'anno', circa(t.forza(P(d1), g).val, 3), t.forza(P(d1), g).val);
@@ -256,8 +251,6 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     x = t.titolarita(zero, g);
     verifica('0 partite su 4: pesa come fuori dalle probabili', x && x.perc === 0 && circa(t.punteggio(zero, g) - t.fmStimata(zero), -0.4),
              zero.nome + ' ' + JSON.stringify(x));
-    verifica('ed è tra le cose da tenere d\'occhio se entra', !Object.values(t.undici(g)).flat().includes(zero) ||
-             t.rispondi('chi schiero').includes(zero.nome + ': ha giocato 0 partite su 4'));
   }
   verifica('la rosa mostra le presenze', el.rosa.innerHTML.includes('presenze 3/4'));
   ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': prob5, 'infortuni.json': null, 'squadre.json': sq2 } }));
@@ -293,9 +286,6 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const alto = t.mia.filter(p => p.pgv <= 1 && p.ruolo === 'A').sort((a, b) => b.quot - a.quot);
   if (alto.length > 1) verifica('a parità di partite conta la quotazione', t.fmStimata(alto[0]) > t.fmStimata(alto[alto.length - 1]) ||
                                 alto[0].fm < alto[alto.length - 1].fm, alto.map(p => p.nome + ' q' + p.quot + ' ' + t.fmStimata(p).toFixed(2)).join(', '));
-  const nuovo = t.mia.find(p => p.pgv === 0 && p.ruolo !== 'P');
-  if (nuovo) verifica('la scheda mostra la stima usata', /per il consiglio/.test(t.rispondi('come sta ' + cognomeDi(nuovo))),
-                      t.rispondi('come sta ' + cognomeDi(nuovo)).split('\n')[1]);
 
   console.log('\n11ter. Squalificati e dati vecchi');
   const indisp5 = { aggiornato: '2026-09-15T09:00:00+00:00', giornata: 5, squadre: [], titolari: {}, panchina: {},
@@ -306,7 +296,6 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            && !Object.values(t.undici(g)).flat().includes(P(d1)));
   verifica('motivo nella rosa', el.rosa.innerHTML.includes('Squalificato, salta questa giornata'));
   verifica('infortunato dalla pagina di giornata, con la data', el.rosa.innerHTML.includes('Infortunato fino al 28/10'));
-  verifica('«chi è infortunato?» li elenca', /Squalificato/.test(t.rispondi('chi è infortunato')) && /28\/10/.test(t.rispondi('chi è infortunato')));
   verifica('«Non disponibili» con due o più: una riga sola, che apre la finestra', /data-ko-tutti/.test(el.kobox.innerHTML)
            && /giocatori/.test(el.kobox.innerHTML) && !/class="ko-carta"/.test(el.kobox.innerHTML));
   t.apriNonDisponibili();
@@ -350,8 +339,6 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('un riquadro per reparto, con una riga e la maglia per ogni panchinaro', /class="pb-reparto"/.test(el.panchina.innerHTML)
            && (el.panchina.innerHTML.match(/class="pb-riga"/g) || []).length === banco.length
            && (el.panchina.innerHTML.match(/class="maglia"/g) || []).length === banco.length, banco.length);
-  verifica('«chi schiero?» dice anche la panchina', /\nPanchina, in ordine: P /.test(t.rispondi('chi schiero')),
-           t.rispondi('chi schiero').split('\n').find(r => r.startsWith('Panchina')));
 
   console.log('\n11quinquies. Statistiche del giorno dalle pagine pubbliche');
   const stat = {};
@@ -370,58 +357,34 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   console.log('\n12. Siri non si usa');
   verifica('niente più domanda dall\'indirizzo (?q=), tolta nella pulizia', !/domandaDaIndirizzo|location\.search/.test(html));
 
-  console.log('\n13. Pagina Chiedi');
-  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'squadre.json': null, 'infortuni.json': null } }));
-  g = t.prossima();
-  let r = t.rispondi('Chi schiero?');
-  const scelti = Object.values(t.undici(g)).flat();
-  verifica('«chi schiero?»: tutto l\'undici in poche righe', r.startsWith('Giornata 1 contro ' + AVV1)
-           && scelti.every(p => r.includes(p.nome)) && r.split('\n').length <= 14, r.split('\n').length + ' righe');
-  verifica('dice che le probabili non sono uscite', /non sono ancora uscite/.test(r));
-  r = t.rispondi('chi schiero in difesa');
-  verifica('per ruolo: i 4 del modulo, poi solo i nomi', /^In difesa \(4-3-3\):/.test(r)
-           && r.split('\n').filter(x => x.startsWith('· ')).length === 4 && /\nPoi: /.test(r), r.split('\n').length + ' righe');
-  verifica('domande pronte con un confronto vero', /Chi schiero\?/.test(el.esempi.innerHTML) && / o [^<]+\?/.test(el.esempi.innerHTML),
-           el.esempi.innerHTML.replace(/<\/?button>/g, ' ').trim());
-  el.esempi.onclick({ target: { closest: () => ({ textContent: 'Chi affronto?' }) } });
-  verifica('toccare una domanda pronta risponde', new RegExp('affronti ' + AVV1).test(el.risposta.textContent));
-
+  console.log('\n13. Cinque moduli, e «Chiedi» non c\'è più');
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': prob5, 'squadre.json': null, 'infortuni.json': null } }));
   g = t.prossima();
-  const [A, B] = [P(d1), P(d2)];
-  r = t.rispondi(cognomeDi(A) + ' o ' + cognomeDi(B) + '?');
-  const pa = t.punteggio(A, g), pb = t.punteggio(B, g);
-  const atteso = Math.abs(pa - pb) < 0.25 ? 'Quasi pari' : 'Meglio ' + (pa > pb ? A : B).nome;
-  verifica('confronto: verdetto dal punteggio, poi le due schede', r.startsWith(atteso) && r.includes(A.nome) && r.includes(B.nome), r.split('\n')[0]);
-  verifica('«chi schiero?» segnala chi non è nelle probabili', /non nelle probabili/.test(t.rispondi('chi schiero')));
-  verifica('ricerca senza maiuscole e con accenti', t.rispondi('come sta ' + cognomeDi(A).toUpperCase().replace(/[AEIOU]/, c => c + '̀')).startsWith(A.nome),
-           cognomeDi(A).toUpperCase().replace(/[AEIOU]/, c => c + '̀'));
-  const pezzo = t.mia.map(p => [p, cognomeDi(p).toLowerCase().slice(0, 5)])
-    .find(([p, c]) => c.length === 5 && base.p.filter(a => a[1].toLowerCase().includes(c)).length === 1);
-  if (pezzo) verifica('ricerca con parte del cognome', t.rispondi('come sta ' + pezzo[1]).startsWith(pezzo[0].nome), pezzo[1] + ' → ' + pezzo[0].nome);
-  const perCognome = {};
-  base.p.forEach(a => { const c = a[1].replace(/\s+\S{1,3}\.$/, '').toLowerCase(); (perCognome[c] = perCognome[c] || []).push(a); });
-  const omonimi = Object.entries(perCognome).find(([c, l]) => l.length > 1 && !c.includes(' ') && c.length > 3
-                                                              && l.filter(a => a[4] === base.me).length !== 1);
-  if (omonimi) verifica('omonimi: chiede quale', /Quale\?/.test(t.rispondi('come sta ' + omonimi[0])), omonimi[0]);
-
-  ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'squadre.json': null,
-        'infortuni.json': { aggiornato: '2026-09-13T00:00:00+00:00', voci: { [d2]: { rientro: '30/12/2026', motivo: 'Infortunato' } } } } }));
-  r = t.rispondi(cognomeDi(P(d1)) + ' oppure ' + cognomeDi(P(d2)));
-  verifica('confronto con un infortunato', r.startsWith('Schiera ' + P(d1).nome), r.split('\n')[0]);
-
-  ({ t, el } = await avvia({ adesso: giovedi }));
-  el.mic.onclick();
-  verifica('senza riconoscimento vocale: indica la tastiera', /microfono della tastiera/.test(el.risposta.textContent), el.risposta.textContent);
-  class VoceOk { start() { this.onresult({ results: [[{ transcript: 'chi affronto' }]] }); this.onend(); } stop() {} }
-  ({ t, el } = await avvia({ adesso: giovedi, sr: VoceOk }));
-  el.mic.onclick();
-  verifica('microfono: la frase dettata riceve risposta', new RegExp('affronti ' + AVV1).test(el.risposta.textContent), el.risposta.textContent.split('\n')[0]);
-  class VoceNo { start() { this.onerror({ error: 'service-not-allowed' }); this.onend(); } stop() {} }
-  ({ t, el } = await avvia({ adesso: giovedi, sr: VoceNo }));
-  el.mic.onclick();
-  verifica('microfono bloccato: spiega perché', /non è disponibile/.test(el.risposta.textContent) && /tastiera/.test(el.risposta.textContent),
-           el.risposta.textContent.split('\n')[0]);
+  verifica('cinque moduli: i tre con la difesa a quattro, più 3-5-2 e 3-4-3', Object.keys(t.MODULI).join() === '4-3-3,4-4-2,4-5-1,3-5-2,3-4-3'
+           && Object.values(t.MODULI).every(q => 1 + q.D + q.C + q.A === 11));
+  const tessMod = el.modulo.innerHTML;
+  verifica('una tessera per modulo, col totale atteso', (tessMod.match(/<button data-m=/g) || []).length === 5
+           && Object.keys(t.MODULI).every(m => tessMod.includes('<b class="mn">' + m + '</b>')));
+  verifica('«NO MOD.» sulle due con la difesa a tre, e solo lì', (tessMod.match(/NO MOD\./g) || []).length === 2
+           && /data-m="3-5-2" class=" tre"/.test(tessMod) && /data-m="3-4-3" class=" tre"/.test(tessMod));
+  const cons = t.moduloConsigliato(g), totali = Object.keys(t.MODULI).map(m => t.totaleModulo(g, m).tot);
+  verifica('«consigliato» sul modulo che rende di più, uno solo', (tessMod.match(/class="cons"/g) || []).length === 1
+           && new RegExp('data-m="' + cons + '"[^>]*><i class="cons">').test(tessMod)
+           && t.totaleModulo(g, cons).tot >= Math.max(...totali) - 1e-9, cons + ' ' + totali.map(x => x.toFixed(1)).join(' / '));
+  for (const m of ['3-5-2', '3-4-3']) {
+    const u = t.undiciDi(t.mia, g, m), q = t.MODULI[m];
+    verifica(m + ': undici completo, tre difensori, i migliori per punteggio', u.P.length === 1 && u.D.length === 3 && u.C.length === q.C && u.A.length === q.A
+             && t.mia.filter(p => p.ruolo === 'D' && t.disponibile(p, g[2]) && !u.D.includes(p))
+                  .every(p => u.D.every(d => t.punteggio(d, g) >= t.punteggio(p, g))));
+    verifica(m + ': niente modificatore nel totale', t.totaleModulo(g, m).mod === 0);
+  }
+  t.scegliModulo('3-5-2');
+  verifica('scelto il 3-5-2: la tessera si accende e il campo ha tre difensori', t.modulo === '3-5-2'
+           && /data-m="3-5-2" class="on tre"/.test(el.modulo.innerHTML) && t.undici(g).D.length === 3);
+  verifica('con la difesa a tre niente riassunto del modificatore', !/Fascia più probabile/.test(el.difesa.innerHTML));
+  t.scegliModulo('4-3-3');
+  verifica('scheda Chiedi tolta: niente pagina, niente risposte, niente microfono', !/id="s-chiedi"/.test(html)
+           && !/function rispondi|SpeechRecognition|id="esempi"/.test(html));
 
   console.log('\n14. Font ospitato nel repository');
   verifica('nessuna richiesta a Google Fonts', !/fonts\.(googleapis|gstatic)\.com/.test(html));
@@ -444,8 +407,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const sfondo = path.join(REPO, 'img', 'sfondo.jpg');
   verifica('sfondo: lo stemma intero, leggero per l\'iPhone', fs.existsSync(sfondo) && fs.statSync(sfondo).size < 400000
            && /url\("img\/sfondo.jpg"\)/.test(html), fs.existsSync(sfondo) ? Math.round(fs.statSync(sfondo).size / 1024) + ' KB' : 'manca');
-  verifica('Re Guyzo anche dentro l\'app (stemma e Chiedi)', /<img class="avatar" src="img\/icona-180.png"/.test(html)
-           && /<image href="img\/icona-180.png"/.test(html));
+  verifica('Re Guyzo anche dentro l\'app (stemma)', /<image href="img\/icona-180.png"/.test(html));
 
   console.log('\n16. Avvisi');
   // venerdì 18 settembre alle 10: scadenza alle 20:30 e un tuo difensore squalificato
@@ -593,14 +555,15 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('avversario della giornata, undici completi da entrambe le parti', sf.avv === AVV1
            && tutti(sf.mio.u).length === 11 && tutti(sf.loro.u).length === 11, sf.avv);
   verifica('tuo undici uguale a quello consigliato', tutti(sf.mio.u).map(p => p.id).join() === tutti(t.undici(g)).map(p => p.id).join());
-  verifica('il loro è il migliore dei tre moduli, sempre con la difesa a quattro', sf.loro.u.D.length === 4
-           && ['4-3-3', '4-4-2', '4-5-1'].every(m => tutti(t.undiciDi(t.players.filter(p => p.team === AVV1), g, m))
-                .reduce((s, p) => s + t.punteggio(p, g), 0) <= sf.loro.tot + 1e-9), sf.loro.modulo);
+  verifica('il loro è il migliore dei cinque moduli, modificatore compreso', sf.loro.u.D.length === t.MODULI[sf.loro.modulo].D
+           && Object.keys(t.MODULI).every(m => { const u = t.undiciDi(t.players.filter(p => p.team === AVV1), g, m);
+                const x = t.MODULI[m].D >= 4 && t.modificatoreAtteso(u.P[0], u.D, 250, g);
+                return tutti(u).reduce((s, p) => s + t.punteggio(p, g), 0) + (x ? x.atteso : 0) <= sf.loro.vale + 1e-9; }), sf.loro.modulo);
   verifica('solo giocatori loro e disponibili', tutti(sf.loro.u).every(p => p.team === AVV1 && t.disponibile(p, g[2])));
   const cartaSfida = el.sfida.innerHTML;
   verifica('scheda della sfida: totali, verdetto, 22 giocatori da toccare', /Sulla carta/.test(cartaSfida)
            && (cartaSfida.match(/data-id="\d+"/g) || []).length === 22 && cartaSfida.includes(AVV1), (cartaSfida.match(/data-id/g) || []).length);
-  verifica('niente spiegazioni, solo i moduli', !/una stima di Jarvis/.test(cartaSfida) && /Tu 4-\d-\d · loro 4-\d-\d/.test(cartaSfida));
+  verifica('niente spiegazioni, solo i moduli', !/una stima di Jarvis/.test(cartaSfida) && /Tu 4-\d-\d · loro \d-\d-\d/.test(cartaSfida));
   const altre = [...new Set(t.players.map(p => p.team))].filter(x => x !== t.ME);
   verifica('nove avversari, nove colori diversi', new Set(altre.map(t.coloreSquadra)).size === altre.length, altre.length + ' squadre');
   verifica('stemmi in classifica e nel calendario', (el.squadre.innerHTML.match(/class="stemma"/g) || []).length === 10
@@ -639,7 +602,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('niente più «Copia la formazione» (sul telefono si fa prima a mano)', !/copia-formazione|testoFormazione/.test(html));
   verifica('barra come su iOS 26: lente di vetro da trascinare col dito, sempre grande e fissa',
            /setPointerCapture/.test(html) && /pointermove/.test(html) && !/classList\.toggle\('mini'/.test(html)
-           && (html.match(/<nav>[\s\S]*?<\/nav>/)[0].match(/<span>(Giornata|Rosa|Lega|Chiedi)<\/span>/g) || []).length === 4);
+           && (html.match(/<nav>[\s\S]*?<\/nav>/)[0].match(/<span>(Giornata|Rosa|Stagione|Lega)<\/span>/g) || []).join() === '<span>Giornata</span>,<span>Rosa</span>,<span>Stagione</span>,<span>Lega</span>');
   const portiereU = t.undici(g).P[0];
   const conPartite = { ...orariVeri, aggiornato: '2026-09-17T08:00:00+00:00', giornate: { ...orariVeri.giornate,
     '5': { ...orariVeri.giornate['5'], partite: [[portiereU.club, 'Squadra finta', '2026-09-19T16:00:00+00:00']] } } };
@@ -700,7 +663,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
 
   console.log('\n26. Liquid Glass');
   verifica('intestazione normale: niente capsula che si stringe scorrendo (non piaceva)', !/body\.scorso|'scorso'/.test(html));
-  verifica('modulo con la lente da trascinare', /selettore\.addEventListener\('pointermove'/.test(html) && /function scegliModulo/.test(html));
+  verifica('modulo a cinque tessere di vetro (la lente da trascinare è tolta)', /\.moduli\{display:grid; grid-template-columns:repeat\(5,1fr\)/.test(html)
+           && !/moduli-cursore/.test(html) && /function scegliModulo/.test(html));
   verifica('pannelli di vetro staccati dai bordi', /\.foglio\{left:8px; right:8px/.test(html));
   verifica('pulsanti di vetro che si illuminano al tocco', /\.luce::after/.test(html) && /--gx/.test(html));
 
@@ -749,14 +713,16 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   t.chiudiSovra();
   verifica('e si chiude', !el.sovra.classList.contains('aperto'));
   // la stagione, con gli stessi voti
-  verifica('la stagione: una riga nella Rosa', /class="invito"/.test(el.stagione.innerHTML) && /La stagione/.test(el.stagione.innerHTML)
-           && /Chi produce di più: /.test(el.stagione.innerHTML));
-  t.apriStagione();
-  const st = t.stagione(), sst = el['sovra-corpo'].innerHTML;
+  verifica('la stagione ha la sua scheda, e nella Rosa non c\'è più la riga', !/id="stagione"/.test(html) && /<section id="s-stagione">/.test(html)
+           && /La stagione/.test(el['s-stagione'].innerHTML));
+  const st = t.stagione(), sst0 = el['s-stagione'].innerHTML;
   const piuAlto = Math.max(...t.mia.map(p => sa4[p.id] ? sa4[p.id][1] : 0));
-  verifica('chi produce: tutti i tuoi, dal più prolifico', (sst.match(/class="vr prod"/g) || []).length === t.mia.length
-           && Math.abs(st.righe[0].tot - piuAlto) < 1e-9 && st.righe.every((x, i) => !i || st.righe[i - 1].tot >= x.tot), st.righe[0].p.nome);
-  verifica('con gol, assist e ammonizioni dei tuoi', ['Gol', 'Assist', 'Ammonizioni'].every(k => sst.includes(k)));
+  verifica('chi produce: i primi cinque nella scheda, dal più prolifico', (sst0.match(/class="vr prod"/g) || []).length === 5
+           && Math.abs(st.righe[0].tot - piuAlto) < 1e-9 && st.righe.every((x, i) => !i || st.righe[i - 1].tot >= x.tot)
+           && sst0.includes('tutti i ' + t.mia.length + ' ›'), st.righe[0].p.nome);
+  verifica('con gol, assist e ammonizioni dei tuoi', ['Gol', 'Assist', 'Ammonizioni'].every(k => sst0.includes(k)));
+  t.apriProduttori();
+  verifica('«tutti»: in sovraimpressione tutti i tuoi', (el['sovra-corpo'].innerHTML.match(/class="vr prod"/g) || []).length === t.mia.length);
   t.chiudiSovra();
   // giornata per giornata, da navigare
   const sa3 = {};
@@ -766,15 +732,19 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('giornata per giornata: i migliori 11 di ogni giornata, reparto per reparto', st2.per.length === 2 && st2.per.every(x =>
            x.scelti.length === 11 && x.scelti.filter(p => p.ruolo === 'D').length === 4
            && Math.abs(x.tot - ['P', 'D', 'C', 'A'].reduce((s, r) => s + x.reparti[r], 0)) < 1e-9), st2.per.map(x => x.tot).join(' e '));
-  t.apriStagione();
-  const piccoSt = st2.per.reduce((a, b) => b.tot > a.tot ? b : a), altraSt = st2.per.find(x => x !== piccoSt).sa;
-  sc = el['sovra-corpo'].innerHTML;
-  verifica('il grafico: una colonna per giornata, si apre sulla migliore', (sc.match(/class="st-col[ "]/g) || []).length === 2
-           && sc.includes('class="st-col sel" data-sa="' + piccoSt.sa + '"') && /la migliore/.test(sc) && /★/.test(sc), 'giornata ' + piccoSt.sa);
+  const ultimaSt = st2.per[st2.per.length - 1], piccoSt = st2.per.reduce((a, b) => b.tot > a.tot ? b : a), altraSt = st2.per[0].sa;
+  sc = el['s-stagione'].innerHTML;
+  verifica('il grafico: una colonna per giornata, si apre sull\'ultima, la migliore con la stella', (sc.match(/class="st-col[ "]/g) || []).length === 2
+           && sc.includes('class="st-col sel" data-sa="' + ultimaSt.sa + '"') && /★/.test(sc), 'giornata ' + ultimaSt.sa + ', migliore ' + piccoSt.sa);
   t.scegliGiornata(altraSt);
-  verifica('toccando un\'altra giornata: chi ha fatto cosa quel giorno', el['st-grafico'].innerHTML.includes('class="st-col sel" data-sa="' + altraSt + '"')
-           && (el['st-giornata'].innerHTML.match(/class="vr"/g) || []).length === 11 && /la peggiore/.test(el['st-giornata'].innerHTML)
-           && ['Porta', 'Difesa', 'Centrocampo', 'Attacco'].every(k => el['st-giornata'].innerHTML.includes(k)));
+  verifica('toccando un\'altra giornata: i migliori 11 e i reparti di quel giorno', el['st-grafico'].innerHTML.includes('class="st-col sel" data-sa="' + altraSt + '"')
+           && /migliori 11 <b>/.test(el['st-giornata'].innerHTML)
+           && ['Porta', 'Difesa', 'Centro', 'Attacco'].every(k => el['st-giornata'].innerHTML.includes(k)));
+  t.apriUndiciGiornata(altraSt);
+  sc = el['sovra-corpo'].innerHTML;
+  verifica('«gli 11 della giornata»: uno per uno in sovraimpressione', (sc.match(/class="vr"/g) || []).length === 11
+           && /la (migliore|peggiore)/.test(sc) && !/class="st-nav"/.test(sc));
+  t.chiudiSovra();
   ({ t, el } = await avvia({ adesso: martedi, dati: conVoti }));    // di nuovo una giornata sola, per le prove che seguono
   const QM = [{ D: 4, C: 3, A: 3 }, { D: 4, C: 4, A: 2 }, { D: 4, C: 5, A: 1 }];
   const meglioAtteso = Math.max(...QM.map(q => ['P', 'D', 'C', 'A'].reduce((s, r) => s + t.mia
@@ -934,9 +904,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     'consigli.json': null };
   ({ t, el } = await avvia({ adesso: giovedi, dati: senzaConsiglio2 }));
   verifica('senza nessun consiglio salvato: niente da valutare', t.accuratezzaConsiglio(t.stagione().per) === null);
-  t.apriStagione();
-  verifica('niente blocco «Quanto si avvicina Jarvis» se non c\'è niente da valutare',
-           !/Quanto si avvicina Jarvis/.test(el['sovra-corpo'].innerHTML));
+  verifica('niente numeri di Jarvis se non c\'è niente da valutare',
+           !/Il consiglio di Jarvis:|del massimo/.test(el['s-stagione'].innerHTML));
   // giornata 1: il consiglio salvato con la sostituzione della lega (sotto il massimo);
   // giornata 2: il consiglio coincide esattamente col migliore possibile, preso da lì
   const conSoloG1 = Object.assign({}, senzaConsiglio2, { 'consigli.json': { giornate: consigliG1 } });
@@ -955,19 +924,22 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('l\'accuratezza: solo le giornate valutabili, sommate', acc && acc.n === 2
            && circa(acc.consiglio, g1.consiglio + g2.consiglio) && circa(acc.massimo, g1.tot + g2.tot)
            && circa(acc.media, 100 * (g1.consiglio + g2.consiglio) / (g1.tot + g2.tot)), acc);
-  t.apriStagione();
-  sc = el['sovra-corpo'].innerHTML;
-  verifica('in sovraimpressione: consigliato, massimo possibile e vicinanza',
-           /Quanto si avvicina Jarvis/.test(sc) && /2 giornate di lega/.test(sc)
-           && sc.includes(f1(acc.consiglio)) && sc.includes(f1(acc.massimo)) && sc.includes(Math.round(acc.media) + '%'), sc.match(/Quanto si avvicina[\s\S]{0,200}/));
+  sc = el['s-stagione'].innerHTML;
+  const corto = x => Math.abs(x - Math.round(x)) < 0.05 ? String(Math.round(x)) : f1(x);
+  verifica('nella scheda: vicinanza, consigliato e massimo possibile',
+           sc.includes(Math.round(acc.media) + '%') && /2 giornate di lega/.test(sc)
+           && sc.includes('Il consiglio di Jarvis: ' + corto(acc.consiglio) + ' su ' + corto(acc.massimo)), sc.match(/Il consiglio di Jarvis[^<]*/));
+  t.apriUndiciGiornata(g1.sa);
+  verifica('nella giornata sotto il massimo: quanto in meno', /Il consiglio di Jarvis: .*in meno del massimo/.test(el['sovra-corpo'].innerHTML)
+           && el['sovra-corpo'].innerHTML.includes(f1(Math.abs(g1.consiglio - g1.tot))), el['sovra-corpo'].innerHTML.match(/Il consiglio[^<]*/));
   t.scegliGiornata(g1.sa);
-  verifica('nella giornata sotto il massimo: quanto in meno', /Il consiglio di Jarvis: .*in meno del massimo/.test(el['st-giornata'].innerHTML)
-           && el['st-giornata'].innerHTML.includes(f1(Math.abs(g1.consiglio - g1.tot))), el['st-giornata'].innerHTML.match(/Il consiglio[^<]*/));
-  t.scegliGiornata(g2.sa);
-  verifica('nella giornata al massimo: come il massimo possibile', /Il consiglio di Jarvis: .*come il massimo possibile/.test(el['st-giornata'].innerHTML)
-           && !/in meno del massimo/.test(el['st-giornata'].innerHTML));
+  verifica('e nella scheda, in breve: Jarvis accanto ai migliori 11', el['st-giornata'].innerHTML.includes('Jarvis <b>' + corto(g1.consiglio) + '</b>'));
+  t.apriUndiciGiornata(g2.sa);
+  verifica('nella giornata al massimo: come il massimo possibile', /Il consiglio di Jarvis: .*come il massimo possibile/.test(el['sovra-corpo'].innerHTML)
+           && !/in meno del massimo/.test(el['sovra-corpo'].innerHTML));
   t.scegliGiornata(4);   // Serie A 4: prima della lega, nessun consiglio possibile
-  verifica('prima della lega: niente riga del consiglio', !/Il consiglio di Jarvis/.test(el['st-giornata'].innerHTML));
+  verifica('prima della lega: niente riga del consiglio', !/Jarvis <b>/.test(el['st-giornata'].innerHTML));
+  t.chiudiSovra();
 
   console.log('\n31. Il modificatore di difesa (portiere + i 3 migliori difensori)');
   // la tabella della lega, agli estremi: gli scalini sono il punto delicato
@@ -1101,8 +1073,6 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('mercato: il valore dei giocatori dal modello (base senza la partita)',
            circa(t.baseStagione(d31), t.attesoModello('fantavoto', d31, null).media) && !circa(t.baseStagione(d31), t.fmStimata(d31)),
            t.baseStagione(d31).toFixed(2) + ' contro ' + t.fmStimata(d31).toFixed(2));
-  verifica('chiedi: «come sta» dice il fantavoto atteso', /atteso se gioca \d+,\d+ ± /.test(t.rispondi('come sta ' + d31.nome)),
-           t.rispondi('come sta ' + d31.nome).split('\n')[1]);
   const m31b = JSON.parse(JSON.stringify(m31));
   m31b.fantavoto.A.usa = false;
   ({ t } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31b } }));
@@ -1121,8 +1091,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const somma31 = l => l.reduce((s, id) => s + v5[id][1], 0);
   verifica('per ogni giornata anche il consiglio del calcolo di prima', x31 && circa(x31.consiglio, somma31(und31))
            && circa(x31.consiglioPrima, somma31(vec31)), x31 && (x31.consiglio + ' e ' + x31.consiglioPrima));
-  t.apriStagione();
-  verifica('e nella stagione il confronto', acc31 && circa(acc31.prima, somma31(vec31)) && /Calcolo di prima/.test(el['sovra-corpo'].innerHTML));
+  verifica('e nella stagione il confronto', acc31 && circa(acc31.prima, somma31(vec31)) && /calcolo di prima/.test(el['s-stagione'].innerHTML));
 
   console.log('\n33. La probabilità di vincere la sfida (B3)');
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31 } }));

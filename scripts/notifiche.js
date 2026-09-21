@@ -69,7 +69,7 @@ async function appSuiDati({ repo = REPO, adesso = Date.now(), dati = {} } = {}) 
   };
   ctx.window = ctx;
   vm.createContext(ctx);
-  // il consiglio: undici e panchina della prossima giornata per ognuno dei tre moduli,
+  // il consiglio: undici e panchina della prossima giornata per ognuno dei cinque moduli,
   // solo prima della scadenza (dopo, resta l'ultimo salvato)
   vm.runInContext(codice + '\n;globalThis.__pronto = () => !!D && mia.length > 0;' +
                   'globalThis.__avvisi = () => avvisi(prossima());' +

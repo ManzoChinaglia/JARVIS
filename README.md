@@ -95,8 +95,10 @@ quando i dati hanno più di 4 giorni.
 
 ## Come si aggiorna la formazione consigliata
 
-La difesa è **sempre a quattro**. Il modulo cambia solo nei reparti avanzati
-(4-3-3, 4-4-2, 4-5-1) dal selettore sopra il campo.
+Cinque moduli, dalle tessere sopra il campo: 4-3-3, 4-4-2, 4-5-1, 3-5-2 e 3-4-3.
+Su ogni tessera il totale atteso dell'undici (fantavoto più modificatore) e
+«consigliato» su quello che rende di più. Con la difesa a tre il **modificatore non
+scatta** (regola della lega: solo con quattro difensori), e la tessera lo dice: «NO MOD.».
 
 Dal 15/09/2026 il punteggio con cui Jarvis ordina i giocatori è il **fantavoto
 atteso** di un modello addestrato su 11 stagioni di voti (`scripts/modello.py`): la
@@ -140,8 +142,10 @@ anche sotto ogni maglia e nella scheda del giocatore.
 Dopo ogni giornata, fino alla scadenza della prossima, in cima alla Giornata c'è
 **Com'è andata**: toccala e si apre a tutto schermo, con l'app sfocata dietro. Dentro:
 il risultato vero della tua sfida e quanto avrebbe fatto l'undici di Jarvis, il
-migliore e il peggiore, tutti i tuoi con voto e bonus o malus. In cima alla Rosa
-**La stagione**: chi produce, giornata dopo giornata. Nella scheda di ogni giocatore
+migliore e il peggiore, tutti i tuoi con voto e bonus o malus. La scheda
+**Stagione** (in basso, tra Rosa e Lega): posizione in classifica, quanto si avvicina
+Jarvis al massimo possibile, il grafico giornata per giornata (tocca una colonna per
+vederla), gol, assist e ammonizioni della rosa e chi produce di più. Nella scheda di ogni giocatore
 c'è l'andamento dei fantavoti e ci sono i prossimi 3 avversari (anche come pallini
 sotto le maglie della Rosa). Nella scheda Lega il **Mercato, sulla carta**: scambi 1
 contro 1 alla pari, che convengono a te senza togliere niente all'altro. Si chiude
@@ -206,21 +210,6 @@ da solo: per vederla, tieni premuto Jarvis sulla Home → Rimuovi app → Rimuov
 dalla schermata Home, poi da Safari apri il sito → Condividi → Aggiungi alla
 schermata Home. In fondo alla schermata Giornata la riga «versione del …» dice
 se l'iPhone sta mostrando l'ultima versione.
-
----
-
-## La scheda Chiedi
-
-Tocca una delle domande pronte o scrivi, per esempio:
-
-- «chi schiero?» — l'undici in poche righe e i dubbi da controllare
-- «chi schiero in difesa?» — chi gioca nel modulo scelto e perché
-- «Kamara o Valle?» — chi schierare tra due, con il motivo
-- «come sta Baturina?» — anche senza accenti o con parte del cognome
-- «chi affronto?», «chi è infortunato?», «aggiorna i dati»
-
-Il microfono dell'app su iPhone può non funzionare: se succede, Jarvis dice il
-perché. Il microfono della tastiera funziona sempre.
 
 ---
 
