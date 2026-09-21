@@ -508,7 +508,26 @@
   .gio-riga b{text-align:right; font-weight:600;}
   .gio-riga b.cond{font-size:21px; font-weight:700; color:var(--oro-chiaro);}
   .gio-riga b small{font-size:13px; font-weight:400; color:var(--dim);}
-  .gio-scomposta{margin:-6px 2px 8px; font-size:12px; line-height:1.45; color:var(--dim);}
+  /* fantavoto atteso e punteggio per il consiglio, in un riquadro di vetro */
+  .ga{margin:12px 0 4px; padding:14px; border-radius:18px; background:var(--vetro-liquido); border:1px solid var(--vetro-bordo);
+      box-shadow:var(--vetro-luce); -webkit-backdrop-filter:var(--vetro-sfoca); backdrop-filter:var(--vetro-sfoca);}
+  .ga-testa{display:flex; justify-content:space-between; align-items:baseline; gap:10px;}
+  .ga-testa .k{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);}
+  .ga-testa b{flex:none; font-size:32px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
+  .ga-testa b small{font-size:14px; font-weight:400; color:var(--dim);}
+  .ga-parti{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;}
+  .ga-p{max-width:100%; padding:3px 9px; border-radius:999px; font-size:12px; color:var(--ink);
+        background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);}
+  .ga-p.base{background:rgba(233,185,73,.14); border-color:rgba(233,185,73,.4); color:var(--oro-chiaro);}
+  .ga-p.su{background:rgba(67,224,143,.12); border-color:rgba(67,224,143,.35); color:#8FF0B8;}
+  .ga-p.giu{background:rgba(239,107,107,.12); border-color:rgba(239,107,107,.35); color:#FF9A9A;}
+  .ga-cons{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:12px; padding-top:12px;
+           border-top:1px solid rgba(255,255,255,.08);}
+  .ga-cons:first-child{margin-top:0; padding-top:0; border-top:0;}
+  .ga-cons span{min-width:0;}
+  .ga-cons span b{display:block; font-size:14px; font-weight:600;}
+  .ga-cons small{display:block; margin-top:2px; font-size:11.5px; line-height:1.35; color:var(--dim);}
+  .ga-cons > b{flex:none; font-size:24px; font-weight:700; color:var(--oro-chiaro);}
   .stato{padding:12px 2px; border-bottom:1px solid var(--line); font-size:14px;}
   .stato .barra{width:100%; max-width:none; height:6px; margin-top:9px;}
   .stato.ko{color:var(--rosso);}
@@ -1565,17 +1584,24 @@ function votoAtteso(p, g){
   if(BALLO === null || r === null || r === undefined) return null;
   return {media: (p.pgv*p.mv + PARTITE_PRIOR_VOTO*r) / (p.pgv + PARTITE_PRIOR_VOTO), sd: BALLO};
 }
-/* nella scheda: il fantavoto atteso se gioca, quanto balla e il perché (base del
-   giocatore, casa, avversario, squadra). Solo col modello */
-function righeAtteso(p, g){
-  const a = attesoModello('fantavoto', p, g);
-  if(!a) return '';
-  const s = x => (Math.abs(x) < 0.05 ? '' : x > 0 ? '+' : '−')+num(Math.abs(x));
-  const pezzi = ['base '+num(a.parti.base)+(a.storia >= 0.5 ? '' : ' (conta la quotazione)')]
-    .concat(a.casa===1 ? ['in casa '+s(a.parti.casa)] : [])
-    .concat(a.casa===null ? [] : ['avversario '+s(a.parti.avv), 'squadra '+s(a.parti.squadra)]);
-  return '<div class="gio-riga"><span>Fantavoto atteso, se gioca</span><b class="cond">'+num(a.media)+
-    '<small> ± '+num(a.sd)+'</small></b></div><p class="gio-scomposta">'+pezzi.join(' · ')+'</p>';
+/* nella scheda, un riquadro di vetro (21/09/2026: prima i pezzi uscivano dalla riga): il
+   fantavoto atteso se gioca con quanto balla e il perché in pillole (base del giocatore,
+   casa, avversario, squadra; verdi se aiutano, rosse se tolgono), e sotto il punteggio per
+   il consiglio con una riga che dice cos'è. Senza modello solo il punteggio. */
+function cartaAtteso(p, g){
+  const a = attesoModello('fantavoto', p, g), t = titolarita(p, g);
+  const pill = (k, x) => '<span class="ga-p'+(Math.abs(x) < 0.05 ? '' : x > 0 ? ' su' : ' giu')+'">'+k+' '+
+    (Math.abs(x) < 0.05 ? '' : x > 0 ? '+' : '−')+num(Math.abs(x))+'</span>';
+  const pezzi = !a ? [] : ['<span class="ga-p base">base '+num(a.parti.base)+(a.storia >= 0.5 ? '' : ' · conta la quotazione')+'</span>']
+    .concat(a.casa===1 ? [pill('in casa', a.parti.casa)] : [])
+    .concat(a.casa===null ? [] : [pill('avversario', a.parti.avv), pill('squadra', a.parti.squadra)]);
+  return '<div class="ga">'+
+    (a ? '<div class="ga-testa"><span class="k">Fantavoto atteso, se gioca</span><b class="cond">'+num(a.media)+
+      '<small> ± '+num(a.sd)+'</small></b></div><div class="ga-parti">'+pezzi.join('')+'</div>' : '')+
+    '<div class="ga-cons"><span><b>Punteggio per il consiglio</b><small>'+
+      (a ? 'il fantavoto atteso più la titolarità'+(t ? ' ('+(t.stato==='s' ? 'presenze' : 'probabili')+')' : '')
+         : 'la fantamedia stimata, l\'avversario e la titolarità')+': con questo Jarvis ordina i giocatori</small></span>'+
+      '<b class="cond">'+num(punteggio(p, g),2)+'</b></div></div>';
 }
 
 /* I voti veri escono a mezzi punti: simularli continui gonfierebbe la precisione
@@ -3070,8 +3096,7 @@ function apriGiocatore(id){
     (p.amm || p.esp ? '<div class="gio-riga"><span>Cartellini</span><b>'+
       (p.amm ? '<span class="cartellino giallo"></span>'+p.amm+(p.amm===1 ? ' ammonizione' : ' ammonizioni') : '')+
       (p.esp ? '<span class="cartellino rosso"></span>'+p.esp+(p.esp===1 ? ' espulsione' : ' espulsioni') : '')+'</b></div>' : '')+
-    righeAtteso(p, g)+
-    '<div class="gio-riga"><span>Punteggio per il consiglio</span><b class="cond">'+num(punteggio(p, g),2)+'</b></div>'+
+    cartaAtteso(p, g)+
     stato+
     (m ? '<div class="gio-riga"><span>Giornata '+g[0]+'</span><b>'+(m.casa ? 'in casa con ' : 'a ')+m.avv+
          (oraPartita(p.club, g[1]) ? ' · '+oraBreve(oraPartita(p.club, g[1])) : '')+'</b></div>' : '')+

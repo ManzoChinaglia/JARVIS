@@ -562,7 +562,10 @@ Toccando un giocatore, in campo o in una lista, sale la sua scheda
 (`apriGiocatore`): fantamedia, media voto, quotazione, partite a voto su quelle
 della sua squadra, gol e assist (per i portieri gol subiti e rigori parati),
 cartellini, punteggio del consiglio, titolarità, partita e avversario, e la data
-delle statistiche. Senza i bonus della fonte compare un trattino. Sotto il campo
+delle statistiche. Fantavoto atteso e punteggio del consiglio stanno in un riquadro di vetro
+(`cartaAtteso`, 21/09/2026: prima i pezzi della scomposizione uscivano dalla riga): il
+valore con ±, il perché in pillole (base in oro, verdi le voci che aiutano, rosse quelle
+che tolgono) e sotto il punteggio per il consiglio con una riga che dice cos'è. Senza i bonus della fonte compare un trattino. Sotto il campo
 nessuna scritta «tocca un giocatore»: per l'utente è intuitivo (14/09/2026).
 
 **Il modulo** (21/09/2026, scelta dell'utente su mockup, «cinque tessere»): sopra il
