@@ -1469,4 +1469,12 @@ python -c "import truststore, runpy; truststore.inject_into_ssl(); runpy.run_pat
 
 ## Note aggiunte dopo il 21/09/2026
 
-(nessuna per ora)
+- **22/09/2026**: freccia dei posti guadagnati o persi in classifica (proposta
+  dell'utente del 21/09). `movimentoLega()` ricostruisce la posizione «di prima» con lo
+  stesso calcolo di `posizioniLega` (punti poi fantapunti) fino alla penultima giornata, e
+  la confronta con la posizione vera di oggi (`D.lega.classifica`). Con una sola giornata
+  non c'è un «prima»: niente freccia, invece di inventarlo. L'utente ha chiuso senza altro
+  lavoro i punti «snellire le pagine» (visto l'app, va bene così) e «il parere
+  dell'utente» (risultato ottimo); la grafica resta aperta solo se lui chiede qualcosa di
+  preciso. Resta aperta solo la formazione schierata da Leghe (pagine «Formazioni» 404 dal
+  21/09), da cui dipende il giudizio «rivelato».

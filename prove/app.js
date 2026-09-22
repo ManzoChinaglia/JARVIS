@@ -101,7 +101,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
     'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,baseStagione,apriConsiglio,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,forma,risultatoLega,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,forma,movimentoLega,risultatoLega,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (attendi && el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -899,6 +899,26 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
 
   ({ el } = await avvia({ adesso: giovedi, dati: { 'lega.json': null } }));
   verifica('senza il file della lega: niente forma, niente tabellone', el.vs.textContent === 'VS' && el.classifica.innerHTML === '');
+
+  // 22/09/2026: i posti guadagnati o persi rispetto alla giornata precedente (proposta dell'utente)
+  const [T1, T2, T3] = squadreLega, restoLega = squadreLega.slice(3);
+  const partitaMov = (casa, fuori, fpCasa, fpFuori) => [casa, fpCasa, fuori, fpFuori, 2, 0];
+  const risMov = { 1: [partitaMov(T1, restoLega[0], 80, 10), partitaMov(T2, restoLega[1], 75, 10), partitaMov(T3, restoLega[2], 70, 10)],
+    2: [partitaMov(restoLega[3], restoLega[4], 50, 40)] };
+  const classificaMov = [[1, T2, 2, 2, 0, 0, 4, 0, 4, 6, 150], [2, T1, 2, 2, 0, 0, 4, 0, 4, 6, 145], [3, T3, 2, 1, 0, 1, 2, 1, 1, 3, 120]]
+    .concat(restoLega.map((s, k) => [k + 4, s, 1, 0, 0, 1, 0, 2, -2, 0, 40]));
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'lega.json': { aggiornato: 'x', classifica: classificaMov, risultati: risMov } } }));
+  const mov = t.movimentoLega();
+  verifica('T2 ha scavalcato T1 tra la giornata prima e oggi: sale di 1, T1 scende di 1', mov[T2] === 1 && mov[T1] === -1,
+           JSON.stringify(mov));
+  verifica('T3 è rimasta al suo posto: 0, non «niente»', mov[T3] === 0);
+  verifica('in classifica la freccia su (verde), giù (rossa) e pari (grigia)', /class="cl-mov su"/.test(el.classifica.innerHTML)
+           && /class="cl-mov giu"/.test(el.classifica.innerHTML) && /class="cl-mov pari"/.test(el.classifica.innerHTML));
+  verifica('accanto a chi sale c\'è ▲1, a chi scende ▼1', el.classifica.innerHTML.includes('▲1') && el.classifica.innerHTML.includes('▼1'));
+
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'lega.json': { aggiornato: 'x', classifica: finta, risultati: { 1: [vittoriaG1] } } } }));
+  verifica('con una sola giornata nessuna freccia: dato non inventato', Object.keys(t.movimentoLega()).length === 0
+           && !/cl-mov/.test(el.classifica.innerHTML));
 
   console.log('\n30. Quanto si avvicina Jarvis (l\'accuratezza del consiglio)');
   const sa6 = {};

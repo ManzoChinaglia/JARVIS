@@ -368,6 +368,12 @@
               background:linear-gradient(90deg,rgba(228,180,81,.35),var(--oro));}
   .team.io .nome, .team.io .pos{color:var(--accento); font-weight:600;}
   .team.io .barretta i{background:linear-gradient(90deg,var(--bf-rosso),var(--bf-verde));}
+  /* freccia dei posti guadagnati o persi rispetto alla giornata precedente (22/09/2026) */
+  .cl-mov{display:inline-flex; align-items:center; gap:1px; margin-left:2px; padding:1px 5px; border-radius:8px;
+          font-size:10.5px; font-weight:700; font-variant-numeric:tabular-nums;}
+  .cl-mov.su{background:rgba(0,158,73,.18); color:#43E08F;}
+  .cl-mov.giu{background:rgba(239,43,45,.16); color:#FF7A7A;}
+  .cl-mov.pari{background:rgba(154,165,158,.16); color:var(--dim);}
   .team .val{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:19px; text-align:right;}
   .team .nome small{display:block; margin-top:3px; font-size:11px; font-weight:400; color:var(--dim);}
   /* forma: le ultime 5 giornate di lega già giocate, dalla più vecchia (a sinistra) alla più recente */
@@ -2880,6 +2886,34 @@ function posizioniLega(io){
   if(io && out.length && out[out.length - 1].gio === io[2]) out[out.length - 1].pos = io[0];
   return out;
 }
+/* i posti guadagnati o persi da ogni squadra rispetto alla giornata precedente (proposta
+   dell'utente, 22/09/2026): la posizione di oggi è quella vera di Leghe (D.lega.classifica);
+   quella di «prima» si ricostruisce con lo stesso calcolo di posizioniLega, fino alla
+   penultima giornata. Con una sola giornata non c'è un «prima»: niente frecce (dato non
+   inventato). */
+function movimentoLega(){
+  const ris = D.lega && D.lega.risultati;
+  if(!ris || !D.lega.classifica) return {};
+  const giornate = Object.keys(ris).map(Number).sort((a,b)=>a-b);
+  if(giornate.length < 2) return {};
+  const pt = {}, fp = {};
+  giornate.slice(0, -1).forEach(gio=>{
+    ris[gio].forEach(m=>[[m[0], m[1], m[4], m[5]], [m[2], m[3], m[5], m[4]]].forEach(([t, f, gf, gs])=>{
+      pt[t] = (pt[t] || 0) + (gf > gs ? 3 : gf === gs ? 1 : 0); fp[t] = (fp[t] || 0) + f;
+    }));
+  });
+  const prima = {};
+  Object.keys(pt).sort((a,b)=>pt[b]-pt[a] || fp[b]-fp[a]).forEach((t, i)=>prima[t] = i + 1);
+  const mov = {};
+  D.lega.classifica.forEach(r=>{ if(prima[r[1]] !== undefined) mov[r[1]] = prima[r[1]] - r[0]; });
+  return mov;
+}
+function freccia(d){
+  const su = d > 0, pari = d === 0, n = Math.abs(d);
+  return '<span class="cl-mov '+(pari ? 'pari' : su ? 'su' : 'giu')+'" aria-label="'+
+    (pari ? 'posizione invariata' : (su ? 'sale di ' : 'scende di ')+n+' post'+(n===1 ? 'o' : 'i'))+'">'+
+    (pari ? '–' : (su ? '▲' : '▼')+n)+'</span>';
+}
 /* «Affidabilità di Jarvis» (scelta dell'utente del 21/09/2026): quanto dei punti possibili
    avrebbe fatto il consiglio, e sotto quante giornate sono già calcolate. Con poche giornate
    il numero balla: il livello lo dice invece di farlo sembrare sicuro. */
@@ -3165,9 +3199,11 @@ function renderLega(){
     const n1 = x => Number.isInteger(x) ? String(x) : num(x, 1);
     /* sotto il nome la forma (W, =, L) e il dettaglio con le sue intestazioni; a destra i
        punti in un riquadro loro, staccati dai fantapunti, che stanno nel dettaglio (21/09/2026) */
+    const mov = movimentoLega();
     cl.innerHTML = '<h2>Classifica</h2><div class="lista">'+D.lega.classifica.map(r=>{
       const f = forma(r[1]);
-      return '<div class="team cl'+(r[1]===ME?' io':'')+'"><span class="pos cond">'+r[0]+'</span>'+stemma(r[1])+
+      return '<div class="team cl'+(r[1]===ME?' io':'')+'"><span class="pos cond">'+r[0]+'</span>'+
+      (mov[r[1]] !== undefined ? freccia(mov[r[1]]) : '')+stemma(r[1])+
       '<span class="nome"><span class="cl-nome">'+r[1]+'</span>'+
       '<span class="forma">'+[0,1,2,3,4].map(k=>f[k] ? pallinoForma(f[k]) : '<i class="fp da-giocare" aria-hidden="true"></i>').join('')+'</span>'+
       '<span class="cl-st">'+[['G', r[2]], ['V', r[3]], ['N', r[4]], ['P', r[5]], ['GF', r[6]], ['GS', r[7]], ['FP', n1(r[10])]]

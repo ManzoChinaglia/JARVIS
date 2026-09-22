@@ -286,18 +286,20 @@ l'iPhone le riprende solo togliendo e rimettendo l'app sulla Home.
   formazione schierata.
 - **B5** «Il consiglio» a tutto schermo, con il riassunto nella Giornata.
 
-## Stato dei lavori (al 21/09/2026)
+## Stato dei lavori (al 22/09/2026)
 
-**Aperti, in ordine:**
-1. **La formazione schierata** da Leghe, per «La stagione» e per B4: il 21/09 tutte le
-   pagine «Formazioni» davano 404. Riprovare; se restano rotte, chiedere all'utente dove
-   le vede.
-2. **Snellire le pagine** che ripetono quello che ora sta nella scheda Stagione (per
-   esempio la classifica nella Lega, i totali in «Com'è andata»): con l'utente, su mockup.
-3. **Il parere dell'utente** su com'è andata, andamento, calendario dei tuoi, «Il
-   consiglio», avvio, panchina, scheda col fantavoto atteso.
-4. **Grafica**: altre migliorie solo concordate, con un mockup prima.
-5. Proposta aperta: in classifica, una freccia con i posti guadagnati o persi.
+**Fatto il 22/09:** la freccia dei posti guadagnati o persi in classifica (`movimentoLega`
+in `index.html`, confronta con la giornata prima; senza almeno due giornate non compare,
+niente inventato). Chiusi anche: lo snellimento delle pagine (l'utente ha visto l'app e va
+bene così), il parere dell'utente sulle sezioni (risultato ottimo) e altre migliorie di
+grafica non richieste (l'utente le chiede lui quando gli vengono in mente).
+
+**Aperto:**
+1. **La formazione schierata** da Leghe (chi hai schierato davvero, non solo i probabili):
+   il 21/09 tutte le pagine «Formazioni» di Leghe davano 404. Serve per «La stagione» (B4,
+   il giudizio «rivelato»: imparare da dove l'undici schierato si discosta dal consiglio) —
+   senza questo dato quell'idea resta ferma. Da riprovare quando si rifà «dati di lega»;
+   se restano rotte, chiedere all'utente dove le vede lui nell'app di Leghe.
 
 **Da vedere nel tempo:** autocalibrazione dei `PESI` (non prima di fine novembre 2026, sui
 consigli salvati e «Quanto si avvicina Jarvis»); ogni tanto la verifica in
