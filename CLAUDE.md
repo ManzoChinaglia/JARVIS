@@ -42,7 +42,12 @@ pubblico.
   costruito il fantavoto atteso sullo storico (B2).
 - **Siri**, **«Chiedi»** (tolta il 21/09), **la voce dell'utente** (B4, tolta il 16/09),
   **«Copia la formazione»**, **«Tira giù per aggiornare»**, **il riquadro della scadenza in
-  «Quando giocano i tuoi»**, **il promemoria della Lista calciatori**: tolti su richiesta.
+  «Quando giocano i tuoi»**, **il promemoria della Lista calciatori**, **«Importa da Leghe»
+  sul telefono** (tolta il 22/09, non serviva più): tolti su richiesta.
+- **Aggiornamento automatico dei dati di lega senza conferma**: scartato (23/09/2026): la
+  regola 9 vieta accessi a Leghe con token o cookie salvati, e ogni download resta
+  confermato dall'utente. A inizio sessione sul PC Claude *propone* «dati di lega» e
+  «formazione schierata» se sembra pronta una giornata nuova, non parte da solo.
 - **Punteggi sul duello individuale** (chi marca chi): precisione finta, non farli.
 - **Crediti rimasti**: all'utente non interessano, non si mostrano.
 - **`backdrop-filter`** da alleggerire e **icona da ricomprimere**: valutati, lasciati.
@@ -50,7 +55,8 @@ pubblico.
 ## Il lucchetto (dati della lega cifrati)
 
 Attivo dal 16/09/2026. I dati **della lega** — `base.json` (rose e calendario),
-`lega.json` (classifica e risultati), `consigli.json` — nel repository stanno solo chiusi,
+`lega.json` (classifica e risultati), `consigli.json`, `formazioni.json` (dal 23/09/2026:
+la tua formazione schierata, giornata per giornata) — nel repository stanno solo chiusi,
 in `dati/<nome>.chiuso.json`. I dati da fonti pubbliche restano in chiaro.
 
 - AES-GCM 256, IV casuale, nome del file come dato associato; chiave da PBKDF2-SHA256,
@@ -109,6 +115,7 @@ sw.js                   service worker: prima la rete, poi la copia salvata (cac
 dati/base.json          rose, calendario lega, calendario Serie A, statistiche (chiuso)
 dati/lega.json          classifica e risultati di lega (chiuso)
 dati/consigli.json      l'undici consigliato salvato prima di ogni scadenza (chiuso)
+dati/formazioni.json    la tua formazione schierata, giornata per giornata (chiuso)
 dati/infortuni.json     automatico
 dati/titolari.json      automatico: probabili della prossima giornata e indisponibili
 dati/orari.json         automatico: orari, primo e ultimo calcio d'inizio, `partite`
@@ -124,6 +131,7 @@ dati/lucchetto.json     sale, iterazioni, prova cifrata
 scripts/aggiorna.py     il giro automatico dei dati
 scripts/importa_rose.py rose da Leghe (xlsx) in base.json
 scripts/importa_lega.py classifica e risultati da Leghe in lega.json
+scripts/importa_formazioni.py  la formazione schierata (testo di una pagina Leghe) in formazioni.json
 scripts/notifiche.js    avvisi sull'iPhone (Web Push o ntfy) e salvataggio del consiglio
 scripts/storico.py      giro una tantum e ripartibile dello storico (B1)
 scripts/modello.py      addestra il modello (B2), nel giro automatico
@@ -144,6 +152,12 @@ identificativi.** Gli Id sono stabili tra le stagioni (verificato).
 
 ## Dati a mano: rose e «dati di lega»
 
+- **Controllo a inizio sessione, sul PC** (non dal cloud: niente Chrome collegato a
+  Leghe lì): guarda l'ultima giornata in `dati/orari.json` con `fine` passata da almeno
+  due ore; se `dati/lega.json` → `risultati` non ha ancora quella giornata, o
+  `dati/formazioni.json` non ha ancora la tua formazione di quella giornata, **proponi**
+  all'utente «dati di lega» e/o «formazione schierata» invece di aspettare che le chieda
+  — resta lui a confermare (regola 9), non partire da solo.
 - **Rose** (dopo scambi e mercato): file `rivoluzione-fantacalcio-rosters-<numero>.xlsx`
   da Leghe (sul PC; dall'app iPhone non si esporta). `python scripts/importa_rose.py
   --prova` (mostra gli scambi senza scrivere), poi senza `--prova`, poi `chiudi`, prove,
@@ -163,9 +177,17 @@ identificativi.** Gli Id sono stabili tra le stagioni (verificato).
   giornate già salvate non si perdono), file in `archivio/lega` con la data, `chiudi`.
   Il calendario può chiamare le squadre in modo diverso: `mappa_nomi_calendario` le
   ricava dalla posizione; il risultato si accetta solo scritto «N-N».
-- **Dal telefono**: scheda Lega → «Importa da Leghe» (`leggiXlsx` con
-  `DecompressionStream`, `classificaDaRighe`) salva **solo sul telefono** (localStorage
-  `jarvis-lega`). Perché i risultati arrivino a GitHub serve «dati di lega» dal PC.
+- **Formazione schierata** (l'utente scrive «formazione schierata» o «giornata N
+  schierata»): niente file da esportare, il dato sta solo nella pagina. Dal **Chrome
+  dell'utente**, già collegato: `.../rivoluzione-fantacalcio/view/competition/748699/
+  round/<giornata>` (748699 è l'id di questa lega; le pagine «Formazioni» del menu
+  restano 404). Si legge il testo con `get_page_text` (solo l'articolo della partita:
+  niente login, niente dati altrui oltre ai nomi già pubblici in `base.json`), si salva
+  in un file, e `python scripts/importa_formazioni.py <file> <giornata>` lo scrive in
+  `dati/formazioni.json` (chiuso). Se la formazione di quella giornata non è ancora
+  stata inserita su Leghe, lo script si ferma con un messaggio chiaro e non scrive
+  niente. Serve solo alla tua squadra (`base['me']`): l'idea è il giudizio «rivelato»
+  (B4 in STORIA.md), non scoutare gli avversari.
 
 ## Dati automatici (`scripts/aggiorna.py`)
 
@@ -296,6 +318,7 @@ python prove/orari.py
 python prove/script.py
 python prove/rose.py
 python prove/lega.py
+python prove/formazioni.py
 node prove/notifiche.js
 python prove/privacy.py
 python prove/modello.py

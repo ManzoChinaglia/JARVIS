@@ -1375,12 +1375,10 @@ del push. `remoto/patch/` resta la cassetta della posta.
   poteva coprire (mercato, import della classifica).
 
 ### Aperti, in ordine
-1. **La formazione schierata** dal Chrome dell'utente, per «La stagione»: il 21/09 le
-   pagine «Formazioni» di Leghe davano 404 (vedi «Risultati, forma e tabellone»). Conta:
-   è il dato su cui poggia l'idea che ha preso il posto della voce (vedi B4). Il formato
-   dei risultati invece è verificato (21/09, primo «dati di lega» dopo la giornata 1).
-   Ricordare all'utente: «Importa da Leghe» sul telefono salva solo sul telefono; perché
-   i risultati arrivino a GitHub (notifiche, «Com'è andata») serve «dati di lega» dal PC.
+(elenco del 17/09; punti 1, 2 e 3 chiusi — vedi le note datate più sotto, 22/09/2026)
+1. ~~**La formazione schierata** dal Chrome dell'utente, per «La stagione»~~ — trovata e
+   scaricabile dal 22/09/2026 sera (`scripts/importa_formazioni.py`, note più sotto);
+   manca solo chi la userà davvero (B4, il giudizio «rivelato», ancora un'idea).
 2. **Snellire le pagine** che ripetono quello che ora sta nella scheda Stagione (per
    esempio la classifica nella Lega, o i totali in «Com'è andata»): da decidere con
    l'utente, con un mockup.
@@ -1486,3 +1484,38 @@ python -c "import truststore, runpy; truststore.inject_into_ssl(); runpy.run_pat
   fantavoto per entrambe le squadre della partita, giornata per giornata; sotto c'è
   «Panchina», da aprire per i cambi. Manca ancora lo script che scarica e salva questo
   dato: rimandato su richiesta dell'utente, si riparte da qui quando serve.
+- **22/09/2026, tardi**: costruito `scripts/importa_formazioni.py`. Con `get_page_text`
+  (non `javascript_tool`: leggere `outerHTML`/`textContent` dentro `ui-match-player` dà
+  sempre `[BLOCKED: Cookie/query string data]`, anche togliendo ogni URL dal risultato —
+  non capito perché, presa la via che funziona) il testo dell'`<article>` è già ben
+  fatto: nome, proprietario e modulo di una squadra, poi punteggio e «-», poi nome,
+  proprietario e modulo dell'altra; poi tutti i titolari della prima squadra (nome, voto,
+  fantavoto — anche «s.v.»), poi tutti quelli della seconda; «Panchina»; poi la panchina
+  di entrambe, un nome senza voto per chi non è entrato. Le due squadre non sono sempre
+  nello stesso ordine (l'ho verificata: `round/1` mostrava prima l'avversario), quindi
+  l'intestazione si riconosce dal modulo (o «Non schierata»), non dalla posizione. Niente
+  ruolo nel testo: si ricava da `base.json` (nome nella tua rosa, come le rose). Niente
+  voto/fantavoto salvato: c'è già in `dati/voti.json` per Id e giornata, ripeterlo qui
+  sarebbe dato duplicato. Solo la tua squadra: l'idea è il giudizio «rivelato» su di te,
+  non scoutare gli altri, e `dati/formazioni.json` con gli avversari sarebbe stato un
+  altro file da proteggere col lucchetto per niente. Provato sul testo vero di `round/1`:
+  gli Id tornano esatti (controllati a mano contro la rosa). `round/2` (non ancora
+  giocata dalla lega vera) mostra «Non schierata» per entrambe e «Formazione non
+  inserita»: lo script si ferma con un messaggio, non scrive niente (coerente con la
+  regola 4). Il file è entrato nel lucchetto (`PROTETTI` in `lucchetto.js`,
+  `prove/privacy.py`, `.gitignore`): dopo `chiudi`, la prova di privacy è tornata a 8/8
+  solo una volta che `dati/formazioni.chiuso.json` è tracciato da Git (prima, appena
+  scritto e non ancora aggiunto, dà 7/8 — non un guasto, il controllo guarda `git
+  ls-files`). Non ancora agganciato a niente: va richiamato a mano, giornata per
+  giornata, finché non nasce il giudizio «rivelato» che lo userà davvero.
+- **23/09/2026**: proposto di far partire «dati di lega» e la formazione schierata da
+  soli, appena il PC è acceso — scartato: la regola 9 (non negoziabile) vieta di
+  salvare un token o un cookie per accedere a Leghe senza conferma, e non c'è modo di
+  "aprire Chrome da solo" senza aggirarla. Deciso invece: a ogni inizio sessione sul PC,
+  Claude controlla se una giornata sembra pronta (`orari.json` finita da ≥ 2 ore, non
+  ancora in `lega.json` o `formazioni.json`) e lo **propone** — resta l'utente a
+  confermare. Tolto anche «Importa da Leghe» sul telefono (bottone, `leggiXlsx`,
+  `classificaDaRighe`, `importaClassifica`, localStorage `jarvis-lega`): con «dati di
+  lega» dal PC ormai consolidato, l'utente ha detto di non usarlo più — tolto codice,
+  CSS e i 10 test di `prove/app.js` che lo coprivano (`xlsxProva` compresa), non solo
+  nascosto.
