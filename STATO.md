@@ -32,10 +32,20 @@ telefono (non serviva più): bottone, CSS, funzioni (`leggiXlsx`, `classificaDaR
 `importaClassifica`) e i 10 test che li coprivano in `prove/app.js` — non solo nascosto.
 `prove/app.js` ora 306/306 (era 316/316, meno i 10 di quel bottone).
 
-**Aperto:** il giudizio «rivelato» (B4) — da progettare: come confrontare la formazione
-schierata (`dati/formazioni.json`, appena costruito) con «Il consiglio» di Jarvis, e cosa
-farne (solo mostrare lo scarto? usarlo per tarare `PESI`? altro). Prossimo cantiere.
+**Fatto il 23/09: il giudizio «rivelato» (B4)**, su mockup approvati dall'utente, dentro
+le schermate che c'erano (niente tolto o cambiato, solo aggiunto):
+- «Com'è andata»: «Dove non eravate d'accordo» (reparto per reparto, tu | Jarvis, totali)
+  ed etichetta «Tu» accanto a «Jarvis» in «Tutti i tuoi».
+- Stagione: sotto «Tu, Jarvis e il massimo» il bilancio della stagione (chi ha scelto
+  meglio, pallini T/J/=, punti totali, «tutte le tue scelte ›»); blocco nuovo «Il tuo modo
+  di scegliere»: fino a 6 giornate con la formazione mostra solo «n di 6», poi reparti,
+  moduli e chi tieni anche quando Jarvis no.
+- Per ora descrive soltanto: non tocca il consiglio. `prove/app.js` 328/328 (22 nuove).
+
+**Aperto:** niente di nuovo. Il giudizio «rivelato» cresce da solo, a patto di importare
+la formazione ogni giornata (il controllo a inizio sessione lo ricorda).
 
 **Da vedere nel tempo:** autocalibrazione dei `PESI` (non prima di fine novembre 2026, sui
-consigli salvati e «Quanto si avvicina Jarvis»); ogni tanto la verifica in
+consigli salvati e «Quanto si avvicina Jarvis»; lì si decide anche se far pesare sul
+consiglio «Il tuo modo di scegliere»; da rivedere le sue soglie e frasi con 6+ giornate vere); ogni tanto la verifica in
 `dati/modello.json`; fine stagione: la 2026-27 nello storico; rose dopo soste e gennaio.

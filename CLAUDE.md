@@ -236,7 +236,8 @@ accende «Condividi» se c'è `navigator.share`); nella pagina resta una riga-in
   scritto che manca); **Quando giocano i tuoi** (`renderQuando`); **La sfida, sulla carta**
   (`sfidaDati`, `renderSfida`, con la probabilità di vittoria); **Il consiglio**
   (`apriConsiglio`: la difesa, la sfida, il perché dell'undici); **Com'è andata**
-  (`comeAndata`, `apriComeAndata`); in fondo «versione del …».
+  (`comeAndata`, `apriComeAndata`; con la formazione schierata anche «Dove non eravate
+  d'accordo», `htmlScelte`, e l'etichetta «Tu» accanto a «Jarvis»); in fondo «versione del …».
 - **Scheda del giocatore** (`apriGiocatore`): statistiche, titolarità, partita, il riquadro
   del fantavoto atteso con ± e le sue voci (`cartaAtteso`), andamento (`graficoVoti`),
   prossimi 3 avversari (`prossimi3`).
@@ -244,7 +245,9 @@ accende «Condividi» se c'è `navigator.share`); nella pagina resta una riga-in
   dubbio / Fuori (`statoRosa`), in fondo «La rosa in numeri» (`#rosa-numeri`).
 - **Stagione** (`renderStagione`, `htmlStagione`): Affidabilità di Jarvis
   (`bloccoAffidabilita`, `accuratezzaConsiglio`, livelli in `LIVELLI_AFFIDABILITA`), In
-  lega (`bloccoLega`, `posizioniLega`), Tu/Jarvis/massimo (`confrontoGiornata`), Giornate
+  lega (`bloccoLega`, `posizioniLega`), Tu/Jarvis/massimo (`confrontoGiornata`, sotto il
+  bilancio della stagione `bilancioScelte` e «tutte le tue scelte» `apriScelte`), Il tuo
+  modo di scegliere (`bloccoModoScegliere`, tendenze solo da `SOGLIA_MODO` = 6 giornate), Giornate
   di lega (`graficoLega`, `stagioneSel`, `giornataLega`), Gli 11 della giornata
   (`apriUndiciGiornata`, `cellaVoto`), Chi produce (`apriProduttori`). Tocchi da
   `toccaStagione`; numeri interi senza «,0» (`numCorto`).
@@ -303,9 +306,11 @@ l'iPhone le riprende solo togliendo e rimettendo l'app sulla Home.
 - **B2** fantavoto atteso: `scripts/modello.py`, ridge per ruolo, voci in `VOCI`, verifica
   sulle ultime due stagioni, `dati/modello.json` riaddestrato a ogni giro.
 - **B3** probabilità di vittoria e suggerimento per varianza (sopra).
-- **B4** la voce dell'utente: fatta e **tolta**. Resta l'idea del giudizio «rivelato»
-  (imparare da dove l'undici schierato si discosta dal consiglio), che richiede la
-  formazione schierata.
+- **B4** la voce dell'utente: fatta e **tolta**. Al suo posto il giudizio «rivelato» (dal
+  23/09/2026): la formazione schierata (`dati/formazioni.json`) contro l'undici di Jarvis
+  nello stesso modulo di «Com'è andata» (`scelte`, `contributi`: stessa regola dei cambi di
+  `puntiUndici`, e i totali tornano sempre). Per ora **descrive soltanto**: se e come far
+  pesare le tue abitudini sul consiglio si decide con l'autocalibrazione dei `PESI`.
 - **B5** «Il consiglio» a tutto schermo, con il riassunto nella Giornata.
 
 ## Come si prova
@@ -324,9 +329,10 @@ python prove/privacy.py
 python prove/modello.py
 ```
 
-Totali: sul PC (con `archivio/`) `prove/app.js` 311/311 e `prove/lega.py` 34/34; su un
-clone pulito o nella CI 310/310 e 31/31 (saltano le prove sui file veri di Leghe: non è un
-guasto). `prove/privacy.py` 8/8, `prove/lucchetto.js` 22/22. Le fallite si vedono come `NO`.
+Totali: `prove/app.js` 328/328 (ovunque); `prove/lega.py` 34/34 sul PC (con `archivio/`),
+31/31 su un clone pulito o nella CI (saltano le prove sui file veri di Leghe: non è un
+guasto). `prove/formazioni.py` 10/10, `prove/privacy.py` 8/8, `prove/lucchetto.js` 22/22.
+Le fallite si vedono come `NO`.
 
 `prove/app.js` estrae lo `<script>` da `index.html`, lo esegue in Node con un finto DOM e
 una `fetch` che legge da disco, e verifica i risultati reali: **ogni funzione nuova

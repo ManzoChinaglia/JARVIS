@@ -1519,3 +1519,29 @@ python -c "import truststore, runpy; truststore.inject_into_ssl(); runpy.run_pat
   lega» dal PC ormai consolidato, l'utente ha detto di non usarlo più — tolto codice,
   CSS e i 10 test di `prove/app.js` che lo coprivano (`xlsxProva` compresa), non solo
   nascosto.
+- **23/09/2026, il giudizio «rivelato» (B4)**: due giri di mockup. Il primo, tre proposte
+  staccate (A in «Com'è andata», B un bilancio nella Stagione, C «Jarvis impara da te»);
+  guardando l'app vera si è visto che «Tu, Jarvis e il massimo» faceva già metà di B, quindi
+  nel secondo giro (le due schermate vere, parti nuove tratteggiate) B è diventato
+  un'aggiunta a quel blocco invece di un doppione. L'utente ha scelto A+B+C, con C impostato
+  subito ma muto fino a 6 giornate («con poche giornate sarebbe rumore»). Scelte:
+  - **Stesso modulo e stessi conti dell'app**: il consiglio si confronta nel modulo di
+    «Com'è andata» (`modulo`, all'apertura 4-3-3), coi fantavoti e la regola della panchina
+    di `puntiUndici`, senza modificatore. Il primo mockup diceva Jarvis 71 (col +1 del
+    modificatore del 4-3-3), l'app diceva 70: vale l'app, così i numeri coincidono ovunque.
+    Se il punteggio vero è diverso dai fantavoti lo dice una nota sotto (con la difesa a 4
+    «il modificatore di difesa», con la difesa a 3 senza dare colpe).
+  - **Per reparto, non a coppie**: con moduli diversi le coppie mischiavano i ruoli
+    (Perrone contro Maldini); due colonne, tu | Jarvis, e i totali.
+  - **I totali tornano sempre**: `contributi` dà i punti titolare per titolare (chi è senza
+    voto vale il panchinaro che entra); se un titolare in comune prende un cambio diverso
+    per te e per Jarvis (panchine in ordine diverso), la differenza è una riga a parte.
+    `puntiUndici` ora si appoggia a `contributi` (stessi risultati, 306 prove invariate).
+  - **Il bilancio della stagione** usa il punteggio vero contro il consiglio, gli stessi
+    numeri della pillola «seguendo Jarvis»: c'è anche senza le formazioni; senza, manca solo
+    «tutte le tue scelte».
+  - **C descrive soltanto**: reparti (in quante giornate hai cambiato i giocatori di Jarvis,
+    i tuoi contro i suoi), moduli usati, chi tieni in almeno metà delle giornate. Non tocca
+    il consiglio: se farlo, con l'autocalibrazione.
+  Visto nell'anteprima coi dati veri della giornata 1: tu 22,5 contro 26,5 di Jarvis sugli
+  scambi (i 4 punti di «Com'è andata»), «Il migliore che non hai schierato: Maldini, 10,0».

@@ -818,6 +818,33 @@
   .cf-pillole{display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;}
   .cf-pillole span{padding:2px 9px; border-radius:999px; font-size:11px; background:rgba(233,185,73,.16); color:var(--oro-chiaro);}
   .cf-pillole span.verde{background:rgba(67,224,143,.14); color:#6FE8A8;}
+  /* il giudizio «rivelato»: le tue scelte contro quelle di Jarvis */
+  .chip.tu{background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.3); color:var(--ink);}
+  .blocco-t small.sc-mod{flex:none; margin-left:10px; white-space:nowrap;}
+  .sc-r{display:grid; grid-template-columns:58px 1fr 1fr; gap:8px; padding:9px 0; border-top:1px solid rgba(255,255,255,.08);
+        font-size:13.5px; align-items:start;}
+  .sc-r .k{padding-top:2px; font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);}
+  .sc-r > span > i{font-style:normal; color:var(--dim);}
+  .sc-g{display:block; line-height:1.35; cursor:pointer;}
+  .sc-g + .sc-g{margin-top:4px;}
+  .sc-g small{font-size:11px; color:var(--dim);}
+  .sc-g b{margin-left:3px; font-size:15px;}
+  .sc-r.sc-testa{margin-top:8px; padding:0 0 4px; border-top:0; font-size:10.5px; font-weight:600; text-transform:uppercase;
+                 letter-spacing:.08em; color:var(--dim);}
+  .sc-r.sc-testa span:last-child{color:var(--oro);}
+  .sc-r.sc-tot{border-top:1px solid rgba(255,255,255,.16); font-size:18px;}
+  .sc-r.sc-tot b:last-child{color:var(--oro-chiaro);}
+  .sc-bil{margin-top:14px; padding-top:4px; border-top:1px solid rgba(255,255,255,.08);}
+  .sc-bil .af-riga{align-items:baseline; font-size:12.5px;}
+  .sc-bil .af-riga b{font-size:17px;}
+  .sc-bil .af-riga b small{font-size:11px; color:var(--dim); font-family:inherit; font-weight:400;}
+  .sc-bil b.su, .md-d.su{color:#6FE8A8;} .sc-bil b.giu, .md-d.giu{color:#FF9A9A;}
+  .sc-pallini{margin-top:8px;}
+  .md-r{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0;
+        border-top:1px solid rgba(255,255,255,.08);}
+  .blocco-t + .md-r{margin-top:8px;}
+  .md-r b{font-size:14px;} .md-r small{display:block; margin-top:2px; font-size:12px; color:var(--dim);}
+  .md-d{font-size:18px; white-space:nowrap;}
   /* le giornate di lega */
   .lg-base{stroke:rgba(255,255,255,.12);}
   .lg-col.fatta{cursor:pointer;}
@@ -1145,7 +1172,7 @@ const ORD = {P:0, D:1, C:2, A:3};
    stessa cifratura di scripts/lucchetto.js: la chiave viene dalla password (PBKDF2) e
    resta su questo telefono, la password no. Senza dati/lucchetto.json tutto in chiaro,
    come prima (e come nelle prove). */
-const PROTETTI = ['base.json', 'lega.json', 'consigli.json'];
+const PROTETTI = ['base.json', 'lega.json', 'consigli.json', 'formazioni.json'];
 const chiusoDi = n => n.replace(/\.json$/, '.chiuso.json');
 let LUCCHETTO = null, CHIAVE = null, sblocca = null;
 const byteDa64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -1233,7 +1260,8 @@ async function carica(){
   /* il lucchetto: senza dati/lucchetto.json tutto in chiaro, come prima */
   LUCCHETTO = await leggi('lucchetto.json', false);
   if(LUCCHETTO && !CHIAVE) CHIAVE = await chiaveSalvata(LUCCHETTO) || await chiediPassword(LUCCHETTO);
-  const [base, lg, cs] = await Promise.all([leggi('base.json', true), leggi('lega.json', false), leggi('consigli.json', false)]);
+  const [base, lg, cs, fz] = await Promise.all([leggi('base.json', true), leggi('lega.json', false), leggi('consigli.json', false),
+                                                leggi('formazioni.json', false)]);
   const [inf, tit, ora, sq, st, vt, md] = await Promise.all(pubblici);
 
   D = base;
@@ -1244,6 +1272,8 @@ async function carica(){
   /* voti di ogni giornata di Serie A finita e undici consigliati salvati prima delle scadenze */
   D.voti  = vt && vt.giornate && Object.keys(vt.giornate).length ? vt.giornate : null;
   D.consigli = cs && cs.giornate ? cs.giornate : null;
+  /* la formazione che hai schierato davvero, da Leghe (scripts/importa_formazioni.py) */
+  D.formazioni = fz && fz.giornate ? fz.giornate : null;
   /* il modello del fantavoto atteso (scripts/modello.py): senza, resta il calcolo di prima */
   D.mod = md && md.versione===1 && md.fantavoto && md.voto && md.giocatori ? md : null;
   D.lega  = lg && lg.classifica && lg.classifica.length===10 ? lg : null;
@@ -2283,16 +2313,36 @@ function votoDi(p, sa){
 /* fantavoti di un undici con la regola della lega: chi non prende voto lascia il posto al
    primo panchinaro dello stesso ruolo, nell'ordine, che il voto l'ha preso */
 function puntiUndici(ids, panchina, sa){
+  const c = contributi(ids, panchina, sa);
+  return {tot: c.reduce((s,x)=>s + x.fv, 0), cambi: c.filter(x=>x.entra).length, vuoti: c.filter(x=>x.senza && !x.entra).length};
+}
+/* gli stessi punti, titolare per titolare: chi è senza voto vale quanto il panchinaro che
+   entra al suo posto (entra), o zero se non entra nessuno */
+function contributi(ids, panchina, sa){
   const chi = id => players.find(p=>p.id===id);
   const panca = (panchina || []).map(chi).filter(Boolean), usati = new Set();
-  let tot = 0, cambi = 0, vuoti = 0;
-  ids.map(chi).filter(Boolean).forEach(p=>{
+  return ids.map(chi).filter(Boolean).map(p=>{
     const v = votoDi(p, sa);
-    if(v){ tot += v[1]; return; }
-    const entra = panca.find(q=>q.ruolo===p.ruolo && !usati.has(q.id) && votoDi(q, sa));
-    if(entra){ usati.add(entra.id); tot += votoDi(entra, sa)[1]; cambi++; } else vuoti++;
+    if(v) return {p, fv: v[1]};
+    const entra = panca.find(q=>q.ruolo===p.ruolo && !usati.has(q.id) && votoDi(q, sa)) || null;
+    if(entra) usati.add(entra.id);
+    return {p, fv: entra ? votoDi(entra, sa)[1] : 0, senza: true, entra};
   });
-  return {tot, cambi, vuoti};
+}
+/* il giudizio «rivelato» (B4, 23/09/2026, su mockup): la formazione schierata davvero
+   (dati/formazioni.json, da Leghe) contro l'undici di Jarvis nello stesso modulo di «Com'è
+   andata» e di «Tu, Jarvis e il massimo». Solo i giocatori diversi, ognuno con quello che ha
+   portato nel suo undici; resto: la differenza che viene dai cambi dalla panchina dei
+   titolari in comune, perché i totali tornino. */
+function scelte(gio, sa){
+  const f = D.formazioni && D.formazioni[String(gio)], c = D.consigli && D.consigli[String(gio)];
+  if(!f || !f.titolari || !c || !c.undici || !c.undici[modulo]) return null;
+  const tu = contributi(f.titolari, f.panchina, sa), jv = contributi(c.undici[modulo], (c.panchina || {})[modulo], sa);
+  const inTu = new Set(f.titolari), inJv = new Set(c.undici[modulo]);
+  const soloTu = tu.filter(x=>!inJv.has(x.p.id)), soloJv = jv.filter(x=>!inTu.has(x.p.id));
+  const somma = l => l.reduce((s,x)=>s + x.fv, 0), tuTot = somma(tu), jvTot = somma(jv);
+  const delta = somma(soloTu) - somma(soloJv);
+  return {modulo: f.modulo, moduloJ: modulo, schierati: inTu, soloTu, soloJv, tuTot, jvTot, delta, resto: tuTot - jvTot - delta};
 }
 /* l'undici migliore a posteriori, con i fantavoti veri, sempre con la difesa a quattro */
 function miglioreUndici(sa){
@@ -2378,13 +2428,42 @@ function renderComeAndata(){
   }
   if(html !== caDisegnata){ caDisegnata = html; document.getElementById('comeandata').innerHTML = html; }
 }
+/* «Dove non eravate d'accordo»: reparto per reparto, i tuoi e quelli di Jarvis che l'altro
+   non aveva schierato, con i totali. Sono i fantavoti, senza modificatore, come il numero
+   di Jarvis in «Com'è andata»: se il tuo punteggio vero è diverso lo dice sotto */
+const segnato = x => (x > 0 ? '+' : x < 0 ? '−' : '')+num(Math.abs(x));
+function htmlScelte(x, r, titolo){
+  const nome = c => '<span class="sc-g" data-id="'+c.p.id+'">'+c.p.nome+
+    (c.entra ? ' <small>s.v., entrava '+c.entra.nome+'</small>' : c.senza ? ' <small>s.v.</small>' : '')+
+    ' <b class="fvn '+classeFv(c.fv)+'">'+num(c.fv)+'</b></span>';
+  const testa = '<div class="blocco-t">'+(titolo || 'Dove non eravate d\'accordo')+'<small class="sc-mod">'+x.modulo+' · '+x.moduloJ+'</small></div>';
+  if(!x.soloTu.length) return '<div class="blocco">'+testa+'<p>Avete schierato gli stessi 11.</p></div>';
+  const somma = l => l.reduce((s,c)=>s + c.fv, 0), meglio = l => l.slice().sort((a,b)=>b.fv - a.fv)[0];
+  const righe = ['P','D','C','A'].map(k=>{
+    const a = x.soloTu.filter(c=>c.p.ruolo===k), b = x.soloJv.filter(c=>c.p.ruolo===k);
+    return a.length || b.length ? '<div class="sc-r"><span class="k">'+REPARTO_BREVE[k]+'</span>'+
+      '<span>'+(a.map(nome).join('') || '<i>—</i>')+'</span><span>'+(b.map(nome).join('') || '<i>—</i>')+'</span></div>' : '';
+  }).join('');
+  const d = x.delta, chi = d < -0.05 ? meglio(x.soloJv) : d > 0.05 ? meglio(x.soloTu) : null;
+  const modVero = r ? r.mio - x.tuTot : 0;
+  return '<div class="blocco">'+testa+
+    '<div class="sc-r sc-testa"><span></span><span>Tu</span><span>Jarvis</span></div>'+righe+
+    '<div class="sc-r sc-tot"><span></span><b class="cond">'+num(somma(x.soloTu))+'</b><b class="cond">'+num(somma(x.soloJv))+'</b></div>'+
+    '<p>'+(d < -0.05 ? 'Il migliore che non hai schierato: <b>'+chi.p.nome+'</b>, '+num(chi.fv)+'.'
+         : d > 0.05 ? 'La tua scelta migliore: <b>'+chi.p.nome+'</b>, '+num(chi.fv)+'.' : 'Le vostre scelte si sono equivalse.')+'</p>'+
+    (Math.abs(x.resto) >= 0.05 ? '<p class="nota">'+segnato(x.resto)+' per te dai cambi dalla panchina dei titolari in comune.</p>' : '')+
+    (Math.abs(modVero) >= 0.05 ? '<p class="nota">Il tuo punteggio vero ha '+segnato(modVero)+' rispetto a questi fantavoti'+
+       (x.modulo.startsWith('4') ? ': il modificatore di difesa' : '')+'.</p>' : '')+'</div>';
+}
 /* in sovraimpressione: il punteggio spiegato, il migliore e il peggiore, e tutti i tuoi con
-   voto e bonus. «Jarvis» nell'undici consigliato, «Top 11» nei migliori 11 possibili */
+   voto e bonus. «Jarvis» nell'undici consigliato, «Tu» in quello che hai schierato */
 function apriComeAndata(){
   const ca = comeAndata();
   if(!ca) return;
   const c = ca.g && D.consigli && D.consigli[String(ca.g[0])];
   const diJarvis = new Set(c && c.undici && c.undici[modulo] || []);
+  const f = ca.g && D.formazioni && D.formazioni[String(ca.g[0])], schierati = new Set(f && f.titolari || []);
+  const sx = ca.g ? scelte(ca.g[0], ca.sa) : null;
   const v = p => votoDi(p, ca.sa), k = ca.consiglio, r = ca.risultato;
   /* in cima, solo per le giornate di lega: il risultato vero (da Leghe) e l'undici di Jarvis */
   let eroe = '';
@@ -2409,7 +2488,8 @@ function apriComeAndata(){
   const riga = p => {
     const x = v(p);
     return '<div class="vr'+(x ? '' : ' sv')+'" data-id="'+p.id+'">'+maglia(p.club)+
-      '<div class="vr-nome"><b>'+p.nome+(diJarvis.has(p.id) ? '<i class="chip j">Jarvis</i>' : '')+'</b>'+
+      '<div class="vr-nome"><b>'+p.nome+(diJarvis.has(p.id) ? '<i class="chip j">Jarvis</i>' : '')+
+        (schierati.has(p.id) ? '<i class="chip tu">Tu</i>' : '')+'</b>'+
       '<small>'+(x ? spiegaVoto(x) : avversarioClub(p.club, ca.sa) ? 'senza voto: non ha giocato o troppo poco' : 'la sua squadra non giocava')+'</small></div>'+
       '<strong class="fvn '+(x ? classeFv(x[1]) : '')+'">'+(x ? num(x[1]) : 's.v.')+'</strong></div>';
   };
@@ -2420,10 +2500,11 @@ function apriComeAndata(){
   const testo = [titoloCa(ca)]
     .concat(r ? [ME+' '+num(r.mio)+' - '+num(r.loro)+' '+r.avv+' ('+r.golMio+'-'+r.golLoro+')'] : [])
     .concat(k ? ['Con l\'undici di Jarvis: '+num(k.tot)] : [])
+    .concat(sx && sx.soloTu.length ? ['Le tue scelte contro quelle di Jarvis: '+segnato(sx.delta)] : [])
     .concat(ca.miei.length > 1 ? ['Il migliore: '+ca.miei[0].nome+' '+num(v(ca.miei[0])[1])+
       ' · il peggiore: '+ca.miei[ca.miei.length - 1].nome+' '+num(v(ca.miei[ca.miei.length - 1])[1])] : [])
     .join('\n');
-  apriSovra('Com\'è andata', titoloCa(ca), eroe+evid+tutti, testo);
+  apriSovra('Com\'è andata', titoloCa(ca), eroe+(sx ? htmlScelte(sx, r) : '')+evid+tutti, testo);
 }
 
 /* ---------- andamento del giocatore ---------- */
@@ -2885,7 +2966,71 @@ function confrontoGiornata(s, sa){
     '<div class="cf"><div class="cf-linea"></div><div class="cf-spazio" style="left:'+dove(Math.min(r.mio, x.tot))+';right:calc(100% - '+dove(Math.max(r.mio, x.tot))+')"></div>'+
     segno('tu', 'Tu '+numCorto(r.mio), r.mio)+(x.consiglio===null ? '' : segno('jarvis', 'Jarvis '+numCorto(x.consiglio), x.consiglio))+
     segno('max', 'Max '+numCorto(x.tot), x.tot)+'</div>'+
-    (pillole.length ? '<div class="cf-pillole">'+pillole.join('')+'</div>' : '')+'</div>';
+    (pillole.length ? '<div class="cf-pillole">'+pillole.join('')+'</div>' : '')+bilancioScelte(s)+'</div>';
+}
+/* il bilancio della stagione (giudizio «rivelato», 23/09/2026): giornata per giornata chi ha
+   fatto di più, tu col punteggio vero o l'undici di Jarvis, e la somma. Gli stessi numeri
+   della pillola «seguendo Jarvis», sulle giornate con risultato e consiglio salvato */
+const PALLINI_SCELTE = 8;
+function bilancioScelte(s){
+  const g = s.per.filter(x=>x.g && x.risultato && x.consiglio!==null);
+  if(!g.length) return '';
+  const d = g.map(x=>x.risultato.mio - x.consiglio), tot = d.reduce((a,b)=>a + b, 0);
+  const tu = d.filter(v=>v >= 0.05).length, jv = d.filter(v=>v <= -0.05).length, pari = d.length - tu - jv;
+  const ultimi = d.slice(-PALLINI_SCELTE);
+  const pallini = ultimi.map(v=>v >= 0.05 ? '<i class="v">T</i>' : v <= -0.05 ? '<i class="p">J</i>' : '<i class="n">=</i>').join('')+
+    '<i></i>'.repeat(Math.max(0, Math.min(PALLINI_SCELTE, D.g.length) - ultimi.length));
+  const chi = tu > jv ? 'Tu '+tu+'–'+jv : jv > tu ? 'Jarvis '+jv+'–'+tu : 'Pari '+tu+'–'+jv;
+  return '<div class="sc-bil"><div class="af-riga sc-chi"><span>Nella stagione, chi ha scelto meglio</span>'+
+      '<b class="cond">'+chi+(pari ? ' <small>'+pari+' pari</small>' : '')+'</b></div>'+
+    '<div class="lg-forma sc-pallini">'+pallini+'</div>'+
+    '<div class="af-riga"><span>Punti dalle tue scelte, in totale</span><b class="cond '+(tot >= 0.05 ? 'su' : tot <= -0.05 ? 'giu' : '')+'">'+
+      segnato(tot)+'</b></div>'+
+    (g.some(x=>scelte(x.g[0], x.sa)) ? '<button class="st-tutti" data-scelte="1">tutte le tue scelte ›</button>' : '')+'</div>';
+}
+/* tutte le tue scelte: giornata per giornata, dalla più recente */
+function apriScelte(){
+  const s = stagione();
+  if(!s) return;
+  const lega = s.per.filter(x=>x.g && x.consiglio!==null).reverse();
+  const con = lega.map(x=>({x, sc: scelte(x.g[0], x.sa)})).filter(y=>y.sc);
+  if(!con.length) return;
+  const mancano = lega.filter(x=>!con.some(y=>y.x===x)).map(x=>'G'+x.g[0]);
+  apriSovra('Le tue scelte', quanteGiornate(con.length)+' contro Jarvis',
+    con.map(({x, sc})=>htmlScelte(sc, x.risultato, 'Giornata '+x.g[0]+
+      (x.risultato ? ' · tu '+numCorto(x.risultato.mio)+', Jarvis '+numCorto(x.consiglio) : ''))).join('')+
+    (mancano.length ? '<div class="blocco"><p class="nota">Manca la formazione schierata: '+mancano.join(', ')+'.</p></div>' : ''));
+}
+/* il tuo modo di scegliere (giudizio «rivelato»): con almeno SOGLIA_MODO giornate con la tua
+   formazione e il consiglio salvato, reparto per reparto in quante giornate hai cambiato i
+   giocatori di Jarvis e quanto hanno reso i tuoi contro i suoi, i moduli usati e chi tieni
+   anche quando Jarvis no. Prima, solo quante giornate mancano: con poche giornate sarebbe
+   rumore. Descrive soltanto: il consiglio non ne tiene conto (si decide con
+   l'autocalibrazione, non prima di fine novembre 2026). */
+const SOGLIA_MODO = 6;
+function bloccoModoScegliere(s){
+  const g = s.per.filter(x=>x.g).map(x=>scelte(x.g[0], x.sa)).filter(Boolean), n = g.length;
+  const testa = '<div class="blocco-t">Il tuo modo di scegliere<small>'+(n < SOGLIA_MODO ? n+' di '+SOGLIA_MODO+' giornate' : quanteGiornate(n))+'</small></div>';
+  if(n < SOGLIA_MODO)
+    return '<div class="blocco">'+testa+'<p>Servono almeno '+SOGLIA_MODO+' giornate con la tua formazione per dire qualcosa di vero.</p>'+
+      '<div class="af-tacche" style="--n:'+SOGLIA_MODO+'">'+Array.from({length:SOGLIA_MODO}, (_, k)=>'<i class="'+(k < n ? 'fatta' : '')+'"></i>').join('')+'</div></div>';
+  const fv = (l, k) => l.filter(c=>c.p.ruolo===k).reduce((a,c)=>a + c.fv, 0);
+  const reparti = ['P','D','C','A'].map(k=>{
+    const cambiate = g.filter(x=>x.soloTu.some(c=>c.p.ruolo===k) || x.soloJv.some(c=>c.p.ruolo===k));
+    return {k, volte: cambiate.length, d: cambiate.reduce((a,x)=>a + fv(x.soloTu, k) - fv(x.soloJv, k), 0)};
+  }).filter(r=>r.volte);
+  const moduli = {}, tenuti = {};
+  g.forEach(x=>{
+    moduli[x.modulo] = (moduli[x.modulo] || 0) + 1;
+    x.soloTu.forEach(c=>{ (tenuti[c.p.id] = tenuti[c.p.id] || {p: c.p, n: 0}).n++; });
+  });
+  const fedeli = Object.values(tenuti).filter(t=>t.n >= n/2).sort((a,b)=>b.n - a.n);
+  const riga = (t, sotto, destra) => '<div class="md-r"><div><b>'+t+'</b><small>'+sotto+'</small></div>'+(destra || '')+'</div>';
+  return '<div class="blocco">'+testa+
+    reparti.map(r=>riga(PLURALI[r.k], 'cambiati in '+quanteGiornate(r.volte)+' su '+n+' · i tuoi contro i suoi',
+      '<b class="cond md-d '+(r.d >= 0.05 ? 'su' : r.d <= -0.05 ? 'giu' : '')+'">'+segnato(r.d)+'</b>')).join('')+
+    riga('Moduli', Object.entries(moduli).sort((a,b)=>b[1] - a[1]).map(([m, v])=>m+' '+(v===1 ? '1 volta' : v+' volte')).join(' · '))+
+    (fedeli.length ? riga('Tieni anche quando Jarvis no', fedeli.map(t=>t.p.nome+' ('+t.n+' su '+n+')').join(', ')) : '')+'</div>';
 }
 /* le giornate di lega: la colonna è il tuo punteggio vero, colorata per esito; dietro il
    massimo possibile, tratteggiato; la tacca dorata dove sarebbe arrivato Jarvis. Le
@@ -2933,7 +3078,7 @@ function htmlStagione(s){
   }
   const max = Math.max(1, ...s.righe.map(x=>x.tot));
   return '<h2>La stagione</h2>'+bloccoAffidabilita(s)+bloccoLega()+
-    '<div id="st-confronto">'+(stagioneSel ? confrontoGiornata(s, stagioneSel) : '')+'</div>'+
+    '<div id="st-confronto">'+(stagioneSel ? confrontoGiornata(s, stagioneSel) : '')+'</div>'+bloccoModoScegliere(s)+
     '<div class="blocco"><div class="blocco-t">Giornate di lega<small>'+lega.length+' di '+D.g.length+'</small></div>'+
       '<div id="st-grafico">'+graficoLega(s, stagioneSel)+'</div>'+
       '<div id="st-giornata">'+(stagioneSel ? giornataLega(s, stagioneSel) : '')+'</div></div>'+
@@ -2999,6 +3144,7 @@ function apriProduttori(){
 function toccaStagione(ev){
   const t = ev.target && ev.target.closest ? ev.target : null;
   if(t && t.closest('[data-tutti]')){ apriProduttori(); return; }
+  if(t && t.closest('[data-scelte]')){ apriScelte(); return; }
   const u = t ? t.closest('[data-undici]') : null;
   if(u){ apriUndiciGiornata(+u.getAttribute('data-undici')); return; }
   const n = t ? t.closest('[data-sa]') : null;

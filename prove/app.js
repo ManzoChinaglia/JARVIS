@@ -26,7 +26,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   // prima restano quelle; il modello ha la sua sezione (32)
   // lucchetto non vero (sul PC c'è): le prove partono in chiaro; il
   // lucchetto ha la sua sezione (34)
-  dati = Object.assign({ 'modello.json': null, 'lucchetto.json': null }, dati);
+  // e senza la formazione schierata vera (dati/formazioni.json): il giudizio «rivelato» ha la sua (35)
+  dati = Object.assign({ 'modello.json': null, 'lucchetto.json': null, 'formazioni.json': null }, dati);
   const RealDate = Date;
   const fisso = new RealDate(adesso).getTime();
   class FintaData extends RealDate {
@@ -78,7 +79,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
     'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,baseStagione,apriConsiglio,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,mercato,forma,movimentoLega,risultatoLega,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,mercato,forma,movimentoLega,risultatoLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (attendi && el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -1139,6 +1140,99 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('sul telefono resta la chiave, mai la password', !!mem34['jarvis-chiave'] && !Object.values(mem34).some(v => v.includes(PW34)));
   ({ t, el } = await avvia({ adesso: giovedi, dati: chiusi34, memoria: mem34, ntfy: ntfy34 }));
   verifica('riaprendo l\'app non la richiede', !!t.D && (el.lucchetto === undefined || el.lucchetto.hidden !== false));
+
+  console.log('\n35. Il giudizio «rivelato»: le tue scelte contro quelle di Jarvis');
+  // tutto costruito qui: Jarvis 4-3-3, tu 3-5-2; diversi solo C4 e C5 (tuoi), D4 e A3 (suoi)
+  const r35 = rr => t.mia.filter(p => p.ruolo === rr);
+  const [P35, D35, C35, A35] = ['P', 'D', 'C', 'A'].map(r35);
+  const jv35 = [P35[0], ...D35.slice(0, 4), ...C35.slice(0, 3), ...A35.slice(0, 3)];
+  const tu35 = [P35[0], ...D35.slice(0, 3), ...C35.slice(0, 5), ...A35.slice(0, 2)];
+  const ids35 = l => l.map(p => p.id), panca35 = l => ids35(t.mia.filter(p => !l.includes(p)));
+  const voti35 = { [C35[3].id]: [7, 7], [C35[4].id]: [5, 5], [D35[3].id]: [6.5, 6.5], [A35[2].id]: [7, 10] };
+  const sa35 = k => BASE0.g[k][1];
+  const votiDi35 = () => { const v = {}; t.mia.forEach(p => { v[p.id] = voti35[p.id] || [6, 6]; }); return v; };
+  const consiglio35 = k => ({ sa: sa35(k), undici: { '4-3-3': ids35(jv35) }, panchina: { '4-3-3': panca35(jv35) } });
+  const formazione35 = (modulo, l) => ({ modulo, titolari: ids35(l), panchina: panca35(l) });
+  const dati35 = (n, { formazioni = true, mio = 66, fz } = {}) => {
+    const g = [...Array(n).keys()];
+    return { 'titolari.json': null, 'infortuni.json': null,
+      'voti.json': { aggiornato: 'x', giornate: Object.fromEntries(g.map(k => [String(sa35(k)), votiDi35()])) },
+      'consigli.json': { giornate: Object.fromEntries(g.map(k => [String(k + 1), consiglio35(k)])) },
+      'formazioni.json': formazioni ? { giornate: Object.fromEntries(g.map(k => [String(k + 1), fz || formazione35('3-5-2', tu35)])) } : null,
+      'lega.json': { aggiornato: 'x', classifica: finta, risultati: Object.fromEntries(g.map(k => [String(k + 1), [risultatoG(k + 1, mio, 60, 2, 1)]])) } };
+  };
+  const dopoG1 = '2026-09-22T12:00:00+02:00';
+  ({ t, el } = await avvia({ adesso: dopoG1, dati: dati35(1) }));
+  let x35 = t.scelte(1, sa35(0));
+  verifica('diversi solo quelli che l\'altro non aveva: i tuoi C4 e C5, i suoi D4 e A3', x35
+           && ids35(x35.soloTu.map(c => c.p)).join() === [C35[3].id, C35[4].id].join()
+           && ids35(x35.soloJv.map(c => c.p)).join() === [D35[3].id, A35[2].id].join(), x35 && x35.soloTu.map(c => c.p.nome));
+  verifica('le tue scelte: 12 contro 16,5, cioè −4,5; i totali tornano (66 contro 70,5)', circa(x35.delta, -4.5) && circa(x35.resto, 0)
+           && circa(x35.tuTot, 66) && circa(x35.jvTot, 70.5) && x35.modulo === '3-5-2' && x35.moduloJ === '4-3-3', [x35.tuTot, x35.jvTot, x35.delta]);
+  verifica('stessi punti di «Com\'è andata» per Jarvis', circa(t.comeAndata().consiglio.tot, x35.jvTot));
+  t.apriComeAndata();
+  sc = el['sovra-corpo'].innerHTML;
+  verifica('in «Com\'è andata»: «Dove non eravate d\'accordo», i due moduli, i quattro nomi e i totali', /Dove non eravate d'accordo<small class="sc-mod">3-5-2 · 4-3-3/.test(sc)
+           && [C35[3], C35[4], D35[3], A35[2]].every(p => sc.includes('data-id="' + p.id + '">' + p.nome)) && sc.includes('>12,0<') && sc.includes('>16,5<'));
+  verifica('e chi ha pesato: il migliore che non hai schierato', sc.includes('Il migliore che non hai schierato: <b>' + A35[2].nome + '</b>, 10,0'));
+  verifica('il riquadro sta dopo l\'undici di Jarvis e prima del migliore e del peggiore',
+           sc.indexOf('Con l\'undici di Jarvis') < sc.indexOf('Dove non eravate') && sc.indexOf('Dove non eravate') < sc.indexOf('Il migliore<'));
+  verifica('in «Tutti i tuoi» accanto a «Jarvis» anche «Tu»: 11 e 11', (sc.match(/class="chip tu"/g) || []).length === 11
+           && (sc.match(/class="chip j"/g) || []).length === 11);
+  verifica('punteggio vero uguale ai fantavoti con la difesa a 3: nessuna nota in più', !/Il tuo punteggio vero ha/.test(sc));
+  ({ t, el } = await avvia({ adesso: dopoG1, dati: dati35(1, { mio: 67 }) }));
+  t.apriComeAndata();
+  verifica('se il punteggio vero è diverso lo dice, senza dare la colpa al modificatore con la difesa a 3',
+           /Il tuo punteggio vero ha \+1,0 rispetto a questi fantavoti\./.test(el['sovra-corpo'].innerHTML));
+  ({ t, el } = await avvia({ adesso: dopoG1, dati: dati35(1, { formazioni: false }) }));
+  t.apriComeAndata();
+  verifica('senza la formazione schierata «Com\'è andata» resta com\'era', !/Dove non eravate/.test(el['sovra-corpo'].innerHTML)
+           && !/chip tu/.test(el['sovra-corpo'].innerHTML) && /Con l'undici di Jarvis/.test(el['sovra-corpo'].innerHTML));
+  ({ t, el } = await avvia({ adesso: dopoG1, dati: dati35(1, { fz: formazione35('4-3-3', jv35) }) }));
+  t.apriComeAndata();
+  verifica('stessi 11 di Jarvis: lo dice e basta', /Avete schierato gli stessi 11\./.test(el['sovra-corpo'].innerHTML));
+  // un titolare in comune senza voto: entra un panchinaro diverso per te e per Jarvis
+  const d135 = D35[0], dFuori = D35.filter(p => !tu35.includes(p) && !jv35.includes(p));
+  const v35b = votiDi35(); delete v35b[d135.id]; v35b[dFuori[0].id] = [8, 8]; v35b[dFuori[1].id] = [5, 5];
+  const panJ = [dFuori[0].id, ...panca35(jv35).filter(i => i !== dFuori[0].id)], panT = [dFuori[1].id, ...panca35(tu35).filter(i => i !== dFuori[1].id)];
+  const dati35b = Object.assign(dati35(1), { 'voti.json': { aggiornato: 'x', giornate: { [sa35(0)]: v35b } },
+    'consigli.json': { giornate: { '1': { sa: sa35(0), undici: { '4-3-3': ids35(jv35) }, panchina: { '4-3-3': panJ } } } },
+    'formazioni.json': { giornate: { '1': { modulo: '3-5-2', titolari: ids35(tu35), panchina: panT } } } });
+  ({ t, el } = await avvia({ adesso: dopoG1, dati: dati35b }));
+  x35 = t.scelte(1, sa35(0));
+  verifica('cambi dalla panchina diversi su un titolare in comune: a parte, e i totali tornano lo stesso', circa(x35.resto, -3)
+           && circa(x35.tuTot - x35.jvTot, x35.delta + x35.resto), [x35.delta, x35.resto]);
+  t.apriComeAndata();
+  verifica('e lo dice sotto', /−3,0 per te dai cambi dalla panchina dei titolari in comune/.test(el['sovra-corpo'].innerHTML));
+  const cu35 = t.contributi(ids35(jv35), panJ, sa35(0)).find(c => c.p.id === d135.id);
+  verifica('chi è senza voto vale il panchinaro che entra, come nel calcolo di prima', cu35 && cu35.senza && cu35.entra.id === dFuori[0].id && cu35.fv === 8
+           && circa(t.puntiUndici(ids35(jv35), panJ, sa35(0)).tot, x35.jvTot) && t.puntiUndici(ids35(jv35), panJ, sa35(0)).cambi === 1);
+
+  // la stagione: il bilancio e il tuo modo di scegliere
+  ({ t, el } = await avvia({ adesso: giovedi, dati: dati35(1) }));
+  sc = el['s-stagione'].innerHTML;
+  verifica('in «Tu, Jarvis e il massimo» il bilancio: Jarvis 1–0, un pallino J, −4,5 in totale', /chi ha scelto meglio<\/span><b class="cond">Jarvis 1–0<\/b>/.test(sc)
+           && /<div class="lg-forma sc-pallini"><i class="p">J<\/i>(<i><\/i>){7}<\/div>/.test(sc) && /in totale<\/span><b class="cond giu">−4,5<\/b>/.test(sc));
+  verifica('il blocco nuovo sotto: 1 di 6 giornate, niente tendenze inventate', /Il tuo modo di scegliere<small>1 di 6 giornate/.test(sc)
+           && /Servono almeno 6 giornate con la tua formazione/.test(sc) && !/cambiati in/.test(sc));
+  t.apriScelte();
+  verifica('«tutte le tue scelte»: giornata per giornata, col punteggio', /Giornata 1 · tu 66, Jarvis 70,5/.test(el['sovra-corpo'].innerHTML));
+  ({ t, el } = await avvia({ adesso: giovedi, dati: dati35(1, { formazioni: false }) }));
+  sc = el['s-stagione'].innerHTML;
+  verifica('senza formazioni: il bilancio c\'è (viene dal punteggio vero), l\'elenco delle scelte no, e 0 di 6',
+           /Jarvis 1–0/.test(sc) && !/data-scelte/.test(sc) && /0 di 6 giornate/.test(sc));
+  ({ t, el } = await avvia({ adesso: giovedi, dati: dati35(5) }));
+  verifica('con 5 giornate ancora niente tendenze', /5 di 6 giornate/.test(el['s-stagione'].innerHTML) && !/cambiati in/.test(el['s-stagione'].innerHTML));
+  ({ t, el } = await avvia({ adesso: giovedi, dati: dati35(6) }));
+  sc = el['s-stagione'].innerHTML;
+  const modo35 = sc.slice(sc.indexOf('Il tuo modo di scegliere'));
+  verifica('con 6 giornate le tendenze: reparto per reparto, i tuoi contro i suoi', /Il tuo modo di scegliere<small>6 giornate/.test(sc)
+           && /<b>Difensori<\/b><small>cambiati in 6 giornate su 6/.test(modo35) && modo35.includes('−39,0')
+           && /<b>Centrocampisti<\/b><small>cambiati in 6 giornate su 6/.test(modo35) && modo35.includes('+72,0')
+           && /<b>Attaccanti<\/b>/.test(modo35) && modo35.includes('−60,0') && !/<b>Portieri<\/b>/.test(modo35));
+  verifica('i moduli usati e chi tieni anche quando Jarvis no', modo35.includes('3-5-2 6 volte')
+           && modo35.includes(C35[3].nome + ' (6 su 6)') && modo35.includes(C35[4].nome + ' (6 su 6)'));
+  verifica('e il bilancio su tutte: Jarvis 6–0, −27 in totale', /Jarvis 6–0/.test(sc) && /−27,0<\/b>/.test(sc));
 
 
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
