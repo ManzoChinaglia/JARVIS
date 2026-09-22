@@ -17,29 +17,6 @@ const circa = (a, b) => Math.abs(a - b) < 1e-9;
 const BASE0 = JSON.parse(fs.readFileSync(path.join(REPO, 'dati', 'base.json'), 'utf8'));
 const AVV1 = BASE0.g[0][3].map(([a, b]) => a === BASE0.me ? b : b === BASE0.me ? a : null).find(Boolean);
 
-// un file Excel minimo, costruito qui (uno zip con il solo foglio): la classifica di prova
-// con i nomi veri delle squadre, presi da base.json, e numeri inventati. Il file non sta
-// più nel repository, che è pubblico: fino al 16/09/2026 ci stava, con i nomi dentro
-function xlsxProva(righe) {
-  const zlib = require('zlib');
-  const crc = b => { let c = ~0; for (const x of b) { c ^= x; for (let k = 0; k < 8; k++) c = c >>> 1 ^ (0xEDB88320 & -(c & 1)); } return ~c >>> 0; };
-  const colonna = j => String.fromCharCode(65 + j), esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  const foglio = '<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>' +
-    righe.map((r, i) => `<row r="${i + 1}">` + r.map((v, j) => v === null ? '' : typeof v === 'number'
-      ? `<c r="${colonna(j)}${i + 1}"><v>${v}</v></c>` : `<c r="${colonna(j)}${i + 1}" t="inlineStr"><is><t>${esc(v)}</t></is></c>`).join('') + '</row>').join('') +
-    '</sheetData></worksheet>';
-  const nome = Buffer.from('xl/worksheets/sheet1.xml'), dati = Buffer.from(foglio), compresso = zlib.deflateRawSync(dati);
-  const locale = Buffer.alloc(30), centrale = Buffer.alloc(46), fine = Buffer.alloc(22);
-  locale.writeUInt32LE(0x04034b50, 0); locale.writeUInt16LE(20, 4); locale.writeUInt16LE(8, 8); locale.writeUInt32LE(crc(dati), 14);
-  locale.writeUInt32LE(compresso.length, 18); locale.writeUInt32LE(dati.length, 22); locale.writeUInt16LE(nome.length, 26);
-  centrale.writeUInt32LE(0x02014b50, 0); centrale.writeUInt16LE(20, 4); centrale.writeUInt16LE(20, 6); centrale.writeUInt16LE(8, 10);
-  centrale.writeUInt32LE(crc(dati), 16); centrale.writeUInt32LE(compresso.length, 20); centrale.writeUInt32LE(dati.length, 24);
-  centrale.writeUInt16LE(nome.length, 28);
-  fine.writeUInt32LE(0x06054b50, 0); fine.writeUInt16LE(1, 8); fine.writeUInt16LE(1, 10);
-  fine.writeUInt32LE(46 + nome.length, 12); fine.writeUInt32LE(30 + nome.length + compresso.length, 16);
-  return Buffer.concat([locale, nome, compresso, centrale, nome, fine]);
-}
-
 // dati: file di dati/ da sostituire con un oggetto finto, o con null per "assente"
 // orari.json e infortuni.json veri vengono "aggiornati" al giorno simulato, così
 // l'avviso dei dati vecchi non dipende dal giorno in cui si lanciano le prove
@@ -93,7 +70,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     }
   };
   if (nav) ctx.navigator = nav;          // un iPhone finto, per il numero sull'icona
-  Object.assign(ctx, { Blob, Response, DecompressionStream, TextDecoder });   // per leggere i file Excel
+  Object.assign(ctx, { Response, TextDecoder });
   Object.assign(ctx, { TextEncoder, atob, btoa, crypto: require('crypto').webcrypto });   // per il lucchetto
   ctx.window = ctx;
   vm.createContext(ctx);
@@ -101,7 +78,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
     'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,baseStagione,apriConsiglio,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,mercato,leggiXlsx,classificaDaRighe,importaClassifica,forma,movimentoLega,risultatoLega,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,mercato,forma,movimentoLega,risultatoLega,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (attendi && el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -618,48 +595,6 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   ({ el } = await avvia({ adesso: giovedi, dati: { ...senzaSorprese, 'orari.json': { ...orariVeri, aggiornato: '2026-09-17T08:00:00+00:00',
           giornate: { ...orariVeri.giornate, '5': { ...orariVeri.giornate['5'], partite: undefined } } } } }));
   verifica('senza gli orari delle partite nessun orario inventato', el.quando.innerHTML === '' && !/class="ora"/.test(el.campo.innerHTML));
-
-  console.log('\n25. Importa da Leghe sul telefono');
-  const SQ25 = [...new Set(BASE0.g.flatMap(g => g[3].flat()))].sort();
-  const esempioXlsx = xlsxProva([['Classifica Sborra league'], ['https://leghe.fantacalcio.it/rivoluzione-fantacalcio'], [],
-    ['Pos', 'Squadra', null, 'G', 'V', 'N', 'P', 'Gf', 'Gs', 'Dr', 'Pt.', 'Pt. Totali'],
-    ...[[2, 2, 0, 0, 5, 1, 4, 6, 150.5], [2, 2, 0, 0, 4, 2, 2, 6, 148], [2, 1, 1, 0, 3, 1, 2, 4, 141.5], [2, 1, 0, 1, 3, 3, 0, 3, 139],
-        [2, 1, 0, 1, 2, 2, 0, 3, 137.5], [2, 0, 2, 0, 2, 2, 0, 2, 133], [2, 0, 1, 1, 1, 2, -1, 1, 131], [2, 0, 1, 1, 1, 3, -2, 1, 129.5],
-        [2, 0, 0, 2, 1, 4, -3, 0, 127], [2, 0, 0, 2, 0, 5, -5, 0, 120.5]].map((n, k) => [k + 1, SQ25[k], null, ...n])]);
-  const buf = b => new Uint8Array(b).buffer;
-  const memLega = {};
-  ({ t, el } = await avvia({ adesso: giovedi, memoria: memLega }));
-  const righeX = await t.leggiXlsx(buf(esempioXlsx));
-  verifica('il file Excel si apre sul telefono, senza librerie', righeX.some(r => r[0] === 'Pos' && r[1] === 'Squadra'), righeX.length + ' righe');
-  const importata = await t.importaClassifica(buf(esempioXlsx));
-  verifica('classifica importata: 10 squadre in ordine, con i numeri del file', importata.length === 10
-           && importata[0].slice(2).join() === '2,2,0,0,5,1,4,6,150.5', importata[0].join(' '));
-  verifica('si vede subito nella scheda Lega, detto che viene dal telefono', el.classifica.innerHTML.includes('<i>FP</i><b>150,5</b>')
-           && /Importata sul telefono/.test(el.classifica.innerHTML));
-  verifica('resta sul telefono', !!memLega['jarvis-lega'] && JSON.parse(memLega['jarvis-lega']).origine === 'telefono');
-  // la classifica del PC più vecchia di quella del telefono (non quella vera del giorno, che può essere più nuova)
-  ({ el } = await avvia({ adesso: giovedi, memoria: memLega, dati: { 'lega.json': { aggiornato: '2026-09-14T10:00:00+00:00',
-          classifica: squadreLega.map((s, k) => [k + 1, s, 0, 0, 0, 0, 0, 0, 0, 0, 0]) } } }));
-  verifica('riaprendo l\'app vale la più recente: quella del telefono', el.classifica.innerHTML.includes('<i>FP</i><b>150,5</b>'));
-  ({ el } = await avvia({ adesso: giovedi, memoria: memLega, dati: { 'lega.json': { aggiornato: '2026-09-30T10:00:00+00:00',
-          classifica: squadreLega.map((s, k) => [k + 1, s, 0, 0, 0, 0, 0, 0, 0, 0, 0]) } } }));
-  verifica('se quella del PC è più nuova vale quella', !el.classifica.innerHTML.includes('150,5'));
-  const primaDelFileSbagliato = memLega['jarvis-lega'];
-  let rifiuto = '';
-  try { await t.importaClassifica(buf(Buffer.from('non sono un file Excel'))); } catch (e) { rifiuto = e.message; }
-  verifica('file sbagliato: lo dice e non tocca niente', /non è un file Excel/.test(rifiuto) && memLega['jarvis-lega'] === primaDelFileSbagliato, rifiuto);
-  const righeRotte = righeX.map(r => [...r]);
-  righeRotte[righeRotte.findIndex(r => r[0] === 1)][4] = 7;
-  try { t.classificaDaRighe(righeRotte); rifiuto = ''; } catch (e) { rifiuto = e.message; }
-  verifica('numeri che non tornano: si ferma', /vinte \+ pari \+ perse/.test(rifiuto), rifiuto);
-  try { t.classificaDaRighe([['Pos', 'Team']]); rifiuto = ''; } catch (e) { rifiuto = e.message; }
-  verifica('file di un\'altra pagina: dice quale serve', /Classifica/.test(rifiuto), rifiuto);
-  const veri = fs.existsSync(path.join(REPO, 'archivio', 'lega')) ?
-    fs.readdirSync(path.join(REPO, 'archivio', 'lega')).filter(f => /^Classifica_.*\.xlsx$/.test(f)).sort() : [];
-  if (veri.length) {
-    const cv = t.classificaDaRighe(await t.leggiXlsx(buf(fs.readFileSync(path.join(REPO, 'archivio', 'lega', veri[veri.length - 1])))));
-    verifica('il file vero di Leghe si legge uguale (solo sul PC)', cv.length === 10 && cv.every(r => squadreLega.includes(r[1])), veri[veri.length - 1]);
-  }
 
   console.log('\n26. Liquid Glass');
   verifica('intestazione normale: niente capsula che si stringe scorrendo (non piaceva)', !/body\.scorso|'scorso'/.test(html));
