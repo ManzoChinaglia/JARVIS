@@ -28,7 +28,7 @@ const { webcrypto } = require('crypto');
 const subtle = webcrypto.subtle;
 
 const DATI = path.join(__dirname, '..', 'dati');
-const PROTETTI = ['base.json', 'lega.json', 'consigli.json'];
+const PROTETTI = ['base.json', 'lega.json', 'consigli.json', 'formazioni.json'];
 const ITERAZIONI = 600000;          // PBKDF2-SHA256, la soglia raccomandata da OWASP nel 2023
 const LUNGHEZZA_MINIMA = 12;        // i file chiusi restano pubblici per sempre: niente password corte
 const PROVA = 'jarvis';

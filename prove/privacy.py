@@ -15,7 +15,7 @@ import json, os, subprocess, sys, zipfile
 
 REPO = sys.argv[1] if len(sys.argv) > 1 else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATI = os.path.join(REPO, 'dati')
-PROTETTI = ['base.json', 'lega.json', 'consigli.json']
+PROTETTI = ['base.json', 'lega.json', 'consigli.json', 'formazioni.json']
 TESTO = ('.html', '.js', '.py', '.md', '.yml', '.yaml', '.json', '.ics', '.txt', '.webmanifest', '.css')
 OFFICE = ('.xlsx', '.xlsm', '.docx', '.pptx')
 
