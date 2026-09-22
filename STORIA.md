@@ -1478,3 +1478,11 @@ python -c "import truststore, runpy; truststore.inject_into_ssl(); runpy.run_pat
   dell'utente» (risultato ottimo); la grafica resta aperta solo se lui chiede qualcosa di
   preciso. Resta aperta solo la formazione schierata da Leghe (pagine «Formazioni» 404 dal
   21/09), da cui dipende il giudizio «rivelato».
+- **22/09/2026 sera**: trovata la formazione schierata, dal Chrome dell'utente. Il link
+  «Formazioni» del menu in alto resta 404 (confermato cliccandolo direttamente dal sito,
+  non solo indovinando indirizzi), ma il dato c'è altrove: Dashboard → Menu → «Ultimi
+  risultati» → clic sulla giornata, pagina `.../view/competition/748699/round/<giornata>`
+  (748699 è l'id di questa lega su Leghe). Mostra il modulo e i titolari con ruolo, voto e
+  fantavoto per entrambe le squadre della partita, giornata per giornata; sotto c'è
+  «Panchina», da aprire per i cambi. Manca ancora lo script che scarica e salva questo
+  dato: rimandato su richiesta dell'utente, si riparte da qui quando serve.
