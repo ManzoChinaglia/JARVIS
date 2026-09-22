@@ -87,5 +87,14 @@ with tempfile.TemporaryDirectory() as d:
     with open(p, encoding='utf-8') as f:
         verifica('con 29 giornate non scrive', not scritto and json.load(f)['giornate'] == {'1': 'vecchio'})
 
+print('\n6. Con abbastanza giornate scrive')
+with tempfile.TemporaryDirectory() as d:
+    p = os.path.join(d, 'orari.json')
+    scritto = mod.scrivi(p, {'giornate': {str(n): {} for n in range(1, 39)}}, 38, 'orari')
+    verifica('scrivi() restituisce True', scritto, scritto)
+    with open(p, encoding='utf-8') as f:
+        g2 = json.load(f)['giornate']
+    verifica('38 giornate nel file', len(g2) == 38, len(g2))
+
 print(f'\n{esiti - falliti}/{esiti} verifiche superate')
 sys.exit(1 if falliti else 0)
