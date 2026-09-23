@@ -19,7 +19,7 @@ Regole di sicurezza:
  - se una fonte non risponde o cambia struttura, il file esistente NON viene toccato
  - ogni scrittura avviene solo se il risultato supera un controllo di plausibilita'
 """
-import json, os, re, sys, unicodedata
+import json, os, re, sys, time, unicodedata
 from datetime import datetime, timedelta, timezone
 
 import requests
@@ -142,7 +142,12 @@ def scrivi(percorso, contenuto, minimo, etichetta, n=None):
 
 
 def infortuni(listone):
-    r = requests.get(URL_INFORTUNI, headers=UA, timeout=TIMEOUT)
+    # la fonte ogni tanto risponde 404 per un attimo (23/09): fino a 3 tentativi
+    for tentativo in range(3):
+        r = requests.get(URL_INFORTUNI, headers=UA, timeout=TIMEOUT)
+        if r.status_code == 200 or tentativo == 2:
+            break
+        time.sleep(5)
     r.raise_for_status()
     soup = BeautifulSoup(r.text, 'lxml')
 
