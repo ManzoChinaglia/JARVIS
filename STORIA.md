@@ -1545,3 +1545,16 @@ python -c "import truststore, runpy; truststore.inject_into_ssl(); runpy.run_pat
     il consiglio: se farlo, con l'autocalibrazione.
   Visto nell'anteprima coi dati veri della giornata 1: tu 22,5 contro 26,5 di Jarvis sugli
   scambi (i 4 punti di «Com'è andata»), «Il migliore che non hai schierato: Maldini, 10,0».
+
+
+## 23/09/2026 — dettagli tolti da CLAUDE.md nell'alleggerimento
+
+- **Lucchetto, dettagli**: AES-GCM 256, IV casuale, nome del file come dato associato; chiave da
+  PBKDF2-SHA256, 600.000 iterazioni, sale e «prova» in `dati/lucchetto.json` (pubblico). Stesso
+  formato in `scripts/lucchetto.js` e in `index.html` (Web Crypto). La derivazione resta a 512 bit:
+  cambiarla cambierebbe la chiave dei file già chiusi. Storia di git azzerata il 16 e il 17/09
+  (dati in chiaro); copie in `archivio/storia-fino-al-2026-09-1{6,7}.bundle`; un clone di prima non
+  combacia più. Manca un comando per cambiare password (`inizia` rifiuta se il lucchetto c'è): se
+  servirà, un `cambia` che apre con la vecchia e richiude con la nuova.
+- **Service worker**: cache `jarvis-3`; se cambia la lista dei file fissi, `jarvis-4`.
+- **Fine riga (CRLF)**: la cartella era su OneDrive, da cui i falsi «tutto modificato»; ora Jarvis sta in `Progetti\` (fuori da OneDrive), ma il controllo resta valido se capita.
