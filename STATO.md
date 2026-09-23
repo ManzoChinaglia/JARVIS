@@ -42,8 +42,23 @@ le schermate che c'erano (niente tolto o cambiato, solo aggiunto):
   moduli e chi tieni anche quando Jarvis no.
 - Per ora descrive soltanto: non tocca il consiglio. `prove/app.js` 328/328 (22 nuove).
 
-**Aperto:** niente di nuovo. Il giudizio «rivelato» cresce da solo, a patto di importare
+**Fatto il 23/09 sera: workflow «Aggiorna Jarvis» fallito** per un 404 passeggero della
+fonte infortuni (fantacalcio-online.com); `scripts/aggiorna.py` ora fa 3 tentativi (5 s di
+pausa) su quel download. Rilancio a mano verde, prove e pagine verdi. Se rifallisce: la
+fonte è davvero cambiata, vedere `[infortuni]` nel log.
+
+**Aperto:** niente sul motore. Il giudizio «rivelato» cresce da solo, a patto di importare
 la formazione ogni giornata (il controllo a inizio sessione lo ricorda).
+
+**In lista, non prima di fine asta Fantalab:** Jarvis multi-lega. L'utente ha un'asta
+nuova in arrivo su una lega a 8 su Fantalab (stesse regole di Rivoluzione Fantacalcio:
+Classic + modificatore difesa; modificatore gol diverso, 8 squadre invece di 10). Non un
+nuovo Jarvis: la stessa app, un selettore di lega in cima (mockup approvato il
+23/09/2026, artifact `jarvis_switcher_lega`) che cambia solo il set di dati caricato
+(`dati/base.json` ecc. → equivalenti per l'altra lega); motore e UI restano gli stessi.
+Da guardare quando si riprende: se `REGOLE_GOL` va parametrizzato per lega (il
+modificatore gol della lega Fantalab è diverso) e come tenere separati i lucchetti/le
+chiavi delle due leghe.
 
 **Da vedere nel tempo:** autocalibrazione dei `PESI` (non prima di fine novembre 2026, sui
 consigli salvati e «Quanto si avvicina Jarvis»; lì si decide anche se far pesare sul
