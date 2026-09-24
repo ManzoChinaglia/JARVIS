@@ -41,3 +41,9 @@ Spostate da `CLAUDE.md` il 23/09/2026 (testo invariato). Si leggono quando l'ute
   stata inserita su Leghe, lo script si ferma con un messaggio chiaro e non scrive
   niente. Serve solo alla tua squadra (`base['me']`): l'idea è il giudizio «rivelato»
   (B4 in STORIA.md), non scoutare gli avversari.
+  **Un solo giro** (`scripts/schiera.py`): `python scripts/schiera.py --mancanti` elenca le
+  giornate finite (≥ 2 ore) e già in `lega.json` senza la tua formazione (se Leghe dice «Formazione non inserita», non c'è nulla da recuperare); Claude, con **una sola conferma** dell'utente,
+  legge dal Chrome le pagine di tutte quelle giornate (una scheda, poi la chiude), le salva in file
+  temporanei e lancia `python scripts/schiera.py 2=g2.txt 3=g3.txt ...` (prima con `--prova`):
+  `apri` → import di ogni giornata → `chiudi` (anche se una fallisce) → `prove/formazioni.py` e
+  `prove/privacy.py`. Non fa commit: il commit (e il push) lo fa Claude dopo, coi totali delle prove.

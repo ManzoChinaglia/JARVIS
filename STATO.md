@@ -24,6 +24,12 @@ un'idea, non ancora costruita) — per ora si può richiamare la routine («form
 schierata») giornata per giornata quando serve. Non ancora automatizzato dentro
 `aggiorna.py` (il giro automatico non ha un Chrome collegato a Leghe).
 
+**Fatto il 24/09: «formazione schierata» in un solo giro.** `scripts/schiera.py`:
+`--mancanti` elenca le giornate finite e già in `lega.json` senza la tua formazione; `schiera.py N=file ...`
+fa apri → import (anche più giornate, recupero dopo un salto) → chiudi → prove, senza
+commit. Resta una sola conferma dell'utente per il giro (regola 9 invariata: Chrome suo,
+sola lettura). Vedi PROCEDURE.md.
+
 **Fatto il 23/09:** il controllo automatico a inizio sessione sul PC (CLAUDE.md, «Dati a
 mano»): Claude propone «dati di lega»/«formazione schierata» quando una giornata sembra
 pronta, invece di aspettare che l'utente lo chieda — resta lui a confermare (regola 9,
