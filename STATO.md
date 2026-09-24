@@ -1,6 +1,6 @@
 # Stato dei lavori — JARVIS
 
-(al 23/09/2026)
+(al 24/09/2026)
 
 **Fatto il 22/09:** la freccia dei posti guadagnati o persi in classifica (`movimentoLega`
 in `index.html`, confronta con la giornata prima; senza almeno due giornate non compare,
