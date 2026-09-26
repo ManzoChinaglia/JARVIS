@@ -1,6 +1,12 @@
 # Stato dei lavori — JARVIS
 
-(al 24/09/2026)
+(al 26/09/2026)
+
+**Fatto il 26/09: riquadro «In lega» (Stagione) sistemato.** Le cifre «0V 1N 0P · gol 1-1»
+stavano sulla stessa riga dei pallini e finivano sotto il grafico: ora sono una riga a parte,
+per esteso («Vinte · pari · perse», «Gol fatti · subiti»). Il grafico dell'andamento compare
+dalla seconda giornata (con una sola era un punto e basta) e le etichette 1°/ultimo non si
+sovrappongono più alle linee. `prove/app.js` 329/329 (1 nuova).
 
 **Fatto il 22/09:** la freccia dei posti guadagnati o persi in classifica (`movimentoLega`
 in `index.html`, confronta con la giornata prima; senza almeno due giornate non compare,

@@ -798,7 +798,6 @@
              font-style:normal; font-family:"Barlow Condensed",sans-serif; font-size:11px; font-weight:700; line-height:1;}
   .lg-forma i.v{background:var(--bf-verde); border:0; color:#EFFFF4;} .lg-forma i.n{background:var(--bf-stella); border:0; color:#3A2F05;}
   .lg-forma i.p{background:var(--bf-rosso); border:0; color:#FFF1F1;}
-  .lg-forma span{margin-left:4px; white-space:nowrap;}
   .lg-trend{width:70px; height:48px; flex:none; overflow:visible;}
   .lg-trend line{stroke:rgba(255,255,255,.08);}
   .lg-trend polyline{fill:none; stroke:var(--oro); stroke-width:2; stroke-linejoin:round;}
@@ -2922,18 +2921,23 @@ function bloccoLega(){
   if(!io) return '';
   const n1 = x => Number.isInteger(x) ? String(x) : num(x, 1), f = formaGol(ME), tot = D.g.length;
   const squadre = D.lega.classifica.length, pos = posizioniLega(io);
-  const x = gio => 6 + (gio - 1)*58/Math.max(1, tot - 1), y = p => 6 + (p - 1)*36/Math.max(1, squadre - 1);
+  const x = gio => 6 + (gio - 1)*44/Math.max(1, tot - 1), y = p => 6 + (p - 1)*36/Math.max(1, squadre - 1);
   const ultimo = pos[pos.length - 1];
-  const trend = '<svg class="lg-trend" viewBox="0 0 70 48" role="img" aria-label="La tua posizione giornata per giornata">'+
-    '<line x1="0" x2="70" y1="6" y2="6"/><line x1="0" x2="70" y1="42" y2="42"/>'+
-    (pos.length > 1 ? '<polyline points="'+pos.map(q=>x(q.gio).toFixed(1)+','+y(q.pos).toFixed(1)).join(' ')+'"/>' : '')+
-    (ultimo ? '<path class="resto" d="M'+(x(ultimo.gio) + 4).toFixed(1)+' '+y(ultimo.pos).toFixed(1)+' H64"/><circle cx="'+x(ultimo.gio).toFixed(1)+'" cy="'+y(ultimo.pos).toFixed(1)+'" r="4"/>' : '')+
-    '<text x="66" y="14">1°</text><text x="66" y="39">'+squadre+'°</text></svg>';
+  /* con una giornata sola l'andamento non c'è ancora: il grafico compare dalla seconda;
+     le etichette 1° e ultimo stanno a destra, fuori dall'area delle linee */
+  const trend = pos.length < 2 ? '' : '<svg class="lg-trend" viewBox="0 0 70 48" role="img" aria-label="La tua posizione giornata per giornata">'+
+    '<line x1="0" x2="52" y1="6" y2="6"/><line x1="0" x2="52" y1="42" y2="42"/>'+
+    '<polyline points="'+pos.map(q=>x(q.gio).toFixed(1)+','+y(q.pos).toFixed(1)).join(' ')+'"/>'+
+    (x(ultimo.gio) + 4 < 50 ? '<path class="resto" d="M'+(x(ultimo.gio) + 4).toFixed(1)+' '+y(ultimo.pos).toFixed(1)+' H50"/>' : '')+
+    '<circle cx="'+x(ultimo.gio).toFixed(1)+'" cy="'+y(ultimo.pos).toFixed(1)+'" r="4"/>'+
+    '<text x="70" y="9">1°</text><text x="70" y="45">'+squadre+'°</text></svg>';
   return '<div class="blocco"><div class="blocco-t">In lega<small>dopo la giornata '+io[2]+'</small></div><div class="lg-testa">'+
     '<div class="lg-pos cond">'+io[0]+'°</div>'+
     '<div class="lg-dati"><b class="cond">'+n1(io[9])+(io[9]===1 ? ' punto' : ' punti')+'</b>'+
       '<div class="lg-forma">'+[0,1,2,3,4].map(k=>'<i class="'+(f[k] || '')+'">'+(f[k] ? LETTERA_FORMA[f[k].toUpperCase()] : '')+'</i>').join('')+
-      '<span>'+io[3]+'V '+io[4]+'N '+io[5]+'P · gol '+io[6]+'-'+io[7]+'</span></div></div>'+trend+'</div></div>';
+      '</div></div>'+trend+'</div>'+
+    '<div class="af-riga"><span>Vinte <b>'+io[3]+'</b> · pari <b>'+io[4]+'</b> · perse <b>'+io[5]+'</b></span>'+
+      '<span>Gol <b>'+io[6]+'</b> fatti · <b>'+io[7]+'</b> subiti</span></div></div>';
 }
 /* gli esiti delle ultime 5 giornate, dai gol (per i pallini della scheda Stagione) */
 function formaGol(squadra){

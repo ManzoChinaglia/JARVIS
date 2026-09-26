@@ -170,7 +170,7 @@ l'iPhone le riprende solo togliendo e rimettendo l'app sulla Home.
 
 ## Totali attesi delle prove (al 23/09/2026)
 
-`prove/app.js` 328/328 (ovunque); `prove/lega.py` 34/34 sul PC (con `archivio/`), 31/31 su un clone
+`prove/app.js` 329/329 (ovunque); `prove/lega.py` 34/34 sul PC (con `archivio/`), 31/31 su un clone
 pulito o nella CI (saltano le prove sui file veri di Leghe: non è un guasto). `prove/formazioni.py`
 10/10, `prove/privacy.py` 8/8, `prove/lucchetto.js` 22/22. Le fallite si vedono come `NO`.
 

@@ -894,6 +894,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const ioF = finta.find(r => r[1] === t.ME);
   verifica('in lega: posizione, forma dai gol (pari e vittoria) e andamento', sc.includes('<div class="lg-pos cond">' + ioF[0] + '°</div>')
            && /<div class="lg-forma"><i class="n">=<\/i><i class="v">W<\/i><i class=""><\/i>/.test(sc) && /class="lg-trend"/.test(sc));
+  verifica('in lega: vinte, pari, perse e gol in una riga a parte, sotto', sc.includes('Vinte <b>' + ioF[3] + '</b> · pari <b>' + ioF[4]
+           + '</b> · perse <b>' + ioF[5] + '</b>') && sc.includes('Gol <b>' + ioF[6] + '</b> fatti · <b>' + ioF[7] + '</b> subiti'));
   verifica('il grafico: le due giornate di lega, colorate per esito, aperto sull\'ultima', (sc.match(/lg-col fatta/g) || []).length === 2
            && sc.includes('lg-col fatta sel" data-sa="' + g2.sa + '"') && /class="lg-bar n"/.test(sc) && /class="lg-bar v"/.test(sc)
            && (sc.match(/class="lg-jarvis"/g) || []).length === 2 && (sc.match(/class="lg-vuota"/g) || []).length === 6);
