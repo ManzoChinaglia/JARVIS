@@ -63,8 +63,8 @@ fonte è davvero cambiata, vedere `[infortuni]` nel log.
 la formazione ogni giornata (il controllo a inizio sessione lo ricorda).
 
 **In lista, non prima di fine asta Fantalab:** Jarvis multi-lega. L'utente ha un'asta
-nuova in arrivo su una lega a 8 su Fantalab (stesse regole di Rivoluzione Fantacalcio:
-Classic + modificatore difesa; modificatore gol diverso, 8 squadre invece di 10). Non un
+nuova in arrivo su una lega a 10 su Fantalab (erano 8 fino al 25/09) (stesse regole di Rivoluzione Fantacalcio:
+Classic + modificatore difesa; modificatore gol diverso, stesse 10 squadre). Non un
 nuovo Jarvis: la stessa app, un selettore di lega in cima (mockup approvato il
 23/09/2026, artifact `jarvis_switcher_lega`) che cambia solo il set di dati caricato
 (`dati/base.json` ecc. → equivalenti per l'altra lega); motore e UI restano gli stessi.
