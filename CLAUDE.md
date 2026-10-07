@@ -16,15 +16,20 @@ Leggi questo file prima di toccare qualsiasi cosa. È la versione **snella** (al
 
 Assistente personale di fantacalcio per **un solo utente**, stagione 2026/27. Lega a 10
 squadre, formato **Classic con modificatore difesa**, 500 crediti, rose da 25 (3 P, 8 D,
-8 C, 6 A), asta a ruoli. La squadra dell'utente è **BURKINA FASO**. App web statica su
+8 C, 6 A), asta a ruoli. La squadra dell'utente è **BURKINA FASO**.
+**Dal 07/10/2026 è multilega**: seconda lega Fantalega QI (Leghe id 886465, squadra **BOCA NDUJORS**),
+una sola app con selettore in cima; regole, tema e cartella di ogni lega in `dati/leghe.json`
+(mai nel codice), dati di lega in `dati/` (prima) e `dati/qi/` (seconda); scelta salvata in `jarvis-lega`.
+Script di lega con `--lega <id>` (`scripts/lega_cfg.py`). App web statica su
 GitHub Pages (https://manzochinaglia.github.io/JARVIS/), usata **dall'iPhone** (16 Pro,
 iOS 26) dalla schermata Home. Nessun backend, nessuna chiave nel codice: il repository è
 pubblico.
 
 ## Regole non negoziabili
 
-1. **Cinque moduli: 4-3-3, 4-4-2, 4-5-1, 3-5-2, 3-4-3.** Con la difesa a tre la lega
-   **non dà il modificatore** (scatta solo con quattro difensori). Difesa a cinque no.
+1. **Sette moduli (dal 07/10/2026): 4-3-3, 4-4-2, 4-5-1, 3-5-2, 3-4-3, 5-3-2, 5-4-1**, per
+   tutte le leghe (elenco in `dati/leghe.json`). Il modificatore difesa scatta solo con almeno
+   quattro difensori (portiere incluso, come da regola delle leghe): quindi non con la difesa a tre.
 2. **Niente chiavi API né segreti nel codice**: il repository è pubblico.
 3. **Nessun dato inventato.** Se una statistica non c'è, si dice che non c'è.
 4. **Gli aggiornamenti automatici non svuotano mai i dati**: si scrive solo se il

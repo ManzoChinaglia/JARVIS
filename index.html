@@ -96,6 +96,36 @@
                        background:var(--bf-verde); box-shadow:0 0 8px var(--bf-verde);}
   .sottotitolo:has(#stamp.vecchio)::before{background:var(--bf-rosso); box-shadow:0 0 8px var(--bf-rosso);}
   #stamp.vecchio{color:var(--rosso);}
+  /* selettore di lega: una fascia a vetro nei colori della lega scelta, con lo stemma; il menu mostra
+     ogni lega come una scheda nei suoi colori, così si riconoscono a colpo d'occhio */
+  .lega-box{position:relative; margin-top:12px;}
+  .lega-box[hidden], .lega-menu[hidden]{display:none;}
+  .lega-chip, .lega-voce{--a:var(--bf-rosso); --b:var(--bf-verde); position:relative; display:flex; align-items:center; gap:12px; width:100%;
+        text-align:left; font:inherit; color:var(--ink); cursor:pointer; overflow:hidden; border-radius:18px; padding:9px 14px 9px 10px;
+        background:linear-gradient(115deg,color-mix(in srgb,var(--a) 62%,#0b0d0c) 0%,color-mix(in srgb,var(--b) 55%,#0b0d0c) 100%);
+        border:1px solid color-mix(in srgb,var(--oro) 55%,transparent);
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 0 0 1px rgba(0,0,0,.3), 0 8px 22px color-mix(in srgb,var(--a) 35%,transparent);
+        transition:transform .25s var(--molla), box-shadow .25s;}
+  .lega-chip::after, .lega-voce::after{content:''; position:absolute; inset:0; pointer-events:none;
+        background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,0) 55%);}
+  .lega-chip:active, .lega-voce:active{transform:scale(.98);}
+  .lega-stemma{flex-shrink:0; width:38px; height:44px; filter:drop-shadow(0 3px 6px rgba(0,0,0,.55));}
+  .lega-stemma svg{width:100%; height:100%; display:block;}
+  .lega-testo{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+  .lega-nome{font-size:10.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.72);}
+  .lega-squadra{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:22px; line-height:1; letter-spacing:.3px; color:#fff;
+                text-shadow:0 2px 8px rgba(0,0,0,.45); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .lega-freccia{flex-shrink:0; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; color:var(--oro-chiaro);
+                background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.22);}
+  .lega-freccia svg{width:12px; height:12px; transition:transform .25s var(--molla);}
+  .lega-chip[aria-expanded="true"] .lega-freccia svg{transform:rotate(180deg);}
+  .lega-menu{position:absolute; left:0; right:0; top:100%; margin-top:8px; z-index:30; display:flex; flex-direction:column; gap:8px; padding:8px; border-radius:22px;
+             background:rgba(10,12,11,.78); border:1px solid rgba(255,255,255,.16);
+             -webkit-backdrop-filter:blur(22px) saturate(1.8); backdrop-filter:blur(22px) saturate(1.8); box-shadow:0 16px 36px rgba(0,0,0,.55);}
+  .lega-voce{opacity:.78;}
+  .lega-voce[aria-selected="true"]{opacity:1; border-color:var(--oro-chiaro);}
+  .lega-voce .lega-spunta{flex-shrink:0; width:22px; height:22px; border-radius:50%; display:none; place-items:center; background:var(--oro); color:#1b1405; font-size:13px; font-weight:800;}
+  .lega-voce[aria-selected="true"] .lega-spunta{display:grid;}
   .versione{margin:30px 0 6px; text-align:center; font-size:11px; color:var(--dim);}
 
   main{position:relative; z-index:1; padding:0 16px;}
@@ -133,12 +163,13 @@
   .stemmino .stemma{width:100%; height:100%; filter:drop-shadow(0 6px 12px rgba(0,0,0,.55));}
   .mia, .loro{font-family:"Barlow Condensed",sans-serif; font-weight:700; line-height:.95;}
   /* la tua squadra nei colori della bandiera: rosso sopra, verde sotto, stella gialla */
-  .mia{font-size:38px; color:var(--tema-a);
-       background:linear-gradient(180deg,var(--tema-a) 0 50%,var(--tema-b) 50% 100%);
+  .mia{font-size:38px; color:var(--nome-a,var(--tema-a));
+       background:linear-gradient(180deg,var(--nome-a,var(--tema-a)) 0 50%,var(--nome-b,var(--tema-b)) 50% 100%);
        -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
-       filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));}
+       filter:drop-shadow(0 0 1.5px rgba(0,0,0,.95)) drop-shadow(0 2px 7px rgba(0,0,0,.7));}
   .mia .stella{display:inline-block; -webkit-text-fill-color:var(--bf-stella); color:var(--bf-stella);
                font-size:.62em; vertical-align:.18em; margin-left:.18em; animation:brilla 3.2s ease-in-out infinite;}
+  .mia .stella .pepe{display:inline-block; width:1.3em; height:1.3em; vertical-align:-.3em; filter:drop-shadow(0 0 5px rgba(255,120,30,.8));}
   .loro{font-size:30px; color:var(--ink); filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));}
   .vs-riga{display:flex; align-items:center; gap:10px; margin:9px 0 9px 60px;}
   .vs{font-size:13px; font-weight:700; letter-spacing:.2em; color:var(--oro);}
@@ -179,9 +210,9 @@
   .modrow h2{margin:0 2px;}
   /* cinque tessere di vetro: la formazione disegnata coi colori dei ruoli, il totale atteso
      (fantavoto più modificatore) e «consigliato» sul modulo che rende di più */
-  .moduli{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:14px;}
-  .moduli button{position:relative; display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0;
-                 padding:14px 2px 8px; border-radius:14px; color:var(--ink);
+  .moduli{display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin-top:12px;}
+  .moduli button{position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; min-width:0;
+                 padding:8px 2px 5px; border-radius:12px; color:var(--ink);
                  background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.02)), rgba(255,255,255,.04);
                  border:1px solid rgba(255,255,255,.16);
                  box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 4px 14px rgba(0,0,0,.18);
@@ -191,14 +222,14 @@
   .moduli button.tre{background:linear-gradient(180deg,rgba(127,179,213,.13),rgba(127,179,213,.04)); border-color:rgba(127,179,213,.3);}
   .moduli button.on{background:linear-gradient(180deg,rgba(233,185,73,.26),rgba(233,185,73,.08)); border-color:rgba(233,185,73,.75);
                     box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 0 0 3px rgba(233,185,73,.16), 0 6px 18px rgba(233,185,73,.2);}
-  .moduli svg{width:36px; height:29px; display:block;}
-  .moduli .mn{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:17px; line-height:1; letter-spacing:.2px;}
+  .moduli svg{width:32px; height:25px; display:block;}
+  .moduli .mn{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:16px; line-height:1; letter-spacing:.2px;}
   .moduli button.on .mn{color:var(--accento);}
-  .moduli .mt{font-family:"Barlow Condensed",sans-serif; font-weight:600; font-size:14px; line-height:1; color:var(--dim);}
+  .moduli .mt{font-family:"Barlow Condensed",sans-serif; font-weight:600; font-size:13px; line-height:1; color:var(--dim);}
   .moduli button.on .mt{color:var(--ink);}
-  .moduli .nomod{margin-top:1px; padding:2px 5px; border-radius:6px; font-family:"Barlow Condensed",sans-serif; font-weight:700;
-                 font-size:11px; letter-spacing:.6px; line-height:1.1; color:#BFDDF0; background:rgba(127,179,213,.2);}
-  .moduli .cons{position:absolute; top:-7px; left:50%; transform:translateX(-50%); padding:1px 6px; border-radius:7px;
+  .moduli .nomod{margin-top:2px; padding:1px 4px; border-radius:5px; font-family:"Barlow Condensed",sans-serif; font-weight:700;
+                 font-size:9.5px; letter-spacing:.5px; line-height:1.1; color:#BFDDF0; background:rgba(127,179,213,.2);}
+  .moduli .cons{position:absolute; top:-6px; left:50%; transform:translateX(-50%); padding:1px 6px; border-radius:7px;
                 white-space:nowrap; font-style:normal; font-size:9.5px; font-weight:700; letter-spacing:.3px; text-transform:uppercase;
                 background:#43e08f; color:#0c2a19; box-shadow:0 2px 8px rgba(67,224,143,.35);}
 
@@ -1049,6 +1080,7 @@
     </button>
   </div>
   <div class="sottotitolo"><span id="stamp"></span></div>
+  <div class="lega-box" id="lega-box" hidden><button class="lega-chip" id="lega-chip" type="button" aria-haspopup="listbox" aria-expanded="false"></button><div class="lega-menu" id="lega-menu" role="listbox" hidden></div></div>
 </header>
 
 <main>
@@ -1258,6 +1290,7 @@ function sceltaLega(){
   const tutte = LEGHE && LEGHE.leghe && LEGHE.leghe.length ? LEGHE.leghe : [LEGA_PREDEFINITA];
   return tutte.find(l=>l.id===id) || tutte.find(l=>l.id===(LEGHE && LEGHE.predefinita)) || tutte[0];
 }
+const PEPERONCINO = '<svg class="pepe" viewBox="0 0 24 24" aria-hidden="true"><defs>'+'<linearGradient id="gFiamma" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FF5A1F"/><stop offset=".6" stop-color="#FF9F1C"/><stop offset="1" stop-color="#FFE066"/></linearGradient>'+'<linearGradient id="gPepe" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF3B30"/><stop offset="1" stop-color="#B3121F"/></linearGradient></defs>'+'<path d="M13.5 .6c.5 2.4 2.6 3.3 2.8 6 .1 2-1 3.2-2.4 3.7.2-1.3-.4-2.2-1.2-3-.8 1-2.1 1.8-2.1 3.5 0 .5.1.9.3 1.2-1.7-.7-2.7-2.2-2.5-4.2.3-2.7 3.3-3.6 4.3-7.2z" fill="url(#gFiamma)"/>'+'<path d="M3.2 11.2c3.2-1.3 8.2-.2 11.3 3.3 2.6 2.9 4.6 5.6 6.3 7.7-4.9.9-10.2-.2-13.4-3.5-2.3-2.3-4.3-5.1-4.2-7.5z" fill="url(#gPepe)"/>'+'<path d="M5.4 13.2c2.4-.6 5.1.2 7.3 2.2" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="1" stroke-linecap="round"/>'+'<path d="M3.2 11.2c-.8-1.6-.3-3.1 1-3.9l.8 1.3c-.6.5-.8 1.2-.3 2.2z" fill="#2FA84F"/></svg>';
 function applicaLega(cfg){
   LEGA = Object.assign({}, LEGA_PREDEFINITA, cfg);
   Object.keys(MODULI).forEach(m=>{ delete MODULI[m]; });
@@ -1274,12 +1307,47 @@ function applicaLega(cfg){
     const st = document.documentElement.style;
     if(t.a) st.setProperty('--tema-a', t.a);
     if(t.b) st.setProperty('--tema-b', t.b);
+    if(t.nome_a) st.setProperty('--nome-a', t.nome_a);
+    if(t.nome_b) st.setProperty('--nome-b', t.nome_b);
     if(t.sfondo) st.setProperty('--sfondo', 'url("'+t.sfondo+'")');
   }
   const nome = document.getElementById('mia-nome'), stella = document.getElementById('mia-stella');
   if(nome) nome.textContent = LEGA.squadra;
   if(stella) stella.style.display = t && t.simbolo === '' ? 'none' : '';
-  if(stella && t && t.simbolo) stella.textContent = t.simbolo;
+  if(stella && t && t.simbolo === 'peperoncino') stella.innerHTML = PEPERONCINO;
+  else if(stella && t && t.simbolo) stella.textContent = t.simbolo;
+}
+/* il selettore di lega in cima: compare solo con due o più leghe; la scelta si salva e l'app si riapre */
+function stemmaLega(l){
+  const src = l.stemma || 'img/icona-180.png';
+  return '<span class="lega-stemma"><svg viewBox="0 0 40 46"><image href="'+src+'" x="-3" y="0" width="46" height="46" preserveAspectRatio="xMidYMid slice" clip-path="url(#scudo)"/>'+
+         '<path d="'+SCUDO+'" fill="none" stroke="#E4B451" stroke-width="1.6"/></svg></span>';
+}
+function schedaLega(l, voce){
+  const t = l.tema || {};
+  const stile = (t.a ? '--a:'+t.a+';' : '') + (t.b ? '--b:'+t.b+';' : '');
+  const freccia = '<span class="lega-freccia"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+  return {stile, html: stemmaLega(l)+'<span class="lega-testo"><span class="lega-nome">'+l.nome+'</span><span class="lega-squadra">'+l.squadra+'</span></span>'+
+          (voce ? '<span class="lega-spunta">✓</span>' : freccia)};
+}
+function montaSelettoreLega(){
+  const box = document.getElementById('lega-box'), chip = document.getElementById('lega-chip'), menu = document.getElementById('lega-menu');
+  const tutte = LEGHE && LEGHE.leghe ? LEGHE.leghe : [];
+  if(!box || !chip || !menu || !chip.setAttribute || tutte.length < 2) return;
+  const cur = schedaLega(LEGA, false);
+  chip.setAttribute('style', cur.stile); chip.innerHTML = cur.html;
+  box.hidden = false;
+  menu.innerHTML = tutte.map(l=>{ const c = schedaLega(l, true);
+    return '<button class="lega-voce" role="option" type="button" data-id="'+l.id+'" aria-selected="'+(l.id===LEGA.id)+'" style="'+c.stile+'">'+c.html+'</button>'; }).join('');
+  const chiudi = ()=>{ menu.hidden = true; chip.setAttribute('aria-expanded','false'); };
+  chip.onclick = e=>{ e.stopPropagation(); const apri = menu.hidden; menu.hidden = !apri; chip.setAttribute('aria-expanded', String(apri)); };
+  if(document.addEventListener) document.addEventListener('click', e=>{ if(!menu.hidden && !menu.contains(e.target)) chiudi(); });
+  menu.onclick = e=>{
+    const v = e.target.closest('.lega-voce'); if(!v) return;
+    if(v.dataset.id === LEGA.id){ chiudi(); return; }
+    try{ localStorage.setItem('jarvis-lega', v.dataset.id); }catch(x){}
+    const u = new URL(location.href); u.searchParams.delete('lega'); location.href = u.toString();
+  };
 }
 async function carica(){
   const leggi = async (f, obbligatorio) => {
@@ -1300,6 +1368,7 @@ async function carica(){
   try{ const rl = await fetch('dati/leghe.json?cb='+Date.now(), {cache:'no-store'}); LEGHE = rl.ok ? await rl.json() : null; }
   catch(e){ LEGHE = null; }
   applicaLega(sceltaLega());
+  montaSelettoreLega();
   const CL = LEGA.cartella || '';
   const pubblici = ['infortuni.json', 'titolari.json', 'orari.json', 'squadre.json', 'statistiche.json', 'voti.json', 'modello.json']
     .map(f=>leggi(f, false));
@@ -1712,6 +1781,13 @@ function campioneVoti(p, n, g){
   return (CAMPIONI[chiave] = out);
 }
 
+/* la somma dei 3 migliori voti dei difensori, nell'estrazione i: con quattro in campo è la somma meno il peggiore,
+   con cinque (5-3-2, 5-4-1) contano ancora solo i 3 migliori (prima si toglieva solo il peggiore: la media usciva gonfiata e i moduli a 5
+   risultavano sempre i consigliati, 07/10/2026) */
+function treMigliori(cd, i){
+  const v = cd.map(c=>c[i]).sort((a, b)=>b - a);
+  return v[0] + (v[1] || 0) + (v[2] || 0);
+}
 /* media del modificatore e basta. Nella ricerca del blocco servono solo i confronti,
    e costruire la distribuzione per ognuna delle settanta combinazioni costerebbe più
    della ricerca stessa. I campioni sono gli stessi per tutte (seme fisso per
@@ -1719,10 +1795,7 @@ function campioneVoti(p, n, g){
 function mediaModificatore(cp, cd, n){
   let somma = 0;
   for(let i = 0; i < n; i++){
-    let s = 0, peggiore = Infinity;
-    for(let k = 0; k < cd.length; k++){ const x = cd[k][i]; s += x; if(x < peggiore) peggiore = x; }
-    /* i 3 migliori difensori: con quattro in campo è la somma meno il peggiore */
-    somma += bonusModificatore((cp[i] + (cd.length > 3 ? s - peggiore : s)) / 4);
+    somma += bonusModificatore((cp[i] + treMigliori(cd, i)) / 4);
   }
   return somma / n;
 }
@@ -1738,9 +1811,7 @@ function modificatoreAtteso(portiere, difensori, n, g){
   const conta = {};
   let somma = 0;
   for(let i = 0; i < n; i++){
-    let s = 0, peggiore = Infinity;
-    for(let k = 0; k < cd.length; k++){ const x = cd[k][i]; s += x; if(x < peggiore) peggiore = x; }
-    const media = (cp[i] + (cd.length > 3 ? s - peggiore : s)) / 4;
+    const media = (cp[i] + treMigliori(cd, i)) / 4;
     somma += media;
     const b = bonusModificatore(media);
     conta[b] = (conta[b] || 0) + 1;
@@ -2233,9 +2304,7 @@ function totaliSquadra(u, g, n){
     let s = 0;
     for(let k = 0; k < fv.length; k++) s += fv[k][i];
     if(conMod){
-      let d = 0, peggiore = Infinity;
-      for(let k = 0; k < cd.length; k++){ const x = cd[k][i]; d += x; if(x < peggiore) peggiore = x; }
-      s += bonusModificatore((cp[i] + (cd.length > 3 ? d - peggiore : d))/4);
+      s += bonusModificatore((cp[i] + treMigliori(cd, i))/4);
     }
     out[i] = s;
   }

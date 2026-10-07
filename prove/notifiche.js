@@ -133,9 +133,21 @@ function ntfyFinto(ok = true) {
   await main({ argomento: '', invia: n.invia, adesso: venerdi, registro, dati: dati(1) });
   let cs = JSON.parse(fs.readFileSync(consigli, 'utf8'));
   const c1 = cs.giornate && cs.giornate['1'];
-  verifica('undici e panchina per ognuno dei cinque moduli, anche senza canali di notifica', c1 && c1.sa === 5
-           && Object.keys(c1.undici).length === 5 && Object.values(c1.undici).every(u => u.length === 11) && c1.panchina['3-5-2'].length > 0,
+  verifica('undici e panchina per ognuno dei sette moduli, anche senza canali di notifica', c1 && c1.sa === 5
+           && Object.keys(c1.undici).length === 7 && Object.values(c1.undici).every(u => u.length === 11) && c1.panchina['3-5-2'].length > 0,
            c1 && Object.keys(c1.undici).join(', '));
+  /* più leghe: la seconda ha i suoi consigli nella sua cartella e avvisi con prefisso */
+  {
+    const tmpQ = fs.mkdtempSync(path.join(require('os').tmpdir(), 'jarvis-qi-'));
+    fs.mkdirSync(path.join(tmpQ, 'qi'));
+    const r = await main({ argomento: '', invia: n.invia, adesso: Date.parse('2026-10-09T10:00:00Z'), registro: path.join(tmpQ, 'notifiche.json'), lega: 'qi' });
+    const f = path.join(tmpQ, 'qi', 'consigli.json');
+    const cq = fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null;
+    const g = cq && Object.values(cq.giornate || {})[0];
+    verifica('seconda lega: consigli in dati/qi/, sette moduli, avvisi col prefisso della lega',
+             !!g && Object.keys(g.undici).length === 7 && r.nuovi.every(a => a.id.startsWith('qi:') && a.titolo.startsWith('Fantalega QI')),
+             g ? Object.keys(g.undici).join(', ') : 'nessun consiglio salvato');
+  }
   verifica('con il modello, anche l\'undici del calcolo di prima (per il confronto)',
            !fs.existsSync(path.join(__dirname, '..', 'dati', 'modello.json'))
            || (c1 && c1.undici_vecchio && c1.undici_vecchio['4-3-3'].length === 11 && c1.panchina_vecchio['4-3-3'].length > 0));

@@ -30,15 +30,27 @@ corona e foglie d'alloro) in `archivio/qi/stemma.png`. Nomi di altre squadre/man
   7 moduli (tessere 4 per riga: **da vedere su mockup**). `prove/app.js` 327/329 (le 2 rosse c'erano già: date delle prove).
 - Fix workflow job falliti (08/10…): checkout `ref: main`, concurrency, conflitto di salvataggio = avviso, non errore (`8d40d0d`, pushato).
 
+**Fatto il 07/10 sera (non committato, in attesa dell'ok):**
+- Selettore di lega in cima (`#lega-chip` + `montaSelettoreLega()` in `index.html`): pillola a destra del sottotitolo,
+  menu a vetro con le due leghe, salva `jarvis-lega` e ricarica. Verificato in anteprima (mobile, `?lega=qi`).
+- Tema QI in `leghe.json` (`tema {a:#B3173F, b:#2347A8}`, `stemma img/stemma-qi.png`): nome squadra e stemma cambiano.
+  **Da decidere con l'utente**: lo sfondo (resta quello con la figura del Burkina) e il simbolo accanto al nome (★).
+- `importa_formazioni.py` e `schiera.py` con `--lega <id>` (moduli validi ora 7); `importa_lega.py` con `--lega` (fatto io: Bonsai non ha prodotto nulla).
+- `notifiche.js`: `mainTutte()` un giro per lega (consigli in `dati/<lega>/consigli.json`, codici avvisi `qi:…`, titolo con
+  il nome della lega); prova nuova «seconda lega». `aggiorna.py` non cambia (Serie A condivisa); `jarvis.ics` resta quello della prima lega.
+- CLAUDE.md: regola 1 a sette moduli e sezione multilega. Prove: app 327/329 (2 rosse di prima), notifiche 27/27, il resto verde.
+
+**Fatto il 07/10 notte (non committato):** BF: stemma = logo preso da Leghe (`img/stemma-bf.png`, 256 px), sfondo senza sfocatura sui due ritratti
+(volti del logo 256 px ingranditi e fusi in `img/sfondo.jpg`: morbidi, l'originale non è sul PC). QI: `img/sfondo-qi.jpg` con lo stemma, peperoncino infiammato al posto della ★,
+nome in rosa/azzurro chiari (`tema.nome_a/nome_b`) per leggersi. Selettore rifatto: fascia a vetro nei colori della lega + menu a schede. Tessere dei moduli più snelle.
+**Bug trovato e corretto:** con la difesa a 5 il modificatore toglieva solo il peggiore e dividendo per 4 la media usciva gonfiata (5-3-2 e 5-4-1 sempre consigliati): ora `treMigliori()` (3 migliori difensori). Prova nuova in `prove/app.js` (328/330, 2 rosse di prima).
+
 **Da fare, in ordine:**
-1. Selettore di lega in cima (mockup approvato 23/09: artifact `jarvis_switcher_lega`) che salva `jarvis-lega` e ricarica.
-2. Tema/stemma di QI in `leghe.json` (`tema:{a,b,sfondo,simbolo}`, `stemma:"img/stemma-qi.png"` ridotto), con mockup.
-3. Verificare l'app con `?lega=qi` (preview) e la grafica dei 7 moduli.
-4. Script di import per lega: **delegato al locale** (importa_lega/importa_formazioni/schiera con `--lega`, in
-   `~/cantieri-locale/JARVIS-*`, esito non ancora arrivato): controllare con `prove/lega.py` e `prove/formazioni.py`.
-5. `aggiorna.py`/`notifiche.js`/`aggiorna.yml`: giro per tutte le leghe (consigli per lega, codici avvisi con la lega).
-6. Aggiornare CLAUDE.md (regola 1: moduli a 7, difesa a 5 col modificatore; regola 7 e struttura per più leghe) e RIFERIMENTO.md.
-7. Dopo l'ok dell'utente: push (prima `git pull --rebase`, `apri`, prove, `chiudi`).
+1. Decidere con l'utente sfondo/simbolo del tema QI (mockup) e guardare i 7 moduli (tessere 4 per riga).
+2. (fatto) `importa_lega.py --lega qi`: da provare sui file veri della prima giornata.
+3. RIFERIMENTO.md (multilega) e, se serve, `aggiorna.yml` (nessun passo nuovo: `git add dati/` copre `dati/qi/`).
+4. Prima partita: ricavare con `schiera.py --lega qi` la formazione di BOCA NDUJORS dalla giornata 1 (dopo la scadenza).
+5. Dopo l'ok dell'utente: commit, push (prima `git pull --rebase`, `apri`, prove, `chiudi`; 2 commit locali già in coda).
 **Attenzione:** dopo un `git pull` fare SEMPRE `node scripts/lucchetto.js apri` PRIMA di `chiudi`, altrimenti `chiudi`
 ricifra copie in chiaro vecchie sopra i file chiusi più nuovi (successo oggi con consigli.chiuso.json, ripristinato).
 

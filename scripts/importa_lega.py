@@ -32,6 +32,8 @@ accetta solo "N-N", altrimenti l'import del calendario si ferma con un messaggio
 chiaro invece di indovinare. Verificare sulla prima giornata vera (dal 20/09/2026).
 """
 import glob, json, os, re, shutil, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lega_cfg
 from datetime import date, datetime, timezone
 
 RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -239,11 +241,16 @@ def archivia(percorso, oggi=None):
 
 
 def main():
+    global ARCHIVIO
+    cfg = lega_cfg.lega(lega_cfg.id_da_argomenti())
+    sotto = cfg['cartella'].strip('/')     # '' per la prima lega, 'qi' per la seconda
+    if sotto:
+        ARCHIVIO = os.path.join(RADICE, 'archivio', sotto)   # es. archivio/qi
     argomenti = [a for a in sys.argv[1:] if not a.startswith('--')]
     prova = '--prova' in sys.argv
     percorso = argomenti[0] if argomenti else trova_file(DOWNLOAD)
     print(f'file: {percorso}')
-    with open(os.path.join(DATI, 'base.json'), encoding='utf-8') as f:
+    with open(os.path.join(DATI, sotto, 'base.json'), encoding='utf-8') as f:
         base = json.load(f)
     try:
         righe, diversi = classifica(leggi_classifica(percorso), base)
@@ -280,7 +287,7 @@ def main():
         print('prova: nessun file scritto.')
         return
 
-    percorso_lega = os.path.join(DATI, 'lega.json')
+    percorso_lega = os.path.join(DATI, sotto, 'lega.json')
     risultati = {}
     if os.path.exists(percorso_lega):
         try:

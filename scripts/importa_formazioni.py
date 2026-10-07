@@ -27,11 +27,13 @@ validi, la rosa non corrisponde): i dati di prima restano (upsert per
 giornata, non si svuota mai tutto).
 """
 import json, os, re, sys, unicodedata
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import lega_cfg
 from datetime import datetime, timezone
 
 RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATI = os.path.join(RADICE, 'dati')
-MODULI_VALIDI = {'4-3-3', '4-4-2', '4-5-1', '3-5-2', '3-4-3'}
+MODULI_VALIDI = {'4-3-3', '4-4-2', '4-5-1', '3-5-2', '3-4-3', '5-3-2', '5-4-1'}
 N_TITOLARI = 11
 N_PANCHINA = 14                       # una rosa è sempre 25 (3 P, 8 D, 8 C, 6 A): 25 - 11
 RE_MODULO = re.compile(r'^\d-\d-\d$')
@@ -140,6 +142,7 @@ def importa(testo, base):
 
 
 def main():
+    cfg = lega_cfg.lega(lega_cfg.id_da_argomenti())
     argomenti = [a for a in sys.argv[1:] if not a.startswith('--')]
     prova = '--prova' in sys.argv
     if len(argomenti) < 2:
@@ -151,7 +154,7 @@ def main():
         sys.exit(1)
     with open(percorso, encoding='utf-8') as f:
         testo = f.read()
-    with open(os.path.join(DATI, 'base.json'), encoding='utf-8') as f:
+    with open(lega_cfg.percorso(cfg, 'base.json'), encoding='utf-8') as f:
         base = json.load(f)
 
     try:
@@ -165,7 +168,7 @@ def main():
         print('prova: nessun file scritto.')
         return
 
-    percorso_formazioni = os.path.join(DATI, 'formazioni.json')
+    percorso_formazioni = lega_cfg.percorso(cfg, 'formazioni.json')
     dati = {'aggiornato': '', 'giornate': {}}
     if os.path.exists(percorso_formazioni):
         try:

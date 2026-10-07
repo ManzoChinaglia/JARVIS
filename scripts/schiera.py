@@ -6,7 +6,7 @@ delle pagine lo cattura Claude dal Chrome dell'utente, con la sua conferma) e no
 fa commit.
 
 Uso:
-  python scripts/schiera.py --mancanti
+  python scripts/schiera.py [--lega <id>] --mancanti
       elenca le giornate finite da almeno due ore, già in lega.json, di cui manca la tua
       formazione; non scrive niente. Se la lega ha giocato una giornata senza che tu
       abbia inserito la formazione, Leghe dice «Formazione non inserita»: non c'è nulla
@@ -17,6 +17,7 @@ Uso:
       salvate, i dati di prima non si perdono, e il lucchetto viene comunque richiuso.
 """
 import json, os, subprocess, sys
+import lega_cfg
 from datetime import datetime, timedelta, timezone
 
 RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,18 +32,18 @@ def lucchetto(azione):
     return esegui(['node', 'scripts/lucchetto.js', azione])
 
 
-def carica(nome):
+def carica(nome, cfg=None):
     try:
-        with open(os.path.join(DATI, nome), encoding='utf-8') as f:
+        with open((lega_cfg.percorso(cfg, nome) if cfg and nome in lega_cfg.PROTETTI else os.path.join(DATI, nome)), encoding='utf-8') as f:
             return json.load(f)
     except (OSError, json.JSONDecodeError):
         return {}
 
 
-def mancanti(ora=None):
+def mancanti(ora=None, cfg=None):
     ora = ora or datetime.now(timezone.utc)
-    schierate = set((carica('formazioni.json').get('giornate') or {}))
-    giocate = set((carica('lega.json').get('risultati') or {}))   # la lega le ha giocate
+    schierate = set((carica('formazioni.json', cfg).get('giornate') or {}))
+    giocate = set((carica('lega.json', cfg).get('risultati') or {}))   # la lega le ha giocate
     esito = []
     for n, g in (carica('orari.json').get('giornate') or {}).items():
         if not g.get('ufficiale'):
@@ -53,6 +54,8 @@ def mancanti(ora=None):
 
 
 def main():
+    id_lega = lega_cfg.id_da_argomenti()
+    cfg = lega_cfg.lega(id_lega)
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     prova = '--prova' in sys.argv
     if '--mancanti' not in sys.argv and not args:
@@ -64,7 +67,7 @@ def main():
     esito = 0
     try:
         if '--mancanti' in sys.argv:
-            m = mancanti()
+            m = mancanti(cfg=cfg)
             print('formazione mancante per le giornate: ' + (', '.join(map(str, m)) or 'nessuna'))
             return
         coppie = []
@@ -74,7 +77,7 @@ def main():
                 sys.exit(f'argomento non valido «{a}»: serve <giornata>=<file>')
             coppie.append((n, percorso))
         for n, percorso in coppie:
-            comando = [sys.executable, 'scripts/importa_formazioni.py', percorso, n]
+            comando = [sys.executable, 'scripts/importa_formazioni.py', percorso, n, '--lega', cfg['id']]
             if prova:
                 comando.append('--prova')
             if esegui(comando) != 0:

@@ -131,7 +131,12 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
 
   console.log('\n6. Giornata senza orari ufficiali (Serie A 13)');
   const g13 = (await avvia({ adesso: '2026-09-13T12:00:00+02:00' })).t.D.g.find(x => x[1] === 13);
-  ({ t, el } = await avvia({ adesso: new Date(g13[2] + 'T09:00:00+01:00').getTime() - 5 * 86400000 }));
+  // orari finti: la Serie A 13 senza orario ufficiale (nei dati veri ormai ce l'ha, e la prova non deve dipendere dal giorno)
+  const orari13 = JSON.parse(fs.readFileSync(path.join(REPO, 'dati', 'orari.json'), 'utf8'));
+  orari13.giornate['13'] = Object.assign({}, orari13.giornate['13'], { ufficiale: false });
+  const adesso13 = new Date(g13[2] + 'T09:00:00+01:00').getTime() - 5 * 86400000;
+  orari13.aggiornato = new Date(adesso13).toISOString();
+  ({ t, el } = await avvia({ adesso: adesso13, dati: { 'orari.json': orari13 } }));
   g = t.prossima();
   verifica('è la giornata con la Serie A 13', g[1] === 13, 'G' + g[0] + ' / SA ' + g[1]);
   verifica('nessuna scadenza inventata', t.scadenza(g) === null);
@@ -468,7 +473,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('nel pannello il dettaglio dei dati', /probabili del/.test(el['stamp-dett'].textContent), el['stamp-dett'].textContent);
   const sig = (el['avv-stemma'].innerHTML.match(/>([^<>]*)<\/text>/) || [])[1];
   verifica('stemma dell\'avversario con le sue iniziali', /^[A-Z0-9]{1,2}$/.test(sig || ''), sig);
-  verifica('il tuo stemma è Re Guyzo', /img\/icona-180\.png/.test(el['mio-stemma'].innerHTML));
+  verifica('il tuo stemma è quello della lega (Burkina: dal 07/10/2026 il logo preso da Leghe)', /img\/stemma-bf\.png/.test(el['mio-stemma'].innerHTML), el['mio-stemma'].innerHTML.slice(0, 120));
 
   console.log('\n19. Notifiche di Jarvis');
   verifica('chiave pubblica delle notifiche nell\'app, una sola', (html.match(/const CHIAVE_PUSH = 'B[A-Za-z0-9_-]{86}'/g) || []).length === 1);
@@ -942,6 +947,13 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('le probabilità delle fasce fanno uno', m1 && circa(m1.fasce.reduce((s, f) => s + f.prob, 0), 1), m1 && m1.fasce);
   verifica('stesso blocco, stesso risultato: il seme è fisso, non balla a ogni tocco',
            circa(t.modificatoreAtteso(por[0], dif.slice(0, 4)).atteso, m1.atteso), m1.atteso);
+
+  // difesa a cinque: contano ancora solo i 3 migliori difensori (prima si toglieva solo il peggiore e la media usciva gonfiata)
+  dif.forEach((p, k) => { p.mv = k < 3 ? 7.8 : 4.5; p.pgv = 10; });
+  t.stimaVoti();
+  const m3 = t.modificatoreAtteso(por[0], dif.slice(0, 3)), m5 = t.modificatoreAtteso(por[0], dif.slice(0, 5));
+  verifica('con cinque difensori il modificatore conta i 3 migliori: i due più deboli non gonfiano la media',
+           m3 && m5 && Math.abs(m5.media - m3.media) < 0.15, m3 && m5 && [m3.media, m5.media]);
 
   // un blocco modForte rende più di uno modDebole, e nessuno dei due è una certezza
   t.mia.forEach(p => { if (p.ruolo === 'D' || p.ruolo === 'P') { p.mv = 7.4; p.pgv = 10; } });

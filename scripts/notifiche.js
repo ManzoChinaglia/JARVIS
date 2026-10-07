@@ -35,7 +35,7 @@ const RIATTIVA = { id: 'riattiva', livello: 'urgente', titolo: 'Riattiva le noti
 
 /* Il codice dell'app sui file di dati/, pronto per chiedergli gli avvisi e il consiglio.
    dati: file da sostituire (prove). */
-async function appSuiDati({ repo = REPO, adesso = Date.now(), dati = {} } = {}) {
+async function appSuiDati({ repo = REPO, adesso = Date.now(), dati = {}, lega = null } = {}) {
   const html = fs.readFileSync(path.join(repo, 'index.html'), 'utf8');
   const codice = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].pop()[1];
   const VeraData = Date;
@@ -51,7 +51,7 @@ async function appSuiDati({ repo = REPO, adesso = Date.now(), dati = {} } = {}) 
     Date: Orologio, console: { log() {}, error() {}, warn() {} }, URLSearchParams, Promise, Object, String, Math, Set, JSON,
     setInterval() {}, setTimeout: () => 0, clearTimeout() {},
     localStorage: { getItem: () => null, setItem() {} },
-    location: { search: '', host: 'manzochinaglia.github.io', pathname: '/JARVIS/' },
+    location: { search: lega ? '?lega=' + lega : '', host: 'manzochinaglia.github.io', pathname: '/JARVIS/' },
     document: { getElementById: id => nodi[id] || (nodi[id] = nodo()), querySelector: () => nodo(), querySelectorAll: () => [] },
     fetch: async url => {
       const f = url.split('?')[0], nome = f.replace(/^dati\//, '');
@@ -102,6 +102,22 @@ function salvaConsiglio(file, c, adesso) {
   fs.writeFileSync(file, JSON.stringify(reg));
 }
 
+/* le leghe di dati/leghe.json (senza il file: nessuna, si lavora sulla predefinita) */
+function leggiLeghe(repo = REPO) {
+  try { return JSON.parse(fs.readFileSync(path.join(repo, 'dati', 'leghe.json'), 'utf8')).leghe || []; } catch (e) { return []; }
+}
+/* un giro per ogni lega: la prima senza prefisso (come prima), le altre col proprio */
+async function mainTutte(opzioni = {}) {
+  const leghe = leggiLeghe(opzioni.repo || REPO);
+  if (leghe.length < 2) return main(opzioni);
+  const esiti = [];
+  for (const [i, l] of leghe.entries()) {
+    try { esiti.push(await main(Object.assign({}, opzioni, { lega: i === 0 ? null : l.id }))); }
+    catch (e) { console.log(`[notifiche] lega ${l.id} fallita: ${e.message}`); }
+  }
+  return esiti;
+}
+
 function leggiRegistro(file) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return { inviati: [] }; }
 }
@@ -147,11 +163,14 @@ async function ntfy(invia, argomento, a) {
 async function main({ argomento = process.env.NTFY_ARGOMENTO, iscrizione = process.env.PUSH_ISCRIZIONE,
                       chiave = process.env.PUSH_CHIAVE, prova = process.env.PROVA_NOTIFICHE === 'true',
                       invia = fetch, spedisci = spedisciPush, adesso = Date.now(),
-                      registro = REGISTRO, consigli, repo = REPO, dati = {} } = {}) {
-  const app = await appSuiDati({ repo, adesso, dati });
-  const lista = app.__avvisi();
+                      registro = REGISTRO, consigli, repo = REPO, dati = {}, lega = null } = {}) {
+  const app = await appSuiDati({ repo, adesso, dati, lega });
+  /* più leghe (07/10/2026): ogni lega ha i suoi consigli nella sua cartella e i suoi codici d'avviso
+     (prefisso «<lega>:»), così un avviso uguale in due leghe non si perde; il titolo dice quale */
+  const cfg = lega ? leggiLeghe(repo).find(l => l.id === lega) : null;
+  const lista = app.__avvisi().map(a => lega ? Object.assign({}, a, { id: lega + ':' + a.id, titolo: (cfg ? cfg.nome : lega) + ' · ' + a.titolo }) : a);
   const c = app.__consiglio();
-  if (c) salvaConsiglio(consigli || path.join(path.dirname(registro), 'consigli.json'), c, adesso);
+  if (c) salvaConsiglio(consigli || path.join(path.dirname(registro), cfg && cfg.cartella ? cfg.cartella : '', 'consigli.json'), c, adesso);
   const reg = leggiRegistro(registro), gia = new Set(reg.inviati || []);
   let nuovi = lista.filter(a => !gia.has(a.id));
   if (prova) nuovi.unshift({ id: 'prova-' + new Date(adesso).toISOString(), livello: 'info', titolo: 'Notifica di prova',
@@ -203,6 +222,6 @@ async function main({ argomento = process.env.NTFY_ARGOMENTO, iscrizione = proce
 
 if (require.main === module) {
   // le notifiche non devono mai far fallire il giro: i dati vanno salvati comunque
-  main().catch(e => console.log('[notifiche] fallito:', e.message));
+  mainTutte().catch(e => console.log('[notifiche] fallito:', e.message));
 }
-module.exports = { avvisiDellApp, appSuiDati, main, MASSIMO, opzioniPush, chiavePubblica, leggiIscrizione };
+module.exports = { avvisiDellApp, appSuiDati, main, mainTutte, MASSIMO, opzioniPush, chiavePubblica, leggiIscrizione };
