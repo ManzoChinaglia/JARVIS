@@ -1,6 +1,6 @@
 # Stato dei lavori — JARVIS
 
-(al 07/10/2026 sera)
+(al 07/10/2026 notte — tutto pushato, `6ef9631`; prove 330/330)
 
 ## MULTILEGA — cantiere aperto, URGENTE (prima giornata della nuova lega: 6ª di Serie A, ~10/10/2026)
 
@@ -40,7 +40,7 @@ corona e foglie d'alloro) in `archivio/qi/stemma.png`. Nomi di altre squadre/man
   il nome della lega); prova nuova «seconda lega». `aggiorna.py` non cambia (Serie A condivisa); `jarvis.ics` resta quello della prima lega.
 - CLAUDE.md: regola 1 a sette moduli e sezione multilega. Prove: app 327/329 (2 rosse di prima), notifiche 27/27, il resto verde.
 
-**Fatto il 07/10 notte (non committato):** BF: stemma = logo preso da Leghe (`img/stemma-bf.png`, 256 px), sfondo senza sfocatura sui due ritratti
+**Fatto il 07/10 notte (pushato):** BF: stemma = logo preso da Leghe (`img/stemma-bf.png`, 256 px), sfondo senza sfocatura sui due ritratti
 (volti del logo 256 px ingranditi e fusi in `img/sfondo.jpg`: morbidi, l'originale non è sul PC). QI: `img/sfondo-qi.jpg` con lo stemma, peperoncino infiammato al posto della ★,
 nome in rosa/azzurro chiari (`tema.nome_a/nome_b`) per leggersi. Selettore rifatto: fascia a vetro nei colori della lega + menu a schede. Tessere dei moduli più snelle.
 **Bug trovato e corretto:** con la difesa a 5 il modificatore toglieva solo il peggiore e dividendo per 4 la media usciva gonfiata (5-3-2 e 5-4-1 sempre consigliati): ora `treMigliori()` (3 migliori difensori). Prova nuova in `prove/app.js` (328/330, 2 rosse di prima).
@@ -50,7 +50,7 @@ nome in rosa/azzurro chiari (`tema.nome_a/nome_b`) per leggersi. Selettore rifat
 2. (fatto) `importa_lega.py --lega qi`: da provare sui file veri della prima giornata.
 3. RIFERIMENTO.md (multilega) e, se serve, `aggiorna.yml` (nessun passo nuovo: `git add dati/` copre `dati/qi/`).
 4. Prima partita: ricavare con `schiera.py --lega qi` la formazione di BOCA NDUJORS dalla giornata 1 (dopo la scadenza).
-5. Dopo l'ok dell'utente: commit, push (prima `git pull --rebase`, `apri`, prove, `chiudi`; 2 commit locali già in coda).
+5. (fatto) commit e push. Prossima sessione: consigli grafici proposti all'utente (tema di lega su barra/pulsanti, transizione e swipe nel selettore, pallino «da schierare» per lega, sfondi più nitidi se si trovano gli originali, griglia moduli a 7 colonne) — scegliere con lui, con mockup.
 **Attenzione:** dopo un `git pull` fare SEMPRE `node scripts/lucchetto.js apri` PRIMA di `chiudi`, altrimenti `chiudi`
 ricifra copie in chiaro vecchie sopra i file chiusi più nuovi (successo oggi con consigli.chiuso.json, ripristinato).
 

@@ -168,6 +168,17 @@ l'iPhone le riprende solo togliendo e rimettendo l'app sulla Home.
   pesare le tue abitudini sul consiglio si decide con l'autocalibrazione dei `PESI`.
 - **B5** «Il consiglio» a tutto schermo, con il riassunto nella Giornata.
 
+## Multilega (dal 07/10/2026)
+
+- `dati/leghe.json`: configurazione pubblica di ogni lega (moduli, `soglie_gol`, modificatore difesa, cartella dati, ids Leghe, tema, stemma). Le regole stanno qui, mai nel codice.
+- Cartelle: `dati/` = prima lega (BURKINA FASO), `dati/qi/` = Fantalega QI (BOCA NDUJORS). I dati da fonti pubbliche (Serie A, orari, infortuni) sono condivisi.
+- `scripts/lega_cfg.py`: legge `leghe.json` per gli script. `scripts/crea_lega.py <id>` rigenera la base di una lega da `archivio/qi/` (rosters, `rose-asta.csv`, `calendario.json`).
+- `--lega <id>` in `importa_lega.py`, `importa_formazioni.py`, `schiera.py` (senza l'opzione: prima lega).
+- `scripts/lucchetto.js`: `PROTETTI` per ogni cartella di lega (AAD della seconda lega: `qi/base.json`).
+- `scripts/notifiche.js`: `mainTutte()` fa un giro per lega (consigli in `dati/<lega>/consigli.json`, codici avvisi `qi:…`).
+- `index.html`: `applicaLega()` (moduli, soglie gol, fasce del modificatore, tema, nome squadra, stemma), `montaSelettoreLega()` (fascia in cima); la lega si sceglie da `?lega=` o da `localStorage` `jarvis-lega`.
+- Con la difesa a 5 il modificatore usa `treMigliori()` (3 migliori difensori).
+
 ## Totali attesi delle prove (al 23/09/2026)
 
 `prove/app.js` 329/329 (ovunque); `prove/lega.py` 34/34 sul PC (con `archivio/`), 31/31 su un clone
