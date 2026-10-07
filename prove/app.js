@@ -349,10 +349,10 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('una tessera per modulo, col totale atteso', (tessMod.match(/<button data-m=/g) || []).length === 7
            && Object.keys(t.MODULI).every(m => tessMod.includes('<b class="mn">' + m + '</b>')));
   verifica('«NO MOD.» sulle due con la difesa a tre, e solo lì', (tessMod.match(/NO MOD\./g) || []).length === 2
-           && /data-m="3-5-2" class=" tre"/.test(tessMod) && /data-m="3-4-3" class=" tre"/.test(tessMod));
+           && /data-m="3-5-2"[^>]*>(?:(?!<button)[\s\S])*?class="nomod"/.test(tessMod) && /data-m="3-4-3"[^>]*>(?:(?!<button)[\s\S])*?class="nomod"/.test(tessMod));
   const cons = t.moduloConsigliato(g), totali = Object.keys(t.MODULI).map(m => t.totaleModulo(g, m).tot);
   verifica('«consigliato» sul modulo che rende di più, uno solo', (tessMod.match(/class="cons"/g) || []).length === 1
-           && new RegExp('data-m="' + cons + '"[^>]*><i class="cons">').test(tessMod)
+           && new RegExp('data-m="' + cons + '"[^>]*><i class="cons"').test(tessMod)
            && t.totaleModulo(g, cons).tot >= Math.max(...totali) - 1e-9, cons + ' ' + totali.map(x => x.toFixed(1)).join(' / '));
   for (const m of ['3-5-2', '3-4-3']) {
     const u = t.undiciDi(t.mia, g, m), q = t.MODULI[m];
@@ -363,7 +363,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   }
   t.scegliModulo('3-5-2');
   verifica('scelto il 3-5-2: la tessera si accende e il campo ha tre difensori', t.modulo === '3-5-2'
-           && /data-m="3-5-2" class="on tre"/.test(el.modulo.innerHTML) && t.undici(g).D.length === 3);
+           && /data-m="3-5-2" class="on"/.test(el.modulo.innerHTML) && t.undici(g).D.length === 3);
   verifica('con la difesa a tre niente riassunto del modificatore', !/Fascia più probabile/.test(el.difesa.innerHTML));
   t.scegliModulo('4-3-3');
   verifica('scheda Chiedi tolta: niente pagina, niente risposte, niente microfono', !/id="s-chiedi"/.test(html)
@@ -604,7 +604,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
 
   console.log('\n26. Liquid Glass');
   verifica('intestazione normale: niente capsula che si stringe scorrendo (non piaceva)', !/body\.scorso|'scorso'/.test(html));
-  verifica('moduli a sette tessere (quattro per riga) di vetro (la lente da trascinare è tolta)', /\.moduli\{display:grid; grid-template-columns:repeat\(4,1fr\)/.test(html)
+  verifica('moduli a sette tessere (una riga sola) di vetro (la lente da trascinare è tolta)', /\.moduli\{display:grid; grid-template-columns:repeat\(7,1fr\)/.test(html)
            && !/moduli-cursore/.test(html) && /function scegliModulo/.test(html));
   verifica('pannelli di vetro staccati dai bordi', /\.foglio\{left:8px; right:8px/.test(html));
   verifica('pulsanti di vetro che si illuminano al tocco', /\.luce::after/.test(html) && /--gx/.test(html));
