@@ -32,6 +32,24 @@ LISTONE = os.path.join(DATI, 'listone.json')   # [{id, nome, squadra}, ...]
 UA = {'User-Agent': 'Jarvis/1.0 (uso personale; aggiornamento 3 volte al giorno)'}
 TIMEOUT = 30
 
+
+def get(url, **kw):
+    """requests.get con 3 tentativi sui guasti di rete (timeout, connessione): le fonti ogni tanto
+    non rispondono per un attimo (07/10)."""
+    for tentativo in range(3):
+        try:
+            return requests.get(url, headers=UA, timeout=TIMEOUT, **kw)
+        except (requests.Timeout, requests.ConnectionError):
+            if tentativo == 2:
+                raise
+            time.sleep(5)
+
+
+def guasto(e):
+    """Uscita del giro: un guasto di sola rete tiene i dati di prima e non fa fallire il job
+    (niente mail di errore a ogni timeout); ogni altro errore sì."""
+    return 0 if isinstance(e, requests.RequestException) else 1
+
 URL_INFORTUNI = 'https://www.fantacalcio-online.com/it/infortunati-serie-a'
 # probabili della singola giornata: media di quattro redazioni
 URL_GIORNATA = 'https://www.fantacalcio-online.com/it/serie-a/2026-2027/probabili-formazioni/{}-giornata'
@@ -144,7 +162,7 @@ def scrivi(percorso, contenuto, minimo, etichetta, n=None):
 def infortuni(listone):
     # la fonte ogni tanto risponde 404 per un attimo (23/09): fino a 3 tentativi
     for tentativo in range(3):
-        r = requests.get(URL_INFORTUNI, headers=UA, timeout=TIMEOUT)
+        r = get(URL_INFORTUNI)
         if r.status_code == 200 or tentativo == 2:
             break
         time.sleep(5)
@@ -203,7 +221,7 @@ def titolari(listone, n):
     Le squadre per cui nessuna redazione ha ancora pubblicato restano fuori:
     l'app le mostra come "probabili non ancora uscite" invece di indovinare.
     """
-    r = requests.get(URL_GIORNATA.format(n), headers=UA, timeout=TIMEOUT)
+    r = get(URL_GIORNATA.format(n))
     r.raise_for_status()
     soup = BeautifulSoup(r.text, 'lxml')
     titolo = soup.title.get_text(strip=True) if soup.title else ''
@@ -285,7 +303,7 @@ def orari(vecchie):
     giornata e' ufficiale solo se nessuna partita e' a mezzanotte. Per le altre
     non si salva nessun orario, perche' sarebbe inventato.
     """
-    r = requests.get(URL_ORARI, headers=UA, timeout=TIMEOUT)
+    r = get(URL_ORARI)
     r.raise_for_status()
 
     partite = {}
@@ -327,7 +345,7 @@ def orari(vecchie):
 def righe_con_id(url):
     """Righe della tabella principale di una pagina di fantacalcio.it: l'Id del
     listone viene dal link del giocatore (…/roma/svilar/5841), non dal nome."""
-    r = requests.get(url, headers=UA, timeout=TIMEOUT)
+    r = get(url)
     r.raise_for_status()
     tabella = BeautifulSoup(r.text, 'lxml').find('table')
     if not tabella:
@@ -428,7 +446,7 @@ def righe_voti(testo):
 def voti_giornata(n, url=URL_VOTI):
     """Voto e fantavoto della redazione Fantacalcio di ogni giocatore della giornata n di
     Serie A, per Id; url ha {} al posto della giornata (di norma la stagione in corso)."""
-    r = requests.get(url.format(n), headers=UA, timeout=TIMEOUT)
+    r = get(url.format(n))
     r.raise_for_status()
     return {x['id']: [x['voto'], x['fantavoto']] for x in righe_voti(r.text)}
 
@@ -486,7 +504,7 @@ def somma(righe):
 
 def moduli():
     """Modulo abituale di ogni squadra, dalla tabella delle formazioni tipo di stagione."""
-    r = requests.get(URL_SQUADRE_TIPO, headers=UA, timeout=TIMEOUT)
+    r = get(URL_SQUADRE_TIPO)
     r.raise_for_status()
     soup = BeautifulSoup(r.text, 'lxml')
     out = {}
@@ -505,9 +523,9 @@ def squadre(abituali):
     Le neopromosse non hanno la Serie A dell'anno scorso: al loro posto si usa la
     media delle tre retrocesse, segnata come stima.
     """
-    attuale = requests.get(URL_ORARI, headers=UA, timeout=TIMEOUT)
+    attuale = get(URL_ORARI)
     attuale.raise_for_status()
-    passata = requests.get(URL_PRECEDENTE, headers=UA, timeout=TIMEOUT)
+    passata = get(URL_PRECEDENTE)
     passata.raise_for_status()
     partite, vecchie = attuale.json(), passata.json()
     if len(vecchie) != 380 or any(m.get('HomeTeamScore') is None for m in vecchie):
@@ -619,14 +637,14 @@ def main():
         scrivi(os.path.join(DATI, 'infortuni.json'), infortuni(listone), 5, 'infortuni')
     except Exception as e:
         print('[infortuni] fallito:', e)
-        uscita = 1
+        uscita = max(uscita, guasto(e))
 
     percorso = os.path.join(DATI, 'orari.json')
     try:
         scrivi(percorso, orari(precedenti(percorso, 'giornate')), 38, 'orari')
     except Exception as e:
         print('[orari] fallito:', e)
-        uscita = 1
+        uscita = max(uscita, guasto(e))
 
     # i voti di ogni giornata finita: «com'è andata» e l'andamento dei giocatori.
     # Il file si riscrive solo se cambia qualcosa, per non fare un commit a ogni giro.
@@ -640,7 +658,7 @@ def main():
             print('[voti] niente di nuovo.')
     except Exception as e:
         print('[voti] fallito:', e)
-        uscita = 1
+        uscita = max(uscita, guasto(e))
 
     # le probabili della giornata che interessa la lega, secondo gli orari salvati
     try:
@@ -658,7 +676,7 @@ def main():
                 print('[titolari] né probabili né indisponibili per questa giornata: tengo il file precedente.')
     except Exception as e:
         print('[titolari] fallito:', e)
-        uscita = 1
+        uscita = max(uscita, guasto(e))
 
     percorso_st = os.path.join(DATI, 'statistiche.json')
     try:
@@ -669,7 +687,7 @@ def main():
             scrivi(percorso_st, st, 400, 'statistiche', n=len(st['giocatori']))
     except Exception as e:
         print('[statistiche] fallito:', e)
-        uscita = 1
+        uscita = max(uscita, guasto(e))
 
     # senza nessuna scadenza il file non si riscrive: l'iPhone cancellerebbe gli eventi
     try:
@@ -683,7 +701,7 @@ def main():
             print(f'[calendario] scritte {scadenze} scadenze.')
     except Exception as e:
         print('[calendario] fallito:', e)
-        uscita = 1
+        uscita = max(uscita, guasto(e))
 
     try:
         try:
@@ -694,7 +712,7 @@ def main():
         scrivi(os.path.join(DATI, 'squadre.json'), squadre(abituali), 20, 'squadre')
     except Exception as e:
         print('[squadre] fallito:', e)
-        uscita = 1
+        uscita = max(uscita, guasto(e))
 
     sys.exit(uscita)
 
