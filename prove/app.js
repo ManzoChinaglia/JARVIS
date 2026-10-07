@@ -606,6 +606,9 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('intestazione normale: niente capsula che si stringe scorrendo (non piaceva)', !/body\.scorso|'scorso'/.test(html));
   verifica('moduli a sette tessere (una riga sola) di vetro (la lente da trascinare è tolta)', /\.moduli\{display:grid; grid-template-columns:repeat\(7,1fr\)/.test(html)
            && !/moduli-cursore/.test(html) && /function scegliModulo/.test(html));
+  verifica('selettore di lega: cambio con sfumata e scorrimento del dito, nel verso giusto', /body\.lega-esce main/.test(html)
+           && /@keyframes lega-entra/.test(html) && /box\.addEventListener\('touchend'/.test(html) && /jarvis-verso/.test(html));
+  verifica('barra e pulsanti tinti coi colori di marca della lega', /nav\{[^}]*color-mix\(in srgb,var\(--tema-a\)/.test(html));
   verifica('pannelli di vetro staccati dai bordi', /\.foglio\{left:8px; right:8px/.test(html));
   verifica('pulsanti di vetro che si illuminano al tocco', /\.luce::after/.test(html) && /--gx/.test(html));
 

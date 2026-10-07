@@ -109,6 +109,11 @@
   .lega-chip::after, .lega-voce::after{content:''; position:absolute; inset:0; pointer-events:none;
         background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,0) 55%);}
   .lega-chip:active, .lega-voce:active{transform:scale(.98);}
+  /* cambio di lega: la pagina sfuma da una parte e rientra dall'altra, nel verso dello scorrimento */
+  body.lega-esce main{opacity:0; transform:translateX(calc(var(--verso,1) * -28px)); transition:opacity .2s ease-in, transform .2s ease-in;}
+  body.lega-entra main{animation:lega-entra .38s var(--morbida) both;}
+  @keyframes lega-entra{from{opacity:0; transform:translateX(calc(var(--verso,1) * 28px));} to{opacity:1; transform:none;}}
+  @media (prefers-reduced-motion:reduce){ body.lega-esce main{transition:none;} body.lega-entra main{animation:none;} }
   .lega-stemma{flex-shrink:0; width:38px; height:44px; filter:drop-shadow(0 3px 6px rgba(0,0,0,.55));}
   .lega-stemma svg{width:100%; height:100%; display:block;}
   .lega-testo{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
@@ -238,8 +243,9 @@
   .moduli .nomod{position:absolute; top:-6px; left:50%; transform:translateX(-50%); padding:1px 3px; border-radius:6px; white-space:nowrap;
                  font-style:normal; font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:8.5px; letter-spacing:.4px; line-height:1.15;
                  color:#BFDDF0; background:#1d3447; border:1px solid rgba(127,179,213,.45);}
-  .moduli .cons{position:absolute; top:-5px; right:-3px; width:15px; height:15px; border-radius:50%; font-style:normal; font-size:10px; font-weight:800;
-                line-height:15px; text-align:center; background:#43e08f; color:#0c2a19; box-shadow:0 2px 8px rgba(67,224,143,.4);}
+  .moduli .cons{position:absolute; top:-6px; left:50%; transform:translateX(-50%); padding:1px 4px; border-radius:6px; white-space:nowrap; z-index:1;
+                font-style:normal; font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:8.5px; letter-spacing:.3px; line-height:1.15;
+                color:#0c2a19; background:#43e08f; box-shadow:0 2px 8px rgba(67,224,143,.4);}
 
   /* ---- campo ---- */
   /* proporzioni di un campo vero, erba tagliata a strisce, luci da stadio */
@@ -1371,12 +1377,37 @@ function montaSelettoreLega(){
   const chiudi = ()=>{ menu.hidden = true; chip.setAttribute('aria-expanded','false'); };
   chip.onclick = e=>{ e.stopPropagation(); const apri = menu.hidden; menu.hidden = !apri; chip.setAttribute('aria-expanded', String(apri)); };
   if(document.addEventListener) document.addEventListener('click', e=>{ if(!menu.hidden && !menu.contains(e.target)) chiudi(); });
+  /* si cambia lega con un tocco sul menu o scorrendo il dito sulla fascia (a sinistra = la
+     lega dopo, a destra = quella prima); la pagina sfuma e la nuova rientra dal lato giusto */
+  const vai = (id, verso)=>{
+    if(id === LEGA.id){ chiudi(); return; }
+    try{ localStorage.setItem('jarvis-lega', id); sessionStorage.setItem('jarvis-verso', String(verso)); }catch(x){}
+    chiudi();
+    document.documentElement.style.setProperty('--verso', String(verso));
+    document.body.classList.remove('lega-entra'); document.body.classList.add('lega-esce');
+    setTimeout(()=>{ const u = new URL(location.href); u.searchParams.delete('lega'); location.href = u.toString(); }, 200);
+  };
   menu.onclick = e=>{
     const v = e.target.closest('.lega-voce'); if(!v) return;
-    if(v.dataset.id === LEGA.id){ chiudi(); return; }
-    try{ localStorage.setItem('jarvis-lega', v.dataset.id); }catch(x){}
-    const u = new URL(location.href); u.searchParams.delete('lega'); location.href = u.toString();
+    const i = tutte.findIndex(l=>l.id===v.dataset.id), j = tutte.findIndex(l=>l.id===LEGA.id);
+    vai(v.dataset.id, i > j ? 1 : -1);
   };
+  let sx = null, sy = 0;
+  box.addEventListener('touchstart', e=>{ sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive:true});
+  box.addEventListener('touchmove', e=>{
+    if(sx === null) return;
+    const dx = e.touches[0].clientX - sx;
+    if(Math.abs(dx) > Math.abs(e.touches[0].clientY - sy)) chip.style.transform = 'translateX('+Math.max(-34, Math.min(34, dx/2))+'px)';
+  }, {passive:true});
+  box.addEventListener('touchend', e=>{
+    chip.style.transform = '';
+    if(sx === null) return;
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
+    if(Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)*1.5) return;
+    const j = tutte.findIndex(l=>l.id===LEGA.id), n = tutte.length;
+    const k = dx < 0 ? (j + 1) % n : (j - 1 + n) % n;
+    vai(tutte[k].id, dx < 0 ? 1 : -1);
+  }, {passive:true});
 }
 async function carica(){
   const leggi = async (f, obbligatorio) => {
@@ -1398,6 +1429,8 @@ async function carica(){
   catch(e){ LEGHE = null; }
   applicaLega(sceltaLega());
   montaSelettoreLega();
+  try{ const v = sessionStorage.getItem('jarvis-verso'); if(v){ sessionStorage.removeItem('jarvis-verso');
+    document.documentElement.style.setProperty('--verso', v); document.body.classList.add('lega-entra'); } }catch(x){}
   const CL = LEGA.cartella || '';
   const pubblici = ['infortuni.json', 'titolari.json', 'orari.json', 'squadre.json', 'statistiche.json', 'voti.json', 'modello.json']
     .map(f=>leggi(f, false));
@@ -1965,7 +1998,7 @@ function renderModuli(g){
   const html = Object.keys(MODULI).map(m=>{
     const t = totaleModulo(g, m), tre = !conModificatore(m);
     return '<button data-m="'+m+'" class="'+(m===modulo ? 'on' : '')+'"'+(tre ? '' : '')+' aria-pressed="'+(m===modulo)+'">'+
-      (m===cons ? '<i class="cons" title="il più redditizio">✓</i>' : '')+disegnoModulo(MODULI[m])+
+      (m===cons ? '<i class="cons">CONSIGLIATA</i>' : '')+disegnoModulo(MODULI[m])+
       '<b class="mn">'+m+'</b><span class="mt">'+num(t.tot)+'</span>'+(tre ? '<i class="nomod">NO MOD.</i>' : '')+'</button>';
   }).join('');
   if(html !== moduliDisegnati){ moduliDisegnati = html; box.innerHTML = html; }
@@ -3845,7 +3878,7 @@ if(typeof window.addEventListener==='function'){
   let x0 = null, y0 = 0;
   document.querySelector('main').addEventListener('touchstart', e=>{
     const t = e.touches[0];
-    x0 = t.clientX > 24 && t.clientX < innerWidth - 24 && !e.target.closest('.campo, input, textarea, .moduli') ? t.clientX : null;
+    x0 = t.clientX > 24 && t.clientX < innerWidth - 24 && !e.target.closest('.campo, input, textarea, .moduli, .lega-box') ? t.clientX : null;
     y0 = t.clientY;
   }, {passive:true});
   document.querySelector('main').addEventListener('touchend', e=>{
