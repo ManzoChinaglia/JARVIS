@@ -234,8 +234,8 @@
   .moduli button.on .mn{color:var(--accento);}
   .moduli .mt{font-family:"Barlow Condensed",sans-serif; font-weight:600; font-size:12px; line-height:1; color:var(--dim);}
   .moduli button.on .mt{color:var(--ink);}
-  /* difesa a tre: niente modificatore. Una piccola etichetta sull'angolo in alto a sinistra (non copre i punti), così le tessere restano tutte uguali e compatte */
-  .moduli .nomod{position:absolute; top:-6px; left:3px; padding:1px 3px; border-radius:6px; white-space:nowrap;
+  /* difesa a tre: niente modificatore. Una piccola etichetta centrata sul bordo alto (non copre i punti), così le tessere restano tutte uguali e compatte */
+  .moduli .nomod{position:absolute; top:-6px; left:50%; transform:translateX(-50%); padding:1px 3px; border-radius:6px; white-space:nowrap;
                  font-style:normal; font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:8.5px; letter-spacing:.4px; line-height:1.15;
                  color:#BFDDF0; background:#1d3447; border:1px solid rgba(127,179,213,.45);}
   .moduli .cons{position:absolute; top:-5px; right:-3px; width:15px; height:15px; border-radius:50%; font-style:normal; font-size:10px; font-weight:800;
