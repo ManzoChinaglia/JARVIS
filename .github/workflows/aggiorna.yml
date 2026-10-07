@@ -16,13 +16,23 @@ on:
         type: boolean
         default: false
 
+# un giro alla volta: se GitHub ne ritarda uno (capita) non si accavalla col successivo
+concurrency:
+  group: aggiorna-jarvis
+  cancel-in-progress: false
+
 jobs:
   aggiorna:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      # ref: main = sempre l'ultimo commit, non quello del momento in cui il giro era stato
+      # messo in coda (il 05/10/2026 un giro ritardato di 17 ore ripartì da dati vecchi e
+      # andò in conflitto con quello già salvato)
       - uses: actions/checkout@v7
+        with:
+          ref: main
 
       - uses: actions/setup-node@v5
         with:
@@ -87,7 +97,13 @@ jobs:
             git config user.email "jarvis@users.noreply.github.com"
             git add dati/
             git commit -m "Aggiornamento dati $(date -u +'%Y-%m-%d %H:%M')"
-            git pull --rebase && git push || { sleep 5; git pull --rebase && git push; }
+            git pull --rebase && git push || { sleep 5; git pull --rebase && git push; } || {
+              # conflitto: nel frattempo è arrivato un salvataggio più recente. Non è un
+              # errore: si lascia quello e il prossimo giro riparte da lì.
+              git rebase --abort || true
+              git reset --hard origin/main
+              echo "::warning::Salvataggio saltato: dati già aggiornati da un altro giro."
+            }
           else
             echo "Nessuna variazione: niente da salvare."
           fi
