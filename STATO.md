@@ -47,8 +47,10 @@ nome in rosa/azzurro chiari (`tema.nome_a/nome_b`) per leggersi. Selettore rifat
 
 **Fatto l'08/10:** stemma QI nitido (originale 1600 px ritagliato dal marmo: `archivio/qi/stemma-originale.png` e `stemma-ritagliato.png`, solo PC), `img/sfondo-qi.jpg` e `img/stemma-qi.png` rifatti (approvati dall'utente). `aggiorna.py`: `get()` con 3 tentativi sui timeout e `guasto()` (un guasto di sola rete non fa fallire il job: era la causa delle mail di errore, fixturedownload.com in timeout). Controllo job: `aggiorna.yml` copre già le due leghe (Serie A condivisa; titolari dal calendario della prima lega, che include tutte le giornate della seconda; `jarvis.ics` = stesse scadenze; notifiche per lega; `git add dati/` copre `dati/qi/`).
 
+**Fatto l'08/10 (grafica, approvata dall'utente):** tessere dei moduli su una riga (7), tutte uguali; «NO MOD.» (blu) e «CONSIGLIATA» (verde) come pillole sul bordo alto; peperoncino QI ridisegnato con fiamme animate; stella del Burkina sfaccettata (`STELLA`); barra e pulsanti di vetro tinti coi colori di marca (`--tema-a/b`, `color-mix`); selettore di lega con sfumata e swipe (`vai()`, `--verso`, `jarvis-verso`). Scartato: pallino «da schierare» per lega (stesse scadenze, formazione non visibile prima della giornata). Prove: app 332/332.
+
 **Da fare, in ordine:**
-1. Decidere con l'utente sfondo/simbolo del tema QI (mockup) e guardare i 7 moduli (tessere 4 per riga).
+1. (fatto 08/10) tema QI e 7 moduli.
 2. (fatto) `importa_lega.py --lega qi`: da provare sui file veri della prima giornata.
 3. RIFERIMENTO.md (multilega) e, se serve, `aggiorna.yml` (nessun passo nuovo: `git add dati/` copre `dati/qi/`).
 4. Prima partita: ricavare con `schiera.py --lega qi` la formazione di BOCA NDUJORS dalla giornata 1 (dopo la scadenza).
