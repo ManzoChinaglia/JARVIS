@@ -1,6 +1,48 @@
 # Stato dei lavori — JARVIS
 
-(al 26/09/2026)
+(al 07/10/2026 sera)
+
+## MULTILEGA — cantiere aperto, URGENTE (prima giornata della nuova lega: 6ª di Serie A, ~10/10/2026)
+
+**Decisioni dell'utente (07/10):** una sola app con selettore di lega; il Burkina abilita anche i moduli
+con difesa a 5 (5-3-2, 5-4-1) → ora **7 moduli** per entrambe; oro e liquid glass restano, cambiano
+logo/colori di marca (tema bordeaux/blu/oro dallo stemma di BOCA NDUJORS: da decidere insieme, con mockup);
+repo pubblico + lucchetto: si resta così (Pages è pubblico anche con repo privato, il lucchetto servirebbe
+comunque; da verificare i piani GitHub solo se l'utente lo chiede). Le regole della nuova lega **possono
+ancora cambiare** (l'utente è admin per la prima volta; «switch Plus» da lui già disattivato) → tutto in
+`dati/leghe.json`, mai nel codice.
+
+**La nuova lega:** Fantalega QI (Leghe, id 886465, slug `fantalega-qi`), competizione «QI VINCE?», 10 squadre,
+la squadra dell'utente è **BOCA NDUJORS** (I Piccanti). Classic, 500 crediti, rosa 3/8/8/6, panchina 14 libera,
+dalla 6ª alla 38ª di Serie A (33 giornate lega, calendario all'italiana), 3-1-0, nessun fattore campo,
+modificatore difesa uguale al Burkina (≥4 difensori, portiere incluso), bonus/malus standard.
+**Soglie gol: 66, 72, 76, 80, 84… (+4)** (non più «66 + passo 5»). Stemma: PNG 256×256 (bordeaux/blu/oro,
+corona e foglie d'alloro) in `archivio/qi/stemma.png`. Nomi di altre squadre/manager: MAI in file pubblici.
+
+**Fatto (commit locale `6b55825`, NON pushato):**
+- `dati/leghe.json` (config pubblica: moduli, soglie_gol, modificatore, cartella, ids Leghe) e `scripts/lega_cfg.py`.
+- Prima lega = `dati/` come prima; nuova lega = `dati/qi/` (base.json già creata e **chiusa**: `dati/qi/base.chiuso.json`,
+  250 giocatori con Id, calendario 33 giornate). `scripts/crea_lega.py <id>` la rigenera da `archivio/qi/`
+  (rosters xlsx, rose-asta.csv per gli Id, calendario.json: letto dalla pagina perché «Scarica ora» non scarica).
+- `lucchetto.js`: PROTETTI per ogni cartella di lega (AAD = `qi/base.json`).
+- `index.html`: `applicaLega()` (moduli, soglie gol, fasce modificatore, tema `--tema-a/--tema-b/--sfondo`,
+  nome squadra, stemma da `LEGA.stemma`), scelta lega da `?lega=` o `localStorage 'jarvis-lega'`, caricamento per cartella,
+  7 moduli (tessere 4 per riga: **da vedere su mockup**). `prove/app.js` 327/329 (le 2 rosse c'erano già: date delle prove).
+- Fix workflow job falliti (08/10…): checkout `ref: main`, concurrency, conflitto di salvataggio = avviso, non errore (`8d40d0d`, pushato).
+
+**Da fare, in ordine:**
+1. Selettore di lega in cima (mockup approvato 23/09: artifact `jarvis_switcher_lega`) che salva `jarvis-lega` e ricarica.
+2. Tema/stemma di QI in `leghe.json` (`tema:{a,b,sfondo,simbolo}`, `stemma:"img/stemma-qi.png"` ridotto), con mockup.
+3. Verificare l'app con `?lega=qi` (preview) e la grafica dei 7 moduli.
+4. Script di import per lega: **delegato al locale** (importa_lega/importa_formazioni/schiera con `--lega`, in
+   `~/cantieri-locale/JARVIS-*`, esito non ancora arrivato): controllare con `prove/lega.py` e `prove/formazioni.py`.
+5. `aggiorna.py`/`notifiche.js`/`aggiorna.yml`: giro per tutte le leghe (consigli per lega, codici avvisi con la lega).
+6. Aggiornare CLAUDE.md (regola 1: moduli a 7, difesa a 5 col modificatore; regola 7 e struttura per più leghe) e RIFERIMENTO.md.
+7. Dopo l'ok dell'utente: push (prima `git pull --rebase`, `apri`, prove, `chiudi`).
+**Attenzione:** dopo un `git pull` fare SEMPRE `node scripts/lucchetto.js apri` PRIMA di `chiudi`, altrimenti `chiudi`
+ricifra copie in chiaro vecchie sopra i file chiusi più nuovi (successo oggi con consigli.chiuso.json, ripristinato).
+
+## Storico recente
 
 **Fatto il 26/09: riquadro «In lega» (Stagione) sistemato.** Le cifre «0V 1N 0P · gol 1-1»
 stavano sulla stessa riga dei pallini e finivano sotto il grafico: ora sono una riga a parte,
