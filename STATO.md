@@ -1,6 +1,6 @@
 # Stato dei lavori — JARVIS
 
-(al 07/10/2026 notte — tutto pushato, `6ef9631`; prove 330/330)
+(al 08/10/2026 — tutto pushato; prove 330/330)
 
 ## MULTILEGA — cantiere aperto, URGENTE (prima giornata della nuova lega: 6ª di Serie A, ~10/10/2026)
 
@@ -44,6 +44,8 @@ corona e foglie d'alloro) in `archivio/qi/stemma.png`. Nomi di altre squadre/man
 (volti del logo 256 px ingranditi e fusi in `img/sfondo.jpg`: morbidi, l'originale non è sul PC). QI: `img/sfondo-qi.jpg` con lo stemma, peperoncino infiammato al posto della ★,
 nome in rosa/azzurro chiari (`tema.nome_a/nome_b`) per leggersi. Selettore rifatto: fascia a vetro nei colori della lega + menu a schede. Tessere dei moduli più snelle.
 **Bug trovato e corretto:** con la difesa a 5 il modificatore toglieva solo il peggiore e dividendo per 4 la media usciva gonfiata (5-3-2 e 5-4-1 sempre consigliati): ora `treMigliori()` (3 migliori difensori). Prova nuova in `prove/app.js` (328/330, 2 rosse di prima).
+
+**Fatto l'08/10:** stemma QI nitido (originale 1600 px ritagliato dal marmo: `archivio/qi/stemma-originale.png` e `stemma-ritagliato.png`, solo PC), `img/sfondo-qi.jpg` e `img/stemma-qi.png` rifatti (approvati dall'utente). `aggiorna.py`: `get()` con 3 tentativi sui timeout e `guasto()` (un guasto di sola rete non fa fallire il job: era la causa delle mail di errore, fixturedownload.com in timeout). Controllo job: `aggiorna.yml` copre già le due leghe (Serie A condivisa; titolari dal calendario della prima lega, che include tutte le giornate della seconda; `jarvis.ics` = stesse scadenze; notifiche per lega; `git add dati/` copre `dati/qi/`).
 
 **Da fare, in ordine:**
 1. Decidere con l'utente sfondo/simbolo del tema QI (mockup) e guardare i 7 moduli (tessere 4 per riga).
