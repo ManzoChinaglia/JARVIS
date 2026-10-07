@@ -28,7 +28,15 @@ const { webcrypto } = require('crypto');
 const subtle = webcrypto.subtle;
 
 const DATI = path.join(__dirname, '..', 'dati');
-const PROTETTI = ['base.json', 'lega.json', 'consigli.json', 'formazioni.json'];
+/* i quattro file di ogni lega (multi-lega, 07/10/2026): la prima sta in dati/, le altre in
+   dati/<cartella>/ come da dati/leghe.json; il nome con la cartella ('qi/base.json') è anche
+   il dato associato della cifratura, così un file di una lega non si spaccia per un altro */
+const FILE_LEGA = ['base.json', 'lega.json', 'consigli.json', 'formazioni.json'];
+const cartelleLeghe = () => {
+  try { return JSON.parse(fs.readFileSync(path.join(DATI, 'leghe.json'), 'utf8')).leghe.map(l => l.cartella); }
+  catch (e) { return ['']; }
+};
+const PROTETTI = cartelleLeghe().flatMap(c => FILE_LEGA.map(n => c + n));
 const ITERAZIONI = 600000;          // PBKDF2-SHA256, la soglia raccomandata da OWASP nel 2023
 const LUNGHEZZA_MINIMA = 12;        // i file chiusi restano pubblici per sempre: niente password corte
 const PROVA = 'jarvis';

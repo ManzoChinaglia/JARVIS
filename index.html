@@ -37,6 +37,9 @@
     /* bandiera del Burkina Faso: rosso sopra, verde sotto, stella gialla */
     --bf-rosso:#EF2B2D; --bf-verde:#009E49; --bf-stella:#FCD116;
     --accento:var(--bf-stella);   /* accento principale: il giallo della stella */
+    /* tema della lega (multi-lega, 07/10/2026): i due colori «di marca» e lo sfondo cambiano per
+       lega (applicaLega); verde/rosso/giallo con un significato (forma, esiti) restano --bf-* */
+    --tema-a:var(--bf-rosso); --tema-b:var(--bf-verde); --sfondo:url("img/sfondo.jpg");
     --oro:#E4B451; --oro-chiaro:#F7D98B;
     --rosso:#E0605C;
     --verde:#71C295;
@@ -62,7 +65,7 @@
      due ritratti sono sfocati; Re Guyzo, in basso, è anche l'icona dell'app. Si muove
      pianissimo, come se respirasse; il velo scuro sopra tiene leggibile il testo. */
   body::before{content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
-               background:url("img/sfondo.jpg") center/cover no-repeat;
+               background:var(--sfondo) center/cover no-repeat;
                animation:respira 26s ease-in-out infinite alternate;}
   body::after{content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
               background:linear-gradient(180deg,rgba(8,10,9,.86) 0%,rgba(8,10,9,.74) 30%,
@@ -130,8 +133,8 @@
   .stemmino .stemma{width:100%; height:100%; filter:drop-shadow(0 6px 12px rgba(0,0,0,.55));}
   .mia, .loro{font-family:"Barlow Condensed",sans-serif; font-weight:700; line-height:.95;}
   /* la tua squadra nei colori della bandiera: rosso sopra, verde sotto, stella gialla */
-  .mia{font-size:38px; color:var(--bf-rosso);
-       background:linear-gradient(180deg,var(--bf-rosso) 0 50%,var(--bf-verde) 50% 100%);
+  .mia{font-size:38px; color:var(--tema-a);
+       background:linear-gradient(180deg,var(--tema-a) 0 50%,var(--tema-b) 50% 100%);
        -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
        filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));}
   .mia .stella{display:inline-block; -webkit-text-fill-color:var(--bf-stella); color:var(--bf-stella);
@@ -176,7 +179,7 @@
   .modrow h2{margin:0 2px;}
   /* cinque tessere di vetro: la formazione disegnata coi colori dei ruoli, il totale atteso
      (fantavoto più modificatore) e «consigliato» sul modulo che rende di più */
-  .moduli{display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:14px;}
+  .moduli{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:14px;}
   .moduli button{position:relative; display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0;
                  padding:14px 2px 8px; border-radius:14px; color:var(--ink);
                  background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.02)), rgba(255,255,255,.04);
@@ -247,7 +250,7 @@
   .sf-vs{font-size:13px; letter-spacing:.2em; color:var(--oro);}
   .sf-barra{height:8px; margin:13px 0 8px; border-radius:4px; background:rgba(255,255,255,.12); overflow:hidden;}
   .sf-barra i{display:block; height:100%; border-radius:4px; transform-origin:left; animation:cresce 1s var(--morbida) both;
-              background:linear-gradient(90deg,var(--bf-rosso),var(--bf-verde));}
+              background:linear-gradient(90deg,var(--tema-a),var(--tema-b));}
   .sf-verdetto{margin:0 0 10px; text-align:center; font-size:13.5px;}
   .sf-barra.tre{display:flex; gap:2px; background:none;}
   .sf-barra.tre i{border-radius:0;}
@@ -367,7 +370,7 @@
   .barretta i{display:block; height:100%; border-radius:2px; transform-origin:left; animation:cresce 1s var(--morbida) both;
               background:linear-gradient(90deg,rgba(228,180,81,.35),var(--oro));}
   .team.io .nome, .team.io .pos{color:var(--accento); font-weight:600;}
-  .team.io .barretta i{background:linear-gradient(90deg,var(--bf-rosso),var(--bf-verde));}
+  .team.io .barretta i{background:linear-gradient(90deg,var(--tema-a),var(--tema-b));}
   /* freccia dei posti guadagnati o persi rispetto alla giornata precedente (22/09/2026) */
   .cl-mov{display:inline-flex; align-items:center; gap:1px; margin-left:2px; padding:1px 5px; border-radius:8px;
           font-size:10.5px; font-weight:700; font-variant-numeric:tabular-nums;}
@@ -1055,7 +1058,7 @@
       <div class="gg" id="gg"></div>
       <div class="squadra">
         <span class="stemmino" id="mio-stemma"></span>
-        <div class="mia cond">BURKINA FASO<span class="stella" aria-hidden="true">★</span></div>
+        <div class="mia cond"><span id="mia-nome">BURKINA FASO</span><span class="stella" id="mia-stella" aria-hidden="true">★</span></div>
       </div>
       <div class="vs-riga" id="vs-riga"><span class="vs cond" id="vs">VS</span><span class="vs-linea"></span></div>
       <div class="squadra">
@@ -1162,6 +1165,7 @@
 <script>
 let D=null, players=[], mia=[];
 let ME='';
+let LEGHE=null, LEGA=null;
 const RUOLI = {P:'Portiere', D:'Difensore', C:'Centrocampista', A:'Attaccante'};
 const ORD = {P:0, D:1, C:2, A:3};
 
@@ -1171,7 +1175,8 @@ const ORD = {P:0, D:1, C:2, A:3};
    stessa cifratura di scripts/lucchetto.js: la chiave viene dalla password (PBKDF2) e
    resta su questo telefono, la password no. Senza dati/lucchetto.json tutto in chiaro,
    come prima (e come nelle prove). */
-const PROTETTI = ['base.json', 'lega.json', 'consigli.json', 'formazioni.json'];
+const PROTETTI = ['base.json', 'lega.json', 'consigli.json', 'formazioni.json'];   // i file di ogni lega (la cartella si aggiunge: 'qi/base.json')
+const eProtetto = f => PROTETTI.includes(f.replace(/^.*\//, ''));
 const chiusoDi = n => n.replace(/\.json$/, '.chiuso.json');
 let LUCCHETTO = null, CHIAVE = null, sblocca = null;
 const byteDa64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
@@ -1238,10 +1243,48 @@ function chiediPassword(lk){
 const dopoIlPrimoDisegno = f => typeof requestIdleCallback === 'function'
   ? requestIdleCallback(f, {timeout: 1500}) : setTimeout(f, 0);
 
+/* ---------- le leghe (multi-lega, 07/10/2026) ----------
+   dati/leghe.json elenca le leghe: ognuna ha la sua cartella con i quattro file di lega
+   (base, lega, consigli, formazioni: «'' » per la prima, «qi/» per la seconda), le sue
+   regole (moduli, soglie dei gol, fasce del modificatore) e il suo tema. I dati di Serie A
+   (voti, orari, infortuni…) sono uno solo. Si cambia lega dal selettore: si salva la scelta
+   e si riapre l'app, così nessuno stato resta in giro. Senza dati/leghe.json: la prima lega. */
+const LEGA_PREDEFINITA = {id:'bf', nome:'Rivoluzione Fantacalcio', squadra:'BURKINA FASO', cartella:'', squadre:10,
+  moduli:['4-3-3','4-4-2','4-5-1','3-5-2','3-4-3','5-3-2','5-4-1'], soglie_gol:[66,71,76,81,86,91,96,101,106,111],
+  modificatore:[[7,6],[6.75,4.5],[6.5,3],[6.25,2],[6,1]]};
+function sceltaLega(){
+  let id = null;
+  try{ id = new URLSearchParams(location.search).get('lega') || localStorage.getItem('jarvis-lega'); }catch(e){}
+  const tutte = LEGHE && LEGHE.leghe && LEGHE.leghe.length ? LEGHE.leghe : [LEGA_PREDEFINITA];
+  return tutte.find(l=>l.id===id) || tutte.find(l=>l.id===(LEGHE && LEGHE.predefinita)) || tutte[0];
+}
+function applicaLega(cfg){
+  LEGA = Object.assign({}, LEGA_PREDEFINITA, cfg);
+  Object.keys(MODULI).forEach(m=>{ delete MODULI[m]; });
+  LEGA.moduli.filter(m=>TUTTI_MODULI[m]).forEach(m=>{ MODULI[m] = TUTTI_MODULI[m]; });
+  MODULI_4.length = 0; Object.keys(MODULI).filter(conModificatore).forEach(m=>MODULI_4.push(m));
+  if(!MODULI[modulo]) modulo = MODULI['4-3-3'] ? '4-3-3' : Object.keys(MODULI)[0];
+  SOGLIE_GOL.length = 0; LEGA.soglie_gol.forEach(x=>SOGLIE_GOL.push(x));
+  MODIFICATORE.length = 0; LEGA.modificatore.forEach(x=>MODIFICATORE.push(x));
+  M_SOGLIE.length = 0; M_BONUS.length = 0;
+  MODIFICATORE.forEach(x=>{ M_SOGLIE.push(x[0]); M_BONUS.push(x[1]); });
+  /* il tema: due colori di marca, lo sfondo, il simbolo accanto al nome (l'oro e il vetro restano) */
+  const t = LEGA.tema;
+  if(t && document.documentElement && document.documentElement.style){
+    const st = document.documentElement.style;
+    if(t.a) st.setProperty('--tema-a', t.a);
+    if(t.b) st.setProperty('--tema-b', t.b);
+    if(t.sfondo) st.setProperty('--sfondo', 'url("'+t.sfondo+'")');
+  }
+  const nome = document.getElementById('mia-nome'), stella = document.getElementById('mia-stella');
+  if(nome) nome.textContent = LEGA.squadra;
+  if(stella) stella.style.display = t && t.simbolo === '' ? 'none' : '';
+  if(stella && t && t.simbolo) stella.textContent = t.simbolo;
+}
 async function carica(){
   const leggi = async (f, obbligatorio) => {
     try{
-      const chiuso = !!LUCCHETTO && PROTETTI.includes(f);
+      const chiuso = !!LUCCHETTO && eProtetto(f);
       const r = await fetch('dati/'+(chiuso ? chiusoDi(f) : f)+'?cb='+Date.now(), {cache:'no-store'});
       if(!r.ok) throw new Error(r.status);
       const j = await r.json();
@@ -1254,13 +1297,17 @@ async function carica(){
   /* i file si leggono tutti insieme, non uno dopo l'altro (17/09/2026): misurato con 80 ms
      di rete per file, come sul telefono, gli 11 file in fila costavano ~1 secondo, insieme
      ~0,2. Quelli pubblici partono subito; quelli chiusi appena c'è la chiave. */
+  try{ const rl = await fetch('dati/leghe.json?cb='+Date.now(), {cache:'no-store'}); LEGHE = rl.ok ? await rl.json() : null; }
+  catch(e){ LEGHE = null; }
+  applicaLega(sceltaLega());
+  const CL = LEGA.cartella || '';
   const pubblici = ['infortuni.json', 'titolari.json', 'orari.json', 'squadre.json', 'statistiche.json', 'voti.json', 'modello.json']
     .map(f=>leggi(f, false));
   /* il lucchetto: senza dati/lucchetto.json tutto in chiaro, come prima */
   LUCCHETTO = await leggi('lucchetto.json', false);
   if(LUCCHETTO && !CHIAVE) CHIAVE = await chiaveSalvata(LUCCHETTO) || await chiediPassword(LUCCHETTO);
-  const [base, lg, cs, fz] = await Promise.all([leggi('base.json', true), leggi('lega.json', false), leggi('consigli.json', false),
-                                                leggi('formazioni.json', false)]);
+  const [base, lg, cs, fz] = await Promise.all([leggi(CL+'base.json', true), leggi(CL+'lega.json', false), leggi(CL+'consigli.json', false),
+                                                leggi(CL+'formazioni.json', false)]);
   const [inf, tit, ora, sq, st, vt, md] = await Promise.all(pubblici);
 
   D = base;
@@ -1275,7 +1322,7 @@ async function carica(){
   D.formazioni = fz && fz.giornate ? fz.giornate : null;
   /* il modello del fantavoto atteso (scripts/modello.py): senza, resta il calcolo di prima */
   D.mod = md && md.versione===1 && md.fantavoto && md.voto && md.giocatori ? md : null;
-  D.lega  = lg && lg.classifica && lg.classifica.length===10 ? lg : null;
+  D.lega  = lg && lg.classifica && lg.classifica.length===LEGA.squadre ? lg : null;
   D.inf_v = inf && inf.aggiornato ? inf.aggiornato.slice(0,10) : null;
   D.tit_v = tit && tit.aggiornato ? tit.aggiornato.slice(0,10) : null;
   D.inf_t = inf && inf.aggiornato || null;
@@ -1417,11 +1464,14 @@ function renderGiornata(){
 
 /* con la difesa a tre il modificatore non scatta: nella lega vale solo con quattro difensori
    (confermato dall'utente il 21/09/2026) */
-const MODULI = {'4-3-3':{D:4,C:3,A:3}, '4-4-2':{D:4,C:4,A:2}, '4-5-1':{D:4,C:5,A:1}, '3-5-2':{D:3,C:5,A:2}, '3-4-3':{D:3,C:4,A:3}};
+const TUTTI_MODULI = {'4-3-3':{D:4,C:3,A:3}, '4-4-2':{D:4,C:4,A:2}, '4-5-1':{D:4,C:5,A:1}, '3-5-2':{D:3,C:5,A:2}, '3-4-3':{D:3,C:4,A:3},
+                      '5-3-2':{D:5,C:3,A:2}, '5-4-1':{D:5,C:4,A:1}};
+/* i moduli ammessi dalla lega (applicaLega li rimette qui, nello stesso oggetto) */
+const MODULI = Object.assign({}, TUTTI_MODULI);
 const conModificatore = mod => MODULI[mod] && MODULI[mod].D >= 4;
 /* per i conti che non simulano il modificatore (il migliore a posteriori, il mercato) solo
    la difesa a quattro: senza il modificatore la difesa a tre sembrerebbe sempre meglio */
-const MODULI_4 = Object.keys(MODULI).filter(conModificatore);
+const MODULI_4 = Object.keys(MODULI).filter(conModificatore);   // con la difesa a 4 o più (come dice Leghe: «almeno 4 difensori»)
 let modulo = '4-3-3';
 let campoDisegnato = '';
 
@@ -1519,7 +1569,7 @@ function fmStimata(p){
      singolo, conta dove finisce la media del blocco.
    Per questo la difesa non si sceglie più uno a uno, ma a blocco: vedi
    bloccoDifensivo(). */
-const MODIFICATORE = [[7, 6], [6.75, 4.5], [6.5, 3], [6.25, 2], [6, 1]];
+const MODIFICATORE = [[7, 6], [6.75, 4.5], [6.5, 3], [6.25, 2], [6, 1]];   // fasce della lega (dati/leghe.json → modificatore)
 /* la tabella sopra resta l'unica fonte di verità; da lei si ricavano una volta due
    liste piatte, perché nel giro delle simulazioni la fascia si cerca centinaia di
    migliaia di volte e l'accesso annidato lì si sente */
@@ -2118,7 +2168,7 @@ function coloreSquadra(nome){
 }
 function stemma(nome){
   const dentro = nome===ME
-    ? '<image href="img/icona-180.png" x="-3" y="0" width="46" height="46" preserveAspectRatio="xMidYMid slice" clip-path="url(#scudo)"/>'
+    ? '<image href="'+(LEGA && LEGA.stemma || 'img/icona-180.png')+'" x="-3" y="0" width="46" height="46" preserveAspectRatio="xMidYMid slice" clip-path="url(#scudo)"/>'
     : '<path d="'+SCUDO+'" fill="'+coloreSquadra(nome)+'"/><path d="'+SCUDO+'" fill="url(#luce)"/>'+
       '<text x="20" y="28" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="15" fill="#fff">'+
       sigla(nome)+'</text>';
@@ -2148,8 +2198,17 @@ function sfidaDati(g){
    due difese dai voti del suo blocco; i gol con le fasce della lega (golDa). Solo col
    modello: senza, niente probabilità e resta il verdetto «sulla carta». Si suppone che
    giochino tutti gli undici: la titolarità resta nel consiglio, qui no. */
-const REGOLE_GOL = {primo: 66, passo: 5};      // impostazioni della lega su Leghe: 1° gol a 66, poi uno ogni 5 (verificato dall'utente il 15/09/2026)
-function golDa(tot){ return tot < REGOLE_GOL.primo ? 0 : 1 + Math.floor((tot - REGOLE_GOL.primo)/REGOLE_GOL.passo); }
+/* le soglie dei gol della lega (impostazioni su Leghe), una per gol; oltre l'ultima si prosegue col
+   suo stesso passo. Burkina Faso: 66 e poi ogni 5 (verificato dall'utente il 15/09/2026). Si
+   cambiano con applicaLega (dati/leghe.json → soglie_gol). */
+const SOGLIE_GOL = [66, 71, 76, 81, 86, 91, 96, 101, 106, 111];
+function golDa(tot){
+  let n = 0;
+  while(n < SOGLIE_GOL.length && tot >= SOGLIE_GOL[n]) n++;
+  const L = SOGLIE_GOL.length;
+  if(n === L && L > 1) n += Math.floor((tot - SOGLIE_GOL[L-1])/(SOGLIE_GOL[L-1] - SOGLIE_GOL[L-2]));
+  return n;
+}
 let CAMPIONI_FV = {}, SFIDE = {};
 /* fantavoti simulati di un giocatore: voto (arrotondato a mezzi punti, come esce) più i
    bonus, con media e ampiezza che rendono giusti il fantavoto atteso e il suo ballo */

@@ -333,15 +333,15 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('file sospetto (meno di 400 giocatori): restano quelle di base.json', P(d1).pgv === base.p.find(a => a[0] === d1)[7]);
 
   console.log('\n12. Siri non si usa');
-  verifica('niente più domanda dall\'indirizzo (?q=), tolta nella pulizia', !/domandaDaIndirizzo|location\.search/.test(html));
+  verifica('niente più domanda dall\'indirizzo (?q=), tolta nella pulizia', !/domandaDaIndirizzo|get\('q'\)/.test(html));
 
   console.log('\n13. Cinque moduli, e «Chiedi» non c\'è più');
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': prob5, 'squadre.json': null, 'infortuni.json': null } }));
   g = t.prossima();
-  verifica('cinque moduli: i tre con la difesa a quattro, più 3-5-2 e 3-4-3', Object.keys(t.MODULI).join() === '4-3-3,4-4-2,4-5-1,3-5-2,3-4-3'
+  verifica('sette moduli (dal 07/10/2026 anche 5-3-2 e 5-4-1): i tre con la difesa a quattro, 3-5-2, 3-4-3 e i due a cinque', Object.keys(t.MODULI).join() === '4-3-3,4-4-2,4-5-1,3-5-2,3-4-3,5-3-2,5-4-1'
            && Object.values(t.MODULI).every(q => 1 + q.D + q.C + q.A === 11));
   const tessMod = el.modulo.innerHTML;
-  verifica('una tessera per modulo, col totale atteso', (tessMod.match(/<button data-m=/g) || []).length === 5
+  verifica('una tessera per modulo, col totale atteso', (tessMod.match(/<button data-m=/g) || []).length === 7
            && Object.keys(t.MODULI).every(m => tessMod.includes('<b class="mn">' + m + '</b>')));
   verifica('«NO MOD.» sulle due con la difesa a tre, e solo lì', (tessMod.match(/NO MOD\./g) || []).length === 2
            && /data-m="3-5-2" class=" tre"/.test(tessMod) && /data-m="3-4-3" class=" tre"/.test(tessMod));
@@ -385,7 +385,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const sfondo = path.join(REPO, 'img', 'sfondo.jpg');
   verifica('sfondo: lo stemma intero, leggero per l\'iPhone', fs.existsSync(sfondo) && fs.statSync(sfondo).size < 400000
            && /url\("img\/sfondo.jpg"\)/.test(html), fs.existsSync(sfondo) ? Math.round(fs.statSync(sfondo).size / 1024) + ' KB' : 'manca');
-  verifica('Re Guyzo anche dentro l\'app (stemma)', /<image href="img\/icona-180.png"/.test(html));
+  verifica('Re Guyzo anche dentro l\'app (stemma)', /<image href="'\+\(LEGA && LEGA\.stemma \|\| 'img\/icona-180\.png'\)/.test(html));
 
   console.log('\n16. Avvisi');
   // venerdì 18 settembre alle 10: scadenza alle 20:30 e un tuo difensore squalificato
@@ -599,7 +599,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
 
   console.log('\n26. Liquid Glass');
   verifica('intestazione normale: niente capsula che si stringe scorrendo (non piaceva)', !/body\.scorso|'scorso'/.test(html));
-  verifica('modulo a cinque tessere di vetro (la lente da trascinare è tolta)', /\.moduli\{display:grid; grid-template-columns:repeat\(5,1fr\)/.test(html)
+  verifica('moduli a sette tessere (quattro per riga) di vetro (la lente da trascinare è tolta)', /\.moduli\{display:grid; grid-template-columns:repeat\(4,1fr\)/.test(html)
            && !/moduli-cursore/.test(html) && /function scegliModulo/.test(html));
   verifica('pannelli di vetro staccati dai bordi', /\.foglio\{left:8px; right:8px/.test(html));
   verifica('pulsanti di vetro che si illuminano al tocco', /\.luce::after/.test(html) && /--gx/.test(html));
