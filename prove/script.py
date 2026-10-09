@@ -389,7 +389,22 @@ try:
 except ImportError:
     print('  (icalendar non installato: salto la lettura con una libreria esterna)')
 
-print('\n8. Giro leggero delle probabili (finestra della giornata)')
+print('\n8. Listone: giocatori arrivati dopo l\'asta')
+def quotazioni_con_squadra(righe):
+    tr = ''.join(f'<tr><td></td><td></td><td></td><th><a href="https://www.fantacalcio.it/serie-a/squadre/{sq}/{n.lower()}/{i}">{n}</a></th><td>X</td><td>5</td></tr>'
+                 for i, n, sq in righe)
+    return Risposta(f'<table><thead><tr><th>Calciatore</th><th></th><th></th><th></th><th>Sq</th><th>QI</th></tr></thead><tbody>{tr}</tbody></table>')
+LISTONE_FINTO = [{'id': 1, 'nome': 'Svilar', 'squadra': 'Roma'}, {'id': 2, 'nome': 'Darmian', 'squadra': 'Inter'},
+                 {'id': 9, 'nome': 'Altro', 'squadra': 'Udinese'}, {'id': 8, 'nome': 'Altro2', 'squadra': 'Milan'}]
+servi({mod.URL_QUOTAZIONI: quotazioni_con_squadra([(1, 'Svilar', 'roma'), (2, 'Darmian', 'bologna'), (3, 'Alaba', 'udinese'),
+                                                    (4, 'Leao *', 'milan'), (5, 'Ignoto', 'squadra-che-non-esiste')])})
+nuovi = mod.listone_nuovi(LISTONE_FINTO)
+verifica('i nuovi entrano con nome senza asterisco e squadra dal link',
+         nuovi == [{'id': 3, 'nome': 'Alaba', 'squadra': 'Udinese'}, {'id': 4, 'nome': 'Leao', 'squadra': 'Milan'}], nuovi)
+verifica("chi e' gia' nel listone non cambia (Darmian resta com'e': gli Id non si toccano)", all(p['id'] != 2 for p in nuovi))
+verifica('squadra del link sconosciuta: non si aggiunge, non si inventa', all(p['id'] != 5 for p in nuovi))
+
+print('\n9. Giro leggero delle probabili (finestra della giornata)')
 GF = {'6': {'ufficiale': True, 'inizio': '2026-10-10T13:00:00+00:00', 'fine': '2026-10-12T18:45:00+00:00'},
       '7': {'ufficiale': True, 'inizio': '2026-10-16T18:45:00+00:00', 'fine': '2026-10-19T18:45:00+00:00'},
       '8': {'ufficiale': True, 'inizio': '2026-10-21T18:45:00+00:00', 'fine': '2026-10-21T21:00:00+00:00'}}

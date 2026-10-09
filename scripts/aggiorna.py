@@ -281,6 +281,46 @@ def titolari(listone, n):
             'squadre': sorted(pubblicate), 'titolari': tit, 'panchina': panca, 'indisponibili': indisp}
 
 
+def listone_nuovi(listone):
+    """Giocatori della pagina delle quotazioni che il listone non ha ancora (arrivi di
+    mercato, esordienti): (id, nome, squadra), nome senza l'asterisco dei nuovi e squadra dal
+    link («.../serie-a/squadre/udinese/alaba/2404»). Un'altra squadra del listone non viene
+    mai inventata: se il link non corrisponde a nessuna, il giocatore resta fuori."""
+    _, quot = righe_con_id(URL_QUOTAZIONI, con_link=True)
+    squadre = {p['squadra'].lower(): p['squadra'] for p in listone}
+    noti = {p['id'] for p in listone}
+    nuovi, scartati = [], []
+    for i, (riga, link) in sorted(quot.items()):
+        if i in noti:
+            continue
+        nome = re.sub(r'\s*\*$', '', riga[3]).strip()
+        m = re.search(r'/squadre/([^/]+)/', link)
+        squadra = squadre.get(m.group(1).replace('-', ' ')) if m else None
+        if nome and squadra:
+            nuovi.append({'id': i, 'nome': nome, 'squadra': squadra})
+        else:
+            scartati.append(f'{i} {nome!r} ({link})')
+    if scartati:
+        print('[listone] senza squadra riconosciuta, non aggiunti:', '; '.join(scartati))
+    return nuovi
+
+
+def aggiorna_listone():
+    """Aggiunge al listone i giocatori nuovi (mai toglie né cambia i vecchi: gli Id sono
+    la chiave di tutto). Si scrive solo se c'e' qualcosa da aggiungere."""
+    percorso = os.path.join(DATI, 'listone.json')
+    with open(percorso, encoding='utf-8') as f:
+        listone = json.load(f)
+    nuovi = listone_nuovi(listone)
+    if not nuovi:
+        print('[listone] nessun giocatore nuovo.')
+        return False
+    with open(percorso, 'w', encoding='utf-8') as f:
+        json.dump(listone + nuovi, f, ensure_ascii=False, separators=(',', ':'))   # come il file originale: diff minimo
+    print(f'[listone] aggiunti {len(nuovi)} giocatori:', ', '.join(f"{p['nome']} ({p['squadra']})" for p in nuovi))
+    return True
+
+
 def titolari_utili(t):
     """Si scrive se ci sono le probabili di almeno una squadra, oppure gli
     indisponibili della giornata, che escono giorni prima delle probabili."""
@@ -342,7 +382,7 @@ def orari(vecchie):
     return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'giornate': giornate}
 
 
-def righe_con_id(url):
+def righe_con_id(url, con_link=False):
     """Righe della tabella principale di una pagina di fantacalcio.it: l'Id del
     listone viene dal link del giocatore (…/roma/svilar/5841), non dal nome."""
     r = get(url)
@@ -355,7 +395,8 @@ def righe_con_id(url):
     for tr in tabella.find_all('tr'):
         a = tr.find('a', href=re.compile(r'/\d+/?$'))
         if a:
-            righe[int(a['href'].rstrip('/').rsplit('/', 1)[1])] = [c.get_text(' ', strip=True) for c in tr.find_all(['td', 'th'])]
+            celle = [c.get_text(' ', strip=True) for c in tr.find_all(['td', 'th'])]
+            righe[int(a['href'].rstrip('/').rsplit('/', 1)[1])] = (celle, a['href']) if con_link else celle
     return intestazione, righe
 
 
@@ -683,9 +724,16 @@ def solo_titolari():
 def main():
     if '--solo-titolari' in sys.argv:
         sys.exit(solo_titolari())
+    uscita = 0
+    # prima di tutto: i giocatori arrivati dopo l'asta (mercato, esordienti) entrano nel listone,
+    # altrimenti le probabili e gli infortuni non li riconoscono
+    try:
+        aggiorna_listone()
+    except Exception as e:
+        print('[listone] fallito:', e)
+        uscita = max(uscita, guasto(e))
     listone = carica_listone()
     print(f'listone: {len(listone)} calciatori')
-    uscita = 0
 
     try:
         scrivi(os.path.join(DATI, 'infortuni.json'), infortuni(listone), 5, 'infortuni')
