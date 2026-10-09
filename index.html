@@ -3524,8 +3524,9 @@ function avvisi(g){
   const pr = D.prob;
   if(pr && pr.giornata===g[1] && (pr.squadre||[]).length){
     const miei = mia.filter(p=>pr.squadre.includes(p.club));
+    /* l'id cambia solo da «alcune» a «tutte»: con le probabili lette ogni 30 minuti un avviso per ogni squadra sarebbe troppo */
     const tit = miei.filter(p=>{ const t = titolarita(p, g); return t && t.stato==='t'; }).length;
-    out.push({id:'probabili-'+g[1]+'-'+pr.squadre.length, livello:'info', titolo:'Probabili uscite',
+    out.push({id:'probabili-'+g[1]+'-'+(pr.squadre.length>=20 ? 'tutte' : 'alcune'), livello:'info', titolo:'Probabili uscite',
               testo:pr.squadre.length+' squadre su 20. Dei tuoi giocatori già nelle probabili, '+tit+' su '+miei.length+' sono titolari.'});
     [].concat(...Object.values(undici(g))).forEach(p=>{
       const t = titolarita(p, g);

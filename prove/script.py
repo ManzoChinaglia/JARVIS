@@ -389,5 +389,21 @@ try:
 except ImportError:
     print('  (icalendar non installato: salto la lettura con una libreria esterna)')
 
+print('\n8. Giro leggero delle probabili (finestra della giornata)')
+GF = {'6': {'ufficiale': True, 'inizio': '2026-10-10T13:00:00+00:00', 'fine': '2026-10-12T18:45:00+00:00'},
+      '7': {'ufficiale': True, 'inizio': '2026-10-16T18:45:00+00:00', 'fine': '2026-10-19T18:45:00+00:00'},
+      '8': {'ufficiale': True, 'inizio': '2026-10-21T18:45:00+00:00', 'fine': '2026-10-21T21:00:00+00:00'}}
+def alle(s): return datetime.fromisoformat(s)
+verifica('36 ore prima del primo calcio: finestra aperta', mod.giornata_in_finestra(GF, alle('2026-10-09T01:30:00+00:00')) == 6)
+verifica('37 ore prima: ancora chiusa', mod.giornata_in_finestra(GF, alle('2026-10-09T00:30:00+00:00')) is None)
+verifica("un'ora dopo il primo calcio: ancora aperta", mod.giornata_in_finestra(GF, alle('2026-10-10T13:50:00+00:00')) == 6)
+verifica('dopo la scadenza, durante la giornata: chiusa', mod.giornata_in_finestra(GF, alle('2026-10-11T12:00:00+00:00')) is None)
+verifica('giornata finita: si passa alla successiva, ancora lontana', mod.giornata_in_finestra(GF, alle('2026-10-13T12:00:00+00:00')) is None)
+verifica('vigilia della successiva: aperta', mod.giornata_in_finestra(GF, alle('2026-10-15T12:00:00+00:00')) == 7)
+verifica('turno infrasettimanale: finestra della giornata 8', mod.giornata_in_finestra(GF, alle('2026-10-20T12:00:00+00:00')) == 8)
+verifica('senza orari ufficiali: nessuna finestra', mod.giornata_in_finestra({'9': {'ufficiale': False}}, alle('2026-10-15T12:00:00+00:00')) is None)
+verifica("l'ora di aggiornamento da sola non e' un cambiamento",
+         mod.senza_ora({'aggiornato': 'a', 'x': 1}) == mod.senza_ora({'aggiornato': 'b', 'x': 1}) != mod.senza_ora({'aggiornato': 'a', 'x': 2}))
+
 print(f'\n{esiti - falliti}/{esiti} verifiche superate')
 sys.exit(1 if falliti else 0)

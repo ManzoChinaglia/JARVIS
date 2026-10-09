@@ -628,7 +628,61 @@ def calendario(base, giornate, ora=None):
     return '\r\n'.join(piega(r) for r in righe) + '\r\n', scadenze
 
 
+# giro leggero delle probabili (09/10/2026): ogni 30 minuti, ma solo nella finestra della giornata,
+# dalle 36 ore prima del primo calcio d'inizio fino a un'ora dopo (scadenza della formazione)
+PRIMA_FINESTRA = timedelta(hours=36)
+DOPO_FINESTRA = timedelta(hours=1)
+
+
+def giornata_in_finestra(giornate, ora=None):
+    """La giornata di Serie A la cui finestra delle probabili e' aperta adesso, altrimenti None.
+    Va a orari.json, non a base.json: non serve aprire il lucchetto, e vale anche per i turni
+    infrasettimanali."""
+    ora = ora or datetime.now(timezone.utc)
+    n = giornata_da_seguire(sorted(int(k) for k in giornate), giornate, ora)
+    if n is None:
+        return None
+    if not giornate[str(n)].get('ufficiale'):
+        return None                       # orario non ancora fissato: niente finestra
+    inizio = datetime.fromisoformat(giornate[str(n)]['inizio'])
+    return n if inizio - PRIMA_FINESTRA <= ora <= inizio + DOPO_FINESTRA else None
+
+
+def senza_ora(d):
+    return {k: v for k, v in d.items() if k != 'aggiornato'}
+
+
+def solo_titolari():
+    """Aggiorna dati/titolari.json e basta; il file si riscrive solo se le probabili sono cambiate
+    (il campo 'aggiornato' da solo non conta), cosi' il giro non fa commit a vuoto."""
+    giornate = precedenti(os.path.join(DATI, 'orari.json'), 'giornate')
+    n = giornata_in_finestra(giornate)
+    if n is None:
+        print('[titolari] fuori dalla finestra della giornata: niente da fare.')
+        return 0
+    try:
+        t = titolari(carica_listone(), n)
+        if not titolari_utili(t):
+            print('[titolari] né probabili né indisponibili per questa giornata: tengo il file precedente.')
+            return 0
+        percorso = os.path.join(DATI, 'titolari.json')
+        try:
+            with open(percorso, encoding='utf-8') as f:
+                if senza_ora(json.load(f)) == senza_ora(t):
+                    print(f'[titolari] giornata {n}: nessun cambiamento.')
+                    return 0
+        except (OSError, ValueError):
+            pass
+        scrivi(percorso, t, 0, 'titolari', n=len(t['titolari']) + len(t['panchina']) + len(t['indisponibili']))
+        return 0
+    except Exception as e:
+        print('[titolari] fallito:', e)
+        return guasto(e)
+
+
 def main():
+    if '--solo-titolari' in sys.argv:
+        sys.exit(solo_titolari())
     listone = carica_listone()
     print(f'listone: {len(listone)} calciatori')
     uscita = 0

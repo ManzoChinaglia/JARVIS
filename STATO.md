@@ -58,6 +58,47 @@ nome in rosa/azzurro chiari (`tema.nome_a/nome_b`) per leggersi. Selettore rifat
 **Attenzione:** dopo un `git pull` fare SEMPRE `node scripts/lucchetto.js apri` PRIMA di `chiudi`, altrimenti `chiudi`
 ricifra copie in chiaro vecchie sopra i file chiusi più nuovi (successo oggi con consigli.chiuso.json, ripristinato).
 
+## AGGIORNAMENTI PIÙ FITTI + ARCHIVIO NEWS — piano (Opus, 09/10/2026; si esegue con Sonnet)
+
+**Richiesta dell'utente (09/10):** probabili lette di continuo (cambiano in fretta); news di stampa raccolte in un
+repository di conoscenza calcistica, dall'inizio di questo campionato in poi. Repo privato e Chrome approvati.
+Pesi: «valutiamo l'utilizzo», quindi per ora non si tocca il consiglio.
+
+**Verificato il 09/10 (curl, senza login):**
+- `fantacalcio.it/probabili-formazioni-serie-a`: le percentuali sono nell'HTML grezzo («aggiornate in tempo reale»).
+  robots.txt vieta `/homesheet` e `/probabiliformazioniseriea` (la home): **usare solo questa pagina, mai la home**.
+- fantacalcio-online (la fonte di oggi) fa già la media di **Fantacalcio.it, Gazzetta, SOS Fanta, Sky**.
+  Fantacalcio.it non va aggiunto come 5ª voce (conterebbe due volte). Serve solo come segnale più fresco, se serve.
+- News: `fantacalcio.it/news/calcio-italia?page=N` è il flusso fitto (convocati, ultime, infortuni: ~2 pagine al giorno,
+  pag. 10 = 02/10). `.../serie-a` ha solo le cronache delle partite. Link con data e id: `/news/calcio-italia/09_10_2026/<slug>-<id>`.
+  La sitemap non serve (punta a host interni `awslocal`).
+
+**Pezzo 1 — probabili fitte (prima: la QI parte il 10/10):**
+- `aggiorna.py --solo-titolari`: scarica solo le probabili e le notifiche. Niente modello, voti, statistiche.
+  Esce subito se non si è nella **finestra della giornata**, calcolata da `orari.json` (dalla vigilia alla scadenza),
+  così prende anche i turni infrasettimanali.
+- Nuovo workflow (o job) con cron ogni 30 minuti a minuti dispari (`7,37 * * * *`: GitHub ritarda :00/:30), stesso
+  gruppo `concurrency`, commit solo se `dati/titolari.json` cambia.
+- Da controllare: `notifiche.js` deve mandare **un avviso per cambio** di titolarità, non uno per giro.
+- Prove: `prove/` verdi più una prova della finestra (dentro/fuori/infrasettimanale). Il giro completo 3 volte al giorno resta com'è.
+- **Fatto il 09/10 (non pushato, aspetta l'ok):** `aggiorna.py --solo-titolari` (`giornata_in_finestra`: da 36 h prima del primo calcio a 1 h dopo, da `orari.json`, nessun lucchetto), `.github/workflows/probabili.yml` (cron `7,37 * * * *`, stesso gruppo `concurrency`; lucchetto, notifiche e commit solo se `titolari.json` cambia), id dell'avviso «Probabili uscite» ridotto a «alcune/tutte» (prima uno per ogni squadra nuova). Prove: script 83/83, app 332/332, notifiche 27/27. **Da fare dopo il push:** `gh workflow run probabili.yml` due volte e leggere il log (la prima scrive o dice «nessun cambiamento», la seconda deve dire «nessun cambiamento»); la prova in locale non è possibile (Norton blocca il certificato della fonte). Limite noto: un giocatore che torna dubbio dopo essere stato titolare non rinnova l'avviso (un avviso per giocatore e giornata).
+
+**Pezzo 2 — archivio news (dopo il weekend):** [`scripts/news.py` con `leggi_lista` già scritto dal locale in `Progetti\JARVIS-conoscenza`, prova `prove/lista.py` verde, non committato; commenti in inglese e ramo morto da pulire]
+- Repo **privato** `JARVIS-conoscenza` (ManzoChinaglia), separato da JARVIS, che è pubblico.
+- Formato v1, un file per giorno, `news/AAAA/MM/GG.jsonl`. Una riga per notizia: `id, data, titolo, sommario`
+  (l'occhiello della lista), `link, squadre, giocatori` (Id del listone via `norm()`/`trova()` di `aggiorna.py`),
+  `tag` (parole chiave: infortunio, squalifica, convocati, mercato, ballottaggio…). **Niente testo integrale**
+  (copyright) e **niente LLM nella v1**: Groq ha un limite di 200k token al giorno.
+- Arretrato: pagine all'indietro fino al giorno prima della 1ª giornata (da `orari.json`), con una pausa tra le richieste.
+  Poi un giro al giorno in GitHub Actions nel repo privato.
+- Chi lo legge: Claude e le analisi sul PC. **L'app pubblica mai**: al massimo segnali derivati (es. «2 notizie di
+  infortunio in 48 h»), mai testo di articoli.
+- Più avanti, facoltativo: riassunti fatti dal modello locale sul PC, non da Groq.
+
+**Pezzo 3 — pesi (solo valutazione, insieme alla ricalibrazione dei PESI di fine novembre):**
+domanda da misurare: «un segnale delle news (infortunio/ballottaggio) prevede chi non parte titolare meglio delle sole
+probabili?». Fino a quella prova non si costruisce nulla nel motore.
+
 ## Storico recente
 
 **Fatto il 26/09: riquadro «In lega» (Stagione) sistemato.** Le cifre «0V 1N 0P · gol 1-1»

@@ -1,0 +1,90 @@
+name: Probabili Jarvis
+
+# Giro leggero delle probabili formazioni (09/10/2026): ogni 30 minuti, ma lo script esce subito
+# se non si è nella finestra della giornata (da 36 ore prima del primo calcio d'inizio fino a
+# un'ora dopo; vale anche per i turni infrasettimanali). Salva e avvisa solo se le probabili
+# sono cambiate. Il giro completo (aggiorna.yml) resta com'è.
+on:
+  schedule:
+    # minuti dispari: GitHub ritarda spesso i giri a :00 e :30
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+
+# stesso gruppo del giro completo: mai due giri insieme sugli stessi file
+concurrency:
+  group: aggiorna-jarvis
+  cancel-in-progress: false
+
+jobs:
+  probabili:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: scripts/aggiorna.py
+
+      - name: Installa dipendenze
+        run: pip install requests beautifulsoup4 lxml
+
+      - name: Scarica le probabili
+        run: python scripts/aggiorna.py --solo-titolari
+
+      - name: Sono cambiate?
+        id: cambiate
+        run: |
+          if [ -n "$(git status --porcelain dati/titolari.json)" ]; then
+            echo "si=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "si=false" >> "$GITHUB_OUTPUT"
+            echo "Probabili invariate: niente da salvare."
+          fi
+
+      # gli avvisi si calcolano sui dati della lega, che stanno nel lucchetto: si apre solo
+      # quando le probabili sono cambiate
+      - uses: actions/setup-node@v5
+        if: steps.cambiate.outputs.si == 'true'
+        with:
+          node-version: '22'
+
+      - name: Apri il lucchetto
+        if: steps.cambiate.outputs.si == 'true'
+        env:
+          JARVIS_CHIAVE: ${{ secrets.JARVIS_CHIAVE }}
+        run: node scripts/lucchetto.js apri
+
+      - name: Manda le notifiche
+        if: steps.cambiate.outputs.si == 'true' && always()
+        env:
+          NTFY_ARGOMENTO: ${{ secrets.NTFY_ARGOMENTO }}
+          PUSH_ISCRIZIONE: ${{ secrets.PUSH_ISCRIZIONE }}
+          PUSH_CHIAVE: ${{ secrets.PUSH_CHIAVE }}
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund web-push@3.6.7 || echo "web-push non installato: solo ntfy"
+          node scripts/notifiche.js
+
+      - name: Richiudi il lucchetto
+        if: steps.cambiate.outputs.si == 'true' && always()
+        env:
+          JARVIS_CHIAVE: ${{ secrets.JARVIS_CHIAVE }}
+        run: node scripts/lucchetto.js chiudi
+
+      - name: Salva i dati aggiornati
+        if: steps.cambiate.outputs.si == 'true' && always()
+        run: |
+          git config user.name  "Jarvis"
+          git config user.email "jarvis@users.noreply.github.com"
+          git add dati/
+          git commit -m "Probabili $(date -u +'%Y-%m-%d %H:%M')"
+          git pull --rebase && git push || { sleep 5; git pull --rebase && git push; } || {
+            git rebase --abort || true
+            git reset --hard origin/main
+            echo "::warning::Salvataggio saltato: dati già aggiornati da un altro giro."
+          }
