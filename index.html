@@ -1934,12 +1934,16 @@ function modificatoreAtteso(portiere, difensori, n, g){
   return {atteso: fasce.reduce((s,f)=>s + f.bonus*f.prob, 0), media: somma/n, fasce};
 }
 
-/* il punteggio con cui Jarvis ordina i giocatori: il fantavoto atteso se gioca (dal
-   modello) più la titolarità, come prima. Senza modello, il calcolo di prima */
-
+/* il punteggio con cui Jarvis ordina i giocatori: il valore atteso. Il fantavoto del modello
+   è «se gioca» (si addestra sulle presenze con voto), quindi: P(gioca) × fantavoto + (1−P) × SOSTITUTO,
+   dove SOSTITUTO è quanto vale in media chi entra dalla panchina al posto di chi non gioca (parametro da
+   tarare). Con P = 1 vale il fantavoto, con P = 0 il sostituto. Senza probabilità né presenze, il fantavoto.
+   Senza modello, il calcolo di prima. */
+const SOSTITUTO = 5.5;
+function valoreAtteso(fv, t){ return t ? SOSTITUTO + (t.perc/100)*(fv - SOSTITUTO) : fv; }
 function punteggio(p, g){
-  const a = attesoModello('fantavoto', p, g), t = a && titolarita(p, g);
-  return !a ? punteggioVecchio(p, g) : a.media + (t ? -0.4 + 1.6*t.perc/100 : 0);   // titolare sicuro +1,2 · fuori −0,4
+  const a = attesoModello('fantavoto', p, g);
+  return !a ? punteggioVecchio(p, g) : valoreAtteso(a.media, titolarita(p, g));
 }
 /* il calcolo di prima: fantamedia stimata, titolarità e avversario pesato con PESI */
 function punteggioVecchio(p, g){
@@ -2019,12 +2023,12 @@ function undiciDi(rosa, g, mod){
   if(b){ out.P = [b.P]; out.D = b.D.slice().sort((x,y)=>punteggio(y,g)-punteggio(x,g)); }
   return out;
 }
-/* quanto rende ogni modulo: il fantavoto atteso dei suoi undici (senza modello la
+/* quanto rende ogni modulo: il valore atteso dei suoi undici (fantavoto e probabilità di giocare; senza modello la
    fantamedia stimata) più il modificatore atteso, che c'è solo con la difesa a quattro.
    Il modulo che rende di più è «consigliato»; a parità vince il primo dell'elenco. */
 function totaleModulo(g, mod){
   const u = undiciDi(mia, g, mod), tutti = [].concat(u.P, u.D, u.C, u.A);
-  const fv = tutti.reduce((s,p)=>{ const a = attesoModello('fantavoto', p, g); return s + (a ? a.media : fmStimata(p)); }, 0);
+  const fv = tutti.reduce((s,p)=>{ const a = attesoModello('fantavoto', p, g); return s + (a ? valoreAtteso(a.media, titolarita(p, g)) : fmStimata(p)); }, 0);
   const m = conModificatore(mod) && u.P.length && u.D.length >= 4 ? modificatoreAtteso(u.P[0], u.D, SIMULAZIONI, g) : null;
   return {fv, mod: m ? m.atteso : 0, tot: fv + (m ? m.atteso : 0)};
 }
