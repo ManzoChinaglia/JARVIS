@@ -59,6 +59,56 @@ jobs:
         if: always()
         run: python scripts/aggiorna.py
 
+      # le quote dei bookmaker (passo 4, 14/10/2026): quando una partita inizia entro 72 ore
+      # si scaricano I1.csv e fixtures.csv di football-data.co.uk e si aggiorna dati/quote.json
+      # (solo numeri ricavati). I CSV grezzi non possono stare in questo repository pubblico:
+      # si conservano, con data e ora, nel repo privato JARVIS-conoscenza (segreto
+      # CONOSCENZA_TOKEN, solo quel repo) e in un artefatto del giro; sul PC arrivano con un
+      # git pull. Un guasto (rete, blocco del sito, token scaduto) non fa fallire il giro.
+      - name: Prepara l'archivio privato delle quote
+        if: always()
+        continue-on-error: true
+        uses: actions/checkout@v7
+        with:
+          repository: ManzoChinaglia/JARVIS-conoscenza
+          ref: master
+          path: conoscenza
+          token: ${{ secrets.CONOSCENZA_TOKEN }}
+
+      - name: Scarica le quote
+        if: always()
+        env:
+          QUOTE_ARCHIVIO: ${{ github.workspace }}/conoscenza/football-data
+        run: |
+          [ -d conoscenza/.git ] || { echo "::warning::archivio privato non disponibile (CONOSCENZA_TOKEN?): i CSV restano solo nell'artefatto."; export QUOTE_ARCHIVIO="$RUNNER_TEMP/football-data"; echo "QUOTE_ARCHIVIO=$QUOTE_ARCHIVIO" >> "$GITHUB_ENV"; }
+          python scripts/quote.py --automatico
+
+      - name: Conserva i CSV delle quote (artefatto)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quote-csv
+          path: |
+            conoscenza/football-data/
+            ${{ runner.temp }}/football-data/
+          if-no-files-found: ignore
+          retention-days: 90
+
+      - name: Salva i CSV nell'archivio privato
+        if: always()
+        continue-on-error: true
+        working-directory: conoscenza
+        run: |
+          if [ -d .git ] && [ -n "$(git status --porcelain football-data/)" ]; then
+            git config user.name  "Jarvis"
+            git config user.email "jarvis@users.noreply.github.com"
+            git add football-data/
+            git commit -m "Quote football-data $(date -u +'%Y-%m-%d %H:%M')"
+            git pull --rebase && git push || { sleep 5; git pull --rebase && git push; }
+          else
+            echo "Nessuna copia nuova da conservare."
+          fi
+
       # il modello del fantavoto atteso (B2): si riaddestra con i voti nuovi, in Python
       # puro, in pochi secondi. Se il risultato non è plausibile resta il file di prima.
       - name: Aggiorna il modello del fantavoto

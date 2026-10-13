@@ -483,5 +483,25 @@ with tempfile.TemporaryDirectory() as td:
     verifica('copie dei CSV con data e ora nel nome, mai sovrascritte',
              f1 != f2 and '2026-10-13' in os.path.basename(f1) and open(f1).read() == 'uno' and open(f2).read() == 'due', (f1, f2))
 
+ORA = datetime(2026, 10, 14, 17, 0, tzinfo=timezone.utc)
+OR_P = {'giornate': {'6': {'partite': [['a', 'b', '2026-10-10T13:00:00+00:00']]},
+                     '7': {'partite': [['A', 'B', '2026-10-16T18:45:00+00:00'], ['C', 'D', '2026-10-19T18:45:00+00:00']]},
+                     '8': {'partite': [['E', 'F', '2026-10-21T18:45:00+00:00'], ['G', 'H', None]]}}}
+verifica('finestra: una partita entro 72 ore = la giornata si scarica', qt.in_finestra(OR_P, ORA) == ['7'])
+verifica("finestra: l'ultima partita di lunedi' conta ancora (la giornata e' gia' iniziata)",
+         qt.in_finestra(OR_P, datetime(2026, 10, 18, 17, 0, tzinfo=timezone.utc)) == ['7'])
+verifica('finestra: partite tutte lontane (oltre 72 ore) = niente', qt.in_finestra(OR_P, datetime(2026, 10, 11, 17, 0, tzinfo=timezone.utc)) == [])
+verifica("finestra: tutto giocato, o orario mancante/non valido = niente, senza errori",
+         qt.in_finestra(OR_P, datetime(2026, 11, 1, tzinfo=timezone.utc)) == [] and qt.in_finestra({}, ORA) == [])
+verifica('ora italiana: il nome dei file sullo stesso orologio del PC anche da un server in UTC',
+         qt.ora_italiana(datetime(2026, 10, 14, 17, 0, tzinfo=timezone.utc)).strftime('%H') == '19')
+with tempfile.TemporaryDirectory() as td:
+    ad = datetime(2026, 10, 14, 17, 0, tzinfo=timezone.utc)
+    f1 = qt.salva_copia('uno', 'fixtures', td, ad)
+    f2 = qt.salva_copia('uno', 'fixtures', td, ad + timedelta(hours=3))
+    f3 = qt.salva_copia('due', 'fixtures', td, ad + timedelta(hours=6))
+    verifica('copia identica all ultima: niente di nuovo; contenuto cambiato: file nuovo, il vecchio resta',
+             f1 == f2 and f3 != f1 and open(f1).read() == 'uno' and open(f3).read() == 'due' and '_1900' in f1, (f1, f3))
+
 print(f'\n{esiti - falliti}/{esiti} verifiche superate')
 sys.exit(1 if falliti else 0)

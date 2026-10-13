@@ -6,9 +6,10 @@ Dalle quote si ricavano i gol attesi di casa e trasferta (il totale dal più/men
 divisione dall'1X2, margine tolto normalizzando); mai le colonne di chiusura («...C...»).
 
 Regole (13/10/2026):
-- i CSV grezzi non entrano mai in Git (nessuna licenza scritta): ogni file scaricato si
-  conserva in archivio/football-data/ con data e ora nel nome e non si cancella né si
-  sovrascrive mai (storico e evoluzione delle quote);
+- i CSV grezzi non entrano mai nel repository pubblico (nessuna licenza scritta): ogni file
+  scaricato si conserva con data e ora d'Italia nel nome e non si cancella né si sovrascrive mai
+  (storico e evoluzione delle quote; copia identica all'ultima = niente di nuovo): sul PC in
+  archivio/football-data/, su GitHub Actions nel repo privato JARVIS-conoscenza (QUOTE_ARCHIVIO);
 - in dati/ solo numeri ricavati: dati/quote.json (giornata Serie A, casa, trasferta, gol
   attesi), agganciato alle partite di dati/orari.json (nessun calendario nuovo), e lo storico
   dati/quote-storico.json.gz che legge scripts/modello.py (gira anche su GitHub Actions,
@@ -16,12 +17,14 @@ Regole (13/10/2026):
 - controllo di plausibilità: se il risultato non torna resta il file di prima.
 
 Uso: python scripts/quote.py                 scarica I1.csv e fixtures.csv, aggiorna quote.json
+     python scripts/quote.py --automatico    come sopra, ma solo se una partita inizia entro 72 ore (orari
+                                             veri di orari.json); un guasto di rete non è un errore (Actions)
      python scripts/quote.py --file X.csv... usa file già scaricati (nessuna rete)
      python scripts/quote.py --storico       ricostruisce dati/quote-storico.json.gz dall'archivio
 Su questo PC (Norton intercetta HTTPS) lanciarlo con truststore, come aggiorna.py.
 """
 import csv, glob, gzip, io, json, math, os, re, sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 QUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, QUI)     # `from aggiorna import get` anche con runpy.run_path (truststore)
@@ -174,11 +177,25 @@ def scrivi(percorso, nuovo):
     return True
 
 
+def ora_italiana(adesso=None):
+    """Ora d'Italia anche sul server di GitHub (UTC): i nomi dei file stanno in ordine con quelli del PC."""
+    try:
+        from zoneinfo import ZoneInfo
+        return (adesso or datetime.now(timezone.utc)).astimezone(ZoneInfo('Europe/Rome'))
+    except Exception:
+        return adesso or datetime.now()
+
+
 def salva_copia(testo, nome, cartella=ARCHIVIO, adesso=None):
     """Conserva il file scaricato in `cartella` come <nome>_AAAA-MM-GG_HHMM.csv; non
     sovrascrive mai (se il nome c'è già aggiunge -2, -3…). Ritorna il percorso."""
     os.makedirs(cartella, exist_ok=True)
-    quando = (adesso or datetime.now()).strftime('%Y-%m-%d_%H%M')
+    quando = ora_italiana(adesso).strftime('%Y-%m-%d_%H%M')
+    prima = sorted(glob.glob(os.path.join(cartella, f'{nome}_????-??-??_????*.csv')))
+    if prima:
+        with open(prima[-1], encoding='utf-8', newline='') as f:
+            if f.read() == testo:
+                return prima[-1]            # identico all'ultima copia: niente di nuovo da conservare
     k, percorso = 1, os.path.join(cartella, f'{nome}_{quando}.csv')
     while os.path.exists(percorso):
         k += 1
@@ -211,6 +228,23 @@ def storico_da_archivio(cartella=ARCHIVIO):
     return out
 
 
+def in_finestra(orari, adesso, ore=72):
+    """Giornate con almeno una partita che inizia nelle prossime `ore` ore (dall'orario vero di
+    ogni partita in orari.json): finché c'è una partita da giocare le quote si riscaricano a ogni
+    giro (aggiornamenti e movimento delle quote), fuori finestra niente."""
+    out = []
+    for g, v in sorted((orari.get('giornate') or {}).items(), key=lambda kv: int(kv[0])):
+        for p in v.get('partite') or []:
+            try:
+                inizio = datetime.fromisoformat(p[2])
+            except (IndexError, TypeError, ValueError):
+                continue
+            if adesso < inizio <= adesso + timedelta(hours=ore):
+                out.append(g)
+                break
+    return out
+
+
 def _leggi(percorso):
     with open(percorso, encoding='utf-8-sig') as f:
         return f.read()
@@ -235,9 +269,23 @@ def main(argv):
         i1 = [x for n, t in testi if n.startswith('I1') for x in leggi_csv(t)]
         fx = [x for n, t in testi if n.startswith('fixtures') for x in leggi_csv(t)]
     else:
-        testo_i1, testo_fx = scarica(URL_I1), scarica(URL_FIXTURES)
+        automatico = '--automatico' in argv
+        if automatico:
+            giornate = in_finestra(orari, datetime.now(timezone.utc))
+            if not giornate:
+                print('[quote] nessuna partita nelle prossime 72 ore: niente da scaricare.')
+                return 0
+            print('[quote] giornate in finestra:', ', '.join(giornate))
+        cartella = os.environ.get('QUOTE_ARCHIVIO') or ARCHIVIO
+        try:
+            testo_i1, testo_fx = scarica(URL_I1), scarica(URL_FIXTURES)
+        except Exception as e:      # come guasto() di aggiorna.py: un guasto di rete non fa fallire il giro
+            if not automatico:
+                raise
+            print(f'::warning::quote: download non riuscito ({type(e).__name__}): resta il file di prima.')
+            return 0
         for nome, t in (('I1_' + STAGIONE, testo_i1), ('fixtures', testo_fx)):
-            print('[quote] salvato', salva_copia(t, nome))
+            print('[quote] salvato', salva_copia(t, nome, cartella))
         i1, fx = leggi_csv(testo_i1), leggi_csv(testo_fx)
     nuovo, avvisi = costruisci(i1, fx, orari)
     for a in avvisi:

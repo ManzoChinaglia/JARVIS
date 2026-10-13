@@ -16,3 +16,5 @@ dati/qi/base.json
 dati/qi/lega.json
 dati/qi/consigli.json
 dati/qi/formazioni.json
+# archivio privato delle quote (repo JARVIS-conoscenza), clonato solo dal giro di GitHub
+conoscenza/
