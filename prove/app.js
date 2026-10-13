@@ -27,7 +27,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   // lucchetto non vero (sul PC c'è): le prove partono in chiaro; il
   // lucchetto ha la sua sezione (34)
   // e senza la formazione schierata vera (dati/formazioni.json): il giudizio «rivelato» ha la sua (35)
-  dati = Object.assign({ 'modello.json': null, 'lucchetto.json': null, 'formazioni.json': null }, dati);
+  dati = Object.assign({ 'modello.json': null, 'lucchetto.json': null, 'formazioni.json': null, 'quote.json': null }, dati);
   const RealDate = Date;
   const fisso = new RealDate(adesso).getTime();
   class FintaData extends RealDate {
@@ -78,7 +78,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.createContext(ctx);
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
-    'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,baseStagione,apriConsiglio,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
+    'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,cartaAtteso,baseStagione,apriConsiglio,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
     'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,mercato,forma,movimentoLega,risultatoLega,forfaitLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
@@ -1292,6 +1292,58 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('e il bilancio su tutte: Jarvis 6–0, −27 in totale', /Jarvis 6–0/.test(sc) && /−27,0<\/b>/.test(sc));
 
 
+
+  console.log('\n36. Le quote (dati/quote.json): serie «con quote» e «senza quote»');
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31, 'quote.json': null } }));
+  g = t.prossima();
+  const d36 = t.mia.find(p => p.ruolo === 'D' && t.disponibile(p, g[2])), m36 = t.avversarioClub(d36.club, g[1]);
+  const base36 = t.attesoModello('fantavoto', d36, g);
+  verifica('senza quote.json il modello è quello di sempre, identico', base36 && base36.quote === false && base36.senza === null
+           && circa(base36.media, a31.media));
+  const fq36 = (casa, trasf, h, a) => ({ aggiornato: 'x', giornate: { [String(g[1])]: [[casa, trasf, h, a, 'fixtures']] } });
+  const quote36 = m36.casa ? fq36(d36.club, m36.avv, 1.9, 0.8) : fq36(m36.avv, d36.club, 0.8, 1.9);
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31, 'quote.json': quote36 } }));
+  g = t.prossima();
+  const q36 = t.attesoModello('fantavoto', d36, g);
+  verifica('con le quote della sua partita: serie con quote, e il valore senza quote resta a disposizione',
+           q36 && q36.quote === true && circa(q36.senza, a31.media) && !circa(q36.media, a31.media),
+           q36 && a31.media.toFixed(2) + ' → ' + q36.media.toFixed(2));
+  verifica('la scomposizione torna anche con le quote (avversario a 0: lo fanno i gol attesi)',
+           circa(q36.parti.base + q36.parti.casa + q36.parti.avv + q36.parti.squadra, q36.media) && q36.parti.avv === 0);
+  const altra36 = JSON.parse(JSON.stringify(quote36));
+  altra36.giornate[String(g[1])][0][0] = 'Altra'; altra36.giornate[String(g[1])][0][1] = 'Altra2';
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31, 'quote.json': altra36 } }));
+  g = t.prossima();
+  const x36 = t.attesoModello('fantavoto', d36, g);
+  verifica('quote di un\'altra partita: niente ripiego, resta la serie senza quote', x36 && x36.quote === false && circa(x36.media, a31.media));
+  const mNo36 = JSON.parse(JSON.stringify(m31));
+  mNo36.fantavoto_quote.D.usa = false;
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': mNo36, 'quote.json': quote36 } }));
+  g = t.prossima();
+  const n36 = t.attesoModello('fantavoto', d36, g);
+  verifica('un ruolo dove le quote non battono la serie senza quote non le usa (usa = false)', n36 && n36.quote === false && circa(n36.media, a31.media));
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31, 'quote.json': quote36 } }));
+  g = t.prossima();
+  const html36 = t.cartaAtteso(d36, g);
+  verifica('con le quote la scheda non mostra un «avversario» che non esiste (0 per costruzione)',
+           html36.includes('partita (quote)') && !html36.includes('>avversario'));
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31, 'quote.json': null } }));
+  g = t.prossima();
+  verifica('con le quote la scheda dice «senza quote → con quote» coi due valori; senza quote nessuna riga',
+           html36.includes('senza quote <b>' + a31.media.toFixed(2).replace('.', ',')) && html36.includes('→ con quote'));
+  verifica('senza quote la scheda mostra avversario e squadra come sempre',
+           t.cartaAtteso(d36, g).includes('avversario') && !t.cartaAtteso(d36, g).includes('partita (quote)'));
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31, 'quote.json': quote36 } }));
+  g = t.prossima();
+  t.CALCOLO_VECCHIO = true;
+  t.CALCOLO_VECCHIO = false;
+  verifica('il consiglio usa la serie con quote: il punteggio segue il fantavoto atteso con quote',
+           Math.abs(t.punteggio(d36, g) - t.attesoModello('fantavoto', d36, g).media) < 1.3 && t.attesoModello('fantavoto', d36, g).quote === true
+           && t.punteggio(d36, g) !== t.punteggioVecchio(d36, g));
+  t.CALCOLO_VECCHIO = true;
+  verifica('il calcolo di prima non usa le quote', circa(t.punteggio(d36, g), t.punteggioVecchio(d36, g)));
+  t.CALCOLO_VECCHIO = false;
+  verifica('il file del modello ha le due serie, stesse voci', ['fantavoto_quote', 'voto_quote'].every(k => m31[k] && ['P', 'D', 'C', 'A'].every(r => m31[k][r].coef.length === m31.voci.length)));
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
 })().catch(e => { console.error('ERRORE', e); process.exit(2); });

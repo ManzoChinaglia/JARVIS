@@ -17,6 +17,13 @@ Onestà del modello, verificata e da tenere:
   numeri finiscono nel file, in «verifica»;
 - un modello lineare, così l'app può dire perché («in casa +0,2, avversario −0,3»).
 
+Due serie di coefficienti (13/10/2026, passo 4 del cervello calcistico): «senza quote» (quella di
+sempre) e «con quote» (`fantavoto_quote`, `voto_quote`): al posto di avversario, attacco e difesa
+squadra, i gol attesi dalle quote dei bookmaker (scripts/quote.py, storico in
+dati/quote-storico.json.gz). Stesse voci, stesso ordine: cambiano gli ingressi (avversario = 0) e
+i coefficienti, quindi l'app usa la stessa formula con l'una o con l'altra. Un ruolo usa le quote
+solo se in verifica, sulle stesse partite, batte la serie senza quote (`usa`).
+
 Gira nel giro automatico dopo aggiorna.py: Python puro, nessuna libreria, pochi secondi.
 Il file si riscrive solo se cambia qualcosa, e solo se il risultato è plausibile.
 
@@ -76,6 +83,15 @@ def voci(storia, quale, qi, casa, avv, att, dif):
     lam = storia.W / (storia.W + K) if storia else 0.0
     m = storia.media(quale) if storia else 0.0
     return [1.0, lam * m, 1.0 - lam, (1.0 - lam) * qi, float(casa), avv, att, dif]
+
+
+def contesto_quote(lam, lega, casa):
+    """attacco e difesa della propria squadra dai gol attesi delle quote (lam = (casa, trasf)),
+    come differenza dalla media del campionato prima, nel campo giusto: gli ingressi «attacco
+    squadra» e «difesa squadra» della serie con quote (l'avversario resta 0)."""
+    c_mio = 'casa' if casa else 'fuori'
+    mio, suo = (lam[0], lam[1]) if casa else (lam[1], lam[0])
+    return mio - lega[c_mio][1] / lega[c_mio][0], lega[c_mio][2] / lega[c_mio][0] - suo
 
 
 # ---- forza delle squadre, come perPartita e forzaSa in index.html ----
@@ -138,11 +154,12 @@ def mediana(v):
 
 
 # ---- dalle stagioni alle righe di addestramento ----
-def righe_e_storie(stagioni):
+def righe_e_storie(stagioni, quote=None):
     """Una riga per ogni presenza con voto in una partita abbinata al calendario:
-    (stagione, ruolo, fantavoto, voto, voci fv, voci voto, parti per il calcolo di prima).
+    (stagione, ruolo, fantavoto, voto, voci fv, voci voto, parti per il calcolo di prima, voci fv
+    con quote, voci voto con quote: queste ultime due None se la partita non ha quote).
     Le storie dei giocatori si aggiornano DOPO ogni giornata, mai prima."""
-    storie, righe = {}, []
+    storie, righe, quote = {}, [], quote or {}
     for k, st in enumerate(stagioni):
         s, partite = st['stagione'], st.get('partite') or []
         quot = st.get('quotazioni') or {}
@@ -166,12 +183,16 @@ def righe_e_storie(stagioni):
                     avv, casa = m[0]
                     d_avv, att, dif = contesto(ora, prec, lega, sq, avv, casa, ruolo)
                     q = quot.get(i)
+                    lq = quote.get(s, {}).get((sq, avv) if casa else (avv, sq))
+                    qa, qd = contesto_quote(lq, lega, casa) if lq else (None, None)
                     qi = q[0] if q else qi_ruolo[ruolo]
                     h = storie.get(i)
                     ns, sf, sv = stag[i]
                     righe.append((s, ruolo, fv, voto, voci(h, 'fv', qi, casa, d_avv, att, dif),
                                   voci(h, 'voto', qi, casa, d_avv, att, dif),
-                                  (ns, sf / ns if ns else 0.0, sv / ns if ns else 0.0, qi, d_avv)))
+                                  (ns, sf / ns if ns else 0.0, sv / ns if ns else 0.0, qi, d_avv),
+                                  voci(h, 'fv', qi, casa, 0.0, qa, qd) if lq else None,
+                                  voci(h, 'voto', qi, casa, 0.0, qa, qd) if lq else None))
             for i, r in g.items():
                 if r[2] not in RUOLI:
                     continue
@@ -238,12 +259,13 @@ def rmse(p, v):
     return math.sqrt(sum((a - b) ** 2 for a, b in zip(p, v)) / len(p)) if p else None
 
 
-def addestra(righe, quale, fuori=()):
-    """{ruolo: {'coef', 'sd'}} addestrati sulle righe delle stagioni non in «fuori»"""
-    j, t = (4, 2) if quale == 'fv' else (5, 3)
+def addestra(righe, quale, fuori=(), quote=False):
+    """{ruolo: {'coef', 'sd'}} addestrati sulle righe delle stagioni non in «fuori»; con
+    `quote` sulle voci con le quote (solo le partite che le hanno)"""
+    j, t = ((7, 2) if quale == 'fv' else (8, 3)) if quote else ((4, 2) if quale == 'fv' else (5, 3))
     out = {}
     for r in RUOLI:
-        tr = [x for x in righe if x[1] == r and x[0] not in fuori]
+        tr = [x for x in righe if x[1] == r and x[0] not in fuori and x[j] is not None]
         beta = ridge([x[j] for x in tr], [x[t] for x in tr])
         res = [x[t] - prevedi(beta, x[j]) for x in tr]
         out[r] = {'coef': beta, 'sd': math.sqrt(sum(e * e for e in res) / len(res))}
@@ -276,6 +298,25 @@ def verifica(righe, prova):
             esito[nome][r] = {'righe': len(te),
                               'modello': {'corr': round(correlazione(pm, vero), 4), 'rmse': round(rmse(pm, vero), 4)},
                               'prima': {'corr': round(correlazione(pa, vero), 4), 'rmse': round(rmse(pa, vero), 4)}}
+    return esito
+
+
+def verifica_quote(righe, prova):
+    """Come `verifica`, ma solo sulle partite con le quote e contro la serie senza quote sulle
+    stesse righe: la serie con quote si usa per un ruolo solo se ordina meglio."""
+    esito = {'fantavoto': {}, 'voto': {}}
+    for quale, nome, j, jq, t in (('fv', 'fantavoto', 4, 7, 2), ('voto', 'voto', 5, 8, 3)):
+        senza, con = addestra(righe, quale, prova), addestra(righe, quale, prova, quote=True)
+        for r in RUOLI:
+            te = [x for x in righe if x[1] == r and x[0] in prova and x[jq] is not None]
+            if not te:
+                continue
+            vero = [x[t] for x in te]
+            ps = [prevedi(senza[r]['coef'], x[j]) for x in te]
+            pq = [prevedi(con[r]['coef'], x[jq]) for x in te]
+            esito[nome][r] = {'righe': len(te),
+                              'con_quote': {'corr': round(correlazione(pq, vero), 4), 'rmse': round(rmse(pq, vero), 4)},
+                              'senza_quote': {'corr': round(correlazione(ps, vero), 4), 'rmse': round(rmse(ps, vero), 4)}}
     return esito
 
 
@@ -312,9 +353,9 @@ def n0(corr):
     return round(min(1000.0, max(5.0, 25 * (1 - c) / c)), 1)
 
 
-def costruisci(stagioni, voti_correnti, rose, iniziali, quot_attuali, adesso=None):
+def costruisci(stagioni, voti_correnti, rose, iniziali, quot_attuali, adesso=None, quote=None):
     """Tutto il modello, pronto per dati/modello.json."""
-    righe, storie = righe_e_storie(stagioni)
+    righe, storie = righe_e_storie(stagioni, quote)
     for sa in sorted(voti_correnti, key=int):
         for i, v in voti_correnti[sa].items():
             storie.setdefault(i, Storia()).aggiungi(v[0], v[1])
@@ -324,6 +365,9 @@ def costruisci(stagioni, voti_correnti, rose, iniziali, quot_attuali, adesso=Non
     modello = {'versione': VERSIONE, 'voci': VOCI, 'K': K,
                'addestramento': {'stagioni': con_partite, 'righe': len(righe), 'verifica_su': prova},
                'verifica': verifica(righe, prova)}
+    if quote:
+        modello['addestramento']['righe_quote'] = sum(1 for x in righe if x[7] is not None)
+        modello['verifica_quote'] = verifica_quote(righe, prova)
     for quale, nome in (('fv', 'fantavoto'), ('voto', 'voto')):
         mod = addestra(righe, quale)
         # il modello si usa per un ruolo solo se nella verifica ordina i giocatori meglio del
@@ -333,6 +377,12 @@ def costruisci(stagioni, voti_correnti, rose, iniziali, quot_attuali, adesso=Non
         modello[nome] = {r: {'coef': [round(c, 5) for c in mod[r]['coef']], 'sd': round(mod[r]['sd'], 4),
                              'persistenza': None if pers[nome][r] is None else round(pers[nome][r], 3),
                              'n0': n0(pers[nome][r]), 'usa': usa(r)} for r in RUOLI}
+        if quote:
+            modq = addestra(righe, quale, quote=True)
+            vq = modello['verifica_quote'][nome]
+            usaq = lambda r: bool(vq.get(r)) and vq[r]['con_quote']['corr'] >= vq[r]['senza_quote']['corr']
+            modello[nome + '_quote'] = {r: {'coef': [round(c, 5) for c in modq[r]['coef']], 'sd': round(modq[r]['sd'], 4),
+                                            'usa': usaq(r)} for r in RUOLI}
     giocatori, qi_ruolo = {}, defaultdict(list)
     for pid, ruolo in rose:
         h = storie.get(pid)
@@ -385,6 +435,16 @@ def leggi_json(nome):
         return {}
 
 
+def quote_storico(percorso=os.path.join(DATI, 'quote-storico.json.gz')):
+    """{stagione: {(casa, trasferta): (gol attesi casa, trasferta)}} da dati/quote-storico.json.gz
+    (scripts/quote.py --storico); {} se manca: la serie con quote allora non si addestra."""
+    try:
+        with gzip.open(percorso, 'rt', encoding='utf-8') as f:
+            return {s: {(c, t): (a, b) for c, t, a, b in v} for s, v in json.load(f).items()}
+    except (OSError, ValueError):
+        return {}
+
+
 def stagioni_storico(cartella=os.path.join(DATI, 'storico')):
     out = []
     for p in sorted(glob.glob(os.path.join(cartella, '*.json.gz'))):
@@ -397,7 +457,8 @@ if __name__ == '__main__':
     base, st = leggi_json('base.json'), leggi_json('statistiche.json')
     m = costruisci(stagioni_storico(), (leggi_json('voti.json').get('giornate') or {}),
                    [(str(a[0]), a[3]) for a in base.get('p', [])], st.get('iniziali') or {},
-                   {k: v[3] for k, v in (st.get('giocatori') or {}).items() if len(v) > 3 and v[3]})
+                   {k: v[3] for k, v in (st.get('giocatori') or {}).items() if len(v) > 3 and v[3]},
+                   quote=quote_storico())
     print(f'[modello] {m["addestramento"]["righe"]} righe, stagioni {m["addestramento"]["stagioni"][0]} - '
           f'{m["addestramento"]["stagioni"][-1]}, verifica su {", ".join(m["addestramento"]["verifica_su"])}')
     for nome in ('fantavoto', 'voto'):
@@ -407,6 +468,13 @@ if __name__ == '__main__':
                 print(f'  {nome:<9} {r}: modello corr {v["modello"]["corr"]:.3f} rmse {v["modello"]["rmse"]:.3f}'
                       f'  |  prima corr {v["prima"]["corr"]:.3f} rmse {v["prima"]["rmse"]:.3f}'
                       f'  |  n0 {m[nome][r]["n0"]}')
+    for nome in ('fantavoto', 'voto'):
+        for r in RUOLI:
+            v = (m.get('verifica_quote') or {}).get(nome, {}).get(r)
+            if v:
+                print(f'  {nome:<9} {r}: con quote corr {v["con_quote"]["corr"]:.3f} rmse {v["con_quote"]["rmse"]:.3f}'
+                      f'  |  senza quote corr {v["senza_quote"]["corr"]:.3f} rmse {v["senza_quote"]["rmse"]:.3f}'
+                      f'  |  {v["righe"]} righe  usa {m[nome + "_quote"][r]["usa"]}')
     if '--verifica' not in sys.argv:
         ok = scrivi(os.path.join(DATI, 'modello.json'), m)
         sys.exit(0 if ok or plausibile(m) else 1)

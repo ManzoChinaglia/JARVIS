@@ -26,7 +26,9 @@ dati/listone.json       elenco ufficiale, per gli script
 dati/notifiche.json     codici degli avvisi già inviati
 dati/jarvis.ics         calendario da sottoscrivere sull'iPhone
 dati/storico/           voti dal 2015-16, una stagione per file compresso (non per l'iPhone)
-dati/modello.json       il modello del fantavoto atteso (B2)
+dati/modello.json       il modello del fantavoto atteso (B2); dal 13/10 anche le serie `fantavoto_quote`/`voto_quote` (con le quote)
+dati/quote.json         gol attesi dalle quote per partita, per giornata di Serie A (scripts/quote.py; solo numeri ricavati)
+dati/quote-storico.json.gz  lo stesso per le stagioni 2017-26, letto da scripts/modello.py (i CSV grezzi stanno solo in archivio/football-data/, fuori da Git)
 dati/lucchetto.json     sale, iterazioni, prova cifrata
 scripts/aggiorna.py     il giro automatico dei dati
 scripts/importa_rose.py rose da Leghe (xlsx) in base.json
@@ -35,6 +37,7 @@ scripts/importa_formazioni.py  la formazione schierata (testo di una pagina Legh
 scripts/notifiche.js    avvisi sull'iPhone (Web Push o ntfy) e salvataggio del consiglio
 scripts/storico.py      giro una tantum e ripartibile dello storico (B1)
 scripts/modello.py      addestra il modello (B2), nel giro automatico
+scripts/quote.py        scarica I1.csv e fixtures.csv di football-data (solo a mano, ogni download confermato), li conserva in archivio/football-data/, scrive quote.json; `--storico` ricostruisce quote-storico.json.gz
 scripts/lucchetto.js    apri | chiudi | stato | inizia
 archivio/               file di Leghe già importati, bundle della storia (solo PC, fuori da Git)
 prove/                  prove automatiche

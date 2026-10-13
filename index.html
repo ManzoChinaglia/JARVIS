@@ -575,6 +575,7 @@
   .ga-parti{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;}
   .ga-p{max-width:100%; padding:3px 9px; border-radius:999px; font-size:12px; color:var(--ink);
         background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);}
+  .ga-quote{margin-top:6px; font-size:12px; color:var(--dim);} .ga-quote b{color:var(--oro-chiaro);}
   .ga-p.base{background:rgba(233,185,73,.14); border-color:rgba(233,185,73,.4); color:var(--oro-chiaro);}
   .ga-p.su{background:rgba(67,224,143,.12); border-color:rgba(67,224,143,.35); color:#8FF0B8;}
   .ga-p.giu{background:rgba(239,107,107,.12); border-color:rgba(239,107,107,.35); color:#FF9A9A;}
@@ -1433,14 +1434,14 @@ async function carica(){
   try{ const v = sessionStorage.getItem('jarvis-verso'); if(v){ sessionStorage.removeItem('jarvis-verso');
     document.documentElement.style.setProperty('--verso', v); document.body.classList.add('lega-entra'); } }catch(x){}
   const CL = LEGA.cartella || '';
-  const pubblici = ['infortuni.json', 'titolari.json', 'orari.json', 'squadre.json', 'statistiche.json', 'voti.json', 'modello.json', 'titolari-storico.json']
+  const pubblici = ['infortuni.json', 'titolari.json', 'orari.json', 'squadre.json', 'statistiche.json', 'voti.json', 'modello.json', 'titolari-storico.json', 'quote.json']
     .map(f=>leggi(f, false));
   /* il lucchetto: senza dati/lucchetto.json tutto in chiaro, come prima */
   LUCCHETTO = await leggi('lucchetto.json', false);
   if(LUCCHETTO && !CHIAVE) CHIAVE = await chiaveSalvata(LUCCHETTO) || await chiediPassword(LUCCHETTO);
   const [base, lg, cs, fz] = await Promise.all([leggi(CL+'base.json', true), leggi(CL+'lega.json', false), leggi(CL+'consigli.json', false),
                                                 leggi(CL+'formazioni.json', false)]);
-  const [inf, tit, ora, sq, st, vt, md, ts] = await Promise.all(pubblici);
+  const [inf, tit, ora, sq, st, vt, md, ts, qt] = await Promise.all(pubblici);
 
   D = base;
   ME = D.me;
@@ -1449,6 +1450,8 @@ async function carica(){
   D.sq    = sq && sq.squadre ? sq : null;
   /* le probabili delle giornate passate (scripts/aggiorna.py, registra_storico): stimano la titolarità senza probabili nuove */
   D.titStorico = ts && ts.giornate ? ts.giornate : null;
+  /* i gol attesi dalle quote dei bookmaker, per giornata di Serie A (scripts/quote.py): senza, il modello resta quello senza quote */
+  D.quote = qt && qt.giornate ? qt.giornate : null;
   FATTORI_TIT = {};
   /* voti di ogni giornata di Serie A finita e undici consigliati salvati prima delle scadenze */
   D.voti  = vt && vt.giornate && Object.keys(vt.giornate).length ? vt.giornate : null;
@@ -1799,9 +1802,21 @@ function stimaVoti(){
    («usa»); altrimenti, e senza il file, resta quello. CALCOLO_VECCHIO forza il calcolo
    di prima: serve al confronto in «Quanto si avvicina Jarvis». */
 let CALCOLO_VECCHIO = false;
-function modelloPer(quale, p){
-  const m = D.mod && !CALCOLO_VECCHIO && D.mod[quale] ? D.mod[quale][p.ruolo] : null;
+function modelloPer(quale, p, quote){
+  const m = D.mod && !CALCOLO_VECCHIO && D.mod[quale + (quote ? '_quote' : '')] ? D.mod[quale + (quote ? '_quote' : '')][p.ruolo] : null;
   return m && m.usa ? m : null;
+}
+/* la stessa partita vista dalle quote (passo 4 del cervello calcistico, scripts/quote.py): al posto di
+   avversario, attacco e difesa della squadra, i gol attesi dei bookmaker rispetto alla media del
+   campionato scorso, nel campo giusto, come scripts/modello.py (contesto_quote). null se la partita
+   non ha quote: allora resta la serie senza quote, mai un ripiego mai provato */
+function contestoQuote(p, g){
+  const m = g && D.quote && D.sq && D.sq.campionato_precedente && avversarioClub(p.club, g[1]);
+  const q = m && (D.quote[String(g[1])] || []).find(x=>m.casa ? x[0]===p.club && x[1]===m.avv : x[0]===m.avv && x[1]===p.club);
+  if(!q) return null;
+  const L = D.sq.campionato_precedente, c = m.casa ? 'casa' : 'fuori', media = k => L[c][k]/L[c][0];
+  const mio = m.casa ? q[2] : q[3], suo = m.casa ? q[3] : q[2];
+  return {casa: m.casa ? 1 : 0, avv: 0, att: mio - media(1), dif: media(2) - suo};
 }
 /* la partita come la vede il modello (scripts/modello.py, contesto): l'avversario come
    forzaSa, attacco e difesa della propria squadra nel suo campo, tutti come differenza
@@ -1821,15 +1836,20 @@ function contestoModello(p, g){
    mescola quella del giocatore e quella del ruolo, con più peso al giocatore dove il suo
    ballo si conserva da una stagione all'altra (n0 piccolo) */
 function attesoModello(quale, p, g){
-  const m = modelloPer(quale, p), gi = m && D.mod.giocatori[String(p.id)];
+  const m0 = modelloPer(quale, p), gi = m0 && D.mod.giocatori[String(p.id)];
   if(!gi) return null;
   const W = gi[0], storia = quale==='fantavoto' ? gi[1] : gi[2], ballo = quale==='fantavoto' ? gi[3] : gi[4], n = gi[5];
-  const c = m.coef, lam = W/(W + D.mod.K), qi = gi[6] || D.mod.qi_ruolo[p.ruolo];
-  const x = contestoModello(p, g);
-  const parti = {base: c[0] + c[1]*lam*(storia || 0) + c[2]*(1 - lam) + c[3]*(1 - lam)*qi,
-                 casa: x ? c[4]*x.casa : 0, avv: x ? c[5]*x.avv : 0, squadra: x ? c[6]*x.att + c[7]*x.dif : 0};
-  const sd = ballo===null || ballo===undefined ? m.sd : (n*ballo + m.n0*m.sd)/(n + m.n0);
-  return {media: parti.base + parti.casa + parti.avv + parti.squadra, sd, parti, storia: lam, casa: x ? x.casa : null};
+  const lam = W/(W + D.mod.K), qi = gi[6] || D.mod.qi_ruolo[p.ruolo];
+  const parti = (c, x) => ({base: c[0] + c[1]*lam*(storia || 0) + c[2]*(1 - lam) + c[3]*(1 - lam)*qi,
+                 casa: x ? c[4]*x.casa : 0, avv: x ? c[5]*x.avv : 0, squadra: x ? c[6]*x.att + c[7]*x.dif : 0});
+  const tot = o => o.base + o.casa + o.avv + o.squadra;
+  const x = contestoModello(p, g), xq = contestoQuote(p, g), mq = xq && modelloPer(quale, p, true);
+  /* con le quote dove la partita le ha e il ruolo le usa (verifica), altrimenti la serie di sempre;
+     «senza» tiene il valore senza quote per mostrare la differenza */
+  const pt = mq ? parti(mq.coef, xq) : parti(m0.coef, x), m = mq || m0;
+  const sd = ballo===null || ballo===undefined ? m.sd : (n*ballo + m0.n0*m.sd)/(n + m0.n0);
+  return {media: tot(pt), sd, parti: pt, storia: lam, casa: (mq ? xq : x) ? (mq ? xq : x).casa : null,
+          quote: !!mq, senza: mq ? tot(parti(m0.coef, x)) : null};
 }
 /* voto atteso: dal modello dove si usa; altrimenti come prima, la media del giocatore
    mescolata con quella del suo ruolo, con il ballo misurato su tutta la lega */
@@ -1850,10 +1870,11 @@ function cartaAtteso(p, g){
     (Math.abs(x) < 0.05 ? '' : x > 0 ? '+' : '−')+num(Math.abs(x))+'</span>';
   const pezzi = !a ? [] : ['<span class="ga-p base">base '+num(a.parti.base)+(a.storia >= 0.5 ? '' : ' · conta la quotazione')+'</span>']
     .concat(a.casa===1 ? [pill('in casa', a.parti.casa)] : [])
-    .concat(a.casa===null ? [] : [pill('avversario', a.parti.avv), pill('squadra', a.parti.squadra)]);
+    .concat(a.casa===null ? [] : a.quote ? [pill('partita (quote)', a.parti.squadra)] : [pill('avversario', a.parti.avv), pill('squadra', a.parti.squadra)]);
   return '<div class="ga">'+
     (a ? '<div class="ga-testa"><span class="k">Fantavoto atteso, se gioca</span><b class="cond">'+num(a.media)+
-      '<small> ± '+num(a.sd)+'</small></b></div><div class="ga-parti">'+pezzi.join('')+'</div>' : '')+
+      '<small> ± '+num(a.sd)+'</small></b></div><div class="ga-parti">'+pezzi.join('')+'</div>'+
+      (a.quote && a.senza!==null ? '<div class="ga-quote">senza quote <b>'+num(a.senza,2)+'</b> → con quote <b>'+num(a.media,2)+'</b></div>' : '') : '')+
     '<div class="ga-cons"><span><b>Punteggio per il consiglio</b><small>'+
       (a ? 'il fantavoto atteso più la titolarità'+(t ? ' ('+(t.stato==='s' ? (t.storico ? 'probabili passate' : 'presenze') : 'probabili')+')' : '')
          : 'la fantamedia stimata, l\'avversario e la titolarità')+': con questo Jarvis ordina i giocatori</small></span>'+
@@ -2111,7 +2132,7 @@ function righePerche(g){
     let parti = [breve(p, g)];
     if(a){
       parti = ['base '+num(a.parti.base)].concat(a.casa===1 ? ['in casa '+s(a.parti.casa)] : [],
-        a.casa===null ? [] : ['avversario '+s(a.parti.avv), 'squadra '+s(a.parti.squadra)]);
+        a.casa===null ? [] : a.quote ? ['partita (quote) '+s(a.parti.squadra)] : ['avversario '+s(a.parti.avv), 'squadra '+s(a.parti.squadra)]);
       if(t) parti.push((t.stato==='s' ? descrizionePres(t) : t.stato==='t' ? 'titolare '+t.perc+'%'
         : t.stato==='c' ? 'in panchina' : 'non nelle probabili')+' '+s(-0.4 + 1.6*t.perc/100));
     }

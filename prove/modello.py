@@ -111,5 +111,28 @@ else:
              {r: m['fantavoto'][r]['sd'] for r in mod.RUOLI})
     verifica('veloce: si può rifare a ogni giro automatico', durata < 60, f'{durata:.1f} s')
 
+print('\n4. Due serie: senza quote e con quote (passo 4 del cervello calcistico)')
+quote_finte = {st['stagione']: {(h, aw): (1.5, 1.0) for _, h, aw, _, _ in st['partite']} for st in finte}
+senza_q = mod.costruisci(finte, {}, rose, {}, {}, adesso=mod.datetime(2026, 9, 15, tzinfo=mod.timezone.utc))
+con_q = mod.costruisci(finte, {}, rose, {}, {}, adesso=mod.datetime(2026, 9, 15, tzinfo=mod.timezone.utc), quote=quote_finte)
+verifica('senza quote: nessuna serie con quote, e il resto identico a prima',
+         'fantavoto_quote' not in senza_q and 'verifica_quote' not in senza_q and all(con_q[k] == senza_q[k] for k in ('fantavoto', 'voto', 'verifica', 'giocatori')))
+verifica('con quote: due serie, stesse voci e stesso ordine', all(len(con_q[n + '_quote'][r]['coef']) == len(mod.VOCI) for n in ('fantavoto', 'voto') for r in mod.RUOLI))
+verifica("con quote l'avversario vale 0 (ingresso nullo: lo fanno i gol attesi)",
+         all(con_q[n + '_quote'][r]['coef'][mod.VOCI.index('avversario')] == 0 for n in ('fantavoto', 'voto') for r in mod.RUOLI))
+verifica('righe con quote contate e verifica a coppie sulle stesse partite',
+         con_q['addestramento']['righe_quote'] == con_q['addestramento']['righe'] and con_q['verifica_quote']['fantavoto']['D']['righe'] > 0)
+verifica("un ruolo usa le quote solo se in verifica ordina meglio della serie senza quote", all(
+    con_q[n + '_quote'][r]['usa'] == (con_q['verifica_quote'][n][r]['con_quote']['corr'] >= con_q['verifica_quote'][n][r]['senza_quote']['corr'])
+    for n in ('fantavoto', 'voto') for r in mod.RUOLI))
+lega_q = {'casa': [10, 13, 11], 'fuori': [10, 11.5, 12.8]}
+att, dif = mod.contesto_quote((1.5, 1.0), lega_q, True)
+verifica('contesto_quote in casa: gol attesi propri meno media casa; media subiti meno gol attesi dell\'avversario',
+         abs(att - 0.2) < 1e-9 and abs(dif - 0.1) < 1e-9, (att, dif))
+att, dif = mod.contesto_quote((1.5, 1.0), lega_q, False)
+verifica('contesto_quote fuori casa: gli stessi gol attesi letti dalla parte della trasferta, con la media fuori',
+         abs(att - (-0.15)) < 1e-9 and abs(dif - (-0.22)) < 1e-9, (att, dif))
+verifica("senza il file dello storico delle quote la serie non si addestra e non c'e' errore", mod.quote_storico('/non/esiste.gz') == {})
+
 print(f'\n{esiti - falliti}/{esiti} verifiche superate')
 sys.exit(1 if falliti else 0)

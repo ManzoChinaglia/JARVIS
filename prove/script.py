@@ -436,5 +436,52 @@ verifica('senza orari ufficiali: nessuna finestra', mod.giornata_in_finestra({'9
 verifica("l'ora di aggiornamento da sola non e' un cambiamento",
          mod.senza_ora({'aggiornato': 'a', 'x': 1}) == mod.senza_ora({'aggiornato': 'b', 'x': 1}) != mod.senza_ora({'aggiornato': 'a', 'x': 2}))
 
+print('\n10. Quote (scripts/quote.py): gol attesi, aggancio, mai meno dati')
+spq = importlib.util.spec_from_file_location('quote', os.path.join(REPO, 'scripts', 'quote.py'))
+qt = importlib.util.module_from_spec(spq)
+spq.loader.exec_module(qt)
+pari = qt.lambda_da_quote(2.6, 3.4, 2.6, 1.9, 1.9)
+verifica('quote simmetriche: gol attesi uguali', pari and abs(pari[0] - pari[1]) < 1e-3, pari)
+fav = qt.lambda_da_quote(1.5, 4.2, 6.5, 1.8, 2.0)
+verifica('favorita in casa: piu\' gol attesi in casa che fuori', fav and fav[0] > fav[1] > 0, fav)
+verifica('totale coerente col piu\'/meno 2,5 (quota 1,9/1,9 = totale attorno a 2,5)', 2.0 < sum(pari) < 3.2, sum(pari))
+verifica('manca una quota: nessun valore inventato', qt.lambda_da_quote(2.0, 3.0, None, 1.9, 1.9) is None)
+CSV_Q = ('Div,HomeTeam,AwayTeam,FTHG,AvgH,AvgD,AvgA,Avg>2.5,Avg<2.5\n'
+         'I1,Spal,Roma,1,2.6,3.4,2.6,1.9,1.9\n'
+         'E0,Altra,Altra2,0,2.0,3.0,3.5,1.9,1.9\n'
+         'I1,Milan,Inter,,2.0,3.3,3.8,1.9,1.9\n')
+righe_q = qt.leggi_csv(CSV_Q)
+verifica('solo il campionato giusto; Spal diventa SPAL; giocata se c\'e\' il risultato',
+         [(c, t, g) for c, t, _, g in righe_q] == [('SPAL', 'Roma', True), ('Milan', 'Inter', False)], righe_q)
+verifica('senza colonne delle quote: lambda None, mai le «C» (chiusura)',
+         qt.leggi_csv('Div,HomeTeam,AwayTeam,FTHG,AvgCH,AvgCD,AvgCA\nI1,A,B,1,2,3,4\n')[0][2] is None)
+ORARI_Q = {'giornate': {'1': {'partite': [['SPAL', 'Roma', 'x']]}, '2': {'partite': [['Milan', 'Inter', 'x']]}}}
+gq, senza_g, senza_q = qt.aggancia(righe_q + [('Fantasma', 'Roma', (1.0, 1.0), False)], ORARI_Q)
+verifica('aggancio per coppia (casa, trasferta) alla giornata di orari.json; sconosciute segnalate',
+         sorted(gq) == ['1', '2'] and gq['1'][0][:2] == ['SPAL', 'Roma'] and senza_g == [('Fantasma', 'Roma')], (gq, senza_g))
+verifica('plausibile: lambda fuori da 0,2-5 o file vuoto = no', qt.plausibile({'1': [['a', 'b', 1.2, 1.1]]})
+         and not qt.plausibile({'1': [['a', 'b', 9.0, 1.1]]}) and not qt.plausibile({}))
+vecchio_q = {'aggiornato': 'a', 'giornate': {'1': [['A', 'B', 1.2, 1.0, 'I1'], ['C', 'D', 1.0, 1.0, 'I1']],
+                                                 '2': [['E', 'F', 1.1, 1.1, 'fixtures']]}}
+nuovo_q = {'aggiornato': 'b', 'giornate': {'2': [['E', 'F', 1.3, 0.9, 'I1']], '3': [['G', 'H', 1.0, 1.0, 'fixtures']]}}
+unito = qt.unisci(vecchio_q, nuovo_q)
+verifica('unisci: le partite non citate restano (i dati non si svuotano)',
+         ['A', 'B'] in [p[:2] for p in unito['giornate']['1']] and ['C', 'D'] in [p[:2] for p in unito['giornate']['1']])
+verifica('unisci: stessa coppia = vince la nuova; nuove giornate aggiunte; data nuova',
+         unito['giornate']['2'] == [['E', 'F', 1.3, 0.9, 'I1']] and '3' in unito['giornate'] and unito['aggiornato'] == 'b')
+with tempfile.TemporaryDirectory() as td:
+    pq = os.path.join(td, 'quote.json')
+    qt.scrivi(pq, vecchio_q)
+    qt.scrivi(pq, {'aggiornato': 'c', 'giornate': {'3': [['G', 'H', 1.0, 1.0, 'fixtures']]}})
+    dopo = json.load(open(pq, encoding='utf-8'))
+    verifica('una corsa col solo fixtures non cancella le partite giocate', sum(len(v) for v in dopo['giornate'].values()) == 4, dopo)
+    qt.scrivi(pq, {'aggiornato': 'd', 'giornate': {'1': [['A', 'B', 99.0, 1.0, 'I1']]}})
+    verifica('risultato non plausibile: il file di prima resta', json.load(open(pq, encoding='utf-8')) == dopo)
+    ad = datetime(2026, 10, 13, 15, 30, tzinfo=timezone.utc)
+    f1 = qt.salva_copia('uno', 'I1', td, ad)
+    f2 = qt.salva_copia('due', 'I1', td, ad)
+    verifica('copie dei CSV con data e ora nel nome, mai sovrascritte',
+             f1 != f2 and '2026-10-13' in os.path.basename(f1) and open(f1).read() == 'uno' and open(f2).read() == 'due', (f1, f2))
+
 print(f'\n{esiti - falliti}/{esiti} verifiche superate')
 sys.exit(1 if falliti else 0)
