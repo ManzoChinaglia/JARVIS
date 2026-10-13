@@ -1768,7 +1768,7 @@ function bonusModificatore(media){
 const PARTITE_PRIOR_VOTO = 4;
 let VOTO_RUOLO = {}, BALLO = null;
 function stimaVoti(){
-  VOTO_RUOLO = {}; BALLO = null; CAMPIONI = {}; BLOCCHI = {}; CAMPIONI_FV = {}; SFIDE = {};
+  VOTO_RUOLO = {}; BALLO = null; CAMPIONI = {}; BLOCCHI = {}; SOSTITUTI = {}; CAMPIONI_FV = {}; SFIDE = {};
   ['P','D','C','A'].forEach(r=>{
     const g = players.filter(p=>p.ruolo===r && p.pgv>0), W = g.reduce((s,p)=>s+p.pgv, 0);
     VOTO_RUOLO[r] = W ? g.reduce((s,p)=>s+p.pgv*p.mv, 0)/W : null;
@@ -1935,15 +1935,26 @@ function modificatoreAtteso(portiere, difensori, n, g){
 }
 
 /* il punteggio con cui Jarvis ordina i giocatori: il valore atteso. Il fantavoto del modello
-   è «se gioca» (si addestra sulle presenze con voto), quindi: P(gioca) × fantavoto + (1−P) × SOSTITUTO,
-   dove SOSTITUTO è quanto vale in media chi entra dalla panchina al posto di chi non gioca (parametro da
-   tarare). Con P = 1 vale il fantavoto, con P = 0 il sostituto. Senza probabilità né presenze, il fantavoto.
-   Senza modello, il calcolo di prima. */
-const SOSTITUTO = 5.5;
-function valoreAtteso(fv, t){ return t ? SOSTITUTO + (t.perc/100)*(fv - SOSTITUTO) : fv; }
+   è «se gioca» (si addestra sulle presenze con voto), quindi: P(gioca) × fantavoto + (1−P) × sostituto.
+   Regola delle leghe: se un titolare non prende voto entra il primo panchinaro dello stesso ruolo
+   che il voto l'ha preso, e se non entra nessuno si prende zero. Il sostituto è quindi il primo
+   panchinaro del ruolo nella rosa del giocatore, a sua volta pesato per la probabilità di avere
+   voto (un solo livello). Senza modello, il calcolo di prima. */
+let SOSTITUTI = {};
+function sostituto(p, g){
+  const chiave = p.team+':'+p.ruolo+':'+g[0]+':'+modulo;
+  if(chiave in SOSTITUTI) return SOSTITUTI[chiave];
+  const posti = Object.assign({P:1}, MODULI[modulo])[p.ruolo] || 1;
+  const v = players.filter(q=>q.team===p.team && q.ruolo===p.ruolo && disponibile(q, g[2]))
+    .map(q=>{ const a = attesoModello('fantavoto', q, g), t = titolarita(q, g);
+              return a ? (t ? t.perc/100 : 1) * a.media : 0; })
+    .sort((x,y)=>y-x);
+  return (SOSTITUTI[chiave] = v[posti] || 0);
+}
+function valoreAtteso(fv, t, sost){ return t ? (t.perc/100)*fv + (1 - t.perc/100)*sost : fv; }
 function punteggio(p, g){
   const a = attesoModello('fantavoto', p, g);
-  return !a ? punteggioVecchio(p, g) : valoreAtteso(a.media, titolarita(p, g));
+  return !a ? punteggioVecchio(p, g) : valoreAtteso(a.media, titolarita(p, g), sostituto(p, g));
 }
 /* il calcolo di prima: fantamedia stimata, titolarità e avversario pesato con PESI */
 function punteggioVecchio(p, g){
@@ -2028,7 +2039,7 @@ function undiciDi(rosa, g, mod){
    Il modulo che rende di più è «consigliato»; a parità vince il primo dell'elenco. */
 function totaleModulo(g, mod){
   const u = undiciDi(mia, g, mod), tutti = [].concat(u.P, u.D, u.C, u.A);
-  const fv = tutti.reduce((s,p)=>{ const a = attesoModello('fantavoto', p, g); return s + (a ? valoreAtteso(a.media, titolarita(p, g)) : fmStimata(p)); }, 0);
+  const fv = tutti.reduce((s,p)=>{ const a = attesoModello('fantavoto', p, g); return s + (a ? valoreAtteso(a.media, titolarita(p, g), sostituto(p, g)) : fmStimata(p)); }, 0);
   const m = conModificatore(mod) && u.P.length && u.D.length >= 4 ? modificatoreAtteso(u.P[0], u.D, SIMULAZIONI, g) : null;
   return {fv, mod: m ? m.atteso : 0, tot: fv + (m ? m.atteso : 0)};
 }

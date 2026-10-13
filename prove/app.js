@@ -78,7 +78,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.createContext(ctx);
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
-    'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,baseStagione,apriConsiglio,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,valoreAtteso,SOSTITUTO,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
+    'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,baseStagione,apriConsiglio,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,valoreAtteso,sostituto,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
     'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,mercato,forma,movimentoLega,risultatoLega,forfaitLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
@@ -1089,11 +1089,11 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            a31 && circa(a31.parti.base + a31.parti.casa + a31.parti.avv + a31.parti.squadra, a31.media));
   const tit31 = t.titolarita(d31, g);
   verifica('punteggio = valore atteso: P × fantavoto + (1 − P) × sostituto',
-           circa(t.punteggio(d31, g), tit31 ? t.SOSTITUTO + tit31.perc / 100 * (a31.media - t.SOSTITUTO) : a31.media));
+           circa(t.punteggio(d31, g), tit31 ? tit31.perc / 100 * a31.media + (1 - tit31.perc / 100) * t.sostituto(d31, g) : a31.media));
   verifica('valore atteso: P=1 → fantavoto, P=0 → sostituto, senza probabilità → fantavoto',
-           circa(t.valoreAtteso(7, {perc: 100}), 7) && circa(t.valoreAtteso(7, {perc: 0}), t.SOSTITUTO) && circa(t.valoreAtteso(7, null), 7));
+           circa(t.valoreAtteso(7, {perc: 100}, 4), 7) && circa(t.valoreAtteso(7, {perc: 0}, 4), 4) && circa(t.valoreAtteso(7, null, 4), 7));
   verifica('un titolare solido batte uno più forte ma 50/50',
-           t.valoreAtteso(6.4, {perc: 95}) > t.valoreAtteso(7.0, {perc: 50}));
+           t.valoreAtteso(6.4, {perc: 95}, 5) > t.valoreAtteso(7.0, {perc: 50}, 5));
   t.CALCOLO_VECCHIO = true;
   const v31 = t.punteggio(d31, g);
   t.CALCOLO_VECCHIO = false;
