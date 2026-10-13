@@ -864,6 +864,7 @@
   .cf-m{position:absolute; transform:translateX(-50%); text-align:center; white-space:nowrap; font-size:15px; font-weight:700;}
   .cf-m i{display:block; width:4px; height:26px; margin:0 auto; border-radius:2px; background:var(--ink);}
   .cf-m.tu, .cf-m.max{top:19px;} .cf-m.jarvis{top:0;}
+  .cf.vicini{height:84px;} .cf.vicini .cf-m.max i{height:44px;}
   .cf-m.jarvis{color:var(--oro-chiaro);} .cf-m.jarvis i{background:var(--oro); box-shadow:0 0 8px rgba(228,180,81,.5);}
   .cf-m.max{color:#43E08F;} .cf-m.max i{background:#43E08F;}
   .cf-pillole{display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;}
@@ -2635,19 +2636,20 @@ function htmlScelte(x, r, titolo){
     ' <b class="fvn '+classeFv(c.fv)+'">'+num(c.fv)+'</b></span>';
   const testa = '<div class="blocco-t">'+(titolo || 'Dove non eravate d\'accordo')+'<small class="sc-mod">'+x.modulo+' · '+x.moduloJ+'</small></div>';
   if(!x.soloTu.length) return '<div class="blocco">'+testa+'<p>Avete schierato gli stessi 11.</p></div>';
-  const somma = l => l.reduce((s,c)=>s + c.fv, 0), meglio = l => l.slice().sort((a,b)=>b.fv - a.fv)[0];
+  const somma = l => l.reduce((s,c)=>s + c.fv, 0), meglio = l => l.filter(c=>!c.senza).sort((a,b)=>b.fv - a.fv)[0];   // chi è senza voto non ha «preso» il fantavoto del panchinaro che entra
   const righe = ['P','D','C','A'].map(k=>{
     const a = x.soloTu.filter(c=>c.p.ruolo===k), b = x.soloJv.filter(c=>c.p.ruolo===k);
     return a.length || b.length ? '<div class="sc-r"><span class="k">'+REPARTO_BREVE[k]+'</span>'+
       '<span>'+(a.map(nome).join('') || '<i>—</i>')+'</span><span>'+(b.map(nome).join('') || '<i>—</i>')+'</span></div>' : '';
   }).join('');
   const d = x.delta, chi = d < -0.05 ? meglio(x.soloJv) : d > 0.05 ? meglio(x.soloTu) : null;
+  const frase = !chi ? 'Le vostre scelte si sono equivalse.' : d < 0 ? 'Il migliore che non hai schierato: <b>'+chi.p.nome+'</b>, '+num(chi.fv)+'.'
+    : 'La tua scelta migliore: <b>'+chi.p.nome+'</b>, '+num(chi.fv)+'.';
   const modVero = r ? r.mio - x.tuTot : 0;
   return '<div class="blocco">'+testa+
     '<div class="sc-r sc-testa"><span></span><span>Tu</span><span>Jarvis</span></div>'+righe+
     '<div class="sc-r sc-tot"><span></span><b class="cond">'+num(somma(x.soloTu))+'</b><b class="cond">'+num(somma(x.soloJv))+'</b></div>'+
-    '<p>'+(d < -0.05 ? 'Il migliore che non hai schierato: <b>'+chi.p.nome+'</b>, '+num(chi.fv)+'.'
-         : d > 0.05 ? 'La tua scelta migliore: <b>'+chi.p.nome+'</b>, '+num(chi.fv)+'.' : 'Le vostre scelte si sono equivalse.')+'</p>'+
+    '<p>'+(Math.abs(d) < 0.05 ? 'Le vostre scelte si sono equivalse.' : frase)+'</p>'+
     (Math.abs(x.resto) >= 0.05 ? '<p class="nota">'+segnato(x.resto)+' per te dai cambi dalla panchina dei titolari in comune.</p>' : '')+
     (Math.abs(modVero) >= 0.05 ? '<p class="nota">Il tuo punteggio vero ha '+segnato(modVero)+' rispetto a questi fantavoti'+
        (x.modulo.startsWith('4') ? ': il modificatore di difesa' : '')+'.</p>' : '')+'</div>';
@@ -3164,8 +3166,10 @@ function confrontoGiornata(s, sa){
                                     : '<span>'+numCorto(-d)+' in più di Jarvis</span>');
   }
   if(x.tot - r.mio >= 0.05) pillole.push('<span class="verde">'+numCorto(x.tot - r.mio)+' punti lasciati in panchina</span>');
+  /* Tu e il massimo vicini: le etichette si sovrapporrebbero, quella del massimo scende di una riga */
+  const vicini = Math.abs(parseFloat(dove(r.mio)) - parseFloat(dove(x.tot))) < 24;
   return '<div class="blocco"><div class="blocco-t">Tu, Jarvis e il massimo<small>giornata '+x.g[0]+'</small></div>'+
-    '<div class="cf"><div class="cf-linea"></div><div class="cf-spazio" style="left:'+dove(Math.min(r.mio, x.tot))+';right:calc(100% - '+dove(Math.max(r.mio, x.tot))+')"></div>'+
+    '<div class="cf'+(vicini ? ' vicini' : '')+'"><div class="cf-linea"></div><div class="cf-spazio" style="left:'+dove(Math.min(r.mio, x.tot))+';right:calc(100% - '+dove(Math.max(r.mio, x.tot))+')"></div>'+
     segno('tu', 'Tu '+numCorto(r.mio), r.mio)+(x.consiglio===null ? '' : segno('jarvis', 'Jarvis '+numCorto(x.consiglio), x.consiglio))+
     segno('max', 'Max '+numCorto(x.tot), x.tot)+'</div>'+
     (pillole.length ? '<div class="cf-pillole">'+pillole.join('')+'</div>' : '')+bilancioScelte(s)+'</div>';
