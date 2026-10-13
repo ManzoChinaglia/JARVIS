@@ -1433,20 +1433,23 @@ async function carica(){
   try{ const v = sessionStorage.getItem('jarvis-verso'); if(v){ sessionStorage.removeItem('jarvis-verso');
     document.documentElement.style.setProperty('--verso', v); document.body.classList.add('lega-entra'); } }catch(x){}
   const CL = LEGA.cartella || '';
-  const pubblici = ['infortuni.json', 'titolari.json', 'orari.json', 'squadre.json', 'statistiche.json', 'voti.json', 'modello.json']
+  const pubblici = ['infortuni.json', 'titolari.json', 'orari.json', 'squadre.json', 'statistiche.json', 'voti.json', 'modello.json', 'titolari-storico.json']
     .map(f=>leggi(f, false));
   /* il lucchetto: senza dati/lucchetto.json tutto in chiaro, come prima */
   LUCCHETTO = await leggi('lucchetto.json', false);
   if(LUCCHETTO && !CHIAVE) CHIAVE = await chiaveSalvata(LUCCHETTO) || await chiediPassword(LUCCHETTO);
   const [base, lg, cs, fz] = await Promise.all([leggi(CL+'base.json', true), leggi(CL+'lega.json', false), leggi(CL+'consigli.json', false),
                                                 leggi(CL+'formazioni.json', false)]);
-  const [inf, tit, ora, sq, st, vt, md] = await Promise.all(pubblici);
+  const [inf, tit, ora, sq, st, vt, md, ts] = await Promise.all(pubblici);
 
   D = base;
   ME = D.me;
   D.orari = ora && ora.giornate ? ora.giornate : null;
   D.prob  = tit && tit.giornata && tit.titolari ? tit : null;
   D.sq    = sq && sq.squadre ? sq : null;
+  /* le probabili delle giornate passate (scripts/aggiorna.py, registra_storico): stimano la titolarità senza probabili nuove */
+  D.titStorico = ts && ts.giornate ? ts.giornate : null;
+  FATTORI_TIT = {};
   /* voti di ogni giornata di Serie A finita e undici consigliati salvati prima delle scadenze */
   D.voti  = vt && vt.giornate && Object.keys(vt.giornate).length ? vt.giornate : null;
   D.consigli = cs && cs.giornate ? cs.giornate : null;
@@ -1617,17 +1620,64 @@ function titolarita(p, g){
     if(pr.panchina && id in pr.panchina) return {stato:'c', perc:pr.panchina[id]};
     return {stato:'r', perc:0};
   }
-  /* probabili non ancora uscite: una stima dalle presenze (partite giocate su
-     quelle della squadra), altrimenti chi non ha mai giocato conterebbe come gli altri */
+  /* probabili non ancora uscite. 1) dalle probabili delle ultime giornate (chi partiva titolare e
+     chi entrava dalla panchina si distinguono); 2) dalle presenze (partite giocate su quelle della
+     squadra, dove un subentrato conta come titolare); altrimenti chi non ha mai giocato conterebbe
+     come gli altri. In entrambi i casi i giocatori della stessa squadra e dello stesso ruolo non
+     possono valere, insieme, più dei posti del modulo abituale (ballottaggi: Pellegrino e Beto). */
+  const st = titolaritaStorico(p, g);
+  if(st) return {stato:'s', storico:st.storico, perc:tenutiInsieme(p, g, st.perc)};
   const s = D.sq && D.sq.squadre[p.club];
   const n = s ? s.attuale.casa[0] + s.attuale.fuori[0] : 0;
   if(!n) return null;
   const giocate = Math.min(p.pgv, n);
-  return {stato:'s', perc:Math.round(100*giocate/n), giocate, di:n};
+  return {stato:'s', perc:tenutiInsieme(p, g, Math.round(100*giocate/n)), giocate, di:n};
 }
+/* le ultime (al massimo 3) giornate prima di g con le probabili della squadra del giocatore:
+   percentuale tra titolari e panchina (0 se non compare), le più recenti pesano di più */
+function titolaritaStorico(p, g){
+  if(!D.titStorico) return null;
+  const gg = Object.keys(D.titStorico).map(Number).filter(n=>n < g[1] && (D.titStorico[n].squadre||[]).includes(p.club))
+    .sort((a,b)=>b-a).slice(0, 3);
+  if(!gg.length) return null;
+  let somma = 0, pesi = 0;
+  gg.forEach((n, i)=>{
+    const h = D.titStorico[n], id = String(p.id), w = 3 - i;
+    somma += w * (id in h.t ? h.t[id] : id in h.p ? h.p[id] : 0); pesi += w;
+  });
+  return {perc: Math.round(somma/pesi), storico: gg.length};
+}
+/* quanti posti ha una squadra in un ruolo: dal suo modulo abituale (squadre.json) */
+function postiRuolo(club, ruolo){
+  const s = D.sq && D.sq.squadre[club], m = s && s.modulo && /^\d(-\d)+$/.test(s.modulo) ? s.modulo.split('-').map(Number) : null;
+  if(!m) return null;
+  return ruolo==='P' ? 1 : ruolo==='D' ? m[0] : ruolo==='A' ? m[m.length-1] : m.slice(1, -1).reduce((a, b)=>a + b, 0);
+}
+let FATTORI_TIT = {};
+function tenutiInsieme(p, g, perc){
+  const posti = postiRuolo(p.club, p.ruolo);
+  if(!posti) return perc;
+  const k = p.club+'|'+p.ruolo+'|'+g[1]+'|'+(D.titStorico ? 1 : 0);
+  if(!(k in FATTORI_TIT)){
+    let tot = 0;
+    players.forEach(q=>{ if(q.club===p.club && q.ruolo===p.ruolo){ const x = titolaritaGrezza(q, g); tot += x === null ? 0 : x; } });
+    FATTORI_TIT[k] = tot > 100*posti ? 100*posti/tot : 1;
+  }
+  return Math.round(perc * FATTORI_TIT[k]);
+}
+/* la stessa stima, prima del tetto dei posti */
+function titolaritaGrezza(q, g){
+  const st = titolaritaStorico(q, g);
+  if(st) return st.perc;
+  const s = D.sq && D.sq.squadre[q.club], n = s ? s.attuale.casa[0] + s.attuale.fuori[0] : 0;
+  return n ? Math.round(100*Math.min(q.pgv, n)/n) : null;
+}
+/* «presenze 4/6», o con le probabili passate «ultime probabili 49%» */
+const descrizionePres = t => t.storico ? 'ultime probabili '+t.perc+'%' : 'presenze '+t.giocate+'/'+t.di;
 function descriviTit(t){
   return !t ? '\nProbabili di questa giornata non ancora uscite.'
-       : t.stato==='s' ? '\nProbabili non ancora uscite: ha giocato '+t.giocate+(t.giocate===1 ? ' partita' : ' partite')+' su '+t.di+'.'
+       : t.stato==='s' ? '\nProbabili non ancora uscite: '+(t.storico ? 'nelle ultime '+t.storico+(t.storico===1 ? ' probabile' : ' probabili')+' era dato al '+t.perc+'%.'
+                                                  : 'ha giocato '+t.giocate+(t.giocate===1 ? ' partita' : ' partite')+' su '+t.di+'.')
        : t.stato==='t' ? '\nTitolare al '+t.perc+'% nelle probabili.'
        : t.stato==='c' ? '\nIn panchina nelle probabili.' : '\nNon compare nelle probabili.';
 }
@@ -1805,7 +1855,7 @@ function cartaAtteso(p, g){
     (a ? '<div class="ga-testa"><span class="k">Fantavoto atteso, se gioca</span><b class="cond">'+num(a.media)+
       '<small> ± '+num(a.sd)+'</small></b></div><div class="ga-parti">'+pezzi.join('')+'</div>' : '')+
     '<div class="ga-cons"><span><b>Punteggio per il consiglio</b><small>'+
-      (a ? 'il fantavoto atteso più la titolarità'+(t ? ' ('+(t.stato==='s' ? 'presenze' : 'probabili')+')' : '')
+      (a ? 'il fantavoto atteso più la titolarità'+(t ? ' ('+(t.stato==='s' ? (t.storico ? 'probabili passate' : 'presenze') : 'probabili')+')' : '')
          : 'la fantamedia stimata, l\'avversario e la titolarità')+': con questo Jarvis ordina i giocatori</small></span>'+
       '<b class="cond">'+num(punteggio(p, g),2)+'</b></div></div>';
 }
@@ -2062,7 +2112,7 @@ function righePerche(g){
     if(a){
       parti = ['base '+num(a.parti.base)].concat(a.casa===1 ? ['in casa '+s(a.parti.casa)] : [],
         a.casa===null ? [] : ['avversario '+s(a.parti.avv), 'squadra '+s(a.parti.squadra)]);
-      if(t) parti.push((t.stato==='s' ? 'presenze '+t.giocate+'/'+t.di : t.stato==='t' ? 'titolare '+t.perc+'%'
+      if(t) parti.push((t.stato==='s' ? descrizionePres(t) : t.stato==='t' ? 'titolare '+t.perc+'%'
         : t.stato==='c' ? 'in panchina' : 'non nelle probabili')+' '+s(-0.4 + 1.6*t.perc/100));
     }
     return '<div class="vr" data-id="'+p.id+'">'+maglia(p.club)+'<div class="vr-nome"><b>'+p.nome+'</b><small>'+
@@ -2216,7 +2266,7 @@ function rigaPanchina(p, g, n){
   const m = avversarioClub(p.club, g[1]), o = oraPartita(p.club, g[1]), t = titolarita(p, g), f = forza(p, g);
   const a = attesoModello('fantavoto', p, g), n1 = x => x.toFixed(1).replace('.', ','), fm = p.pgv ? p.fm.toFixed(2).replace('.', ',') : '—';
   const partita = m ? (m.casa ? 'vs ' : 'a ')+m.avv+(o ? ' · '+oraBreve(o) : '') : p.club;
-  const tit = !t ? '' : t.stato==='s' ? '<span class="pb-chip">presenze '+t.giocate+'/'+t.di+'</span>'
+  const tit = !t ? '' : t.stato==='s' ? '<span class="pb-chip">'+descrizionePres(t)+'</span>'
     : '<span class="pb-chip '+(t.stato==='t' && t.perc >= 70 ? 'verde' : t.stato==='r' ? 'rosso' : 'giallo')+'">'+
       (t.stato==='t' ? 'titolare '+t.perc+'%' : t.stato==='c' ? 'in panchina'+(t.perc ? ' '+t.perc+'%' : '') : 'non nelle probabili')+
       '<i class="pb-barra"><i style="width:'+t.perc+'%"></i></i></span>';
@@ -2236,7 +2286,7 @@ function riga(p, g, ordine){
   const ko = !disponibile(p, g[2]);
   const sfida = m ? (m.casa?'in casa con ':'a ') + m.avv : '';
   const t = titolarita(p, g), f = forza(p, g);
-  const stato = !t ? '' : t.stato==='s' ? '<span class="nodata">presenze '+t.giocate+'/'+t.di+'</span>'
+  const stato = !t ? '' : t.stato==='s' ? '<span class="nodata">'+descrizionePres(t)+'</span>'
               : t.stato==='t' ? '<span class="tit">titolare '+t.perc+'%</span>'
               : t.stato==='c' ? '<span class="camb">in panchina</span>'
               : '<span class="nodata">non nelle probabili</span>';

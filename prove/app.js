@@ -54,6 +54,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     fetch: async url => {
       const f = url.split('?')[0], nome = f.replace(/^dati\//, '');
       if (senzaOrari && nome === 'orari.json') return { ok: false, status: 404 };
+      if (nome === 'titolari-storico.json' && !(nome in dati)) return { ok: false, status: 404 };   // i dati veri cambiano ogni giornata
       if (nome in dati) {
         const v = dati[nome];
         return v === null ? { ok: false, status: 404 }
@@ -240,6 +241,40 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('uscite le probabili, contano solo quelle', t.mia.every(p => t.titolarita(p, g).stato !== 's'));
   ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': { ...prob5, squadre: [] }, 'infortuni.json': null, 'squadre.json': sq2 } }));
   verifica('squadra non ancora pubblicata: si resta sulle presenze', t.mia.every(p => t.titolarita(p, g).stato === 's'));
+
+  console.log('\n10ter. Titolarità senza probabili: dalle probabili passate e dai posti del modulo');
+  // d1 titolare al 90% nelle ultime due probabili, d2 in panchina al 50% (la più vecchia pesa meno: 3·90 + 2·90 su 5)
+  const club1 = P(d1).club;
+  const storicoFinto = { aggiornato: '2026-09-17T09:30:00+00:00', giornate: {
+    3: { squadre: clubs, t: { [d1]: 90 }, p: { [d2]: 50 } }, 4: { squadre: clubs, t: { [d1]: 90 }, p: { [d2]: 50 } } } };
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'infortuni.json': null, 'squadre.json': null, 'titolari-storico.json': storicoFinto } }));
+  g = t.prossima();
+  x = t.titolarita(P(d1), g);
+  verifica('titolare nelle ultime probabili: 90%, stima dallo storico', x && x.stato === 's' && x.storico === 2 && x.perc === 90, JSON.stringify(x));
+  x = t.titolarita(P(d2), g);
+  verifica('in panchina al 50%', x && x.perc === 50 && x.storico === 2, JSON.stringify(x));
+  x = t.titolarita(P(d3), g);
+  verifica('squadra pubblicata e giocatore assente: 0%', x && x.perc === 0, JSON.stringify(x));
+  verifica('la rosa lo dice', el.rosa.innerHTML.includes('ultime probabili 90%'));
+  // una giornata non ancora giocata non conta, e una squadra mai pubblicata resta sulle presenze
+  const storicoFuturo = { giornate: { 5: storicoFinto.giornate[3], 6: { squadre: [], t: {}, p: {} } } };
+  ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'infortuni.json': null, 'squadre.json': sq2, 'titolari-storico.json': storicoFuturo } }));
+  x = t.titolarita(t.mia.find(p => p.pgv === 3), g);
+  verifica('storico della giornata stessa o dopo: si resta sulle presenze', x && x.storico === undefined && x.perc === 75, JSON.stringify(x));
+  // ballottaggi: tre attaccanti della stessa squadra al 100% e il 4-3-3 abituale (3 posti) → 300 su 3 posti, nessun tetto
+  // con quattro al 100% il tetto è 3/4 = 75% ciascuno
+  const attaccanti = t.players.filter(p => p.club === club1 && p.ruolo === 'A').slice(0, 4).map(p => p.id);
+  if (attaccanti.length === 4) {
+    const quattro = { giornate: { 4: { squadre: clubs, t: Object.fromEntries(attaccanti.map(i => [i, 100])), p: {} } } };
+    const sq3 = { ...sq2, squadre: { ...uniformi, [club1]: { ...uniformi[club1], modulo: '4-3-3' } } };
+    ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'infortuni.json': null, 'squadre.json': sq3, 'titolari-storico.json': quattro } }));
+    x = t.titolarita(t.players.find(p => p.id === attaccanti[0]), g);
+    verifica('4 attaccanti al 100% per 3 posti: 75% ciascuno', x && x.perc === 75, JSON.stringify(x));
+    const tre = { giornate: { 4: { squadre: clubs, t: Object.fromEntries(attaccanti.slice(0, 3).map(i => [i, 100])), p: {} } } };
+    ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'infortuni.json': null, 'squadre.json': sq3, 'titolari-storico.json': tre } }));
+    x = t.titolarita(t.players.find(p => p.id === attaccanti[0]), g);
+    verifica('3 attaccanti al 100% per 3 posti: restano al 100%', x && x.perc === 100, JSON.stringify(x));
+  }
 
   console.log('\n11. Senza squadre.json');
   ({ t } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'squadre.json': null } }));

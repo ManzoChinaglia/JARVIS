@@ -118,6 +118,22 @@ with tempfile.TemporaryDirectory() as d:
     with open(p, encoding='utf-8') as f:
         verifica('e il file della giornata prima resta com\'era', not scritto and json.load(f)['giornata'] == 4)
 
+# l'archivio delle probabili passate (registra_storico): una voce per giornata, l'ultima versione vince
+vecchio_dati = mod.DATI
+with tempfile.TemporaryDirectory() as d:
+    mod.DATI = d
+    pr = lambda n, tit: {'aggiornato': 'x', 'giornata': n, 'squadre': ['Roma'], 'titolari': tit, 'panchina': {'9': 30}}
+    mod.registra_storico(pr(5, {'1': 90}))
+    mod.registra_storico(pr(5, {'1': 70}))
+    mod.registra_storico(pr(6, {'1': 80}))
+    mod.registra_storico({'aggiornato': 'x', 'giornata': 7, 'squadre': [], 'titolari': {}, 'panchina': {}})
+    with open(os.path.join(d, 'titolari-storico.json'), encoding='utf-8') as f:
+        st = json.load(f)
+    verifica('storico: una voce per giornata, ultima versione vince', st['giornate']['5']['t'] == {'1': 70} and set(st['giornate']) == {'5', '6'}, list(st['giornate']))
+    verifica('storico: squadre, titolari e panchina', st['giornate']['6'] == {'squadre': ['Roma'], 't': {'1': 80}, 'p': {'9': 30}})
+    verifica('storico: senza squadre pubblicate non si registra', '7' not in st['giornate'])
+mod.DATI = vecchio_dati
+
 for nome, pag in [('pagina di un\'altra giornata', pagina(4, ['Roma'])),
                   ('19 squadre', pagina(5, ['Roma'], blocchi=19)),
                   ('10 titolari', pagina(5, ['Roma'], titolari=10))]:

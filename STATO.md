@@ -117,7 +117,7 @@ Resta in coda per Jarvis solo se un giorno ne esce un ingresso concreto (es. xG 
 - La titolarità entra come somma (−0,4…+1,2), non come probabilità di giocare: due alternativi al 50% valgono quasi come due titolari.
 
 **Passi, in ordine (ognuno con prova in `prove/` e con la verifica sullo storico dove si può):**
-1. **Titolarità senza probabili:** da presenze a **partite da titolare** (o minuti), se la fonte delle statistiche li dà
+1. **FATTO 13/10 (commit locale, da pushare):** `registra_storico()` in `aggiorna.py` → `dati/titolari-storico.json` (G5-G6 recuperate dal git; si riempie a ogni giro); in `index.html` `titolaritaStorico()` (media pesata 3-2-1 delle ultime 3 probabili, «ultime probabili X%») e tetto dei posti del modulo abituale (`tenutiInsieme`, ballottaggi). Effetto G7: Beto fuori dal 4-3-3, Pellegrino resta al 67%. Prove: app 341/341, script 89/89. Limite: la fonte delle statistiche non dà le partite da titolare, quindi si usano le probabili (previsioni, non formazioni vere). Originale: **Titolarità senza probabili:** da presenze a **partite da titolare** (o minuti), se la fonte delle statistiche li dà
    (controllare `statistiche()` in `aggiorna.py`); altrimenti dalla storia delle probabili nel git di `dati/titolari.json`.
    Più la regola dei **ballottaggi**: due della stessa squadra e ruolo che si alternano non si contano titolari entrambi.
 2. **Valore atteso vero:** punteggio = P(gioca) × fantavoto atteso + (1 − P) × chi entra dalla panchina, invece della somma.

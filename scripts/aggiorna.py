@@ -693,6 +693,27 @@ def senza_ora(d):
     return {k: v for k, v in d.items() if k != 'aggiornato'}
 
 
+def registra_storico(t):
+    """dati/titolari-storico.json: per ogni giornata, l'ultima versione delle probabili (squadre
+    pubblicate, titolari e panchina con percentuale). Serve all'app per stimare la titolarità
+    di chi non ha ancora le probabili della giornata nuova: chi parte titolare nelle probabili e
+    chi entra dalla panchina si distinguono, cosa che le sole presenze non fanno (13/10/2026)."""
+    if not t.get('squadre'):
+        return
+    percorso = os.path.join(DATI, 'titolari-storico.json')
+    try:
+        with open(percorso, encoding='utf-8') as f:
+            storico = json.load(f)
+    except (OSError, ValueError):
+        storico = {'giornate': {}}
+    voce = {'squadre': t['squadre'], 't': t['titolari'], 'p': t['panchina']}
+    if storico['giornate'].get(str(t['giornata'])) == voce:
+        return
+    storico['giornate'][str(t['giornata'])] = voce
+    storico['aggiornato'] = t['aggiornato']
+    scrivi(percorso, storico, 0, 'titolari-storico', n=len(storico['giornate']))
+
+
 def solo_titolari():
     """Aggiorna dati/titolari.json e basta; il file si riscrive solo se le probabili sono cambiate
     (il campo 'aggiornato' da solo non conta), cosi' il giro non fa commit a vuoto."""
@@ -706,6 +727,7 @@ def solo_titolari():
         if not titolari_utili(t):
             print('[titolari] né probabili né indisponibili per questa giornata: tengo il file precedente.')
             return 0
+        registra_storico(t)
         percorso = os.path.join(DATI, 'titolari.json')
         try:
             with open(percorso, encoding='utf-8') as f:
@@ -772,6 +794,7 @@ def main():
         else:
             t = titolari(listone, n)
             if titolari_utili(t):
+                registra_storico(t)
                 scrivi(os.path.join(DATI, 'titolari.json'), t, 0, 'titolari',
                        n=len(t['titolari']) + len(t['panchina']) + len(t['indisponibili']))
             else:
