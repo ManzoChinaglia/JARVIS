@@ -30,6 +30,7 @@ pubblico.
 1. **Sette moduli (dal 07/10/2026): 4-3-3, 4-4-2, 4-5-1, 3-5-2, 3-4-3, 5-3-2, 5-4-1**, per
    tutte le leghe (elenco in `dati/leghe.json`). Il modificatore difesa scatta solo con almeno
    quattro difensori (portiere incluso, come da regola delle leghe): quindi non con la difesa a tre.
+   **A tavolino** (solo Rivoluzione, `forfait` in `dati/leghe.json`; la QI non lo ha): chi non schiera prende 0 fantapunti e perde 0-3. Si riconosce dai 0 fantapunti; `forfaitLega()` lo esclude dai confronti.
 2. **Niente chiavi API né segreti nel codice**: il repository è pubblico.
 3. **Nessun dato inventato.** Se una statistica non c'è, si dice che non c'è.
 4. **Gli aggiornamenti automatici non svuotano mai i dati**: si scrive solo se il

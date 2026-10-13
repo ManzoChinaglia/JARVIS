@@ -101,6 +101,8 @@ probabili?». Fino a quella prova non si costruisce nulla nel motore.
 
 ## Storico recente
 
+**Fatto il 13/10:** dati di lega importati (BF giornate 1-2, QI giornata 1, formazioni). Regola «a tavolino» (3-0 a chi non schiera, solo BF): `forfait` in `leghe.json`, `forfaitLega()` in `index.html`; il tuo forfait non conta come risultato giocato. `prove/app.js` 334/334.
+
 **Fatto il 26/09: riquadro «In lega» (Stagione) sistemato.** Le cifre «0V 1N 0P · gol 1-1»
 stavano sulla stessa riga dei pallini e finivano sotto il grafico: ora sono una riga a parte,
 per esteso («Vinte · pari · perse», «Gol fatti · subiti»). Il grafico dell'andamento compare

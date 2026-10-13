@@ -2564,10 +2564,18 @@ function comeAndata(){
 }
 /* il risultato vero della tua sfida, dal calendario di Leghe: in dati/lega.json
    "risultati": {"<giornata>": [[casa, fantapunti, fuori, fantapunti, gol casa, gol fuori], ...]} */
+/* a tavolino (regola della lega, LEGA.forfait): chi non schiera la formazione prende 0
+   fantapunti e perde per gol_vinta a gol_persa; basta guardare se ha fatto punti. Il tuo 0
+   non è un punteggio giocato: la giornata resta senza risultato e fuori dai confronti. */
+function forfaitLega(gio){
+  const r = LEGA && LEGA.forfait && D.lega && D.lega.risultati && D.lega.risultati[String(gio)];
+  const m = r && r.find(x=>x[0]===ME || x[2]===ME);
+  return m && (m[0]===ME ? m[1] : m[3]) === 0 ? {avv: m[0]===ME ? m[2] : m[0], gol: LEGA.forfait} : null;
+}
 function risultatoLega(gio){
   const r = D.lega && D.lega.risultati && D.lega.risultati[String(gio)];
   const m = r && r.find(x=>x[0]===ME || x[2]===ME);
-  if(!m) return null;
+  if(!m || forfaitLega(gio)) return null;
   const casa = m[0]===ME;
   return {avv: casa ? m[2] : m[0], mio: casa ? m[1] : m[3], loro: casa ? m[3] : m[1], golMio: casa ? m[4] : m[5], golLoro: casa ? m[5] : m[4]};
 }
@@ -3255,9 +3263,9 @@ const REPARTO_BREVE = {P:'porta', D:'difesa', C:'centro', A:'attacco'};
 function giornataLega(s, sa){
   const x = s.per.find(z=>z.sa===sa);
   if(!x || !x.g) return '';
-  const r = x.risultato, e = r ? esitoLega(r) : '';
-  return '<div class="st-dentro"><div class="lg-ris"><span>G'+x.g[0]+(r ? ' · contro '+r.avv : '')+'</span>'+
-      (r ? '<span class="cond"><b class="'+e+'">'+r.golMio+'-'+r.golLoro+'</b> <small>'+numCorto(r.mio)+' a '+numCorto(r.loro)+'</small></span>' : '<small>risultato non ancora importato</small>')+'</div>'+
+  const r = x.risultato, e = r ? esitoLega(r) : '', ff = !r && x.g ? forfaitLega(x.g[0]) : null;
+  return '<div class="st-dentro"><div class="lg-ris"><span>G'+x.g[0]+(r ? ' · contro '+r.avv : ff ? ' · contro '+ff.avv : '')+'</span>'+
+      (r ? '<span class="cond"><b class="'+e+'">'+r.golMio+'-'+r.golLoro+'</b> <small>'+numCorto(r.mio)+' a '+numCorto(r.loro)+'</small></span>' : ff ? '<small>non schierata · '+ff.gol.gol_persa+'-'+ff.gol.gol_vinta+' a tavolino</small>' : '<small>risultato non ancora importato</small>')+'</div>'+
     '<div class="rp-k">da dove arrivano i punti (migliori 11)</div>'+
     '<div class="rp">'+['P','D','C','A'].map(k=>'<div class="'+k+'" style="width:'+(100*x.reparti[k]/Math.max(1, x.tot)).toFixed(1)+'%">'+numCorto(x.reparti[k])+'</div>').join('')+'</div>'+
     '<div class="rp-n">'+['P','D','C','A'].map(k=>'<span>'+REPARTO_BREVE[k]+'</span>').join('')+'</div>'+

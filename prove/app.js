@@ -79,7 +79,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
     'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,baseStagione,apriConsiglio,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,mercato,forma,movimentoLega,risultatoLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,mercato,forma,movimentoLega,risultatoLega,forfaitLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (attendi && el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -840,6 +840,11 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     dati: { 'lega.json': { aggiornato: 'x', classifica: finta, risultati: { 1: [vittoriaG1] } } } }));
   verifica('passata alla giornata 2, senza un suo risultato: torna «VS»', el.vs.textContent === 'VS'
            && !el['vs-riga'].classList.contains('vinta') && !el['vs-riga'].classList.contains('persa'), el.vs.textContent);
+
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'lega.json': { aggiornato: 'x', classifica: finta, risultati: { 1: [risultatoG(1, 0, 70, 0, 3)] } } } }));
+  verifica('non schierata (0 fantapunti): a tavolino, nessun risultato giocato nei confronti', t.risultatoLega(1) === null && !!t.forfaitLega(1) && el.vs.textContent === 'VS');
+  ({ t } = await avvia({ adesso: giovedi, dati: { 'lega.json': { aggiornato: 'x', classifica: finta, risultati: { 1: [risultatoG(1, 70.5, 0, 3, 0)] } } } }));
+  verifica('forfait dell avversario: il tuo risultato resta valido', !!t.risultatoLega(1) && t.risultatoLega(1).golMio === 3 && !t.forfaitLega(1));
 
   ({ el } = await avvia({ adesso: giovedi, dati: { 'lega.json': null } }));
   verifica('senza il file della lega: niente forma, niente tabellone', el.vs.textContent === 'VS' && el.classifica.innerHTML === '');
