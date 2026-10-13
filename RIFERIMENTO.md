@@ -184,6 +184,7 @@ l'iPhone le riprende solo togliendo e rimettendo l'app sulla Home.
 `prove/app.js` 329/329 (ovunque); `prove/lega.py` 34/34 sul PC (con `archivio/`), 31/31 su un clone
 pulito o nella CI (saltano le prove sui file veri di Leghe: non è un guasto). `prove/formazioni.py`
 10/10, `prove/privacy.py` 8/8, `prove/lucchetto.js` 22/22. Le fallite si vedono come `NO`.
+`prove/backtest.js` non è una prova ma una misura: confronta due versioni di `index.html` sulle giornate salvate (uso nell'intestazione del file).
 
 `prove/app.js` estrae lo `<script>` da `index.html`, lo esegue in Node con un finto DOM e una `fetch`
 che legge da disco: **ogni funzione nuova aggiunge qui le sue verifiche**, e **ogni prova passa i

@@ -1768,7 +1768,7 @@ function bonusModificatore(media){
 const PARTITE_PRIOR_VOTO = 4;
 let VOTO_RUOLO = {}, BALLO = null;
 function stimaVoti(){
-  VOTO_RUOLO = {}; BALLO = null; CAMPIONI = {}; BLOCCHI = {}; SOSTITUTI = {}; Q_ENTRA = {}; CAMPIONI_FV = {}; SFIDE = {};
+  VOTO_RUOLO = {}; BALLO = null; CAMPIONI = {}; BLOCCHI = {}; CAMPIONI_FV = {}; SFIDE = {};
   ['P','D','C','A'].forEach(r=>{
     const g = players.filter(p=>p.ruolo===r && p.pgv>0), W = g.reduce((s,p)=>s+p.pgv, 0);
     VOTO_RUOLO[r] = W ? g.reduce((s,p)=>s+p.pgv*p.mv, 0)/W : null;
@@ -1934,63 +1934,12 @@ function modificatoreAtteso(portiere, difensori, n, g){
   return {atteso: fasce.reduce((s,f)=>s + f.bonus*f.prob, 0), media: somma/n, fasce};
 }
 
-/* il punteggio con cui Jarvis ordina i giocatori: il valore atteso. Il fantavoto del modello
-   è «se gioca» (si addestra sulle presenze con voto), quindi: P(gioca) × fantavoto + (1−P) × sostituto.
-   Regola delle leghe: se un titolare non prende voto entra il primo panchinaro dello stesso ruolo
-   che il voto l'ha preso, e se non entra nessuno si prende zero. Il sostituto è quindi il primo
-   panchinaro del ruolo nella rosa del giocatore, a sua volta pesato per la probabilità di avere
-   voto (un solo livello). Senza modello, il calcolo di prima. */
-let SOSTITUTI = {}, Q_ENTRA = {};
-/* P(entra): quanto di chi non parte titolare prende comunque voto (subentra, o il titolare si
-   ferma). Si MISURA sulle giornate passate che hanno le probabili e i voti: per ogni gruppo
-   (portiere o giocatore di movimento × stato delle probabili) q = (presi voto − Σp) / (n − Σp),
-   dove p è la percentuale che l'app dava allora. Con meno di 20 giocatori nel gruppo, o senza
-   giornate passate, q = 0: niente numero inventato. Solo giornate prima di quella chiesta. */
-function qEntra(p, stato, sa){
-  const chiave = sa+':'+(p.ruolo==='P' ? 'P' : 'M')+stato+':'+(D.titStorico ? 1 : 0);
-  if(chiave in Q_ENTRA) return Q_ENTRA[chiave];
-  let n = 0, somma = 0, presi = 0;
-  const gruppo = p.ruolo==='P';
-  Object.keys(D.titStorico || {}).map(Number).filter(m=>m < sa && D.voti && D.voti[String(m)]).forEach(m=>{
-    const h = D.titStorico[m], v = D.voti[String(m)];
-    players.forEach(q=>{
-      if((q.ruolo==='P') !== gruppo || !(h.squadre||[]).includes(q.club)) return;
-      const id = String(q.id);
-      let st, perc;
-      if(stato === 's'){ const s = titolaritaStorico(q, [0, m]); if(!s) return; st = 's'; perc = tenutiInsieme(q, [0, m], s.perc); }
-      else if(id in h.t){ st = 't'; perc = h.t[id]; }
-      else if(id in h.p){ st = 'c'; perc = h.p[id]; }
-      else { st = 'r'; perc = 0; }
-      if(st !== stato) return;
-      n++; somma += perc/100; presi += id in v ? 1 : 0;
-    });
-  });
-  return (Q_ENTRA[chiave] = n >= 20 && n > somma ? Math.min(1, Math.max(0, (presi - somma)/(n - somma))) : 0);
-}
-/* probabilità di prendere voto: p + (1−p)·q */
-function pVoto(p, g){
-  const t = titolarita(p, g);
-  if(!t) return null;
-  const x = t.perc/100;
-  return x + (1 - x)*qEntra(p, t.stato, g[1]);
-}
-/* il sostituto di un titolare del ruolo: il primo panchinaro dopo i posti del modulo `mod` (il
-   modulo che si sta valutando, non quello scelto), pesato per la probabilità di avere voto */
-function sostituto(p, g, mod){
-  mod = mod || modulo;
-  const chiave = p.team+':'+p.ruolo+':'+g[0]+':'+mod;
-  if(chiave in SOSTITUTI) return SOSTITUTI[chiave];
-  const posti = Object.assign({P:1}, MODULI[mod])[p.ruolo] || 1;
-  const v = players.filter(q=>q.team===p.team && q.ruolo===p.ruolo && disponibile(q, g[2]))
-    .map(q=>{ const a = attesoModello('fantavoto', q, g), x = pVoto(q, g);
-              return a ? (x === null ? 1 : x) * a.media : 0; })
-    .sort((x,y)=>y-x);
-  return (SOSTITUTI[chiave] = v[posti] || 0);
-}
-function valoreAtteso(fv, x, sost){ return x === null ? fv : x*fv + (1 - x)*sost; }
-function punteggio(p, g, mod){
-  const a = attesoModello('fantavoto', p, g);
-  return !a ? punteggioVecchio(p, g) : valoreAtteso(a.media, pVoto(p, g), sostituto(p, g, mod));
+/* il punteggio con cui Jarvis ordina i giocatori: il fantavoto atteso se gioca (dal
+   modello) più la titolarità, come prima. Senza modello, il calcolo di prima */
+
+function punteggio(p, g){
+  const a = attesoModello('fantavoto', p, g), t = a && titolarita(p, g);
+  return !a ? punteggioVecchio(p, g) : a.media + (t ? -0.4 + 1.6*t.perc/100 : 0);   // titolare sicuro +1,2 · fuori −0,4
 }
 /* il calcolo di prima: fantamedia stimata, titolarità e avversario pesato con PESI */
 function punteggioVecchio(p, g){
@@ -2021,12 +1970,12 @@ function combinazioni(a, k){
    «specialista del voto» va guardato anche se per fantamedia non spicca — e
    comunque pochi, che le combinazioni crescono in fretta. */
 let BLOCCHI = {};
-function bloccoDifensivo(disp, g, quanti, mod){
+function bloccoDifensivo(disp, g, quanti){
   if(BALLO === null && !D.mod) return null;
   const chiave = g[0]+':'+quanti+':'+disp.map(p=>p.id).join(',')+(CALCOLO_VECCHIO ? ':prima' : '');
   if(chiave in BLOCCHI) return BLOCCHI[chiave];
   const pt = new Map();                                  // il punteggio si ricalcola molte volte
-  disp.forEach(p=>pt.set(p, punteggio(p, g, mod)));
+  disp.forEach(p=>pt.set(p, punteggio(p, g)));
   const ord = (a,b)=>pt.get(b)-pt.get(a);
   const por = disp.filter(p=>p.ruolo==='P').sort(ord);
   const dif = disp.filter(p=>p.ruolo==='D').sort(ord);
@@ -2061,48 +2010,21 @@ function undiciDi(rosa, g, mod){
   const out = {P:[],D:[],C:[],A:[]};
   ['P','D','C','A'].forEach(r=>{
     out[r] = disp.filter(p=>p.ruolo===r)
-                 .sort((a,b)=>punteggio(b,g,mod)-punteggio(a,g,mod))
+                 .sort((a,b)=>punteggio(b,g)-punteggio(a,g))
                  .slice(0,q[r]);
   });
   /* portiere e difesa, se il modificatore è misurabile, si rifanno a blocco;
      altrimenti restano quelli scelti uno per uno, come prima */
-  const b = q.D >= 4 ? bloccoDifensivo(disp, g, q.D, mod) : null;
-  if(b){ out.P = [b.P]; out.D = b.D.slice().sort((x,y)=>punteggio(y,g,mod)-punteggio(x,g,mod)); }
+  const b = q.D >= 4 ? bloccoDifensivo(disp, g, q.D) : null;
+  if(b){ out.P = [b.P]; out.D = b.D.slice().sort((x,y)=>punteggio(y,g)-punteggio(x,g)); }
   return out;
 }
-/* quanto portano in più i panchinari, reparto per reparto, nell'ordine in cui Jarvis li propone (come
-   la lega: pari ruolo, il primo della panchina che ha voto prende il posto del primo titolare senza
-   voto, uno solo per titolare). Si tiene la distribuzione dei «buchi» (titolari senza voto, ognuno
-   indipendente) e la si aggiorna panchinaro dopo panchinaro. Il tetto di 5 cambi si ignora: con 11
-   titolari e P(voto) ≥ 0,9 raramente conta, e non lo si prevede. Se manca il modello, 0. */
-function valorePanchina(u, g, mod){
-  const scelti = new Set([].concat(u.P, u.D, u.C, u.A).map(p=>p.id));
-  let tot = 0;
-  ['P','D','C','A'].forEach(r=>{
-    let dist = [1];                                           // dist[h] = P(h titolari senza voto)
-    u[r].forEach(p=>{
-      const x = pVoto(p, g), nuova = new Array(dist.length + 1).fill(0);
-      dist.forEach((d, h)=>{ nuova[h] += d*(x === null ? 1 : x); nuova[h+1] += d*(x === null ? 0 : 1 - x); });
-      dist = nuova;
-    });
-    mia.filter(p=>p.ruolo===r && !scelti.has(p.id) && disponibile(p, g[2]))
-      .sort((a,b)=>punteggio(b, g, mod) - punteggio(a, g, mod)).forEach(p=>{
-        const a = attesoModello('fantavoto', p, g), x = pVoto(p, g);
-        if(!a || x === null) return;
-        const buco = dist.slice(1).reduce((s,d)=>s + d, 0);
-        tot += x*buco*a.media;
-        dist = dist.map((d, h)=> h === 0 ? d + (dist[1] || 0)*x : d*(1 - x) + (dist[h+1] || 0)*x);
-      });
-  });
-  return tot;
-}
-/* quanto rende ogni modulo: il valore atteso dei suoi undici (fantavoto e probabilità di giocare; senza modello la
+/* quanto rende ogni modulo: il fantavoto atteso dei suoi undici (senza modello la
    fantamedia stimata) più il modificatore atteso, che c'è solo con la difesa a quattro.
    Il modulo che rende di più è «consigliato»; a parità vince il primo dell'elenco. */
 function totaleModulo(g, mod){
   const u = undiciDi(mia, g, mod), tutti = [].concat(u.P, u.D, u.C, u.A);
-  const fv = tutti.reduce((s,p)=>{ const a = attesoModello('fantavoto', p, g); return s + (a ? valoreAtteso(a.media, pVoto(p, g), 0) : fmStimata(p)); }, 0)
-           + valorePanchina(u, g, mod);
+  const fv = tutti.reduce((s,p)=>{ const a = attesoModello('fantavoto', p, g); return s + (a ? a.media : fmStimata(p)); }, 0);
   const m = conModificatore(mod) && u.P.length && u.D.length >= 4 ? modificatoreAtteso(u.P[0], u.D, SIMULAZIONI, g) : null;
   return {fv, mod: m ? m.atteso : 0, tot: fv + (m ? m.atteso : 0)};
 }
