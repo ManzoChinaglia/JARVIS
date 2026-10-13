@@ -99,6 +99,40 @@ Pesi: «valutiamo l'utilizzo», quindi per ora non si tocca il consiglio.
 domanda da misurare: «un segnale delle news (infortunio/ballottaggio) prevede chi non parte titolare meglio delle sole
 probabili?». Fino a quella prova non si costruisce nulla nel motore.
 
+## CERVELLO CALCISTICO — piano (Opus, 13/10/2026; si esegue con Sonnet)
+
+**Richiesta dell'utente (13/10):** Jarvis ragiona «solo a numeri». Esempio: BF giornata 7, 4-3-3 con Pellegrino **e** Beto
+(alternativi nella Fiorentina) contro il Como, con la Fiorentina in crisi. L'utente pensava di collegarlo all'Atlante di THE CLUB.
+
+**Perché NON l'Atlante (per ora):** l'Atlante (`THE CLUB/docs/realismo.md`) è fatto di eventi e tracking di stagioni vecchie
+e partite d'esempio: dice come si gioca il calcio, non chi gioca oggi né chi è in forma. Non esiste ancora (R0 non partito).
+Resta in coda per Jarvis solo se un giorno ne esce un ingresso concreto (es. xG per tipo di tiro); oggi nessuno.
+
+**Diagnosi misurata sull'app (13/10, G7, probabili non ancora uscite):**
+- Pellegrino 7,81 e Beto 7,33 nel punteggio: entrambi tra i 3 attaccanti. Senza probabili `titolarita()` usa le presenze
+  (`pgv` su partite della squadra): **chi entra dalla panchina conta come titolare** (Pellegrino 6/6 = 100%, Beto 4/6 = 67%).
+- Il fantavoto atteso **ignora quasi la stagione in corso**: Pellegrino ha media voto 5,75 ma `base` 6,57 (storia
+  pluriennale con `DECAD` 0,97 ≈ 33 presenze, più la quotazione). Contro il Como: avversario −0,07, squadra −0,04: la crisi
+  della Fiorentina e la forza del Como quasi non si vedono (con 6 partite l'anno scorso pesa ancora il 40%, `perPartita`).
+- La titolarità entra come somma (−0,4…+1,2), non come probabilità di giocare: due alternativi al 50% valgono quasi come due titolari.
+
+**Passi, in ordine (ognuno con prova in `prove/` e con la verifica sullo storico dove si può):**
+1. **Titolarità senza probabili:** da presenze a **partite da titolare** (o minuti), se la fonte delle statistiche li dà
+   (controllare `statistiche()` in `aggiorna.py`); altrimenti dalla storia delle probabili nel git di `dati/titolari.json`.
+   Più la regola dei **ballottaggi**: due della stessa squadra e ruolo che si alternano non si contano titolari entrambi.
+2. **Valore atteso vero:** punteggio = P(gioca) × fantavoto atteso + (1 − P) × chi entra dalla panchina, invece della somma.
+   Si verifica sulle giornate salvate (consigli contro formazioni e voti veri, 2 leghe).
+3. **Forma della stagione in corso:** misurare sullo storico (le stagioni tenute da parte in `modello.py --verifica`) se una
+   voce «media delle ultime 5» e un peso della stagione in corso più alto abbassano l'errore. Si tiene solo se migliora.
+4. **Forza delle partite «ad ampio spettro» (le quote):** le quote dei bookmaker riassumono tutto (forma, infortuni, crisi,
+   tattica). Fonte candidata: football-data.co.uk (storico Serie A con quote, file delle prossime partite). Prima R0 come per
+   THE CLUB: licenza e condizioni scritte, download controllato. Poi una voce «gol attesi dalle quote» in `modello.py`,
+   verificata sullo storico 2015-2026: si tiene solo se batte la forza da gol fatti/subiti.
+5. **Le news (JARVIS-conoscenza):** il «Pezzo 3» anticipato: misurare se `ballottaggio`/`infortunio` prevedono chi non parte
+   titolare meglio delle sole probabili. Solo misura; nel motore solo se predice.
+6. **Ricalibrazione dei PESI** a fine novembre, come già previsto, con i passi sopra dentro.
+**Dopo:** grafica «wow» (liquid glass mantenuto, ispirazione dal lavoro di THE CLUB), cantiere a sé con mockup prima.
+
 ## Storico recente
 
 **Fatto il 13/10 (non committato):** (1) «Tu, Jarvis e il massimo»: con Tu e Max vicini le etichette si sovrapponevano; ora `.cf.vicini` porta quella del massimo su una seconda riga. (2) «Il migliore che non hai schierato» non conta più chi è senza voto (prima Robinson s.v. prendeva l'8 di Mendy, il panchinaro che entra): `meglio()` in `htmlScelte`. Prove 334/334.
