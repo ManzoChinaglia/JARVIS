@@ -1,5 +1,12 @@
 # Stato dei lavori — JARVIS
 
+## Prossimo
+<!-- pannello «Punti aperti»: max 3 punti, una riga ciascuno; si aggiorna a fine sessione -->
+Stato: urgente
+1. Multilega: chiudere la seconda lega (BOCA NDUJORS)
+2. Aggiornamenti più fitti + archivio news (piano pronto)
+3. Cervello calcistico (piano pronto)
+
 (al 08/10/2026 — tutto pushato; prove 330/330)
 
 ## MULTILEGA — cantiere aperto, URGENTE (prima giornata della nuova lega: 6ª di Serie A, ~10/10/2026)
