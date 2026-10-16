@@ -1206,6 +1206,38 @@
   .avvio.dest.fermo{animation:none;}
   .avvio.dest.fermo .tl-nome span, .avvio.dest.fermo .tl-stm img{animation-duration:.01s; animation-delay:0s;}
   .avvio.dest.fermo .tl-bar i{animation-duration:2.4s; animation-delay:0s;}
+
+  /* --- Focus sezioni non viste nei mockup (17/10): stesso linguaggio di gala --- */
+  .pb-reparto{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015)); border:1px solid rgba(255,255,255,.09); position:relative;}
+  .pb-reparto::before{content:""; position:absolute; left:14px; right:14px; top:0; height:1px; background:linear-gradient(90deg,transparent,rgba(240,199,94,.55),transparent);}
+  .pb-testa{font-family:"Space Grotesk",sans-serif; font-weight:600; color:var(--dim);}
+  .pb-sigla{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:14px; box-shadow:0 0 12px -2px currentColor;}
+  .pb-sigla.ruolo-P{box-shadow:0 0 12px -2px #E4B451;} .pb-sigla.ruolo-D{box-shadow:0 0 12px -2px #7FB3D5;}
+  .pb-sigla.ruolo-C{box-shadow:0 0 12px -2px #71C295;} .pb-sigla.ruolo-A{box-shadow:0 0 12px -2px #E0605C;}
+  .pb-riga + .pb-riga{border-top:1px solid rgba(255,255,255,.06);}
+  .pb-ord small{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:17px; color:var(--oro);}
+  .pb-chi b, .ko-chi b, .qg-testa b{font-family:"Big Shoulders Display",sans-serif; font-weight:700; font-size:19px; letter-spacing:.01em;}
+  .pb-chip{font-family:"Space Grotesk",sans-serif; border:1px solid rgba(255,255,255,.07);}
+  .pb-chip.verde{border-color:rgba(67,224,143,.25);} .pb-chip.giallo{border-color:rgba(242,201,76,.25);} .pb-chip.rosso{border-color:rgba(255,122,122,.25);}
+  .pb-num b{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:30px; color:#fff;}
+  .pb-num em, .pb-num small{font-family:"Space Grotesk",sans-serif;}
+  .ko-carta, .qg-partita{position:relative; border-radius:20px;}
+  .ko-carta::before, .qg-partita::before{content:""; position:absolute; left:16px; right:16px; top:0; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent); pointer-events:none;}
+  .ko-carta{border-color:rgba(255,122,122,.22); background:linear-gradient(180deg,rgba(255,122,122,.07),rgba(255,255,255,.02));}
+  .ko-conta{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:28px;}
+  .ko-voce span{font-family:"Space Grotesk",sans-serif; font-weight:600;}
+  .qg-giorno{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:17px; letter-spacing:.14em;}
+  .qg-ora{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:19px; border:1px solid currentColor;}
+  .qg-partita.forte{background:linear-gradient(180deg,rgba(233,185,73,.16),rgba(233,185,73,.04)); box-shadow:0 8px 24px -14px rgba(233,185,73,.6);}
+  .qg-nomi span{font-family:"Space Grotesk",sans-serif; font-weight:500;}
+  .qg-nomi span.in{background:linear-gradient(180deg,var(--oro-chiaro),var(--oro)); box-shadow:0 2px 10px -3px rgba(233,185,73,.7);}
+  .sc-lato b{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:20px; letter-spacing:.02em; text-transform:uppercase;}
+  .sc-lato .k, .sc-conti span, .sc-r .k{font-family:"Space Grotesk",sans-serif;}
+  .sc-conti div{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.2)); border:1px solid rgba(255,255,255,.07);}
+  .sc-conti b{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:34px;}
+  .sc-r{font-family:"Space Grotesk",sans-serif;}
+  #difesa .invito-freccia{display:none;}
+  #difesa .invito, #kobox .invito{font-family:"Space Grotesk",sans-serif;}
 </style>
 </head>
 <body class="carica">
@@ -2304,8 +2336,8 @@ function renderDifesa(g){
   const box = document.getElementById('difesa');
   if(!box) return;
   const d = bloccoDifesa(g), ps = probabilitaSfida(g);
-  if(!d && !ps){ box.innerHTML = ''; return; }
-  box.innerHTML = invito(ICONA_CONSIGLIO, 'Il consiglio',
+  if(!d){ box.innerHTML = ''; return; }
+  box.innerHTML = invito(ICONA_CONSIGLIO, 'Modificatore difesa',
     d ? 'La difesa: '+(d.m.atteso>=0.05 ? '+' : '')+num(d.m.atteso)+' atteso' : 'Il perché dell\'undici',
     d ? 'Fascia più probabile '+etichettaFascia(d.alta.bonus)+' ('+Math.round(100*d.alta.prob)+'%)' : '');
 }
