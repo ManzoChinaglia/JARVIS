@@ -5,7 +5,7 @@
 Stato: in corso
 1. Dopo la G7 (da lunedì 19/10 18:45): «dati di lega» e «formazione schierata» per entrambe le leghe (`--lega qi`)
 2. Cervello calcistico: restano i passi 5-6 (news: misura rifare con più giornate; PESI a fine novembre)
-3. Grafica «wow»: scelta la direzione A «Notte di gala» (17/10), prossimo il giro 2 dei mockup (piano sotto)
+3. Grafica «wow»: scelta la direzione A «Notte di gala» (17/10), giro 3 dei mockup pronto in archivio/mockup/wow-3.html (giro 2 corretto dopo le note dell'utente: icona unica Re Guyzo, transizione di lega col proprio stemma, moduli staccati, scadenza senza calendario, testata, stemmi ufficiali) (Rosa, Stagione, Lega, parti piccole, lucchetto; attende la scelta dell'utente), poi passo 2 (piano sotto)
 
 (al 17/10/2026 — tutto pushato; prove 352/352)
 
@@ -162,16 +162,23 @@ Mockup: `archivio/mockup/wow-1.html` (fuori da git: contiene i nomi degli avvers
   Il nome della tua squadra nei colori `nome_a/nome_b`, l'avversario sottile e grigio.
 - Oro solo per ciò che conta: anello della vittoria che si riempie (1,6 s, punto acceso in testa), tessera consigliata con riflesso
   che passa (5 s), voti sottili oro sul campo. Punto verde che respira (3 s) accanto all'aggiornamento.
-- Campo notturno: strisce scure, luce dall'alto, vignetta; sotto ogni maglia una **pozza di luce del colore della squadra**.
+- Campo notturno: **in prospettiva** (trapezio, fasce che si allargano verso il basso, maglie lontane più piccole, stessa proiezione per campo e maglie), linee che brillano nel `--tema-b`; sotto ogni maglia solo un'ombra scura (niente pozza di luce, niente anelli dorati); voto **sotto il nome** in Big Shoulders 300 (verde ≥7, bianco 6-7, rosso <6, stellina sul migliore), mai in pillola; niente linee tratteggiate; maglie che cadono in sequenza con rimbalzo.
 - Restano (già approvati): 7 tessere su una riga, pillole NO MOD./CONSIGLIATA, peperoncino/stella animati, selettore con swipe,
   tema per lega. QI senza percentuali: «pari / sulla carta» nell'anello, mai numeri inventati.
 
 **Passi, in ordine:**
-1. **Giro 2 dei mockup** (stesso file o `wow-2.html`, dati veri, entrambe le leghe): le altre schermate in stile A
+1. **[FATTO e APPROVATO 17/10 sul giro 3: `archivio/mockup/wow-3.html`, riferimento unico per il codice]** **Giro 2 dei mockup** (stesso file o `wow-2.html`, dati veri, entrambe le leghe): le altre schermate in stile A
    (Rosa, Stagione, Lega, selettore aperto, lucchetto, panchina, «La sfida», «Quando giocano», «Il consiglio», scheda giocatore)
    e le micro-parti con tutti gli stati: carta della scadenza **aperta** (conto alla rovescia) e scaduta, tessera giocatore
    (titolare/in dubbio/fuori), tessera modulo (4 stati), campanella, barra in basso. Scelta dell'utente prima del codice.
-2. **Fondamenta in `index.html`**: token CSS nuovi accanto a quelli di oggi; caratteri **in locale** (Big Shoulders Display
+   Decisioni del giro 3 (utente, 17/10): icona unica dell'app e del lucchetto = Re Guyzo (`img/icona-180.png`); **schermata di cambio lega** col proprio stemma
+   (tondo), nome a lettere che compaiono, onde di luce, barra di caricamento, nei colori della lega di destinazione (oggi esce sempre Re Guyzo: da correggere);
+   testata nuova (medaglione Re Guyzo con anello d'oro, JARVIS con riflesso, pillola LIVE, campanella SVG che suona, badge che pulsa); tessera modulo con
+   linea di stacco tra modulo e punteggio; carta scadenza **senza icona calendario**: aperta = tre anelli giorni/ore/minuti + barra con punta luminosa + badge APERTA,
+   chiusa = ora grande + badge CHIUSO (mai la scritta «scaduta»); classifica con **stemmi ufficiali scaricati da Leghe** dove esistono, iniziali altrimenti
+   (da fare: scaricarli nello script di import, con controllo download); bottoni (primario oro con riflesso, vetro con bordo di luce, pressione con rimbalzo);
+   barra in basso con pillola liquida che scorre e si allunga, icone SVG; schermate che entrano in sequenza; tutto fluido, `prefers-reduced-motion` ferma le animazioni.
+2. **[IN CORSO 17/10: caratteri FATTI (font/big-shoulders-display.woff2 e space-grotesk.woff2, variabili, OFL, nel service worker `jarvis-4`, prove 352/352, non committati); restano token CSS e componenti `anello()`, filo di luce, etichetta col punto, testata, tab con pillola]** **Fondamenta in `index.html`**: token CSS nuovi accanto a quelli di oggi; caratteri **in locale** (Big Shoulders Display
    300/800/900 e Space Grotesk, licenza OFL, cartella `font/`, cache del service worker se c'è); componenti riusabili:
    `anello()` SVG, filo di luce, pozza di luce, etichetta col punto. Prima cercare cosa esiste già (regola 7).
 3. **Schermate una alla volta**, Giornata per prima, ognuna vista nell'anteprima 390×844 in tutte e due le leghe e approvata.

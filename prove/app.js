@@ -407,7 +407,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   console.log('\n14. Font ospitato nel repository');
   verifica('nessuna richiesta a Google Fonts', !/fonts\.(googleapis|gstatic)\.com/.test(html));
   const fonti = [...html.matchAll(/url\("(font\/[^"]+\.woff2)"\)/g)].map(m => m[1]);
-  verifica('due spessori, 600 e 700 (il 500 non lo usava nessuno)', fonti.length === 2 && !fonti.some(f => /500/.test(f)), fonti.join(', '));
+  verifica('quattro file in locale: Barlow 600 e 700 (il 500 non lo usava nessuno), Big Shoulders e Space Grotesk variabili', fonti.length === 4 && !fonti.some(f => /condensed-500/.test(f)) && fonti.some(f => /big-shoulders/.test(f)) && fonti.some(f => /space-grotesk/.test(f)), fonti.join(', '));
   verifica('i file esistono e sono woff2', fonti.every(f => fs.existsSync(path.join(REPO, f)) &&
            fs.readFileSync(path.join(REPO, f)).subarray(0, 4).toString() === 'wOF2'));
   verifica('licenza inclusa', fs.existsSync(path.join(REPO, 'font', 'OFL.txt')));
@@ -475,7 +475,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            && /index\.html/.test(sw) && /barlow-condensed-700\.woff2/.test(sw));
   verifica('service worker registrato solo se il browser lo supporta', /'serviceWorker' in navigator/.test(html));
   verifica('rispetta «Riduci movimento» dell\'iPhone', /prefers-reduced-motion: reduce/.test(html));
-  verifica('cache nuova per i file fissi cambiati', /jarvis-3/.test(sw) && /img\/sfondo\.jpg/.test(sw) && !/stemma\.jpg|condensed-500/.test(sw));
+  verifica('cache nuova per i file fissi cambiati', /jarvis-4/.test(sw) && /img\/sfondo\.jpg/.test(sw) && !/stemma\.jpg|condensed-500/.test(sw));
 
   console.log('\n18. Campo, maglie e schede');
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': prob5, 'squadre.json': null, 'infortuni.json': null } }));
