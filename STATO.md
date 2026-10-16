@@ -5,9 +5,10 @@
 Stato: in corso
 1. Dopo la G7 (da lunedì 19/10 18:45): «dati di lega» e «formazione schierata» per entrambe le leghe (`--lega qi`)
 2. Cervello calcistico: restano i passi 5-6 (news: misura rifare con più giornate; PESI a fine novembre)
-3. Grafica «wow»: scelta la direzione A «Notte di gala» (17/10), giro 3 dei mockup pronto in archivio/mockup/wow-3.html (giro 2 corretto dopo le note dell'utente: icona unica Re Guyzo, transizione di lega col proprio stemma, moduli staccati, scadenza senza calendario, testata, stemmi ufficiali) (Rosa, Stagione, Lega, parti piccole, lucchetto; attende la scelta dell'utente), poi passo 2 (piano sotto)
+3. Grafica «wow» fatta (campo, Stagione, Lega con podio e stemmi ufficiali BF): 3 commit locali NON pushati (attende il «sì»); restano stemmi QI (stessa routine, da pagina Leghe della lega QI) e prova sul telefono
+4. Sfida in tempo reale FATTA lato app e importer (18/10): `importa_formazioni.py` salva anche l'undici dell'avversario (`avversario` in formazioni.json); l'app lo usa e, nelle 3 ore prima della scadenza, rilegge ogni 2 min. Manca l'automatismo sul PC (attività con Chrome ogni pochi minuti verso la scadenza + apri→chiudi→push) e non è provato che Leghe mostri l'avversario PRIMA della scadenza: da verificare alla prossima. Stemmi QI presi (8 su 9; «una squadra della QI» non ne ha)
 
-(al 17/10/2026 — rework «Notte di gala» in index.html + focus sezioni non viste (panchina, non disponibili, quando giocano, sfida) pushati; «Il consiglio» ridotto al solo modificatore difesa, non si apre più (decisione utente 17/10: la vista dentro non la usa mai; `apriConsiglio` resta nel codice e nelle prove, da togliere se l'utente conferma); restano stemmi ufficiali in classifica (JSON cifrato dal lucchetto o iniziali); prove 352/352)
+(al 17/10/2026 sera — campo ridisegnato con avversario, consiglio ridotto al solo banner del modificatore (non cliccabile; vista e `apriConsiglio` tolti), mercato tolto, stemmi delle altre squadre come data URI in `dati/lega.json` → `stemmi` (cifrato; `importa_lega.py` li conserva), podio in Lega; prove 339/339)
 
 ## MULTILEGA — cantiere aperto, URGENTE (prima giornata della nuova lega: 6ª di Serie A, ~10/10/2026)
 
