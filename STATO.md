@@ -7,7 +7,7 @@ Stato: in corso
 2. Cervello calcistico: restano i passi 5-6 (news: misura rifare con più giornate; PESI a fine novembre)
 3. Grafica «wow»: scelta la direzione A «Notte di gala» (17/10), giro 3 dei mockup pronto in archivio/mockup/wow-3.html (giro 2 corretto dopo le note dell'utente: icona unica Re Guyzo, transizione di lega col proprio stemma, moduli staccati, scadenza senza calendario, testata, stemmi ufficiali) (Rosa, Stagione, Lega, parti piccole, lucchetto; attende la scelta dell'utente), poi passo 2 (piano sotto)
 
-(al 17/10/2026 — tutto pushato; prove 352/352)
+(al 17/10/2026 — rework «Notte di gala» in index.html + focus sezioni non viste (panchina, non disponibili, quando giocano, sfida) pushati; «Il consiglio» ridotto al solo modificatore difesa, non si apre più (decisione utente 17/10: la vista dentro non la usa mai; `apriConsiglio` resta nel codice e nelle prove, da togliere se l'utente conferma); restano stemmi ufficiali in classifica (JSON cifrato dal lucchetto o iniziali); prove 352/352)
 
 ## MULTILEGA — cantiere aperto, URGENTE (prima giornata della nuova lega: 6ª di Serie A, ~10/10/2026)
 
