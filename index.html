@@ -634,7 +634,6 @@
   .invito-testo b{display:block; margin-top:3px; font-size:17px; font-weight:600; line-height:1.2;}
   .invito-testo small{display:block; margin-top:3px; font-size:12.5px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .invito-freccia{flex-shrink:0; font-size:26px; line-height:1; color:var(--oro);}
-  #mercato .invito{margin-top:22px;}
   #difesa .invito{margin-top:14px;}
   /* il lucchetto (16/09/2026) */
   .lucchetto{position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; padding:24px 16px;
@@ -716,17 +715,6 @@
   .vr strong{min-width:46px; font-size:27px; text-align:right;}
   .vr.sv{opacity:.55;}
   .vr.sv strong{font-size:16px; color:var(--dim);}
-  /* mercato: scambi alla pari */
-  .sc-coppia{display:grid; grid-template-columns:1fr 28px 1fr; align-items:start; gap:6px;}
-  .sc-lato{display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; text-align:center;}
-  .sc-lato .k{font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.1em; color:var(--dim);}
-  .sc-lato.prendi .k{color:#43E08F;}
-  .sc-lato .maglia{width:52px; height:52px; margin:4px 0; filter:drop-shadow(0 6px 8px rgba(0,0,0,.45));}
-  .sc-lato b{max-width:100%; font-size:16px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .sc-lato small{font-size:11.5px; line-height:1.4; color:var(--dim);}
-  .sc-freccia{align-self:center; width:28px; height:28px; color:var(--oro);}
-  .sc-g{display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; max-width:100%;}
-  .sc-g + .sc-g{margin-top:12px;}
   .sez{margin:22px 4px 10px; font-family:"Barlow Condensed",sans-serif; font-size:23px; font-weight:700; color:var(--ink);}
   .sovra-corpo > .sez:first-child{margin-top:4px;}
   /* .blocco sovrappone un velo bianco: sta bene sulle zone scure dello sfondo, ma il
@@ -741,19 +729,6 @@
      Una tinta sola, accesa sulla fascia più probabile e spenta sulle altre: la
      storia è dove cadi, non sei categorie diverse da distinguere. L'ordine delle
      righe (dal +6 allo zero) porta già il senso di «più in alto è meglio». */
-  .md-n{margin-top:10px; text-align:center;}
-  .md-n b{display:block; font-size:44px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
-  .md-n span{display:block; margin-top:4px; font-size:12px; color:var(--dim);}
-  .md-righe{display:flex; flex-direction:column; gap:7px; margin:16px 0 4px;}
-  .md-r{display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--dim);}
-  .md-r .md-f{width:32px; flex-shrink:0; text-align:right; font-weight:600; font-variant-numeric:tabular-nums;}
-  .md-r .md-p{width:32px; flex-shrink:0; text-align:right; font-variant-numeric:tabular-nums;}
-  .md-r i{flex:1; min-width:0; height:10px; border-radius:5px; background:rgba(255,255,255,.055);}
-  .md-r i em{display:block; min-width:4px; height:100%; border-radius:5px;
-             background:rgba(228,180,81,.3); transition:width .3s var(--morbida);}
-  .md-r.sel{color:var(--ink);}
-  .md-r.sel .md-f{color:var(--oro-chiaro);}
-  .md-r.sel i em{background:var(--oro);}
   /* la panchina (17/09/2026, scelta dell'utente, dopo la versione compatta del 16/09 che aveva
      tolto troppo): un riquadro di vetro per reparto, appena dorato, con le maglie. Per ognuno
      partita e orario, titolarità, avversario; a destra il fantavoto atteso se gioca e quanto
@@ -792,14 +767,7 @@
   .pb-sigla.ruolo-P{background:#E4B451;} .pb-sigla.ruolo-D{background:#7FB3D5;}
   .pb-sigla.ruolo-C{background:#71C295;} .pb-sigla.ruolo-A{background:#E0605C;}
   .pb-sigla{color:#10150F;}
-  .sc-conti{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;}
-  .sc-conti div{min-width:0; padding:9px 6px; border-radius:14px; text-align:center; background:rgba(0,0,0,.22);}
-  .sc-conti span{display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim);
                  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .sc-conti b{display:block; margin-top:3px; font-size:26px; line-height:1;}
-  .sc-conti b.su{color:#43E08F;}
-  .blocco p.sc-perche{font-size:13px; color:var(--dim);}
-  .sc-perche b{color:var(--ink); font-weight:600;}
   /* la stagione */
   .st-numeri{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
   .st-numeri div{padding:12px 4px 10px; border-radius:16px; text-align:center; background:rgba(0,0,0,.22);}
@@ -954,16 +922,6 @@
            color:var(--ink); background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);}
   .u11-alt .maglia{width:20px; height:20px;}
   .u11-alt b.fv-alto{color:#43E08F;} .u11-alt b.fv-basso{color:#FF8A8A;} .u11-alt b.sv{color:var(--dim); font-weight:400;}
-  .mk-tab{width:100%; margin-top:10px; border-collapse:collapse; font-size:14px;}
-  .mk-tab th{padding:9px 0; text-align:left; font-size:12.5px; font-weight:400; color:var(--dim);}
-  .mk-tab td{width:31%; padding:9px 4px; text-align:center; font-variant-numeric:tabular-nums;}
-  .mk-tab thead td{padding-top:0; font-size:12px; font-weight:600; color:var(--ink);}
-  .mk-tab thead td small{display:block; font-size:10px; font-weight:400; color:var(--dim);}
-  .mk-tab tbody tr{border-top:1px solid var(--line);}
-  .mk-tab td small{display:block; font-size:10.5px; color:var(--dim);}
-  .mk-tab td.meglio{color:#43E08F; font-weight:700;}
-  .mk-tab tr.tot td{font-family:"Barlow Condensed",sans-serif; font-size:20px; font-weight:700;}
-  .mk-tab .cal3{margin:0;}
   .andamento{margin:0 0 10px; padding:12px 12px 8px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid var(--bordo);}
   .andamento .k{font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--dim);}
   .andamento svg{display:block; width:100%; height:auto; margin-top:6px;}
@@ -1138,7 +1096,7 @@
                            animation:g-passa 5s ease-in-out infinite;}
 
   /* campo in prospettiva: fasce che si allargano verso il basso, linee nel colore della lega */
-  #campo{aspect-ratio:358/470; background:#0a170e; border:0;
+  #campo{aspect-ratio:358/580; background:#0a170e; border:0;
          box-shadow:inset 0 0 80px #000, 0 24px 50px -20px #000;}
   #campo::before{content:''; position:absolute; inset:0; pointer-events:none; z-index:2;
                  background:radial-gradient(90% 70% at 50% 50%,transparent 50%,rgba(0,0,0,.6));}
@@ -1146,7 +1104,6 @@
   #campo .piano{position:absolute; inset:0; width:100%; height:100%;}
   #campo .gioc{transform:translate(-50%,-50%) scale(var(--sc,1)); transform-origin:50% 50%;}
   #campo.entra .gioc{animation:g-cade .7s var(--molla) both; animation-delay:calc(.3s + var(--i) * .06s);}
-  #campo .av, #campo .ora{display:none;}   /* avversario e ora stanno nelle carte sotto: sul campo restano nome e voto */
   #campo .sagoma{filter:none;}
   #campo .ombra{position:absolute; left:50%; bottom:-4px; width:78%; height:16%; margin-left:-39%; border-radius:50%;
                 background:radial-gradient(closest-side,rgba(0,0,0,.65),transparent);}
@@ -1207,6 +1164,19 @@
   .avvio.dest.fermo .tl-nome span, .avvio.dest.fermo .tl-stm img{animation-duration:.01s; animation-delay:0s;}
   .avvio.dest.fermo .tl-bar i{animation-duration:2.4s; animation-delay:0s;}
 
+  /* campo (18/10): nome e voto in pastiglie scure ben leggibili, sotto l'avversario con la sua maglia */
+  #campo .gioc{overflow:visible;}
+  #campo .nm{max-width:none; padding:1px 8px; font-size:14px; background:rgba(5,8,6,.84);}
+  #campo .vl{margin-top:3px; padding:1px 9px 0; border-radius:9px; font:800 18px/1.15 "Big Shoulders Display",sans-serif; letter-spacing:.3px;
+             text-shadow:none; background:rgba(5,8,6,.86); border:1px solid rgba(255,255,255,.16);}
+  #campo .vl.a{color:#5BE3A0; border-color:rgba(91,227,160,.55);}
+  #campo .vl.c{color:#FF8A8A; border-color:rgba(255,138,138,.55);}
+  #campo .av{display:flex; align-items:center; gap:3px; margin-top:3px; padding:1px 7px 1px 4px; border-radius:99px; background:rgba(5,8,6,.66);
+             font:600 9.5px "Space Grotesk",sans-serif; color:rgba(255,255,255,.88); text-shadow:none; overflow:visible; max-width:none;}
+  #campo .av em{font-style:normal; font-size:8.5px; text-transform:uppercase; opacity:.62;}
+  #campo .av .maglia{width:13px; height:13px; filter:none;}
+  #campo .av b{font-weight:700; letter-spacing:.05em;}
+
   /* --- Focus sezioni non viste nei mockup (17/10): stesso linguaggio di gala --- */
   .pb-reparto{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015)); border:1px solid rgba(255,255,255,.09); position:relative;}
   .pb-reparto::before{content:""; position:absolute; left:14px; right:14px; top:0; height:1px; background:linear-gradient(90deg,transparent,rgba(240,199,94,.55),transparent);}
@@ -1231,10 +1201,6 @@
   .qg-partita.forte{background:linear-gradient(180deg,rgba(233,185,73,.16),rgba(233,185,73,.04)); box-shadow:0 8px 24px -14px rgba(233,185,73,.6);}
   .qg-nomi span{font-family:"Space Grotesk",sans-serif; font-weight:500;}
   .qg-nomi span.in{background:linear-gradient(180deg,var(--oro-chiaro),var(--oro)); box-shadow:0 2px 10px -3px rgba(233,185,73,.7);}
-  .sc-lato b{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:20px; letter-spacing:.02em; text-transform:uppercase;}
-  .sc-lato .k, .sc-conti span, .sc-r .k{font-family:"Space Grotesk",sans-serif;}
-  .sc-conti div{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.2)); border:1px solid rgba(255,255,255,.07);}
-  .sc-conti b{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:34px;}
   .sc-r{font-family:"Space Grotesk",sans-serif;}
   #difesa .invito{pointer-events:none;}
   #difesa .invito-freccia{display:none;}
@@ -1347,7 +1313,6 @@ try{ const t = sessionStorage.getItem('jarvis-tr'); if(t){ sessionStorage.remove
 
   <section id="s-lega">
     <div id="classifica"></div>
-    <div id="mercato"></div>
     <h2>La forza delle rose, per fantamedia</h2>
     <div id="squadre"></div>
     <h2>Il tuo calendario</h2>
@@ -2294,14 +2259,9 @@ function renderModuli(g){
   }).join('');
   if(html !== moduliDisegnati){ moduliDisegnati = html; box.innerHTML = html; }
 }
-/* La difesa di oggi, in chiaro. Si mostra la distribuzione e non solo il numero
-   perché sugli scalini la media non capita mai davvero: un blocco «da 2,8» non
-   prende 2,8, prende +2 oppure +3, e sapere con che probabilità è il punto.
-   Senza voti misurati il riquadro non c'è: niente numero inventato. */
-/* B5, la vista unica del consiglio (scelta dell'utente del 15/09/2026: nella Giornata un
-   riassunto, il resto a tutto schermo). Nella Giornata una riga, «Il consiglio», con il
-   modificatore atteso e la fascia più probabile; toccandola si apre la vista con la
-   difesa, la sfida e il perché di ogni titolare. */
+/* Il banner del modificatore difesa (decisione dell'utente del 17/10/2026): resta solo quello,
+   non si tocca, si aggiorna da solo a ogni cambio di modulo. Senza voti misurati non c'è:
+   niente numero inventato. */
 const ICONA_CONSIGLIO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.4 3 8.2 7 10 4-1.8 7-5.6 7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>';
 const etichettaFascia = b => b ? '+'+String(b).replace('.',',') : '0';
 /* La difesa di oggi, in chiaro. Si mostra la distribuzione e non solo il numero
@@ -2313,64 +2273,16 @@ function bloccoDifesa(g){
   const m = u.P.length && u.D.length >= 4 ? modificatoreAtteso(u.P[0], u.D, SIMULAZIONI, g) : null;
   if(!m) return null;
   const alta = m.fasce.slice().sort((a,b)=>b.prob-a.prob)[0];
-  /* quanto manca allo scalino sopra: è l'informazione che fa cambiare un difensore */
-  const su = M_SOGLIE.filter(s=>s > m.media).sort((a,b)=>a-b)[0];
-  const manca = su === undefined ? null :
-    'Per +'+num(M_BONUS[M_SOGLIE.indexOf(su)], su===7?0:1).replace(',0','')+
-    ' serve '+num(su,2)+' di media: oggi vale '+num(m.media,2)+'.';
-  /* le righe coprono tutte le fasce della tabella, anche quelle mai uscite nelle
-     simulazioni: una fascia assente è un'informazione (non ci arrivi), non un buco */
-  const prob = {};
-  m.fasce.forEach(f=>{ prob[f.bonus] = f.prob; });
-  const righe = M_BONUS.concat([0]).map(b=>({bonus:b, prob:prob[b] || 0}));
-  return {m, alta, html: '<div class="blocco scuro"><div class="blocco-t">La difesa<small>MODIFICATORE</small></div>'+
-    '<div class="md-n"><b class="cond">'+(m.atteso>=0.05?'+':'')+num(m.atteso)+'</b>'+
-    '<span>atteso da portiere e 3 migliori difensori</span></div>'+
-    '<div class="md-righe">'+righe.map(f=>
-      '<div class="md-r'+(f.bonus===alta.bonus?' sel':'')+'">'+
-      '<span class="md-f">'+etichettaFascia(f.bonus)+'</span>'+
-      '<i><em style="width:'+(f.prob*100).toFixed(1)+'%"></em></i>'+
-      '<span class="md-p">'+Math.round(f.prob*100)+'%</span></div>').join('')+'</div>'+
-    '<p class="nota">'+(manca || 'Sei già nella fascia più alta.')+'</p></div>'};
+  return {m, alta};
 }
 function renderDifesa(g){
   const box = document.getElementById('difesa');
   if(!box) return;
-  const d = bloccoDifesa(g), ps = probabilitaSfida(g);
+  const d = bloccoDifesa(g);
   if(!d){ box.innerHTML = ''; return; }
   box.innerHTML = invito(ICONA_CONSIGLIO, 'Modificatore difesa',
-    d ? 'La difesa: '+(d.m.atteso>=0.05 ? '+' : '')+num(d.m.atteso)+' atteso' : 'Il perché dell\'undici',
-    d ? 'Fascia più probabile '+etichettaFascia(d.alta.bonus)+' ('+Math.round(100*d.alta.prob)+'%)' : '');
-}
-/* il perché dell'undici: per ogni titolare il punteggio del consiglio scomposto (col
-   modello: base, casa, avversario, squadra e titolarità; senza, il motivo in breve) */
-function righePerche(g){
-  const u = undici(g), s = x => (Math.abs(x) < 0.05 ? '' : x > 0 ? '+' : '−')+num(Math.abs(x));
-  return ['P','D','C','A'].map(r=>'<h3 class="reparto-t">'+PLURALI[r]+'</h3>'+u[r].map(p=>{
-    const a = attesoModello('fantavoto', p, g), t = titolarita(p, g);
-    let parti = [breve(p, g)];
-    if(a){
-      parti = ['base '+num(a.parti.base)].concat(a.casa===1 ? ['in casa '+s(a.parti.casa)] : [],
-        a.casa===null ? [] : a.quote ? ['partita (quote) '+s(a.parti.squadra)] : ['avversario '+s(a.parti.avv), 'squadra '+s(a.parti.squadra)]);
-      if(t) parti.push((t.stato==='s' ? descrizionePres(t) : t.stato==='t' ? 'titolare '+t.perc+'%'
-        : t.stato==='c' ? 'in panchina' : 'non nelle probabili')+' '+s(-0.4 + 1.6*t.perc/100));
-    }
-    return '<div class="vr" data-id="'+p.id+'">'+maglia(p.club)+'<div class="vr-nome"><b>'+p.nome+'</b><small>'+
-      parti.join(' · ')+'</small>'+
-      '</div><strong class="fvn">'+num(punteggio(p, g))+'</strong></div>';
-  }).join('')).join('');
-}
-function apriConsiglio(){
-  const g = prossima(), avv = (avversarioLega(g) || {}).nome || '', u = undici(g);
-  const d = bloccoDifesa(g), pz = probabilitaHtml(g), ps = probabilitaSfida(g), pc = x => Math.round(100*x)+'%';
-  const testo = ['Il consiglio di Jarvis — giornata '+g[0]+(avv ? ' contro '+avv : ''),
-    modulo+': '+[].concat(u.P, u.D, u.C, u.A).map(p=>p.nome).join(', ')]
-    .concat(d ? ['Modificatore atteso '+(d.m.atteso>=0.05 ? '+' : '')+num(d.m.atteso)] : [])
-    .concat(ps ? ['Vinci il '+pc(ps.vittoria)+' · pareggi il '+pc(ps.pareggio)+' · perdi il '+pc(ps.sconfitta)] : []).join('\n');
-  apriSovra('Il consiglio', 'Giornata '+g[0]+' · '+modulo,
-    (d ? d.html : '')+
-    (pz ? '<div class="blocco"><div class="blocco-t">La sfida<small>'+avv+'</small></div>'+pz+'</div>' : '')+
-    '<div class="blocco"><div class="blocco-t">Il perché dell\'undici<small>punteggio</small></div>'+righePerche(g)+'</div>', testo);
+    'La difesa: '+(d.m.atteso>=0.05 ? '+' : '')+num(d.m.atteso)+' atteso',
+    'Fascia più probabile '+etichettaFascia(d.alta.bonus)+' ('+Math.round(100*d.alta.prob)+'%)');
 }
 function disegnaCampo(g){
   const u = undici(g);
@@ -2440,7 +2352,7 @@ function statoTit(t){
    si allarga; una sola proiezione per fasce, linee e maglie, così restano allineate */
 const PROSP = (x, y) => { const k = .66 + .34*y/100; return [50 + (x-50)*k, y]; };
 function prospettiva(pos){
-  const y = pos.y*.78 + 3, k = .66 + .34*y/100;
+  const y = pos.y - 3, k = .66 + .34*y/100;
   return {x: PROSP(pos.x, y)[0], y, w: pos.w*k, sc: .82 + .22*y/100};
 }
 function pianoCampo(){
@@ -2461,16 +2373,15 @@ function pianoCampo(){
   return '<svg class="piano" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'+o+'</svg>';
 }
 function cella(p, g, pos, i, migliore){
-  const m = avversarioClub(p.club, g[1]), quando = oraPartita(p.club, g[1]);
+  const m = avversarioClub(p.club, g[1]);
   const t = titolarita(p, g);
   const rischio = t && (t.stato==='c' || t.stato==='r' || t.perc<60);
   return '<button class="gioc'+(rischio?' rischio':'')+'" data-id="'+p.id+'" style="left:'+pos.x+'%;top:'+pos.y+'%;width:'+pos.w+'%;--i:'+i+';--sc:'+pos.sc.toFixed(2)+'">'+
     '<span class="sagoma"><span class="ombra"></span>'+maglia(p.club)+
       (t ? '<i class="pallino '+statoTit(t)+'"></i>' : '')+'</span>'+
-    '<span class="nm">'+p.nome+'</span>'+
+    '<span class="nm">'+cognome(p)+'</span>'+
     '<span class="vl '+(!p.pgv ? '' : p.fm>=7 ? 'a' : p.fm<6 ? 'c' : '')+'">'+(p.pgv && p.fm===migliore ? '<i>★</i>' : '')+(p.pgv?p.fm.toFixed(1):'–')+'</span>'+
-    '<span class="av">'+(m ? (m.casa?'vs ':'a ')+m.avv : p.club)+'</span>'+
-    (quando ? '<span class="ora">'+oraBreve(quando)+'</span>' : '')+
+    '<span class="av">'+(m ? '<em>'+(m.casa?'vs':'@')+'</em>'+maglia(m.avv)+'<b>'+m.avv.slice(0,3).toUpperCase()+'</b>' : '')+'</span>'+
   '</button>';
 }
 
@@ -2914,7 +2825,6 @@ const LETTERA_FORMA = {V:'W', N:'=', P:'L'};     // come si scrive nel pallino (
 const pallinoForma = e => '<i class="fp '+(e==='V'?'v':e==='N'?'n':'p')+'" aria-label="'+(e==='V'?'vinta':e==='N'?'pari':'persa')+'">'+LETTERA_FORMA[e]+'</i>';
 /* nella pagina una riga sola, che apre la sezione in sovraimpressione */
 const ICONA_CA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5.5-5.5 4 3.5L20 7"/><path d="M15 7h5v5"/></svg>';
-const ICONA_MERCATO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h15l-4-4M20 16H5l4 4"/></svg>';
 function invito(icona, k, titolo, sotto){
   return '<button class="invito"><span class="invito-icona">'+icona+'</span>'+
     '<span class="invito-testo"><span class="k">'+k+'</span><b>'+titolo+'</b>'+(sotto ? '<small>'+sotto+'</small>' : '')+'</span>'+
@@ -3072,215 +2982,6 @@ function prossimi3(p, g){
 function pallini3(p, g){
   const l = prossimi3(p, g);
   return l.length ? '<span class="cal3">'+l.map(x=>'<i class="'+x.livello+'"></i>').join('')+'</span>' : '';
-}
-
-/* ---------- mercato, sulla carta ---------- */
-/* Scambi che restano legali: la lega è ad asta a ruoli, rosa fissa 3 portieri, 8
-   difensori, 8 centrocampisti, 6 attaccanti, uguale su tutte e 10 le squadre (verificato
-   su dati/base.json). Dopo lo scambio la composizione per ruolo deve restare la stessa
-   di prima, su entrambi i lati:
-   - 1 contro 1: per forza stesso ruolo, perché un solo pezzo per lato non può cambiare
-     la composizione in nessun altro modo (dare un difensore e prendere un centrocampista
-     lascerebbe 7 difensori e 9 centrocampisti: illegale).
-   - 2 contro 2: gli stessi due ruoli dati e ricevuti, anche uguali (D+D per D+D) o
-     diversi (C+A per C+A) ma mai un ruolo che compare solo da un lato. È così che un top
-     di un reparto si scambia con un top di un altro reparto (un centrocampista mio contro
-     un attaccante loro): il secondo giocatore di ogni lato è scelto apposta a pareggiare
-     il ruolo che altrimenti sbilancerebbe la rosa, non un terzo pezzo a caso.
-   - un top loro (`intoccabili`: i due più quotati del reparto, il portiere più quotato, i
-     tre più quotati della rosa) si può chiedere solo offrendone anche uno dei miei: mai un
-     top loro per pezzi qualunque, anche se il conto tornerebbe a quotazione.
-   - alla pari a vista, perché l'altro guarda quotazione e fantamedia: quotazioni entro il
-     15% (o 2 punti) e chi dai non ha una fantamedia vera nettamente più bassa (0,5);
-   - serve a tutti e due: il tuo undici migliora di almeno 0,3, chi dai entra nel loro
-     undici e il loro undici non peggiora.
-   Prima gli scambi di esuberi: chi prendi, da loro, non giocava.
-   Il valore è per la stagione, non per le prossime 3: fantamedia stimata e presenze. */
-function presenze(p){
-  const s = D.sq && D.sq.squadre[p.club], n = s ? s.attuale.casa[0] + s.attuale.fuori[0] : 0;
-  return n ? {giocate: Math.min(p.pgv, n), di: n} : null;
-}
-/* la base del giocatore per la stagione, senza la partita: dal modello (B2) dove si usa,
-   altrimenti la fantamedia stimata di prima */
-function baseStagione(p){
-  const a = attesoModello('fantavoto', p, null);
-  return a ? a.media : fmStimata(p);
-}
-function valoreStagione(p){
-  const pr = presenze(p);
-  return baseStagione(p) + (pr ? -0.4 + 1.6*pr.giocate/pr.di : 0);
-}
-/* l'undici migliore di una rosa con quei valori, nel modulo che rende di più (difesa a quattro) */
-function migliori11(rosa, val){
-  let meglio = null;
-  MODULI_4.map(m=>MODULI[m]).forEach(q=>{
-    const ids = new Set();
-    let tot = 0;
-    [['P',1],['D',q.D],['C',q.C],['A',q.A]].forEach(([r,n])=>rosa.filter(p=>p.ruolo===r)
-      .sort((a,b)=>val.get(b.id)-val.get(a.id)).slice(0, n).forEach(p=>{ ids.add(p.id); tot += val.get(p.id); }));
-    if(!meglio || tot > meglio.tot) meglio = {tot, ids};
-  });
-  return meglio;
-}
-/* i pezzi forti di una rosa, che nessuno cede: i due più quotati di ogni reparto (il
-   portiere più quotato) e i tre più quotati in assoluto */
-function intoccabili(t){
-  const rosa = players.filter(p=>p.team===t), piuQuotati = (l, n) => l.slice().sort((a,b)=>b.quot-a.quot).slice(0, n);
-  const ids = new Set(piuQuotati(rosa, 3).map(p=>p.id));
-  ['P','D','C','A'].forEach(r=>piuQuotati(rosa.filter(p=>p.ruolo===r), r==='P' ? 1 : 2).forEach(p=>ids.add(p.id)));
-  return ids;
-}
-/* valori per reparto, dal più alto: così l'undici migliore dopo uno scambio si calcola in
-   fretta (i 2 contro 2 sono decine di migliaia di combinazioni) */
-function perReparto(rosa, val){
-  const r = {P:[], D:[], C:[], A:[]};
-  rosa.forEach(p=>r[p.ruolo].push(val.get(p.id)));
-  Object.values(r).forEach(l=>l.sort((a,b)=>b-a));
-  return r;
-}
-function valore11(r){
-  const s = (k, n) => { let t = 0; for(let i = 0; i < n && i < r[k].length; i++) t += r[k][i]; return t; };
-  return Math.max(...MODULI_4.map(m=>MODULI[m]).map(q=>s('P', 1) + s('D', q.D) + s('C', q.C) + s('A', q.A)));
-}
-/* il valore dell'undici dopo uno scambio: fuori quelli che dai, dentro quelli che prendi */
-function valoreDopo(r, via, dentro, val){
-  const n = Object.assign({}, r), toccati = new Set(via.concat(dentro).map(p=>p.ruolo));
-  toccati.forEach(k=>{ n[k] = r[k].slice(); });
-  via.forEach(p=>{ const i = n[p.ruolo].indexOf(val.get(p.id)); if(i >= 0) n[p.ruolo].splice(i, 1); });
-  dentro.forEach(p=>n[p.ruolo].push(val.get(p.id)));
-  toccati.forEach(k=>n[k].sort((a,b)=>b-a));
-  return valore11(n);
-}
-/* {singoli: 1 contro 1 (al massimo 4), doppi: 2 contro 2 (al massimo 3)}; ogni scambio
-   {dai: [...], prendi: [...], squadra, perMe, perLoro, esubero, entrano, escono, entranoLoro, esconoLoro}.
-   Un 2 contro 2 chiede di più (0,5 per te) e deve rendere almeno 0,2 più del miglior
-   scambio singolo tra quegli stessi giocatori: altrimenti basta il singolo */
-let mercatoMemo = null;
-function mercato(g){
-  if(mercatoMemo && mercatoMemo.players===players && mercatoMemo.sa===g[1]) return mercatoMemo.r;
-  const val = new Map(players.map(p=>[p.id, valoreStagione(p)]));
-  const rosaDi = t => players.filter(p=>p.team===t && disponibile(p, g[2]));
-  const somma = l => l.reduce((s,p)=>s + p.quot, 0);
-  const fmVera = l => l.every(p=>p.pgv >= 2) ? l.reduce((s,p)=>s + p.fm, 0)/l.length : null;
-  const coppie = l => l.flatMap((a,i)=>l.slice(i + 1).map(b=>[a, b]));
-  const ruoli2 = l => l.map(p=>p.ruolo).sort().join('');       // per confrontare i ruoli di due giocatori, in ordine
-  const mia0 = rosaDi(ME), mioR = perReparto(mia0, val), mioBase = valore11(mioR), mieCoppie = coppie(mia0);
-  const forteMie = intoccabili(ME);
-  const singoli = [], doppi = [], squadre = {};
-  [...new Set(players.map(p=>p.team))].filter(t=>t!==ME).forEach(t=>{
-    const loro0 = rosaDi(t), loroR = perReparto(loro0, val), loroBase = valore11(loroR), forti = intoccabili(t);
-    const titolari = migliori11(loro0, val).ids;
-    squadre[t] = loro0;
-    const prova = (dai, prendi, minimo, scarto) => {
-      // un loro top si può chiedere solo offrendone anche uno dei miei
-      if(prendi.some(p=>forti.has(p.id)) && !dai.some(p=>forteMie.has(p.id))) return null;
-      const qd = somma(dai), qp = somma(prendi);
-      if(Math.abs(qd - qp) > Math.max(scarto, 0.15*Math.max(qd, qp))) return null;
-      const fd = fmVera(dai), fp = fmVera(prendi);
-      if(fd!==null && fp!==null && fd < fp - 0.5) return null;
-      const perMe = valoreDopo(mioR, dai, prendi, val) - mioBase;
-      if(perMe < minimo) return null;
-      const perLoro = valoreDopo(loroR, prendi, dai, val) - loroBase;
-      return perLoro < 0 ? null : {dai, prendi, squadra: t, perMe, perLoro, esubero: prendi.every(p=>!titolari.has(p.id))};
-    };
-    // 1 contro 1: per forza stesso ruolo (vedi sopra)
-    loro0.forEach(y=>mia0.filter(x=>x.ruolo===y.ruolo).forEach(x=>{ const i = prova([x], [y], 0.3, 2); if(i) singoli.push(i); }));
-    // 2 contro 2: gli stessi due ruoli dati e ricevuti, altrimenti la rosa si sbilancia
-    coppie(loro0).forEach(py=>mieCoppie.forEach(px=>{
-      if(ruoli2(px)!==ruoli2(py)) return;
-      const i = prova(px, py, 0.5, 3);
-      if(!i) return;
-      /* il confronto è con i singoli che si potrebbero fare davvero (stesso ruolo, alla
-         pari, buoni anche per loro): spesso il secondo giocatore serve proprio a
-         pareggiare le quotazioni o a completare il ruolo del primo */
-      const fattibili = px.flatMap(x=>py.filter(y=>y.ruolo===x.ruolo).map(y=>prova([x], [y], -Infinity, 2))).filter(Boolean);
-      i.meglioSingolo = fattibili.length ? Math.max(...fattibili.map(s=>s.perMe)) : 0;
-      if(i.perMe >= i.meglioSingolo + 0.2) doppi.push(i);
-    }));
-  });
-  /* chi entra e chi esce dagli undici; chi dai deve entrare nel loro, o per loro non ha senso */
-  const descrivi = i => {
-    const loro0 = squadre[i.squadra], prima = migliori11(mia0, val), dopo = migliori11(mia0.filter(p=>!i.dai.includes(p)).concat(i.prendi), val);
-    const primaLoro = migliori11(loro0, val), dopoLoro = migliori11(loro0.filter(p=>!i.prendi.includes(p)).concat(i.dai), val);
-    return Object.assign(i, {entrano: i.prendi.filter(p=>dopo.ids.has(p.id)), escono: i.dai.filter(p=>prima.ids.has(p.id)),
-      entranoLoro: i.dai.filter(p=>dopoLoro.ids.has(p.id)), esconoLoro: i.prendi.filter(p=>primaLoro.ids.has(p.id))});
-  };
-  /* prima gli esuberi; mai lo stesso giocatore chiesto due volte, lo stesso tuo offerto al massimo due volte */
-  const chiesti = new Set(), offerti = new Map();
-  const scegli = (idee, quanti) => {
-    const scelte = [];
-    idee.sort((a,b)=>b.esubero - a.esubero || b.perMe - a.perMe || b.perLoro - a.perLoro).forEach(i=>{
-      if(scelte.length >= quanti || i.prendi.some(p=>chiesti.has(p.id)) || i.dai.some(p=>(offerti.get(p.id) || 0) >= 2)) return;
-      if(!descrivi(i).entranoLoro.length) return;
-      i.prendi.forEach(p=>chiesti.add(p.id));
-      i.dai.forEach(p=>offerti.set(p.id, (offerti.get(p.id) || 0) + 1));
-      scelte.push(i);
-    });
-    return scelte;
-  };
-  const r = {singoli: scegli(singoli, 4), doppi: scegli(doppi, 3)};
-  mercatoMemo = {players, sa: g[1], r};
-  return r;
-}
-let mercatoDisegnato = '';
-function renderMercato(g){
-  const mk = mercato(g), tutti = mk.singoli.concat(mk.doppi), primo = tutti[0], n = tutti.length;
-  const nomi = l => l.map(p=>p.nome).join(' e ');
-  const html = invito(ICONA_MERCATO, 'Mercato, sulla carta', n ? n+(n===1 ? ' scambio alla pari' : ' scambi alla pari')
-    : 'Nessuno scambio alla pari', primo ? 'Il migliore: '+nomi(primo.dai)+' per '+nomi(primo.prendi)+', +'+num(primo.perMe) : '');
-  if(html !== mercatoDisegnato){ mercatoDisegnato = html; document.getElementById('mercato').innerHTML = html; }
-}
-const FRECCE = '<svg class="sc-freccia" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h15l-4-4M20 15H5l4 4"/></svg>';
-/* in sovraimpressione: per ogni scambio chi dai e chi prendi, quanto guadagni tu e quanto loro,
-   chi entra negli undici e il confronto voce per voce */
-function apriMercato(g){
-  g = g || prossima();
-  const mk = mercato(g);
-  const segno = x => (x >= 0.05 ? '+' : x <= -0.05 ? '−' : '')+num(Math.abs(x));
-  const persona = p => '<div class="sc-g" data-id="'+p.id+'">'+maglia(p.club)+
-    '<b>'+p.nome+'</b><small>'+RUOLI[p.ruolo]+' · '+p.club+'<br>quotazione '+p.quot+'</small></div>';
-  const lato = (cl, k, l) => '<div class="sc-lato '+cl+'"><span class="k">'+k+'</span>'+l.map(persona).join('')+'</div>';
-  const riga = (k, x, y, a, b, cl) => {
-    const m = a > b + 0.05 ? [' class="meglio"', ''] : b > a + 0.05 ? ['', ' class="meglio"'] : ['', ''];
-    return '<tr'+(cl ? ' class="'+cl+'"' : '')+'><th>'+k+'</th><td'+m[0]+'>'+x+'</td><td'+m[1]+'>'+y+'</td></tr>';
-  };
-  const pres = p => { const x = presenze(p); return x ? x.giocate+'/'+x.di : '–'; };
-  const quota = p => { const x = presenze(p); return x ? x.giocate/x.di : 0; };
-  const vera = p => '<small>vera '+(p.pgv ? num(p.fm) : '–')+'</small>';
-  const tot = (l, f) => l.reduce((s,p)=>s + f(p), 0);
-  /* 1 contro 1: giocatore contro giocatore; 2 contro 2: i due insieme, contro i due */
-  const tabella = i => {
-    if(i.dai.length===1){
-      const a = i.dai[0], b = i.prendi[0];
-      return '<table class="mk-tab"><thead><tr><th></th><td>'+cognome(a)+'</td><td>'+cognome(b)+'</td></tr></thead><tbody>'+
-        riga('Base Jarvis', num(baseStagione(a))+vera(a), num(baseStagione(b))+vera(b), baseStagione(a), baseStagione(b))+
-        riga('Presenze', pres(a), pres(b), quota(a), quota(b))+
-        riga('Valore Jarvis', num(valoreStagione(a)), num(valoreStagione(b)), valoreStagione(a), valoreStagione(b), 'tot')+'</tbody></table>';
-    }
-    const fa = tot(i.dai, baseStagione)/i.dai.length, fb = tot(i.prendi, baseStagione)/i.prendi.length;
-    const va = tot(i.dai, valoreStagione), vb = tot(i.prendi, valoreStagione);
-    return '<table class="mk-tab"><thead><tr><th></th><td>Dai</td><td>Prendi</td></tr></thead><tbody>'+
-      riga('Quotazione', tot(i.dai, p=>p.quot), tot(i.prendi, p=>p.quot), 0, 0)+
-      riga('Base Jarvis', num(fa), num(fb), fa, fb)+
-      riga('Valore Jarvis', num(va), num(vb), va, vb, 'tot')+'</tbody></table>';
-  };
-  const nomi = l => l.map(p=>'<b>'+p.nome+'</b>').join(' e '), semplici = l => l.map(p=>p.nome).join(' e ');
-  const perche = i => 'Da te '+(i.entrano.length ? nomi(i.entrano)+(i.entrano.length > 1 ? ' entrano' : ' entra')+' nell\'undici' : 'l\'undici non cambia')+
-    (i.escono.length ? ', '+semplici(i.escono)+(i.escono.length > 1 ? ' ne escono' : ' ne esce') : '')+
-    '. Da loro '+nomi(i.entranoLoro)+(i.entranoLoro.length > 1 ? ' entrano' : ' entra')+' nell\'undici'+
-    (i.esconoLoro.length ? ', '+semplici(i.esconoLoro)+(i.esconoLoro.length > 1 ? ' ne escono.' : ' ne esce.') : ', chi ti danno non giocava.');
-  const carta = i => '<div class="blocco mk">'+
-    '<div class="sc-coppia">'+lato('dai', 'Dai', i.dai)+FRECCE+lato('prendi', 'Prendi', i.prendi)+'</div>'+
-    /* perMe e perLoro sono sempre >= 0 qui (mercato() scarta prima gli scambi che non
-       convengono a uno dei due): sempre in verde, anche quando il numero è vicino allo
-       zero, così un'offerta onesta ma di poco vantaggio per loro non sembra sfavorevole */
-    '<div class="sc-conti"><div><span>Per te</span><b class="cond su">'+segno(i.perMe)+'</b></div>'+
-      '<div><span>Per '+i.squadra+'</span><b class="cond su">'+segno(i.perLoro)+'</b></div></div>'+
-    '<p class="sc-perche">'+perche(i)+'</p>'+tabella(i)+'</div>';
-  const html = (mk.singoli.length ? '<h3 class="sez">1 contro 1</h3>'+mk.singoli.map(carta).join('') : '')+
-               (mk.doppi.length ? '<h3 class="sez">2 contro 2</h3>'+mk.doppi.map(carta).join('') : '');
-  apriSovra('Mercato, sulla carta', 'Scambi alla pari',
-    html || '<div class="blocco"><p>Nessuno scambio alla pari conviene a tutti e due, per ora.</p></div>');
 }
 
 /* ---------- la stagione ---------- */
@@ -3802,11 +3503,6 @@ function renderLega(){
       '<span class="d"><b class="cond">G'+g[0]+'</b>'+dataIt(g[2]).replace(/^\w+\s/,'')+'</span>'+
       stemma(av.nome)+'<span class="m">'+av.nome+'</span><span class="dove">'+(av.casa?'casa':'fuori')+'</span></div>';
   }).join('')+'</div>';
-  /* il mercato costa da solo ~150 ms (confronta ogni coppia e ogni quartetto di giocatori
-     fra le dieci rose: misurato col profilatore il 16/09, era la funzione più cara
-     dell'avvio) e serve solo a riempire il cartellino «N scambi alla pari», in una scheda
-     che all'apertura non stai guardando. Fuori dal primo disegno: arriva un attimo dopo. */
-  dopoIlPrimoDisegno(()=>renderMercato(pr));
 }
 
 /* ---------- testi ---------- */
@@ -4152,11 +3848,9 @@ function toccaGiocatore(ev){
 document.getElementById('sovra-corpo').onclick = toccaGiocatore;
 /* com'è andata e mercato: nella pagina una riga, che apre la sovraimpressione */
 document.getElementById('comeandata').onclick = apriComeAndata;
-document.getElementById('mercato').onclick = ()=>apriMercato();
 document.getElementById('chiudi-sovra').onclick = chiudiSovra;
 document.getElementById('condividi-sovra').onclick = condividi;
 document.getElementById('s-stagione').onclick = toccaStagione;
-document.getElementById('difesa').onclick = apriConsiglio;
 /* il lucchetto: la password si prova al tocco di «Apri» */
 document.getElementById('lucchetto-form').onsubmit = ev=>{
   ev.preventDefault();

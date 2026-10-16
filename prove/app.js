@@ -46,7 +46,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     Date: FintaData, console, URLSearchParams, Promise, Object, String, Math, Set, JSON,
     setInterval() {}, setTimeout: () => 0, clearTimeout() {}, webkitSpeechRecognition: sr,
     // il lavoro rimandato dopo il primo disegno (dopoIlPrimoDisegno) qui parte subito: il
-    // setTimeout finto non esegue nulla, e senza questo il mercato non verrebbe mai disegnato
+    // setTimeout finto non esegue nulla, e senza questo il lavoro rimandato non verrebbe mai fatto
     requestIdleCallback: f => { f(); return 0; },
     localStorage: { getItem: k => (k in memoria ? memoria[k] : null), setItem: (k, v) => { memoria[k] = String(v); } },
     location: { search, host: 'manzochinaglia.github.io', pathname: '/JARVIS/' },
@@ -78,9 +78,9 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.createContext(ctx);
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
-    'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,cartaAtteso,baseStagione,apriConsiglio,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
+    'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,cartaAtteso,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,apriMercato,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,mercato,forma,movimentoLega,risultatoLega,forfaitLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,forma,movimentoLega,risultatoLega,forfaitLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (attendi && el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -625,7 +625,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const conPartite = { ...orariVeri, aggiornato: '2026-09-17T08:00:00+00:00', giornate: { ...orariVeri.giornate,
     '5': { ...orariVeri.giornate['5'], partite: [[portiereU.club, 'Squadra finta', '2026-09-19T16:00:00+00:00']] } } };
   ({ t, el } = await avvia({ adesso: giovedi, dati: { ...senzaSorprese, 'orari.json': conPartite } }));
-  verifica('sotto la maglia il giorno e l\'ora della partita', el.campo.innerHTML.includes('<span class="ora">sab 18:00</span>'));
+  verifica('sotto il voto l\'avversario: «vs» o «@», maglia e sigla', /<span class="av"><em>(vs|@)<\/em><svg[\s\S]*?<b>[A-Z]{3}<\/b>/.test(el.campo.innerHTML));
   verifica('«Quando giocano i tuoi»: la partita con i tuoi, senza ripetere la scadenza (è già in cima alla Giornata)',
            /Quando giocano i tuoi/.test(el.quando.innerHTML) && el.quando.innerHTML.includes(portiereU.nome)
            && !/Scadenza della formazione/.test(el.quando.innerHTML), portiereU.nome);
@@ -666,7 +666,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   ({ el } = await avvia({ adesso: giovedi, memoria: memRosa }));
   verifica('riaprendo l\'app resta l\'elenco', el.rosa.dataset.vista === 'elenco');
 
-  console.log('\n28. Voti: com\'è andata, andamento, calendario dei tuoi, mercato');
+  console.log('\n28. Voti: com\'è andata, andamento, calendario dei tuoi');
   const martedi = '2026-09-15T12:00:00+02:00';
   ({ t } = await avvia({ adesso: martedi, dati: { 'titolari.json': null, 'infortuni.json': null, 'voti.json': null } }));
   const portieri = t.mia.filter(p => p.ruolo === 'P');
@@ -779,7 +779,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('in sovraimpressione il risultato vero e, accanto, quanto avrebbe fatto Jarvis', sc.includes('70,5') && sc.includes('66,0')
            && sc.includes(AVV1) && sc.includes(f1(Math.abs(scarto)) + (scarto > 0 ? ' in più' : ' in meno')), f1(scarto));
   verifica('e la notifica «com\'è andata»', t.avvisi(t.prossima()).some(a => a.id === 'voti-5' && /^Giornata 1: com'è andata/.test(a.titolo)));
-  // calendario dei tuoi e mercato
+  // calendario dei tuoi
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'titolari.json': null, 'infortuni.json': null, 'squadre.json': sq2 } }));
   g = t.prossima();
   const p3 = t.prossimi3(t.mia[0], g);
@@ -789,49 +789,6 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('pallini sotto ogni maglia della rosa', (el.rosa.innerHTML.match(/class="cal3"/g) || []).length === 25);
   t.apriGiocatore(t.mia[0].id);
   verifica('nella scheda la riga «Prossime 3»', /Prossime 3/.test(el['foglio-corpo'].innerHTML));
-  const mk = t.mercato(g), singoli = mk.singoli, doppi = mk.doppi, tuttiMk = singoli.concat(doppi);
-  const qSomma = l => l.reduce((s, p) => s + p.quot, 0);
-  const fmMedia = l => l.every(p => p.pgv >= 2) ? l.reduce((s, p) => s + p.fm, 0) / l.length : null;
-  const forti = sq => {
-    const rosa = t.players.filter(p => p.team === sq), q = (a, b) => b.quot - a.quot, f = new Set(rosa.slice().sort(q).slice(0, 3));
-    ['P', 'D', 'C', 'A'].forEach(r => rosa.filter(p => p.ruolo === r).sort(q).slice(0, r === 'P' ? 1 : 2).forEach(p => f.add(p)));
-    return f;
-  };
-  const ruoli2 = l => l.map(p => p.ruolo).sort().join('');
-  verifica('mercato: 1 contro 1 e 2 contro 2, dai i tuoi e prendi i loro', singoli.length <= 4 && doppi.length <= 3
-           && singoli.every(i => i.dai.length === 1 && i.prendi.length === 1) && doppi.every(i => i.dai.length === 2 && i.prendi.length === 2)
-           && tuttiMk.every(i => i.dai.every(p => p.team === t.ME) && i.prendi.every(p => p.team === i.squadra) && i.squadra !== t.ME),
-           tuttiMk.map(i => i.dai.map(p => p.nome).join('+') + ' per ' + i.prendi.map(p => p.nome).join('+')).join(', ') || 'nessuno');
-  verifica('la rosa resta legale: stesso ruolo nel singolo, stessi due ruoli nel doppio', singoli.every(i => i.dai[0].ruolo === i.prendi[0].ruolo)
-           && doppi.every(i => ruoli2(i.dai) === ruoli2(i.prendi)));
-  verifica('alla pari a vista: quotazioni vicine e fantamedia vera non nettamente più bassa', tuttiMk.every(i => {
-    const a = fmMedia(i.dai), b = fmMedia(i.prendi);
-    return Math.abs(qSomma(i.dai) - qSomma(i.prendi)) <= Math.max(i.dai.length === 1 ? 2 : 3, 0.15 * Math.max(qSomma(i.dai), qSomma(i.prendi)))
-        && (a === null || b === null || a >= b - 0.5);
-  }));
-  verifica('un top loro si chiede solo offrendone uno mio', tuttiMk.every(i => {
-    const fLoro = forti(i.squadra);
-    return i.prendi.every(p => !fLoro.has(p)) || i.dai.some(p => forti(t.ME).has(p));
-  }));
-  verifica('un top mio contro un top loro: succede davvero, non solo in teoria', doppi.some(i =>
-           i.prendi.some(p => forti(i.squadra).has(p)) && i.dai.some(p => forti(t.ME).has(p))),
-           doppi.filter(i => i.prendi.some(p => forti(i.squadra).has(p))).map(i => i.dai.map(p=>p.nome)+' per '+i.prendi.map(p=>p.nome)).join(', '));
-  verifica('serve a tutti e due: il tuo undici migliora, chi dai entra nel loro', tuttiMk.every(i =>
-           i.perMe >= (i.dai.length === 1 ? 0.3 : 0.5) && i.perLoro >= 0 && i.entranoLoro.length > 0));
-  verifica('un 2 contro 2 solo se rende più del miglior scambio singolo tra quei giocatori', doppi.every(i => i.perMe >= i.meglioSingolo + 0.2));
-  verifica('prima gli scambi di esuberi', [singoli, doppi].every(l => l.every((i, k) => !k || l[k - 1].esubero >= i.esubero)));
-  verifica('mai lo stesso giocatore chiesto due volte', new Set(tuttiMk.flatMap(i => i.prendi.map(p => p.id))).size
-           === tuttiMk.reduce((s, i) => s + i.prendi.length, 0));
-  verifica('nella Lega solo una riga, che invita ad aprire', /class="invito"/.test(el.mercato.innerHTML)
-           && /Mercato, sulla carta/.test(el.mercato.innerHTML) && !/sc-coppia/.test(el.mercato.innerHTML));
-  t.apriMercato(g);
-  sc = el['sovra-corpo'].innerHTML;
-  verifica('in sovraimpressione: chi dai, chi prendi, per te e per loro', el.sovra.classList.contains('aperto') && (tuttiMk.length
-           ? (sc.match(/class="blocco mk"/g) || []).length === tuttiMk.length && ['Dai', 'Prendi', 'Per te', 'Valore Jarvis'].every(k => sc.includes(k))
-             && /1 contro 1/.test(sc) === singoli.length > 0 && /2 contro 2/.test(sc) === doppi.length > 0
-           : /Nessuno scambio/.test(sc)), singoli.length + ' singoli, ' + doppi.length + ' doppi');
-  verifica('niente tutorial', !/Come si legge|stima di Jarvis|sovra-intro/i.test(sc));
-
   console.log('\n29. Tabellone e forma della lega');
   const sfidaG = gio => BASE0.g[gio - 1][3].find(([a, b]) => a === BASE0.me || b === BASE0.me);
   const risultatoG = (gio, fpMio, fpAvv, golMio = 1, golAvv = 1) => {
@@ -1053,18 +1010,12 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('nella Giornata un riassunto: il modificatore atteso e la fascia più probabile (B5)',
            /class="invito"/.test(el.difesa.innerHTML) && /La difesa: \+?\d+,\d atteso/.test(el.difesa.innerHTML)
            && /Fascia più probabile/.test(el.difesa.innerHTML), (el.difesa.innerHTML.match(/La difesa: [^<]*/) || [])[0]);
-  t.apriConsiglio();
-  const dif2 = el['sovra-corpo'].innerHTML;
-  verifica('e il perché di ogni titolare, nella vista del consiglio', (dif2.match(/class="vr"/g) || []).length === 11
-           && /Il perché dell'undici/.test(dif2), (dif2.match(/class="vr"/g) || []).length);
-  verifica('in «Il consiglio» il riquadro della difesa: atteso, tutte le fasce e quanto manca allo scalino',
-           /La difesa/.test(dif2) && /MODIFICATORE/.test(dif2)
-           && (dif2.match(/class="md-r[ "]/g) || []).length === 6     // una riga per fascia, anche le mai uscite
-           && (dif2.match(/class="md-r sel"/g) || []).length === 1 // una sola accesa: la piu probabile
-           && /serve .* di media|fascia pi/.test(dif2),
-           (dif2.match(/class="md-r[ "]/g) || []).length + ' righe');
-  verifica('e il numero mostrato è quello calcolato, non un altro',
-           dif2.includes(mOgg.atteso.toFixed(1).replace('.', ',')), mOgg.atteso);
+  verifica('il banner mostra il numero calcolato, non un altro', el.difesa.innerHTML.includes(mOgg.atteso.toFixed(1).replace('.', ',')), mOgg.atteso);
+  t.scegliModulo('3-5-2');
+  verifica('cambiando modulo il banner si aggiorna da solo: con la difesa a tre sparisce', el.difesa.innerHTML === '');
+  t.scegliModulo('4-4-2');
+  verifica('e con la difesa a quattro torna, col numero di quell\'undici', /La difesa: \+?\d+,\d atteso/.test(el.difesa.innerHTML));
+  verifica('il banner non si apre al tocco: niente vista del consiglio', typeof t.apriConsiglio === 'undefined');
 
   // senza voti non si inventa nulla: si torna alla scelta di prima
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'voti.json': null } }));
@@ -1106,9 +1057,6 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   t.apriGiocatore(d31.id);
   verifica('nella scheda il fantavoto atteso, quanto balla e il perché', /Fantavoto atteso, se gioca/.test(el['foglio-corpo'].innerHTML)
            && /±/.test(el['foglio-corpo'].innerHTML) && /base \d/.test(el['foglio-corpo'].innerHTML));
-  verifica('mercato: il valore dei giocatori dal modello (base senza la partita)',
-           circa(t.baseStagione(d31), t.attesoModello('fantavoto', d31, null).media) && !circa(t.baseStagione(d31), t.fmStimata(d31)),
-           t.baseStagione(d31).toFixed(2) + ' contro ' + t.fmStimata(d31).toFixed(2));
   const m31b = JSON.parse(JSON.stringify(m31));
   m31b.fantavoto.A.usa = false;
   ({ t } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31b } }));
@@ -1161,9 +1109,6 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('e con meno punti sugli stessi campioni la vittoria non sale', t.esitoSfida(ps33.tm.map(x => x - 3), ps33.tl).vittoria <= ps33.vittoria);
   verifica('nella sfida le probabilità vere al posto della barra «sulla carta»', /Vinci il <b>\d+%<\/b> · pareggi il \d+% · perdi il \d+%/.test(el.sfida.innerHTML)
            && /sf-barra tre/.test(el.sfida.innerHTML));
-  t.apriConsiglio();
-  verifica('in «Il consiglio» anche la sfida e il perché con la scomposizione', /Vinci il/.test(el['sovra-corpo'].innerHTML)
-           && /La sfida/.test(el['sovra-corpo'].innerHTML) && /base \d/.test(el['sovra-corpo'].innerHTML));
   t.chiudiSovra();
   const sug33 = t.suggerimentoSfida(g);
   verifica('il suggerimento, se c\'è: stesso ruolo, dalla panchina, conviene davvero', sug33 === null || (sug33.entra.ruolo === sug33.fuori.ruolo
