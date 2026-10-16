@@ -1259,6 +1259,20 @@
   .lg-pos{width:78px; height:78px; font-size:50px; font-weight:800; border-radius:22px; color:#1b1405;
           background:linear-gradient(160deg,#fbe7a6,#e0ad45 55%,#a87a22); border:1px solid rgba(255,244,210,.7); box-shadow:0 0 22px rgba(240,199,94,.4),inset 0 1px 0 rgba(255,255,255,.6);}
   .lg-dati b.cond{font-size:34px; line-height:1;}
+
+  /* --- nitidezza su iPhone (18/10): le carte non lasciano più passare lo stemma dietro al testo --- */
+  .blocco{background:linear-gradient(180deg,rgba(30,27,21,.86),rgba(10,12,10,.92)); -webkit-backdrop-filter:blur(18px) saturate(1.15); backdrop-filter:blur(18px) saturate(1.15);
+          border-color:rgba(255,255,255,.12); box-shadow:0 10px 28px rgba(0,0,0,.45);}
+  .blocco p, .blocco .af-riga, .blocco small{color:rgba(255,255,255,.82);}
+  .blocco .af-riga{font-size:13.5px; line-height:1.35;} .blocco .af-riga b{color:#fff;}
+  .blocco-t{font-size:12px; color:var(--oro-chiaro); text-shadow:0 1px 4px rgba(0,0,0,.6);} .blocco-t small{color:rgba(255,255,255,.7);}
+  .cf-linea{height:12px; top:26px; background:rgba(255,255,255,.14);} .cf-spazio{height:12px; top:26px; background:rgba(67,224,143,.34);}
+  .cf-m{font-size:16px; text-shadow:0 1px 5px #000,0 0 3px #000;} .cf-m i{width:5px; height:30px; box-shadow:0 0 0 1.5px rgba(0,0,0,.55);}
+  .cf-m.tu i{background:#fff;}
+  .cf-pillole span{font-size:12.5px; padding:4px 11px; font-weight:600; background:rgba(240,199,94,.24); color:#FFE9A8;} .cf-pillole span.verde{background:rgba(67,224,143,.24); color:#8DF0BC;}
+  .sc-chi span, .sc-chi{font-size:13.5px;} .sc-bil .af-riga b{font-size:18px;}
+  .cf.vicini{height:100px;} .cf.vicini .cf-m.max i{height:56px;}
+  .cf.vicini .cf-m.tu{transform:translateX(-85%);}   /* il numero di «Tu» sta a sinistra della sua tacca: la tacca del massimo non lo taglia */
 </style>
 </head>
 <body class="carica">
