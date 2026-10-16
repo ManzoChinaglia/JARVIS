@@ -37,7 +37,7 @@ MODULI_VALIDI = {'4-3-3', '4-4-2', '4-5-1', '3-5-2', '3-4-3', '5-3-2', '5-4-1'}
 N_TITOLARI = 11
 N_PANCHINA = 14                       # una rosa è sempre 25 (3 P, 8 D, 8 C, 6 A): 25 - 11
 RE_MODULO = re.compile(r'^\d-\d-\d$')
-RE_VALORE = re.compile(r'^\d+(\.\d+)?$|^s\.v\.$')
+RE_VALORE = re.compile(r'^\d+(\.\d+)?$|^s\.v\.$|^[-–]$')   # «-» = voto non ancora uscito (partita da giocare)
 
 
 def norm(s):
@@ -78,6 +78,7 @@ def estrai(testo, squadra):
     if len(intestazioni) != 2:
         raise ValueError('struttura della pagina non riconosciuta (moduli non trovati)')
     squadre = {righe[i - 2]: (i, righe[i]) for i in intestazioni}
+    sotto = {righe[i - 2]: righe[i - 1] for i in intestazioni}   # il secondo nome sotto il titolo (allenatore o squadra)
     if squadra not in squadre:
         raise ValueError(f'«{squadra}» non compare in questa pagina: giornata sbagliata?')
     idx_mio, modulo_mio = squadre[squadra]
@@ -95,7 +96,12 @@ def estrai(testo, squadra):
     panchina_1, resto = blocchi(resto[1:], N_PANCHINA)
     panchina_2, resto = blocchi(resto, N_PANCHINA)
     titolari, panchina = (titolari_1, panchina_1) if primo else (titolari_2, panchina_2)
-    return modulo_mio, titolari, panchina
+    altro = [t for t in squadre if t != squadra][0]
+    moduli = [m for _, m in sorted(squadre.values())]
+    titolari_a, panchina_a = (titolari_2, panchina_2) if primo else (titolari_1, panchina_1)
+    avversario = {'titoli': [altro, sotto[altro]], 'modulo': moduli[1] if primo else moduli[0],
+                  'titolari': titolari_a, 'panchina': panchina_a}
+    return modulo_mio, titolari, panchina, avversario
 
 
 def id_di(nomi, rosa):
@@ -117,6 +123,28 @@ def id_di(nomi, rosa):
     return ids, ruoli
 
 
+def importa_avversario(altro, base):
+    """L'undici dell'avversario (stessa pagina), per la sfida «vera» (18/10/2026): solo se il suo nome
+    corrisponde a una sola squadra di base.json, la rosa è completa e i titolari tornano col modulo.
+    Qualunque dubbio → None: la sfida resta sulla stima, e la tua formazione si salva comunque."""
+    squadre = {p[4] for p in base['p']} - {base['me']}
+    trovate = [t for t in altro['titoli'] if t in squadre]
+    if len(trovate) != 1 or altro['modulo'] not in MODULI_VALIDI:
+        return None
+    nome = trovate[0]
+    rosa = [p for p in base['p'] if p[4] == nome]
+    try:
+        ids, ruoli = id_di(altro['titolari'], rosa)
+        d, c, a = (int(x) for x in altro['modulo'].split('-'))
+        if {r: ruoli.count(r) for r in 'PDCA'} != {'P': 1, 'D': d, 'C': c, 'A': a} or len(set(ids)) != N_TITOLARI:
+            return None
+        ids_p, _ = id_di(altro['panchina'], rosa)
+    except ValueError:
+        return None
+    return {'squadra': nome, 'modulo': altro['modulo'], 'titolari': ids, 'panchina': ids_p,
+            'letto': datetime.now(timezone.utc).isoformat(timespec='seconds')}
+
+
 def importa(testo, base):
     """Riga da salvare in dati/formazioni.json → giornate[giornata], dal testo
     di una pagina round/<giornata>. Solleva ValueError se non è plausibile."""
@@ -125,7 +153,7 @@ def importa(testo, base):
     if len(rosa) != N_TITOLARI + N_PANCHINA:
         raise ValueError(f'{squadra}: {len(rosa)} giocatori in rosa invece di {N_TITOLARI + N_PANCHINA}')
 
-    modulo, nomi_titolari, nomi_panchina = estrai(testo, squadra)
+    modulo, nomi_titolari, nomi_panchina, altro = estrai(testo, squadra)
     ids_titolari, ruoli_titolari = id_di(nomi_titolari, rosa)
     d, c, a = (int(x) for x in modulo.split('-'))
     conta = {r: ruoli_titolari.count(r) for r in 'PDCA'}
@@ -138,7 +166,11 @@ def importa(testo, base):
     doppi = sorted({i for i in tutti if tutti.count(i) > 1})
     if doppi:
         raise ValueError(f'giocatori ripetuti tra titolari e panchina: {doppi}')
-    return {'modulo': modulo, 'titolari': ids_titolari, 'panchina': ids_panchina}
+    riga = {'modulo': modulo, 'titolari': ids_titolari, 'panchina': ids_panchina}
+    avv = importa_avversario(altro, base)
+    if avv:
+        riga['avversario'] = avv
+    return riga
 
 
 def main():

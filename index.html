@@ -1273,6 +1273,8 @@
   .sc-chi span, .sc-chi{font-size:13.5px;} .sc-bil .af-riga b{font-size:18px;}
   .cf.vicini{height:100px;} .cf.vicini .cf-m.max i{height:56px;}
   .cf.vicini .cf-m.tu{transform:translateX(-85%);}   /* il numero di «Tu» sta a sinistra della sua tacca: la tacca del massimo non lo taglia */
+
+  .sf-vero{color:#6FE8A8; font-weight:700;}
 </style>
 </head>
 <body class="carica">
@@ -2617,8 +2619,19 @@ function sfidaDati(g){
   const rosaLoro = players.filter(p=>p.team===av.nome);
   const conMod = (u, m) => { if(!conModificatore(m) || !u.P.length || u.D.length < 4) return 0;
                              const x = modificatoreAtteso(u.P[0], u.D, SIMULAZIONI_SCELTA, g); return x ? x.atteso : 0; };
-  const loro = Object.keys(MODULI).map(m=>{ const u = undiciDi(rosaLoro, g, m), t = somma(u); return {modulo:m, u, tot:t, vale:t + conMod(u, m)}; })
+  let loro = Object.keys(MODULI).map(m=>{ const u = undiciDi(rosaLoro, g, m), t = somma(u); return {modulo:m, u, tot:t, vale:t + conMod(u, m)}; })
                      .sort((a,b)=>b.vale-a.vale)[0];
+  /* in tempo reale (18/10/2026): se Leghe mostra già la formazione dell'avversario (scripts/importa_formazioni.py →
+     formazioni.json → avversario), vale quella, non la stima: modulo e undici veri */
+  const fz = D.formazioni && D.formazioni[String(g[0])], vero = fz && fz.avversario;
+  if(vero && vero.squadra === av.nome && vero.titolari.length === 11){
+    const u = {P:[], D:[], C:[], A:[]};
+    vero.titolari.forEach(id=>{ const p = players.find(x=>x.id===id); if(p) u[p.ruolo].push(p); });
+    if(u.P.length + u.D.length + u.C.length + u.A.length === 11){
+      const t = somma(u);
+      loro = {modulo:vero.modulo, u, tot:t, vale:t + conMod(u, vero.modulo), vero:true, letto:vero.letto};
+    }
+  }
   return {avv:av.nome, mio:{modulo, u:mio, tot:somma(mio)}, loro};
 }
 /* ── B3: la probabilità di vincere la sfida ─────────────────────────────────────
@@ -2743,13 +2756,13 @@ function renderSfida(g){
   const quota = Math.max(10, Math.min(90, 50 + diff*4));      // senza modello: la barra esagera il vantaggio, per vederlo
   const barra = probabilitaHtml(g) ||
     '<div class="sf-barra"><i style="width:'+quota.toFixed(0)+'%"></i></div><p class="sf-verdetto">'+verdetto+'</p>';
-  const html = '<h2>La sfida, sulla carta</h2><div class="carta sfida-carta">'+
+  const html = '<h2>'+(s.loro.vero ? 'La sfida, con la formazione vera' : 'La sfida, sulla carta')+'</h2><div class="carta sfida-carta">'+
     '<div class="sf-testa"><div class="sf-sq">'+stemma(ME)+'<b class="cond">'+ME+'</b><span class="sf-tot cond">'+num(s.mio.tot,1)+'</span></div>'+
     '<span class="sf-vs cond">VS</span>'+
     '<div class="sf-sq">'+stemma(s.avv)+'<b class="cond">'+s.avv+'</b><span class="sf-tot cond">'+num(s.loro.tot,1)+'</span></div></div>'+
     barra+
     ['P','D','C','A'].map(reparto).join('')+
-    '<p class="sf-nota">Tu '+s.mio.modulo+' · loro '+s.loro.modulo+'</p></div>';
+    '<p class="sf-nota">Tu '+s.mio.modulo+' · loro '+s.loro.modulo+(s.loro.vero ? ' <b class="sf-vero">schierato davvero</b>' + (s.loro.letto ? ' · letto alle '+oraBreve(new Date(s.loro.letto)).replace(/^\S+\s/, '') : '') : ' · stima di Jarvis')+'</p></div>';
   if(html !== sfidaDisegnata){ sfidaDisegnata = html; document.getElementById('sfida').innerHTML = html; }
 }
 
@@ -3857,6 +3870,29 @@ async function aggiorna(silenzioso){
   return cambiato;
 }
 document.getElementById('refresh').onclick = ()=>aggiorna(true);
+/* sfida in tempo reale (18/10/2026): nelle 3 ore prima della scadenza, e fino a 15 minuti dopo, ogni 2 minuti si rilegge
+   formazioni.json (chiuso dal lucchetto): quando sul PC si importa la formazione schierata dell'avversario la sfida passa
+   da stima a undici vero, senza toccare niente. Fuori da quella finestra non si fa nulla (niente consumo di batteria). */
+let formazioniVista = '';
+async function rileggiFormazioni(){
+  try{
+    const f = ((LEGA && LEGA.cartella) || '')+'formazioni.json', chiuso = !!LUCCHETTO && eProtetto(f);
+    const r = await fetch('dati/'+(chiuso ? chiusoDi(f) : f)+'?cb='+Date.now(), {cache:'no-store'});
+    if(!r.ok) return;
+    const j = await r.json(), fz = chiuso ? JSON.parse(await apriBusta(f, j)) : j;
+    if(!fz || !fz.giornate || fz.aggiornato === formazioniVista) return;
+    formazioniVista = fz.aggiornato;
+    D.formazioni = fz.giornate; SFIDE = {}; sfidaDisegnata = '';
+    renderGiornata();
+  }catch(e){}
+}
+function nellaFinestraDellaScadenza(){
+  const sc = D && D.g ? scadenza(prossima()) : null;
+  if(!sc) return false;
+  const dt = sc.getTime() - oggi().getTime();
+  return dt < 3*3600000 && dt > -15*60000;
+}
+setInterval(()=>{ if(document.visibilityState === 'visible' && nellaFinestraDellaScadenza()) rileggiFormazioni(); }, 120000);
 /* modulo: cinque tessere, si sceglie toccandone una */
 function scegliModulo(m){
   if(!MODULI[m] || m===modulo) return;
