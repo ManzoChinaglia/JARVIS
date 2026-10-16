@@ -425,7 +425,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const sfondo = path.join(REPO, 'img', 'sfondo.jpg');
   verifica('sfondo: lo stemma intero, leggero per l\'iPhone', fs.existsSync(sfondo) && fs.statSync(sfondo).size < 400000
            && /url\("img\/sfondo.jpg"\)/.test(html), fs.existsSync(sfondo) ? Math.round(fs.statSync(sfondo).size / 1024) + ' KB' : 'manca');
-  verifica('Re Guyzo anche dentro l\'app (stemma)', /<image href="'\+\(LEGA && LEGA\.stemma \|\| 'img\/icona-180\.png'\)/.test(html));
+  verifica('Re Guyzo anche dentro l\'app (stemma)', /\(LEGA && LEGA\.stemma \|\| 'img\/icona-180\.png'\)/.test(html));
 
   console.log('\n16. Avvisi');
   // venerdì 18 settembre alle 10: scadenza alle 20:30 e un tuo difensore squalificato
@@ -507,7 +507,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            && !/id="refresh"/.test((html.match(/<header>[\s\S]*?<\/header>/) || [''])[0]));
   verifica('nel pannello il dettaglio dei dati', /probabili del/.test(el['stamp-dett'].textContent), el['stamp-dett'].textContent);
   const sig = (el['avv-stemma'].innerHTML.match(/>([^<>]*)<\/text>/) || [])[1];
-  verifica('stemma dell\'avversario con le sue iniziali', /^[A-Z0-9]{1,2}$/.test(sig || ''), sig);
+  const imgAvv = /<image href="data:image\//.test(el['avv-stemma'].innerHTML);
+  verifica('stemma dell\'avversario: il suo stemma o le iniziali', imgAvv || /^[A-Z0-9]{1,2}$/.test(sig || ''), imgAvv ? 'stemma' : sig);
   verifica('il tuo stemma è quello della lega (Burkina: dal 07/10/2026 il logo preso da Leghe)', /img\/stemma-bf\.png/.test(el['mio-stemma'].innerHTML), el['mio-stemma'].innerHTML.slice(0, 120));
 
   console.log('\n19. Notifiche di Jarvis');
@@ -599,7 +600,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const finta = squadreLega.map((s, k) => [k + 1, s, 1, k < 5 ? 1 : 0, 0, k < 5 ? 0 : 1, 2, 1, 1, k < 5 ? 3 : 0, 70.5 - k]);
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'lega.json': { aggiornato: '2026-09-22T10:00:00+00:00', classifica: finta } } }));
   const cla = el.classifica.innerHTML;
-  verifica('classifica vera: 10 squadre in ordine, con stemma, punti e fantapunti', (cla.match(/class="stemma"/g) || []).length === 10
+  verifica('classifica vera: 10 squadre in ordine, con stemma, punti e fantapunti', (cla.match(/class="stemma"/g) || []).length === 13
            && cla.indexOf(squadreLega[0]) < cla.indexOf(squadreLega[9]) && cla.includes('<i>FP</i><b>70,5</b>') && cla.includes('<i>G</i><b>1</b>'));
   verifica('la tua squadra in evidenza', new RegExp('<div class="team cl io"><span class="pos cond">\\d+</span>').test(cla));
   verifica('nessun credito mostrato', !/credit/i.test(cla));

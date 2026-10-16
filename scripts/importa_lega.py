@@ -288,17 +288,20 @@ def main():
         return
 
     percorso_lega = os.path.join(DATI, sotto, 'lega.json')
-    risultati = {}
+    risultati, stemmi = {}, {}
     if os.path.exists(percorso_lega):
         try:
             with open(percorso_lega, encoding='utf-8') as f:
-                risultati = json.load(f).get('risultati', {})
+                vecchi = json.load(f)
+                risultati, stemmi = vecchi.get('risultati', {}), vecchi.get('stemmi', {})
         except (json.JSONDecodeError, OSError):
             pass                          # lega.json non ancora valido: si riparte da vuoto
     risultati.update(risultati_nuovi)     # upsert: le giornate vecchie non lette di nuovo restano
 
     dati = {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'),
             'colonne': COLONNE, 'classifica': righe, 'risultati': risultati}
+    if stemmi:
+        dati['stemmi'] = stemmi          # gli stemmi delle altre squadre (data URI) non si perdono
     with open(percorso_lega, 'w', encoding='utf-8') as f:
         f.write(json.dumps(dati, ensure_ascii=False, separators=(',', ':')))
     print('classifica aggiornata.')

@@ -1225,6 +1225,40 @@
   .team.io .nome, .team.io .pos{color:var(--oro-chiaro);}
   .team{padding:13px 0;}
   .sez{font-family:"Big Shoulders Display",sans-serif; font-weight:800; letter-spacing:.04em;}
+
+  /* --- effetto wow su Lega e Stagione (18/10): podio, numeri d'oro, ingresso a cascata --- */
+  .podio{display:grid; grid-template-columns:1fr 1.2fr 1fr; align-items:end; gap:8px; margin:6px 0 16px; padding:18px 8px 0; position:relative;
+         border-radius:22px; background:radial-gradient(120% 90% at 50% 0%,rgba(240,199,94,.22),transparent 62%),linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));
+         border:1px solid rgba(255,255,255,.1); overflow:hidden;}
+  .podio::before{content:''; position:absolute; left:10%; right:10%; top:0; height:1px; background:linear-gradient(90deg,transparent,rgba(255,236,190,.7),transparent);}
+  .pd{display:flex; flex-direction:column; align-items:center; text-align:center; min-width:0; animation:pdsu .7s cubic-bezier(.2,.8,.2,1) both;}
+  .pd1{animation-delay:.05s;} .pd2{animation-delay:.18s;} .pd3{animation-delay:.3s;}
+  .pd-st{position:relative; display:block; padding:4px;}
+  .pd-st .stemma{width:54px; height:62px; filter:drop-shadow(0 6px 10px rgba(0,0,0,.6));}
+  .pd1 .pd-st .stemma{width:78px; height:90px; filter:drop-shadow(0 0 16px rgba(240,199,94,.65)) drop-shadow(0 8px 12px rgba(0,0,0,.6));}
+  .pd-n{position:absolute; right:-2px; bottom:-2px; width:24px; height:24px; display:grid; place-items:center; border-radius:50%; font-size:16px; font-weight:800; font-style:normal; color:#1b1405;
+        background:linear-gradient(180deg,#fbe7a6,#d9a63a); box-shadow:0 2px 8px rgba(0,0,0,.5);}
+  .pd2 .pd-n{background:linear-gradient(180deg,#f3f5f8,#a7b0bd);} .pd3 .pd-n{background:linear-gradient(180deg,#f1c79b,#b9753a);}
+  .pd-nome{margin-top:6px; max-width:100%; padding:0 2px; font:600 12px/1.15 "Space Grotesk",sans-serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .pd.io .pd-nome{color:var(--oro-chiaro);}
+  .pd-pt{margin-top:2px; font-size:30px; font-weight:800; line-height:1; background:linear-gradient(180deg,#fff6d6,#f0c75e 60%,#b98a2a); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .pd1 .pd-pt{font-size:40px;}
+  .pd-pt small{margin-left:3px; font:600 9px "Space Grotesk",sans-serif; letter-spacing:.14em; -webkit-text-fill-color:rgba(255,255,255,.55);}
+  .pd-base{display:block; width:100%; margin-top:8px; border-radius:10px 10px 0 0; background:linear-gradient(180deg,rgba(240,199,94,.45),rgba(240,199,94,.05)); border-top:1px solid rgba(255,236,190,.6);}
+  .pd1 .pd-base{height:34px;} .pd2 .pd-base{height:20px;} .pd3 .pd-base{height:12px;}
+  .pd2 .pd-base{background:linear-gradient(180deg,rgba(200,208,220,.4),rgba(200,208,220,.04));} .pd3 .pd-base{background:linear-gradient(180deg,rgba(214,150,92,.4),rgba(214,150,92,.04));}
+  @keyframes pdsu{from{opacity:0; transform:translateY(22px) scale(.94);} to{opacity:1; transform:none;}}
+  @keyframes blsu{from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:none;}}
+  #s-stagione .blocco, #s-stagione h2{animation:blsu .6s cubic-bezier(.2,.8,.2,1) both;}
+  #s-stagione > :nth-child(2){animation-delay:.06s;} #s-stagione > :nth-child(3){animation-delay:.14s;} #s-stagione > :nth-child(4){animation-delay:.22s;} #s-stagione > :nth-child(n+5){animation-delay:.3s;}
+  .af-n{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:25px;}
+  .af svg{filter:drop-shadow(0 0 10px rgba(240,199,94,.45));}
+  .af-pieno{stroke-width:9; animation:afgira 1.1s cubic-bezier(.2,.8,.2,1) both;}
+  @keyframes afgira{from{stroke-dasharray:0 252;}}
+  .af-t b.cond{font-size:27px; line-height:1; background:linear-gradient(180deg,#fff6d6,#f0c75e 70%,#b98a2a); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .lg-pos{width:78px; height:78px; font-size:50px; font-weight:800; border-radius:22px; color:#1b1405;
+          background:linear-gradient(160deg,#fbe7a6,#e0ad45 55%,#a87a22); border:1px solid rgba(255,244,210,.7); box-shadow:0 0 22px rgba(240,199,94,.4),inset 0 1px 0 rgba(255,255,255,.6);}
+  .lg-dati b.cond{font-size:34px; line-height:1;}
 </style>
 </head>
 <body class="carica">
@@ -2547,8 +2581,10 @@ function coloreSquadra(nome){
   return COLORI_SQUADRE[Math.max(0, altre.indexOf(nome)) % COLORI_SQUADRE.length];
 }
 function stemma(nome){
-  const dentro = nome===ME
-    ? '<image href="'+(LEGA && LEGA.stemma || 'img/icona-180.png')+'" x="-3" y="0" width="46" height="46" preserveAspectRatio="xMidYMid slice" clip-path="url(#scudo)"/>'
+  /* lo stemma ufficiale: il mio dalla lega, gli altri da dati/lega.json → stemmi (data URI, nel lucchetto); senza, scudo con la sigla */
+  const img = nome===ME ? (LEGA && LEGA.stemma || 'img/icona-180.png') : (D.lega && D.lega.stemmi && D.lega.stemmi[nome]);
+  const dentro = img
+    ? '<image href="'+img+'" x="-3" y="0" width="46" height="46" preserveAspectRatio="xMidYMid slice" clip-path="url(#scudo)"/>'
     : '<path d="'+SCUDO+'" fill="'+coloreSquadra(nome)+'"/><path d="'+SCUDO+'" fill="url(#luce)"/>'+
       '<text x="20" y="28" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="15" fill="#fff">'+
       sigla(nome)+'</text>';
@@ -3491,7 +3527,12 @@ function renderLega(){
     /* sotto il nome la forma (W, =, L) e il dettaglio con le sue intestazioni; a destra i
        punti in un riquadro loro, staccati dai fantapunti, che stanno nel dettaglio (21/09/2026) */
     const mov = movimentoLega();
-    cl.innerHTML = '<h2>Classifica</h2><div class="lista">'+D.lega.classifica.map(r=>{
+    const podio = [1, 0, 2].map(k=>{
+      const r = D.lega.classifica[k]; if(!r) return '';
+      return '<div class="pd pd'+(k+1)+(r[1]===ME?' io':'')+'"><span class="pd-st">'+stemma(r[1])+'<i class="pd-n cond">'+(k+1)+'</i></span>'+
+        '<b class="pd-nome">'+r[1]+'</b><span class="pd-pt cond">'+n1(r[9])+'<small>PT</small></span><span class="pd-base"></span></div>';
+    }).join('');
+    cl.innerHTML = '<h2>Classifica</h2><div class="podio">'+podio+'</div><div class="lista">'+D.lega.classifica.map(r=>{
       const f = forma(r[1]);
       return '<div class="team cl'+(r[1]===ME?' io':'')+'"><span class="pos cond">'+r[0]+'</span>'+
       (mov[r[1]] !== undefined ? freccia(mov[r[1]]) : '')+stemma(r[1])+
