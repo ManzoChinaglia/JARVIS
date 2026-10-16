@@ -1205,6 +1205,26 @@
   #difesa .invito{pointer-events:none;}
   #difesa .invito-freccia{display:none;}
   #difesa .invito, #kobox .invito{font-family:"Space Grotesk",sans-serif;}
+
+  /* --- Stagione e Lega nello stesso linguaggio della Giornata (18/10) --- */
+  .blocco{position:relative; background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.025)); border-color:rgba(255,255,255,.1);}
+  .blocco::before{content:''; position:absolute; left:12%; right:12%; top:0; height:1px; pointer-events:none;
+                  background:linear-gradient(90deg,transparent,rgba(255,236,190,.55),transparent);}
+  .blocco-t{font-family:"Space Grotesk",sans-serif; font-weight:600; font-size:11px; letter-spacing:.14em; display:flex; align-items:center; gap:8px;}
+  .blocco-t::before{content:''; flex:none; width:5px; height:5px; border-radius:50%; background:var(--oro); box-shadow:0 0 8px var(--oro);}
+  .blocco-t small{margin-left:auto; font-family:"Space Grotesk",sans-serif; font-weight:500;}
+  .cond, .fvn, .fm, .lg-val, .team .val, .gio-riga b.cond, .u11-testa b.cond{font-family:"Big Shoulders Display","Barlow Condensed",sans-serif; font-weight:800; letter-spacing:.01em;}
+  .u11-testa b.cond{font-size:54px;} .gio-riga b.cond{font-size:24px;}
+  .team .pos{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:20px;}
+  .team .nome{font-family:"Space Grotesk",sans-serif; font-weight:500; font-size:14.5px;}
+  .team .nome small, .team .val small, .lg-forma{font-family:"Space Grotesk",sans-serif;}
+  .team .val{font-size:30px; min-width:52px; padding:4px 8px 2px; border-radius:12px; text-align:center; line-height:1;
+             background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(0,0,0,.22)); border:1px solid rgba(255,255,255,.1);}
+  .team .val small{margin-top:2px; font-size:8.5px; letter-spacing:.14em; text-transform:uppercase;}
+  .team.io .val{background:linear-gradient(180deg,rgba(240,199,94,.3),rgba(240,199,94,.08)); border-color:rgba(240,199,94,.55); color:var(--oro-chiaro);}
+  .team.io .nome, .team.io .pos{color:var(--oro-chiaro);}
+  .team{padding:13px 0;}
+  .sez{font-family:"Big Shoulders Display",sans-serif; font-weight:800; letter-spacing:.04em;}
 </style>
 </head>
 <body class="carica">
