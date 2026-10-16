@@ -5,7 +5,7 @@
 Stato: in corso
 1. Dopo la G7 (da lunedì 19/10 18:45): «dati di lega» e «formazione schierata» per entrambe le leghe (`--lega qi`)
 2. Cervello calcistico: restano i passi 5-6 (news: misura rifare con più giornate; PESI a fine novembre)
-3. Grafica «wow» (liquid glass), cantiere a sé con mockup
+3. Grafica «wow»: scelta la direzione A «Notte di gala» (17/10), prossimo il giro 2 dei mockup (piano sotto)
 
 (al 17/10/2026 — tutto pushato; prove 352/352)
 
@@ -148,6 +148,36 @@ Resta in coda per Jarvis solo se un giorno ne esce un ingresso concreto (es. xG 
 **Dopo:** grafica «wow» (liquid glass mantenuto, ispirazione dal lavoro di THE CLUB), cantiere a sé con mockup prima.
 
 **Verificato il 17/10:** probabili ogni 30 min (`probabili.yml`) già in produzione e verdi; quote automatiche funzionanti (segreto `CONOSCENZA_TOKEN` presente, CSV archiviati in JARVIS-conoscenza); Form regole QI chiuso dall'utente. **Passo 5 misurato (17/10):** tra i probabili titolari (soglia 60-80%) con una news d'infortunio nei 3-5 giorni prima, restano senza voto 1 su 9-23 (4-11%) contro il 5-8% senza news: nessun segnale, ma campione minuscolo (G5-G6, proxy = nessun voto). Non si tocca il motore; rifare con più giornate alla ricalibrazione di fine novembre.
+## GRAFICA «WOW» — piano (Opus, 17/10/2026; si esegue con Sonnet)
+
+**Scelta dell'utente (17/10):** direzione **A «Notte di gala»** tra tre (B Medaglia, C Lavagna viva scartate).
+Mockup: `archivio/mockup/wow-1.html` (fuori da git: contiene i nomi degli avversari; `?d=A`, `?lega=qi`), servito da
+`jarvis-chiaro` (porta 8766) come `/archivio/mockup/wow-1.html`.
+
+**Il linguaggio A (vale per ogni parte):**
+- Buio con la luce che cade dall'alto: alone dei colori di lega in cima (`--tema-b` al 22%), sfondo con lo stemma più spento
+  (opacità ~0,28), vignetta in basso. Carte di vetro scure (sfuma dall'alto al basso, raggio 26) con un filo di luce di 1 px in cima.
+- Caratteri: Big Shoulders Display **pieno 800-900** per nomi e titoli, **sottile 300** per numeri grandi (voti, punteggi, percentuali,
+  ore); Space Grotesk per le cifre piccole; Barlow Condensed maiuscoletto spaziato per le etichette, col loro punto d'oro acceso.
+  Il nome della tua squadra nei colori `nome_a/nome_b`, l'avversario sottile e grigio.
+- Oro solo per ciò che conta: anello della vittoria che si riempie (1,6 s, punto acceso in testa), tessera consigliata con riflesso
+  che passa (5 s), voti sottili oro sul campo. Punto verde che respira (3 s) accanto all'aggiornamento.
+- Campo notturno: strisce scure, luce dall'alto, vignetta; sotto ogni maglia una **pozza di luce del colore della squadra**.
+- Restano (già approvati): 7 tessere su una riga, pillole NO MOD./CONSIGLIATA, peperoncino/stella animati, selettore con swipe,
+  tema per lega. QI senza percentuali: «pari / sulla carta» nell'anello, mai numeri inventati.
+
+**Passi, in ordine:**
+1. **Giro 2 dei mockup** (stesso file o `wow-2.html`, dati veri, entrambe le leghe): le altre schermate in stile A
+   (Rosa, Stagione, Lega, selettore aperto, lucchetto, panchina, «La sfida», «Quando giocano», «Il consiglio», scheda giocatore)
+   e le micro-parti con tutti gli stati: carta della scadenza **aperta** (conto alla rovescia) e scaduta, tessera giocatore
+   (titolare/in dubbio/fuori), tessera modulo (4 stati), campanella, barra in basso. Scelta dell'utente prima del codice.
+2. **Fondamenta in `index.html`**: token CSS nuovi accanto a quelli di oggi; caratteri **in locale** (Big Shoulders Display
+   300/800/900 e Space Grotesk, licenza OFL, cartella `font/`, cache del service worker se c'è); componenti riusabili:
+   `anello()` SVG, filo di luce, pozza di luce, etichetta col punto. Prima cercare cosa esiste già (regola 7).
+3. **Schermate una alla volta**, Giornata per prima, ognuna vista nell'anteprima 390×844 in tutte e due le leghe e approvata.
+4. **Prestazioni iPhone:** non impilare `backdrop-filter` (una carta di vetro = un filtro), animazioni solo su transform/opacity,
+   `prefers-reduced-motion` le ferma. Prove `prove/app.js` sempre verdi; residui CSS tolti nello stesso lavoro.
+
 ## Storico recente
 
 **Fatto il 13/10 (non committato):** (1) «Tu, Jarvis e il massimo»: con Tu e Max vicini le etichette si sovrapponevano; ora `.cf.vicini` porta quella del massimo su una seconda riga. (2) «Il migliore che non hai schierato» non conta più chi è senza voto (prima Robinson s.v. prendeva l'8 di Mendy, il panchinaro che entra): `meglio()` in `htmlScelte`. Prove 334/334.
