@@ -2,12 +2,12 @@
 
 ## Prossimo
 <!-- pannello «Punti aperti»: max 3 punti, una riga ciascuno; si aggiorna a fine sessione -->
-Stato: urgente
-1. Multilega QI: chiusa (17/10). Solo routine: a G7 finita (dopo 19/10 18:45) «dati di lega»/«formazione schierata» con `--lega qi`
-2. Aggiornamenti più fitti + archivio news (piano pronto)
-3. Cervello calcistico (piano pronto)
+Stato: in corso
+1. Dopo la G7 (da lunedì 19/10 18:45): «dati di lega» e «formazione schierata» per entrambe le leghe (`--lega qi`)
+2. Cervello calcistico: restano i passi 5-6 (news: misura rifare con più giornate; PESI a fine novembre)
+3. Grafica «wow» (liquid glass), cantiere a sé con mockup
 
-(al 08/10/2026 — tutto pushato; prove 330/330)
+(al 17/10/2026 — tutto pushato; prove 352/352)
 
 ## MULTILEGA — cantiere aperto, URGENTE (prima giornata della nuova lega: 6ª di Serie A, ~10/10/2026)
 
@@ -147,6 +147,7 @@ Resta in coda per Jarvis solo se un giorno ne esce un ingresso concreto (es. xG 
 6. **Ricalibrazione dei PESI** a fine novembre, come già previsto, con i passi sopra dentro.
 **Dopo:** grafica «wow» (liquid glass mantenuto, ispirazione dal lavoro di THE CLUB), cantiere a sé con mockup prima.
 
+**Verificato il 17/10:** probabili ogni 30 min (`probabili.yml`) già in produzione e verdi; quote automatiche funzionanti (segreto `CONOSCENZA_TOKEN` presente, CSV archiviati in JARVIS-conoscenza); Form regole QI chiuso dall'utente. **Passo 5 misurato (17/10):** tra i probabili titolari (soglia 60-80%) con una news d'infortunio nei 3-5 giorni prima, restano senza voto 1 su 9-23 (4-11%) contro il 5-8% senza news: nessun segnale, ma campione minuscolo (G5-G6, proxy = nessun voto). Non si tocca il motore; rifare con più giornate alla ricalibrazione di fine novembre.
 ## Storico recente
 
 **Fatto il 13/10 (non committato):** (1) «Tu, Jarvis e il massimo»: con Tu e Max vicini le etichette si sovrapponevano; ora `.cf.vicini` porta quella del massimo su una seconda riga. (2) «Il migliore che non hai schierato» non conta più chi è senza voto (prima Robinson s.v. prendeva l'8 di Mendy, il panchinaro che entra): `meglio()` in `htmlScelte`. Prove 334/334.
