@@ -112,7 +112,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   g = t.prossima();
   verifica('resta la giornata 1', g[0] === 1, 'G' + g[0]);
   verifica('etichetta "Formazione chiusa"', el.cdk.textContent === 'Formazione chiusa', el.cdk.textContent);
-  verifica('testo "scaduta"', el.cdt.textContent === 'scaduta', el.cdt.textContent);
+  verifica('testo "chiusa"', el.cdt.textContent === 'chiusa', el.cdt.textContent);
 
   // ultima partita della SA 5: Milan-Lecce dom 20/9 18:45 UTC; la giornata cambia 2 ore dopo
   console.log('\n4. Cambio di giornata attorno all\'ultima partita');
@@ -485,7 +485,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
            clubSA.filter(c => !t.MAGLIE[c]).join(', ') || clubSA.length + ' club');
   const celle = el.campo.innerHTML.match(/class="gioc[^"]*" data-id="\d+"/g) || [];
   verifica('in campo 11 maglie, ognuna tocca e apre la scheda', celle.length === 11, celle.length);
-  verifica('linee del campo disegnate', /class="linee"/.test(el.campo.innerHTML));
+  verifica('piano del campo disegnato', /class="piano"/.test(el.campo.innerHTML));
   const quota = ['P', 'D', 'C', 'A'].map(r => t.posizione(r, 0, 1).y);
   verifica('dal portiere in basso all\'attacco in alto', quota.every((y, i) => i === 0 || y < quota[i - 1]), quota.join(' > '));
   for (const [r, n] of [['D', 4], ['C', 5], ['A', 3]]) {
@@ -641,7 +641,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('intestazione normale: niente capsula che si stringe scorrendo (non piaceva)', !/body\.scorso|'scorso'/.test(html));
   verifica('moduli a sette tessere (una riga sola) di vetro (la lente da trascinare è tolta)', /\.moduli\{display:grid; grid-template-columns:repeat\(7,1fr\)/.test(html)
            && !/moduli-cursore/.test(html) && /function scegliModulo/.test(html));
-  verifica('selettore di lega: cambio con sfumata e scorrimento del dito, nel verso giusto', /body\.lega-esce main/.test(html)
+  verifica('selettore di lega: cambio con la schermata della lega nuova e scorrimento del dito, nel verso giusto', /function avvioLega/.test(html)
            && /@keyframes lega-entra/.test(html) && /box\.addEventListener\('touchend'/.test(html) && /jarvis-verso/.test(html));
   verifica('barra e pulsanti tinti coi colori di marca della lega', /nav\{[^}]*color-mix\(in srgb,var\(--tema-a\)/.test(html));
   verifica('pannelli di vetro staccati dai bordi', /\.foglio\{left:8px; right:8px/.test(html));
