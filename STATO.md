@@ -3,7 +3,7 @@
 ## Prossimo
 <!-- pannello «Punti aperti»: max 3 punti, una riga ciascuno; si aggiorna a fine sessione -->
 Stato: urgente
-1. Multilega: chiudere la seconda lega (BOCA NDUJORS)
+1. Multilega QI: chiusa (17/10). Solo routine: a G7 finita (dopo 19/10 18:45) «dati di lega»/«formazione schierata» con `--lega qi`
 2. Aggiornamenti più fitti + archivio news (piano pronto)
 3. Cervello calcistico (piano pronto)
 
