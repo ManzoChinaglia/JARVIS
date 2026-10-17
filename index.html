@@ -2848,7 +2848,7 @@ function renderRagiona(g){
       navigator.clipboard.writeText(testo).then(()=>{ sotto.textContent = 'Copiato · incolla in chat'; }, ()=>{ sotto.textContent = 'Copia non riuscita'; });
     else sotto.textContent = copiato ? 'Copiato · incolla in chat' : 'Non riesco a copiare i numeri';
     setTimeout(() => { sotto.textContent = 'Ragiona con Jarvis'; }, 4000);
-    window.open('https://claude.ai/code', '_blank');
+    window.open('https://claude.ai/code?q=' + encodeURIComponent('INCOLLA DOSSIER!'), '_blank');
   });
 }
 
