@@ -47,3 +47,7 @@ Spostate da `CLAUDE.md` il 23/09/2026 (testo invariato). Si leggono quando l'ute
   temporanei e lancia `python scripts/schiera.py 2=g2.txt 3=g3.txt ...` (prima con `--prova`):
   `apri` → import di ogni giornata → `chiudi` (anche se una fallisce) → `prove/formazioni.py` e
   `prove/privacy.py`. Non fa commit: il commit (e il push) lo fa Claude dopo, coi totali delle prove.
+
+## Dubbio sulla formazione (skill `dubbio`)
+
+Dal bottone «Ragiona con Claude» dell'app (Giornata) l'utente apre una sessione Claude Code sul repo (iPhone o PC), incolla il fascicolo e manda gli screen di Leghe: la skill `.claude/skills/dubbio` guida il ragionamento. Nel cloud solo ragionamento (niente commit, lucchetto chiuso); sul PC si può ricalcolare e, con screen a formazione inserita, proporre «formazione schierata».

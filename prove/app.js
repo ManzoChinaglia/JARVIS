@@ -80,7 +80,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
     'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,cartaAtteso,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,forma,movimentoLega,risultatoLega,forfaitLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,dossierDi,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,forma,movimentoLega,risultatoLega,forfaitLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (attendi && el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -1290,6 +1290,16 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('il calcolo di prima non usa le quote', circa(t.punteggio(d36, g), t.punteggioVecchio(d36, g)));
   t.CALCOLO_VECCHIO = false;
   verifica('il file del modello ha le due serie, stesse voci', ['fantavoto_quote', 'voto_quote'].every(k => m31[k] && ['P', 'D', 'C', 'A'].every(r => m31[k][r].coef.length === m31.voci.length)));
+  console.log('\n37. «Ragiona con Claude»: il fascicolo del bottone');
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31 } }));
+  g = t.prossima();
+  const dos = t.dossierDi(g, 'Meglio il 3-5-2 o il 4-3-3?');
+  verifica('il fascicolo apre con la riga di riconoscimento e porta il dubbio', dos.startsWith('JARVIS · DOSSIER v1') && dos.includes('Meglio il 3-5-2 o il 4-3-3?'));
+  verifica('niente undefined né NaN, e sta in meno di 4.000 caratteri', !/undefined|NaN/.test(dos) && dos.length < 4000, dos.length + ' caratteri');
+  const u37 = t.undiciDi(t.mia, g, t.modulo), tit37 = [].concat(u37.P, u37.D, u37.C, u37.A);
+  verifica('ci sono tutti gli undici dell\'undici dell\'app', tit37.length === 11 && tit37.every(p => dos.includes(p.nome)));
+  verifica('dice se la formazione avversaria è stimata (non ancora vera)', dos.includes('STIMATA') && !dos.includes('formazione VERA'));
+  verifica('senza dubbio scritto non lo inventa, con dubbio lo porta', !t.dossierDi(g, '  ').includes('Il mio dubbio') && t.dossierDi(g, 'x?').includes('Il mio dubbio: x?'));
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
 })().catch(e => { console.error('ERRORE', e); process.exit(2); });

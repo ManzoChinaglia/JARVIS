@@ -84,7 +84,7 @@ trascinabile), campanella degli avvisi in alto a destra. Le sezioni che chiedono
 aprono in **sovraimpressione** (`apriSovra(k, titolo, html, testo)`: il quarto parametro
 accende «Condividi» se c'è `navigator.share`); nella pagina resta una riga-invito.
 
-- **Giornata**: conto alla rovescia con barra del tempo; testata con il punteggio vero al
+- **Giornata**: conto alla rovescia con barra del tempo; in fondo alla sfida il bottone «Ragiona con Claude» (`renderRagiona`, fascicolo `dossierDi`; apre claude.ai/code, skill `dubbio`); testata con il punteggio vero al
   posto di «VS» quando c'è il risultato (`risultatoLega`); **cinque tessere dei moduli**
   (`renderModuli`, `disegnoModulo`, totale atteso con `totaleModulo`, nastrino
   «consigliato» con `moduloConsigliato`, «NO MOD.» sulle difese a tre; all'apertura resta
@@ -184,7 +184,7 @@ l'iPhone le riprende solo togliendo e rimettendo l'app sulla Home.
 
 ## Totali attesi delle prove (al 23/09/2026)
 
-`prove/app.js` 329/329 (ovunque); `prove/lega.py` 34/34 sul PC (con `archivio/`), 31/31 su un clone
+`prove/app.js` 344/344 (ovunque); `prove/lega.py` 34/34 sul PC (con `archivio/`), 31/31 su un clone
 pulito o nella CI (saltano le prove sui file veri di Leghe: non è un guasto). `prove/formazioni.py`
 10/10, `prove/privacy.py` 8/8, `prove/lucchetto.js` 22/22. Le fallite si vedono come `NO`.
 `prove/backtest.js` non è una prova ma una misura: confronta due versioni di `index.html` sulle giornate salvate (uso nell'intestazione del file).

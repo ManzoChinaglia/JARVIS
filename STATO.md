@@ -5,10 +5,17 @@
 Stato: in corso
 1. Dopo la G7 (da lunedì 19/10 18:45): «dati di lega» e «formazione schierata» per entrambe le leghe (`--lega qi`)
 2. Cervello calcistico: restano i passi 5-6 (news: misura rifare con più giornate; PESI a fine novembre)
-3. Grafica «wow» fatta (campo, Stagione, Lega con podio e stemmi ufficiali BF): 3 commit locali NON pushati (attende il «sì»); restano stemmi QI (stessa routine, da pagina Leghe della lega QI) e prova sul telefono
-4. Sfida in tempo reale FATTA lato app e importer (18/10): `importa_formazioni.py` salva anche l'undici dell'avversario (`avversario` in formazioni.json); l'app lo usa e, nelle 3 ore prima della scadenza, rilegge ogni 2 min. Manca l'automatismo sul PC (attività con Chrome ogni pochi minuti verso la scadenza + apri→chiudi→push) e non è provato che Leghe mostri l'avversario PRIMA della scadenza: da verificare alla prossima. Stemmi QI presi (8 su 9; «una squadra della QI» non ne ha)
+3. «Ragiona con Claude» FATTO (17/10): un solo bottone in Giornata sotto la sfida, copia il fascicolo (`dossierDi`) e apre claude.ai/code; in chat l'utente manda gli screen di Leghe e ragiona con la skill `dubbio` (nel repo, valida anche nel cloud). Prove 344/344. NON verificato sull'iPhone: se dalla schermata Home il link apre l'app Claude, e la copia negli appunti
+
+Altri punti aperti: grafica wow e sfida in tempo reale pushate (`657ecee`), resta la prova sul telefono; sfida in tempo reale: non provato che Leghe mostri l'avversario PRIMA della scadenza (verificare alla prossima; nessun automatismo, lo legge Claude quando l'utente scrive «formazione schierata»); una squadra della QI senza stemma.
 
 (al 17/10/2026 sera — campo ridisegnato con avversario, consiglio ridotto al solo banner del modificatore (non cliccabile; vista e `apriConsiglio` tolti), mercato tolto, stemmi delle altre squadre come data URI in `dati/lega.json` → `stemmi` (cifrato; `importa_lega.py` li conserva), podio in Lega; prove 339/339)
+
+## «Ragiona con Claude» (17/10/2026, fatto)
+
+L'app è statica senza backend né chiave API: non può chiamare Claude. **Soluzione scelta dall'utente: solo un bottone** (Giornata, sotto la sfida, `#ragiona`). Copia negli appunti il fascicolo (`dossierDi(g)`: regole della lega, moduli e valori, undici consigliato con fantavoti e probabilità di giocare, panchina, avversario vero o stimato, probabilità di vittoria) e apre `https://claude.ai/code`. In chat, sessione Code sul repo JARVIS (anche a PC spento): incolla, manda gli screen di Leghe (formazioni vere, tempo reale) e ragiona con la skill `.claude/skills/dubbio/SKILL.md` (autosufficiente, nel cloud solo ragionamento: niente commit, niente decifratura). Di riserva Remote Control verso il PC acceso. Scartato su richiesta: campo del dubbio, incolla della scelta, parser SCELTA.
+
+**Dati nel fascicolo:** escono solo per mano dell'utente verso il suo account Claude, mai in un URL. **Ogni tocco apre una nuova sessione cloud** (da telefono non si cancellano, solo archiviano). **Idea per dopo:** cronologia delle scelte contro il risultato vero (giudizio «rivelato», STORIA.md B4).
 
 ## MULTILEGA — cantiere aperto, URGENTE (prima giornata della nuova lega: 6ª di Serie A, ~10/10/2026)
 

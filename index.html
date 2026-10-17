@@ -1275,6 +1275,23 @@
   .cf.vicini .cf-m.tu{transform:translateX(-85%);}   /* il numero di «Tu» sta a sinistra della sua tacca: la tacca del massimo non lo taglia */
 
   .sf-vero{color:#6FE8A8; font-weight:700;}
+
+  /* --- «Ragiona con Claude» (17/10): un solo bottone --- */
+  #ragiona{margin:18px 0 6px;}
+  .rg-btn{position:relative; overflow:hidden; display:flex; align-items:center; gap:14px; width:100%; padding:16px 18px; border-radius:20px; cursor:pointer; text-align:left;
+        border:1px solid rgba(255,244,210,.7); color:#1b1405; -webkit-tap-highlight-color:transparent;
+        background:linear-gradient(160deg,#fff0b8,#f0c75e 45%,#b98a2a); box-shadow:0 0 28px rgba(240,199,94,.35),0 10px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.7);}
+  .rg-btn::after{content:''; position:absolute; top:0; bottom:0; left:-40%; width:30%; transform:skewX(-20deg); pointer-events:none;
+        background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent); animation:rgluce 3.6s ease-in-out infinite;}
+  @keyframes rgluce{0%,55%{left:-40%;} 100%{left:130%;}}
+  .rg-btn:active{transform:scale(.985);}
+  .rg-ico{flex-shrink:0; width:46px; height:46px; display:grid; place-items:center; border-radius:15px; background:rgba(27,20,5,.88); color:#f7d98b; box-shadow:inset 0 1px 0 rgba(255,255,255,.2);}
+  .rg-ico svg{width:26px; height:26px;}
+  .rg-testo{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+  .rg-testo b{font-size:22px; font-weight:800; letter-spacing:.02em; line-height:1.05;}
+  .rg-testo small{font:600 12.5px/1.3 "Space Grotesk",sans-serif; color:rgba(27,20,5,.78);}
+  .rg-freccia{font-size:30px; line-height:1; font-weight:300; color:rgba(27,20,5,.75);}
+  @media (prefers-reduced-motion:reduce){.rg-btn::after{animation:none; display:none;}}
 </style>
 </head>
 <body class="carica">
@@ -1368,6 +1385,7 @@ try{ const t = sessionStorage.getItem('jarvis-tr'); if(t){ sessionStorage.remove
     <div class="campo" id="campo"></div>
     <div id="difesa"></div>
     <div id="sfida"></div>
+    <div id="ragiona"></div>
     <div id="quando"></div>
     <div id="panchina"></div>
     <div id="kobox"></div>
@@ -1849,6 +1867,7 @@ function renderGiornata(){
   disegnaCampo(g);
   renderDifesa(g);
   renderSfida(g);
+  renderRagiona(g);
   renderQuando(g);
   renderComeAndata();
   renderAvvisi();
@@ -2764,6 +2783,69 @@ function renderSfida(g){
     ['P','D','C','A'].map(reparto).join('')+
     '<p class="sf-nota">Tu '+s.mio.modulo+' · loro '+s.loro.modulo+(s.loro.vero ? ' <b class="sf-vero">schierato davvero</b>' + (s.loro.letto ? ' · letto alle '+oraBreve(new Date(s.loro.letto)).replace(/^\S+\s/, '') : '') : ' · stima di Jarvis')+'</p></div>';
   if(html !== sfidaDisegnata){ sfidaDisegnata = html; document.getElementById('sfida').innerHTML = html; }
+}
+
+/* ── «Ragiona con Claude» (17/10/2026): l'app non può chiamare Claude (statica, nessuna chiave), quindi gli passa il
+   fascicolo: un testo con le istruzioni e i numeri di Jarvis che l'utente incolla in Claude Code sull'iPhone (sessione
+   sul repo JARVIS, skill «dubbio») e il blocco «SCELTA» che torna indietro. Niente di nuovo nei calcoli: tutto da qui sopra.
+   Il fascicolo esce solo per mano dell'utente (appunti), mai in un URL. */
+const normNome = s => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+function dossierDi(g, dubbio){
+  const s = sfidaDati(g), ps = probabilitaSfida(g), cons = moduloConsigliato(g), u = undici(g);
+  const sc = scadenza(g), d = bloccoDifesa(g), pc = x => Math.round(100*x)+'%';
+  const att = p => { const a = attesoModello('fantavoto', p, g); return a ? a.media : fmStimata(p); };
+  const riga = p => {
+    const m = avversarioClub(p.club, g[1]), t = titolarita(p, g);
+    return p.ruolo+' '+p.nome+' ('+p.club+(m ? (m.casa ? ' vs ' : ' @ ')+m.avv : '')+') atteso '+num(att(p))+
+      (t && t.perc !== undefined ? ', gioca '+Math.round(t.perc)+'%' : '');
+  };
+  const tutti = x => [].concat(x.P, x.D, x.C, x.A);
+  const moduli = Object.keys(MODULI).map(m=>m+' '+num(totaleModulo(g, m).tot)+(m===cons ? '*' : '')).join(' · ');
+  const loro = s.loro;
+  return [
+    'JARVIS · DOSSIER v1 — usa la skill dubbio',
+    'Sono Jarvis (l\'app), ti passo i miei numeri. Ora ti mando gli screen delle formazioni da Leghe: ragioniamo insieme sulle ultime scelte, una domanda alla volta.',
+    '',
+    'Lega: '+(LEGA && LEGA.nome || '')+' · squadra '+ME+' · giornata '+g[0]+' (Serie A '+g[1]+')'+(sc ? ' · scadenza '+quando(sc) : ''),
+    'Regole: moduli '+Object.keys(MODULI).join(', ')+' · modificatore difesa solo con almeno 4 difensori, portiere incluso · gol a '+SOGLIE_GOL.slice(0,5).join(', ')+'…',
+    '',
+    'Moduli (valore atteso, * = consigliato): '+moduli,
+    'Il mio undici '+modulo+(modulo===cons ? ' (consigliato)' : ' (scelto nell\'app; il consigliato è '+cons+')')+':',
+    tutti(u).map(riga).join('\n'),
+    d ? 'Difesa: modificatore atteso '+(d.m.atteso>=0.05 ? '+' : '')+num(d.m.atteso)+', fascia più probabile '+etichettaFascia(d.alta.bonus)+' ('+pc(d.alta.prob)+')' : '',
+    'Panchina: '+panchina(g).map(p=>p.ruolo+' '+p.nome+' '+num(att(p))).join(', '),
+    '',
+    'Avversario: '+s.avv+', '+loro.modulo+(loro.vero ? ', formazione VERA letta da Leghe' : ', formazione STIMATA da Jarvis (non ancora schierata)')+':',
+    tutti(loro.u).map(p=>p.ruolo+' '+p.nome+' ('+p.club+') '+num(att(p))).join(', '),
+    'Totali attesi: io '+num(ps ? ps.mio : s.mio.tot)+' contro '+num(ps ? ps.loro : s.loro.tot)+(ps ? ' · vinco '+pc(ps.vittoria)+', pareggio '+pc(ps.pareggio)+', perdo '+pc(ps.sconfitta) : ''),
+    String(dubbio||'').trim() ? '\nIl mio dubbio: '+String(dubbio).trim() : ''
+  ].filter((r, i, a) => r !== '' || a[i-1] !== '').join('\n');
+}
+/* il bottone «Ragiona con Claude» (decisione dell'utente 17/10/2026: solo un bottone). Copia il fascicolo e apre Claude
+   Code; gli screen di Leghe (formazioni vere, in tempo reale) li manda lui in chat. Si disegna una volta per giornata. */
+let ragionaChiave = '';
+function renderRagiona(g){
+  const box = document.getElementById('ragiona'), chiave = (LEGA && LEGA.id || '')+':'+g[0];
+  if(!box || chiave === ragionaChiave) return;
+  ragionaChiave = chiave;
+  box.innerHTML = '<button class="rg-btn" id="rg-apri" type="button"><span class="rg-ico" aria-hidden="true">'+
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v10H12l-4.5 4v-4H4z"/><path d="M9 10.5h6M12 8v5"/></svg></span>'+
+    '<span class="rg-testo"><b class="cond">Ragiona con Claude</b><small id="rg-sotto">Porta i numeri di Jarvis in chat</small></span>'+
+    '<span class="rg-freccia" aria-hidden="true">›</span></button>';
+  document.getElementById('rg-apri').addEventListener('click', () => {
+    const testo = dossierDi(g, '');
+    let copiato = false;
+    try{
+      const ta = document.createElement('textarea'); ta.value = testo; ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+      document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, testo.length);
+      copiato = document.execCommand('copy'); ta.remove();
+    }catch(e){}
+    const sotto = document.getElementById('rg-sotto');
+    if(!copiato && navigator.clipboard && navigator.clipboard.writeText)
+      navigator.clipboard.writeText(testo).then(()=>{ sotto.textContent = 'Copiato: incolla e manda gli screen di Leghe'; }, ()=>{ sotto.textContent = 'Non riesco a copiare i numeri'; });
+    else sotto.textContent = copiato ? 'Copiato: incolla e manda gli screen di Leghe' : 'Non riesco a copiare i numeri';
+    window.open('https://claude.ai/code', '_blank');
+  });
 }
 
 /* ---------- quando giocano i tuoi ---------- */
