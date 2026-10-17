@@ -1276,21 +1276,24 @@
 
   .sf-vero{color:#6FE8A8; font-weight:700;}
 
-  /* --- «Ragiona con Claude» (17/10): un solo bottone --- */
+  /* --- «Ragiona con Claude» (17/10): un solo bottone, nei colori della squadra della lega --- */
   #ragiona{margin:18px 0 6px;}
-  .rg-btn{position:relative; overflow:hidden; display:flex; align-items:center; gap:14px; width:100%; padding:16px 18px; border-radius:20px; cursor:pointer; text-align:left;
-        border:1px solid rgba(255,244,210,.7); color:#1b1405; -webkit-tap-highlight-color:transparent;
-        background:linear-gradient(160deg,#fff0b8,#f0c75e 45%,#b98a2a); box-shadow:0 0 28px rgba(240,199,94,.35),0 10px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.7);}
-  .rg-btn::after{content:''; position:absolute; top:0; bottom:0; left:-40%; width:30%; transform:skewX(-20deg); pointer-events:none;
-        background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent); animation:rgluce 3.6s ease-in-out infinite;}
-  @keyframes rgluce{0%,55%{left:-40%;} 100%{left:130%;}}
+  .rg-btn{position:relative; overflow:hidden; isolation:isolate; display:flex; align-items:center; gap:14px; width:100%; padding:14px 16px; border-radius:22px; cursor:pointer; text-align:left;
+        color:#fff; -webkit-tap-highlight-color:transparent;
+        background:linear-gradient(115deg,color-mix(in srgb,var(--tema-a) 62%,#0b0d0c),color-mix(in srgb,var(--tema-b) 62%,#0b0d0c));
+        border:1px solid color-mix(in srgb,var(--tema-a) 45%,rgba(255,255,255,.35));
+        box-shadow:0 10px 28px color-mix(in srgb,var(--tema-a) 38%,transparent),inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(0,0,0,.25);
+        -webkit-backdrop-filter:blur(14px) saturate(1.6); backdrop-filter:blur(14px) saturate(1.6);}
+  .rg-btn::before{content:''; position:absolute; inset:0; z-index:-1; background:radial-gradient(120% 140% at 0% 0%,rgba(255,255,255,.22),transparent 55%);}
+  .rg-btn::after{content:''; position:absolute; top:0; bottom:0; left:-40%; width:26%; z-index:-1; transform:skewX(-20deg); pointer-events:none;
+        background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent); animation:rgluce 4.2s ease-in-out infinite;}
+  @keyframes rgluce{0%,60%{left:-40%;} 100%{left:130%;}}
   .rg-btn:active{transform:scale(.985);}
-  .rg-ico{flex-shrink:0; width:46px; height:46px; display:grid; place-items:center; border-radius:15px; background:rgba(27,20,5,.88); color:#f7d98b; box-shadow:inset 0 1px 0 rgba(255,255,255,.2);}
-  .rg-ico svg{width:26px; height:26px;}
-  .rg-testo{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
-  .rg-testo b{font-size:22px; font-weight:800; letter-spacing:.02em; line-height:1.05;}
-  .rg-testo small{font:600 12.5px/1.3 "Space Grotesk",sans-serif; color:rgba(27,20,5,.78);}
-  .rg-freccia{font-size:30px; line-height:1; font-weight:300; color:rgba(27,20,5,.75);}
+  .rg-ico{flex-shrink:0; width:40px; height:40px; display:grid; place-items:center; border-radius:50%; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.32);
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.35); color:#fff;}
+  .rg-ico svg{width:22px; height:22px;}
+  .rg-testo{flex:1; min-width:0; font-size:22px; font-weight:700; letter-spacing:.02em; line-height:1.1; text-shadow:0 1px 8px rgba(0,0,0,.35);}
+  .rg-freccia{font-size:28px; line-height:1; font-weight:300; color:rgba(255,255,255,.8);}
   @media (prefers-reduced-motion:reduce){.rg-btn::after{animation:none; display:none;}}
 </style>
 </head>
@@ -2829,9 +2832,8 @@ function renderRagiona(g){
   if(!box || chiave === ragionaChiave) return;
   ragionaChiave = chiave;
   box.innerHTML = '<button class="rg-btn" id="rg-apri" type="button"><span class="rg-ico" aria-hidden="true">'+
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v10H12l-4.5 4v-4H4z"/><path d="M9 10.5h6M12 8v5"/></svg></span>'+
-    '<span class="rg-testo"><b class="cond">Ragiona con Claude</b><small id="rg-sotto">Porta i numeri di Jarvis in chat</small></span>'+
-    '<span class="rg-freccia" aria-hidden="true">›</span></button>';
+    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6-5.6-1.9 5.6-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg></span>'+
+    '<b class="rg-testo cond" id="rg-sotto">Ragiona con Claude</b><span class="rg-freccia" aria-hidden="true">›</span></button>';
   document.getElementById('rg-apri').addEventListener('click', () => {
     const testo = dossierDi(g, '');
     let copiato = false;
@@ -2842,8 +2844,9 @@ function renderRagiona(g){
     }catch(e){}
     const sotto = document.getElementById('rg-sotto');
     if(!copiato && navigator.clipboard && navigator.clipboard.writeText)
-      navigator.clipboard.writeText(testo).then(()=>{ sotto.textContent = 'Copiato: incolla e manda gli screen di Leghe'; }, ()=>{ sotto.textContent = 'Non riesco a copiare i numeri'; });
-    else sotto.textContent = copiato ? 'Copiato: incolla e manda gli screen di Leghe' : 'Non riesco a copiare i numeri';
+      navigator.clipboard.writeText(testo).then(()=>{ sotto.textContent = 'Copiato · incolla in chat'; }, ()=>{ sotto.textContent = 'Copia non riuscita'; });
+    else sotto.textContent = copiato ? 'Copiato · incolla in chat' : 'Non riesco a copiare i numeri';
+    setTimeout(() => { sotto.textContent = 'Ragiona con Claude'; }, 4000);
     window.open('https://claude.ai/code', '_blank');
   });
 }
