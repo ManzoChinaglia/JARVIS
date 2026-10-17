@@ -4,10 +4,10 @@
 <!-- pannello «Punti aperti»: max 3 punti, una riga ciascuno; si aggiorna a fine sessione -->
 Stato: in corso
 1. Dopo la G7 (da lunedì 19/10 18:45): «dati di lega» e «formazione schierata» per entrambe le leghe (`--lega qi`)
-2. Cervello calcistico: restano i passi 5-6 (news: misura rifare con più giornate; PESI a fine novembre)
+2. Cervello calcistico: restano i passi 5-6 (news: misura rifare con più giornate; PESI a fine novembre) Ipotesi da misurare al backtest (17/10): prima delle probabili, il posto di un titolare indisponibile va ai compagni di reparto (oggi il tetto dei ballottaggi solo abbassa).
 3. «Ragiona con Jarvis» FATTO (17/10): un solo bottone in Giornata sotto la sfida, copia il fascicolo (`dossierDi`) e apre claude.ai/code; in chat l'utente manda gli screen di Leghe e ragiona con la skill `dubbio` (nel repo, valida anche nel cloud). Prove 344/344. NON verificato sull'iPhone: se dalla schermata Home il link apre l'app Claude, e la copia negli appunti
 
-Altri punti aperti: grafica wow e sfida in tempo reale pushate (`657ecee`), resta la prova sul telefono; sfida in tempo reale: non provato che Leghe mostri l'avversario PRIMA della scadenza (verificare alla prossima; nessun automatismo, lo legge Claude quando l'utente scrive «formazione schierata»); una squadra della QI senza stemma.
+Altri punti aperti: grafica wow e sfida in tempo reale pushate (`657ecee`), resta la prova sul telefono; sfida in tempo reale: non provato che Leghe mostri l'avversario PRIMA della scadenza (verificare alla prossima; nessun automatismo, lo legge Claude quando l'utente scrive «formazione schierata»); una squadra della QI senza stemma; 15 nomi delle probabili non abbinati (probabilmente mancano dal listone: nuovi acquisti), da guardare a parte. Romero D. del Parma ora abbinato con alias (fonte «ROMERO J»), dal 17/10.
 
 (al 17/10/2026 sera — campo ridisegnato con avversario, consiglio ridotto al solo banner del modificatore (non cliccabile; vista e `apriConsiglio` tolti), mercato tolto, stemmi delle altre squadre come data URI in `dati/lega.json` → `stemmi` (cifrato; `importa_lega.py` li conserva), podio in Lega; prove 339/339)
 

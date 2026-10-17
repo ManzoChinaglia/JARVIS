@@ -111,7 +111,19 @@ def trova(listone, squadra, nome):
         scelto = esatto or ripiego
         if scelto:
             return scelto
-    return trova_composto(listone, squadra, nome)
+    p = trova_composto(listone, squadra, nome)
+    if p:
+        return p
+    alias = ALIAS.get((norm(squadra), norm(nome)))
+    return next((p for p in listone if p['id'] == alias), None) if alias else None
+
+
+# Stesso giocatore scritto con un'iniziale diversa dalla fonte delle probabili e dal listone: la regola
+# generale resta «iniziale diversa = nessun abbinamento» (un nuovo acquisto non deve finire su un vecchio).
+# Solo casi verificati, uno per uno:
+# - 17/10/2026: "ROMERO J" del Parma = Romero D. (7554). Voto in G2-G6 (10 in G4 e G5) mentre il Parma
+#   risultava con 10 titolari in G5-G7: il titolare spariva dalle probabili.
+ALIAS = {('parma', 'romero j'): 7554}
 
 
 def iniziale(parole):

@@ -39,9 +39,11 @@ for squadra, nome, atteso in [('Roma', 'SVILAR M', 5841), ('Parma', 'DEL PRATO E
                               ('Milan', 'DA SILVA MOREIRA D', 6372)]:
     p = mod.trova(listone, squadra, nome)
     verifica(f'{squadra} {nome}', p is not None and p['id'] == atteso, p and f"{p['nome']} ({p['id']})")
-for squadra, nome in [('Parma', 'ROMERO J'), ('Venezia', 'FERNANDEZ A')]:
+for squadra, nome in [('Venezia', 'FERNANDEZ A'), ('Napoli', 'ROMERO J')]:
     p = mod.trova(listone, squadra, nome)
     verifica(f'{squadra} {nome}: iniziale diversa, nessun abbinamento', p is None, p and p['nome'])
+p = mod.trova(listone, 'Parma', 'ROMERO J')
+verifica('Parma ROMERO J: alias verificato su Romero D. (17/10/2026)', p is not None and p['id'] == 7554, p and p['nome'])
 
 print('\n2. Nome letto dalla pagina')
 for html, atteso in [('<span class="prb-nome">\n  FALCONE\n  <small>W</small>\n</span>', 'FALCONE W'),
