@@ -1278,7 +1278,7 @@
 
   /* --- «Ragiona con Claude» (17/10): un solo bottone, nei colori della squadra della lega --- */
   #ragiona{margin:18px 0 6px;}
-  .rg-btn{position:relative; overflow:hidden; isolation:isolate; display:flex; align-items:center; gap:14px; width:100%; padding:14px 16px; border-radius:22px; cursor:pointer; text-align:left;
+  .rg-btn{position:relative; overflow:hidden; isolation:isolate; display:flex; align-items:center; gap:14px; width:100%; padding:16px 18px; border-radius:26px; cursor:pointer; text-align:left;
         color:#fff; -webkit-tap-highlight-color:transparent;
         background:linear-gradient(115deg,color-mix(in srgb,var(--tema-a) 62%,#0b0d0c),color-mix(in srgb,var(--tema-b) 62%,#0b0d0c));
         border:1px solid color-mix(in srgb,var(--tema-a) 45%,rgba(255,255,255,.35));
@@ -1289,12 +1289,13 @@
         background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent); animation:rgluce 4.2s ease-in-out infinite;}
   @keyframes rgluce{0%,60%{left:-40%;} 100%{left:130%;}}
   .rg-btn:active{transform:scale(.985);}
-  .rg-ico{flex-shrink:0; width:40px; height:40px; display:grid; place-items:center; border-radius:50%; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.32);
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.35); color:#fff;}
-  .rg-ico svg{width:22px; height:22px;}
-  .rg-testo{flex:1; min-width:0; font-size:22px; font-weight:700; letter-spacing:.02em; line-height:1.1; text-shadow:0 1px 8px rgba(0,0,0,.35);}
+  .rg-ico{flex-shrink:0; position:relative; width:54px; height:54px; margin:-4px 0 -4px -2px; border-radius:50%; overflow:hidden; background:#0b0d0c center/cover;
+        border:2px solid #f0c75e; box-shadow:0 0 0 3px rgba(240,199,94,.22),0 0 18px rgba(240,199,94,.55),0 4px 10px rgba(0,0,0,.5); animation:rgpulsa 2.8s ease-in-out infinite;}
+  .rg-ico img{width:100%; height:100%; object-fit:cover; display:block;}
+  @keyframes rgpulsa{0%,100%{box-shadow:0 0 0 3px rgba(240,199,94,.18),0 0 14px rgba(240,199,94,.4),0 4px 10px rgba(0,0,0,.5);} 50%{box-shadow:0 0 0 5px rgba(240,199,94,.3),0 0 26px rgba(240,199,94,.8),0 4px 10px rgba(0,0,0,.5);}}
+  .rg-testo{flex:1; min-width:0; font-size:24px; font-weight:800; letter-spacing:.03em; line-height:1.1; text-shadow:0 1px 8px rgba(0,0,0,.35);}
   .rg-freccia{font-size:28px; line-height:1; font-weight:300; color:rgba(255,255,255,.8);}
-  @media (prefers-reduced-motion:reduce){.rg-btn::after{animation:none; display:none;}}
+  @media (prefers-reduced-motion:reduce){.rg-btn::after{animation:none; display:none;} .rg-ico{animation:none;}}
 </style>
 </head>
 <body class="carica">
@@ -2832,8 +2833,8 @@ function renderRagiona(g){
   if(!box || chiave === ragionaChiave) return;
   ragionaChiave = chiave;
   box.innerHTML = '<button class="rg-btn" id="rg-apri" type="button"><span class="rg-ico" aria-hidden="true">'+
-    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6-5.6-1.9 5.6-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg></span>'+
-    '<b class="rg-testo cond" id="rg-sotto">Ragiona con Claude</b><span class="rg-freccia" aria-hidden="true">›</span></button>';
+    '<img src="img/icona-180.png" alt=""></span>'+
+    '<b class="rg-testo cond" id="rg-sotto">Ragiona con Jarvis</b><span class="rg-freccia" aria-hidden="true">›</span></button>';
   document.getElementById('rg-apri').addEventListener('click', () => {
     const testo = dossierDi(g, '');
     let copiato = false;
@@ -2846,7 +2847,7 @@ function renderRagiona(g){
     if(!copiato && navigator.clipboard && navigator.clipboard.writeText)
       navigator.clipboard.writeText(testo).then(()=>{ sotto.textContent = 'Copiato · incolla in chat'; }, ()=>{ sotto.textContent = 'Copia non riuscita'; });
     else sotto.textContent = copiato ? 'Copiato · incolla in chat' : 'Non riesco a copiare i numeri';
-    setTimeout(() => { sotto.textContent = 'Ragiona con Claude'; }, 4000);
+    setTimeout(() => { sotto.textContent = 'Ragiona con Jarvis'; }, 4000);
     window.open('https://claude.ai/code', '_blank');
   });
 }
