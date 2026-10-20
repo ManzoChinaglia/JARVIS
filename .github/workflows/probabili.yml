@@ -4,6 +4,9 @@ name: Probabili Jarvis
 # se non si è nella finestra della giornata (da 36 ore prima del primo calcio d'inizio fino a
 # un'ora dopo; vale anche per i turni infrasettimanali). Salva e avvisa solo se le probabili
 # sono cambiate. Il giro completo (aggiorna.yml) resta com'è.
+# Dal 20/10/2026 cerca anche i voti delle giornate finite (da 6 ore a 3 giorni dopo l'ultimo
+# calcio d'inizio) che non ci sono ancora: i giri completi a orario fisso GitHub li ritarda
+# anche di ore, e «Com'è andata» e Stagione restavano senza la giornata.
 on:
   schedule:
     # minuti dispari: GitHub ritarda spesso i giri a :00 e :30
@@ -37,18 +40,23 @@ jobs:
       - name: Scarica le probabili
         run: python scripts/aggiorna.py --solo-titolari
 
+      - name: Scarica i voti che mancano
+        if: always()
+        run: python scripts/aggiorna.py --solo-voti
+
       - name: Sono cambiate?
         id: cambiate
+        if: always()
         run: |
-          if [ -n "$(git status --porcelain dati/titolari.json)" ]; then
+          if [ -n "$(git status --porcelain dati/titolari.json dati/voti.json)" ]; then
             echo "si=true" >> "$GITHUB_OUTPUT"
           else
             echo "si=false" >> "$GITHUB_OUTPUT"
-            echo "Probabili invariate: niente da salvare."
+            echo "Probabili e voti invariati: niente da salvare."
           fi
 
       # gli avvisi si calcolano sui dati della lega, che stanno nel lucchetto: si apre solo
-      # quando le probabili sono cambiate
+      # quando probabili o voti sono cambiati
       - uses: actions/setup-node@v5
         if: steps.cambiate.outputs.si == 'true'
         with:
@@ -82,7 +90,7 @@ jobs:
           git config user.name  "Jarvis"
           git config user.email "jarvis@users.noreply.github.com"
           git add dati/
-          git commit -m "Probabili $(date -u +'%Y-%m-%d %H:%M')"
+          git commit -m "Probabili e voti $(date -u +'%Y-%m-%d %H:%M')"
           git pull --rebase && git push || { sleep 5; git pull --rebase && git push; } || {
             git rebase --abort || true
             git reset --hard origin/main

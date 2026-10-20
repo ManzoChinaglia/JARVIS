@@ -755,9 +755,54 @@ def solo_titolari():
         return guasto(e)
 
 
+def voti_mancanti(giornate_orari, vecchie, ora=None):
+    """Le giornate di Serie A finite da almeno 6 ore (la stessa soglia di voti()) e da meno di
+    3 giorni i cui voti non ci sono ancora. Le cerca il giro leggero ogni 30 minuti: il giro
+    completo ha tre orari fissi, che GitHub ritarda anche di ore (20/10/2026: i voti della G7
+    arrivati solo con un giro lanciato a mano)."""
+    ora = ora or datetime.now(timezone.utc)
+    mancanti = []
+    for n, g in sorted(giornate_orari.items(), key=lambda x: int(x[0])):
+        if not g.get('ufficiale') or 'fine' not in g or n in vecchie:
+            continue
+        passato = ora - datetime.fromisoformat(g['fine'])
+        if timedelta(hours=6) <= passato <= timedelta(days=3):
+            mancanti.append(n)
+    return mancanti
+
+
+def solo_voti():
+    """Scarica i voti delle giornate in voti_mancanti() e basta; il file si riscrive solo se ne
+    arriva almeno una (< 200 voti: la pagina non e' pronta, si riprova al giro dopo). Le giornate
+    gia' salvate le riscarica il giro completo, per tre giorni."""
+    percorso = os.path.join(DATI, 'voti.json')
+    vecchie = precedenti(percorso, 'giornate')
+    mancanti = voti_mancanti(precedenti(os.path.join(DATI, 'orari.json'), 'giornate'), vecchie)
+    if not mancanti:
+        print('[voti] nessuna giornata finita senza voti: niente da fare.')
+        return 0
+    try:
+        giornate = dict(vecchie)
+        for n in mancanti:
+            v = voti_giornata(int(n))
+            if len(v) >= 200:
+                giornate[n] = v
+            else:
+                print(f'[voti] giornata {n}: solo {len(v)} voti, riprovo al prossimo giro.')
+        if giornate != vecchie:
+            scrivi(percorso, {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+                              'giornate': giornate}, 1, 'voti')
+        return 0
+    except Exception as e:
+        print('[voti] fallito:', e)
+        return guasto(e)
+
+
 def main():
     if '--solo-titolari' in sys.argv:
         sys.exit(solo_titolari())
+    if '--solo-voti' in sys.argv:
+        sys.exit(solo_voti())
     uscita = 0
     # prima di tutto: i giocatori arrivati dopo l'asta (mercato, esordienti) entrano nel listone,
     # altrimenti le probabili e gli infortuni non li riconoscono

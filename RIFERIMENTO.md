@@ -54,7 +54,8 @@ Codice e dati separati di proposito: non reincorporare i dati nell'HTML.
   `iniziali` (quotazione iniziale, per il modello).
 - **Voti** (`/voti-fantacalcio-serie-a/2026-27/N`): ogni giornata finita da ≥ 6 ore, voto
   e fantavoto della redazione Fantacalcio; riscaricata per tre giorni; < 200 voti non si
-  salva. `righe_voti()` legge anche l'Id dai link delle stagioni passate (`ID_GIOCATORE`).
+  salva. Dal 20/10/2026 anche nel giro leggero `probabili.yml` (`--solo-voti`, ogni 30
+  minuti: solo le giornate finite da 6 ore a 3 giorni senza voti). `righe_voti()` legge anche l'Id dai link delle stagioni passate (`ID_GIOCATORE`).
 - **Probabili** da fantacalcio-online (`/it/serie-a/2026-2027/probabili-formazioni/N-giornata`):
   percentuale media di quattro redazioni, e gli **indisponibili della giornata**; usate
   **solo se la giornata coincide** con quella mostrata. La pagina `consigli-fantacalcio/...`

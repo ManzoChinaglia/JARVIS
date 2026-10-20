@@ -435,6 +435,11 @@ verifica('giornata finita: si passa alla successiva, ancora lontana', mod.giorna
 verifica('vigilia della successiva: aperta', mod.giornata_in_finestra(GF, alle('2026-10-15T12:00:00+00:00')) == 7)
 verifica('turno infrasettimanale: finestra della giornata 8', mod.giornata_in_finestra(GF, alle('2026-10-20T12:00:00+00:00')) == 8)
 verifica('senza orari ufficiali: nessuna finestra', mod.giornata_in_finestra({'9': {'ufficiale': False}}, alle('2026-10-15T12:00:00+00:00')) is None)
+verifica('voti mancanti: giornata finita da 6 ore senza voti', mod.voti_mancanti(GF, {'6': {}}, alle('2026-10-20T00:45:00+00:00')) == ['7'])
+verifica('voti mancanti: meno di 6 ore dopo, ancora no', mod.voti_mancanti(GF, {'6': {}}, alle('2026-10-20T00:30:00+00:00')) == [])
+verifica('voti mancanti: gia\' salvati, niente', mod.voti_mancanti(GF, {'6': {}, '7': {}}, alle('2026-10-20T12:00:00+00:00')) == [])
+verifica('voti mancanti: oltre 3 giorni non si inseguono (resta il giro completo)', mod.voti_mancanti(GF, {}, alle('2026-10-20T12:00:00+00:00')) == ['7'])
+verifica('voti mancanti: senza orario ufficiale, niente', mod.voti_mancanti({'9': {'ufficiale': False, 'fine': '2026-10-01T18:45:00+00:00'}}, {}, alle('2026-10-02T12:00:00+00:00')) == [])
 verifica("l'ora di aggiornamento da sola non e' un cambiamento",
          mod.senza_ora({'aggiornato': 'a', 'x': 1}) == mod.senza_ora({'aggiornato': 'b', 'x': 1}) != mod.senza_ora({'aggiornato': 'a', 'x': 2}))
 
