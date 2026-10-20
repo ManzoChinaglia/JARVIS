@@ -6,7 +6,10 @@ Fantacalcio, dopo uno scambio o durante il mercato. Accetta:
   squadra (nome, «costo»), 25 giocatori in ordine P, D, C, A, riga «totale»
 - rose.csv, con l'Id del listone per ogni giocatore
 
-Uso: python scripts/importa_rose.py [percorso] [--prova] [--nomi-app]
+- il file del sito, «Rose_<lega>.xlsx» (pagina Rose → XLSX, dal 20/10/2026): per ogni
+  squadra il nome e sotto «Ruolo | Calciatore | Squadra | Costo»
+
+Uso: python scripts/importa_rose.py [--lega <id>] [percorso] [--prova] [--nomi-app]
 Senza percorso prende il file delle rose più recente nella cartella Download.
 Con --prova mostra cosa cambierebbe, senza scrivere niente.
 Con --nomi-app adotta in tutto base.json i nomi di squadra del file dell'app.
@@ -51,8 +54,9 @@ def testo_json(dati):
 
 
 def trova_file(cartella):
-    """Il file delle rose più recente: quello dell'app (…rosters….xlsx) o rose*.csv."""
-    file = glob.glob(os.path.join(cartella, '*rosters*.xlsx')) + glob.glob(os.path.join(cartella, 'rose*.csv'))
+    """Il file delle rose più recente: quello dell'app (…rosters….xlsx), del sito (Rose_….xlsx) o rose*.csv."""
+    file = (glob.glob(os.path.join(cartella, '*rosters*.xlsx')) + glob.glob(os.path.join(cartella, 'Rose_*.xlsx'))
+            + glob.glob(os.path.join(cartella, 'rose*.csv')))
     if not file:
         raise FileNotFoundError(f'nessun file delle rose (…rosters….xlsx o rose*.csv) in {cartella}')
     return max(file, key=os.path.getmtime)
@@ -77,7 +81,29 @@ def leggi_rosters(percorso):
                 giocatori.append((str(nome).strip(), int(r[c + 1] or 0)))
             blocchi.append((str(testa[c]).strip(), giocatori))
     if not blocchi:
+        blocchi = blocchi_sito(righe)
+    if not blocchi:
         raise ValueError('nessun blocco «squadra / costo»: il file ha cambiato struttura')
+    return blocchi
+
+
+def blocchi_sito(righe):
+    """Blocchi del file «Rose_<lega>.xlsx» del sito (dal 20/10/2026): nome della squadra,
+    sotto «Ruolo | Calciatore | Squadra | Costo» e i giocatori; più squadre affiancate e
+    una sotto l'altra. L'asterisco (giocatore non più in campionato) si toglie dal nome."""
+    def cella(r, c):
+        return str(righe[r][c]).strip() if c < len(righe[r]) and righe[r][c] is not None else ''
+    blocchi = []
+    for r in range(1, len(righe)):
+        for c in range(len(righe[r]) - 3):
+            if [cella(r, c + k).lower() for k in range(4)] != ['ruolo', 'calciatore', 'squadra', 'costo']:
+                continue
+            giocatori, s = [], r + 1
+            while s < len(righe) and cella(s, c + 1) and cella(s, c).lower() != 'ruolo':
+                giocatori.append((cella(s, c + 1).rstrip('*').strip(), int(float(cella(s, c + 3) or 0))))
+                s += 1
+            if giocatori:                 # un partecipante senza rosa (solo «Crediti Residui») non è una squadra
+                blocchi.append((cella(r - 1, c), giocatori))
     return blocchi
 
 
@@ -231,11 +257,17 @@ def archivia(percorso):
 
 
 def main():
+    global ARCHIVIO
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import lega_cfg
+    sotto = lega_cfg.lega(lega_cfg.id_da_argomenti())['cartella'].strip('/')   # '' per la prima lega, 'qi' per la seconda
+    if sotto:
+        ARCHIVIO = os.path.join(RADICE, 'archivio', sotto, 'rose')
     argomenti = [a for a in sys.argv[1:] if not a.startswith('--')]
     prova = '--prova' in sys.argv
     percorso = argomenti[0] if argomenti else trova_file(DOWNLOAD)
     print(f'file: {percorso}')
-    base, listone = leggi_json('base.json'), leggi_json('listone.json')
+    base, listone = leggi_json(os.path.join(sotto, 'base.json')), leggi_json('listone.json')
     try:
         stat = leggi_json('statistiche.json').get('giocatori')
     except (OSError, ValueError):
@@ -273,7 +305,7 @@ def main():
         print('prova: nessun file scritto.')
         return
 
-    with open(os.path.join(DATI, 'base.json'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(DATI, sotto, 'base.json'), 'w', encoding='utf-8') as f:
         f.write(testo_json(nuovo))
     if aggiunti:
         with open(os.path.join(DATI, 'listone.json'), 'w', encoding='utf-8') as f:

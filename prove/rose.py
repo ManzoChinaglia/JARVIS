@@ -137,7 +137,34 @@ with tempfile.TemporaryDirectory() as d:
     except ValueError as e:
         verifica('nome sconosciuto: si ferma', 'non è nel listone' in str(e), str(e).splitlines()[0])
 
-vero = mod.trova_file(mod.DOWNLOAD) if os.path.isdir(mod.DOWNLOAD) and (
+print('\n4b. File delle rose del sito (Rose_….xlsx, dal 20/10/2026)')
+def file_sito(p_list, ordine, cartella):
+    """Come il file del sito: intestazione, poi due squadre affiancate per fascia (nome, «Ruolo |
+    Calciatore | Squadra | Costo», 25 righe), asterisco su un giocatore, un partecipante senza rosa."""
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(['Rose lega']); ws.append(['https://leghe.fantacalcio.it/lega']); ws.append(['* Calciatori non più in campionato']); ws.append([])
+    for k in range(0, len(ordine), 2):
+        coppia = ordine[k:k + 2]
+        rose = [sorted((p for p in p_list if p[4] == s), key=lambda p: 'PDCA'.index(p[3])) for s in coppia]
+        ws.append(sum(([s, None, None, None, None] for s in coppia), []))
+        ws.append(sum((['Ruolo', 'Calciatore', 'Squadra', 'Costo', None] for _ in coppia), []))
+        for r in range(25):
+            ws.append(sum(([p[3], p[1] + ('*' if p[1] == 'Dimarco' else ''), 'Xxx', str(p[5]), None]
+                           for p in (rosa[r] for rosa in rose)), []))
+    ws.append([]); ws.append(['vuota']); ws.append(['Ruolo', 'Calciatore', 'Squadra', 'Costo']); ws.append(['Crediti Residui: 500'])
+    percorso = os.path.join(cartella, 'Rose_lega.xlsx')
+    wb.save(percorso)
+    return percorso
+with tempfile.TemporaryDirectory() as d:
+    blocchi = mod.leggi_rosters(file_sito(base['p'], squadre, d))
+    verifica('10 blocchi da 25, partecipante senza rosa escluso', len(blocchi) == 10 and all(len(g) == 25 for _, g in blocchi),
+             [(len(g)) for _, g in blocchi])
+    nuovo, _, aggiunti = mod.importa(mod.righe_da_blocchi(blocchi, base, listone)[0], base, listone)
+    verifica('stesse rose di base.json, asterisco tolto dal nome', nuovo['p'] == base['p'] and not aggiunti)
+    verifica('trova_file prende anche Rose_….xlsx', os.path.basename(mod.trova_file(d)) == 'Rose_lega.xlsx')
+
+vero =mod.trova_file(mod.DOWNLOAD) if os.path.isdir(mod.DOWNLOAD) and (
     [x for x in os.listdir(mod.DOWNLOAD) if 'rosters' in x or x.startswith('rose')]) else None
 if vero:
     print(f'\n5. Il file delle rose vero più recente: {os.path.basename(vero)}')

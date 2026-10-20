@@ -20,7 +20,8 @@ Spostate da `CLAUDE.md` il 23/09/2026 (testo invariato). Si leggono quando l'ute
   ruoli coerenti, nessun doppione. Serve `openpyxl`, solo sul PC.
 - **Routine «dati di lega»** (l'utente scrive «dati di lega» o «rose aggiornate»): dal
   **Chrome dell'utente** (Claude in Chrome), già collegato a Leghe:
-  - rose: `/rivoluzione-fantacalcio/view/rosters/<id>` → «Esporta XLSX»
+  - rose: `/<slug>/rose` → «XLSX» (dal 20/10/2026 file `Rose_<slug>.xlsx`, formato del sito; letto da
+    `importa_rose.py [--lega qi]`, che salta il partecipante senza rosa della QI)
   - calendario: `/rivoluzione-fantacalcio/calendario` → «SCARICA ORA»
   - classifica: `/rivoluzione-fantacalcio/classifica` → «SCARICA ORA»
 
@@ -30,6 +31,13 @@ Spostate da `CLAUDE.md` il 23/09/2026 (testo invariato). Si leggono quando l'ute
   giornate già salvate non si perdono), file in `archivio/lega` con la data, `chiudi`.
   Il calendario può chiamare le squadre in modo diverso: `mappa_nomi_calendario` le
   ricava dalla posizione; il risultato si accetta solo scritto «N-N».
+  **QI (`fantalega-qi`)**: «SCARICA ORA» di classifica e calendario non scarica nulla (la competizione
+  si chiama «QI VINCE?»), e `leggi_calendario` vuole 34 giornate (la QI ne ha 33). Il 20/10 si è letto il
+  testo delle due pagine (`get_page_text`) e lo si è passato a `classifica()` e `risultati_da_calendario()`
+  di `importa_lega.py` (stessi controlli), testi conservati in `archivio/qi/` con la data.
+  Giornata di lega ≠ giornata di Serie A: BF parte dalla 5ª, QI dalla 6ª (G7 = BF 3, QI 2).
+  Pagina della partita QI: `/fantalega-qi/view/competition/886465/round/<giornata di lega>` (aspettare
+  qualche secondo prima di leggere il testo).
 - **Formazione schierata** (l'utente scrive «formazione schierata» o «giornata N
   schierata»): niente file da esportare, il dato sta solo nella pagina. Dal **Chrome
   dell'utente**, già collegato: `.../rivoluzione-fantacalcio/view/competition/748699/
