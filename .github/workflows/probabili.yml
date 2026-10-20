@@ -56,14 +56,14 @@ jobs:
           fi
 
       # gli avvisi si calcolano sui dati della lega, che stanno nel lucchetto: si apre solo
-      # quando probabili o voti sono cambiati
+      # quando probabili o voti sono cambiati, anche se le probabili sono fallite (i voti si salvano)
       - uses: actions/setup-node@v5
-        if: steps.cambiate.outputs.si == 'true'
+        if: steps.cambiate.outputs.si == 'true' && always()
         with:
           node-version: '22'
 
       - name: Apri il lucchetto
-        if: steps.cambiate.outputs.si == 'true'
+        if: steps.cambiate.outputs.si == 'true' && always()
         env:
           JARVIS_CHIAVE: ${{ secrets.JARVIS_CHIAVE }}
         run: node scripts/lucchetto.js apri
