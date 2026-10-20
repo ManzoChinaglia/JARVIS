@@ -12,6 +12,14 @@ e cerca il calendario più recente nella stessa cartella. Con --prova mostra que
 che leggerebbe, senza scrivere niente. Dopo l'importazione i due file passano da
 Download a archivio/lega con la data nel nome (fuori da Git): non si cancella niente.
 
+Dal testo delle pagine (QI, dove «Scarica ora» non scarica; 20/10/2026):
+  python scripts/importa_lega.py --lega qi <classifica.txt> <calendario.txt> [--prova]
+I due file sono il testo di Classifica e Calendario copiato da Claude (get_page_text):
+classifica una riga per squadra «pos nome g v n p gf gs dr pt fantapunti»; calendario
+«N° GIORNATA (…)» e per ogni partita 6 righe: casa, gol, fantapunti, fuori, gol,
+fantapunti (solo le giornate giocate). Stessi controlli dei file; i due testi si
+copiano in archivio/<lega> con la data.
+
 dati/lega.json: {"aggiornato": "...", "colonne": [...], "classifica": [[posizione,
 squadra, partite, vinte, pari, perse, gol fatti, gol subiti, differenza, punti,
 fantapunti], ...], "risultati": {"<giornata>": [[casa, fantapunti, fuori,
@@ -119,7 +127,7 @@ def classifica(tabella, base):
     return sorted(righe, key=lambda r: r[0]), diversi
 
 
-def leggi_calendario(percorso):
+def leggi_calendario(percorso, n=34):
     """Le partite di ogni giornata di lega dal file «Calendario»: due colonne di
     blocchi affiancati (giornate dispari a sinistra, pari a destra), ciascuno con
     un'intestazione «Nª Giornata lega» seguita da 5 righe [casa, fantapunti casa,
@@ -149,8 +157,48 @@ def leggi_calendario(percorso):
                 partite.append((str(casa).strip(), pc, pf, str(fuori).strip(),
                                  '-' if ris is None or str(ris).strip() == '' else str(ris).strip()))
             giornate[gio] = partite
-    if sorted(giornate) != list(range(1, 35)):
-        raise ValueError(f'{len(giornate)} giornate lette invece di 34: il file ha cambiato struttura')
+    if sorted(giornate) != list(range(1, n + 1)):
+        raise ValueError(f'{len(giornate)} giornate lette invece di {n}: il file ha cambiato struttura')
+    return giornate
+
+
+RE_RIGA_CLASSIFICA = re.compile(r'^(\d+) (.+?) (\d+) (\d+) (\d+) (\d+) (\d+) (\d+) (-?\d+) (\d+) (\d+(?:\.\d+)?)$')
+RE_GIORNATA_TESTO = re.compile(r'^(\d+)° GIORNATA\b')
+
+
+def leggi_testo_classifica(percorso):
+    """Le righe della tabella dal testo della pagina Classifica, nella forma di
+    leggi_classifica (la colonna vuota dopo il nome compresa). Le righe che non sono
+    della tabella (menu, piè di pagina) si saltano; servono tutte e 10 le squadre."""
+    with open(percorso, encoding='utf-8') as f:
+        righe = [RE_RIGA_CLASSIFICA.match(r.strip()) for r in f]
+    tabella = [[int(m[1]), m[2], '', *(int(m[k]) for k in range(3, 11)), numero(m[11])] for m in righe if m]
+    if not tabella:
+        raise ValueError('nessuna riga della classifica nel testo: la pagina ha cambiato struttura')
+    return tabella
+
+
+def leggi_testo_calendario(percorso):
+    """Le giornate giocate dal testo della pagina Calendario, nella forma di
+    leggi_calendario: {giornata: [(casa, fp_casa, fp_fuori, fuori, 'gol-gol'), ...]}.
+    Ogni giornata: intestazione «N° GIORNATA (…)», poi 5 partite da 6 righe."""
+    with open(percorso, encoding='utf-8') as f:
+        righe = [r.strip() for r in f if r.strip()]
+    inizi = [(k, int(m[1])) for k, r in enumerate(righe) if (m := RE_GIORNATA_TESTO.match(r))]
+    if not inizi:
+        raise ValueError('nessuna «N° GIORNATA» nel testo: la pagina ha cambiato struttura')
+    giornate = {}
+    for k, gio in inizi:
+        blocco = righe[k + 1:k + 31]
+        if len(blocco) < 30 or any(RE_GIORNATA_TESTO.match(r) for r in blocco):
+            raise ValueError(f'giornata {gio}: meno di 5 partite nel testo')
+        partite = []
+        for p in range(5):
+            casa, gc, fc, fuori, gf, ff = blocco[p * 6:p * 6 + 6]
+            if not (gc.isdigit() and gf.isdigit()):
+                raise ValueError(f'giornata {gio}, {casa}-{fuori}: gol «{gc}», «{gf}» non riconosciuti')
+            partite.append((casa, fc, ff, fuori, f'{gc}-{gf}'))
+        giornate[gio] = partite
     return giornate
 
 
@@ -225,10 +273,11 @@ def risultati_da_calendario(giornate, base):
     return risultati, sorted(mappa.items())
 
 
-def archivia(percorso, oggi=None):
+def archivia(percorso, oggi=None, copia=False):
     """Sposta il file dalla cartella Download all'archivio, con la data nel nome.
-    Solo i file che stanno in Download; se il nome c'è già aggiunge un numero."""
-    if os.path.dirname(os.path.abspath(percorso)) != os.path.abspath(DOWNLOAD):
+    Solo i file che stanno in Download; se il nome c'è già aggiunge un numero.
+    Con copia=True (i testi delle pagine, da qualunque cartella) lo copia soltanto."""
+    if not copia and os.path.dirname(os.path.abspath(percorso)) != os.path.abspath(DOWNLOAD):
         return None
     os.makedirs(ARCHIVIO, exist_ok=True)
     nome, est = os.path.splitext(os.path.basename(percorso))
@@ -236,7 +285,7 @@ def archivia(percorso, oggi=None):
     destinazione, k = os.path.join(ARCHIVIO, nome + est), 1
     while os.path.exists(destinazione):
         destinazione, k = os.path.join(ARCHIVIO, f'{nome}-{k}{est}'), k + 1
-    shutil.move(percorso, destinazione)
+    (shutil.copy2 if copia else shutil.move)(percorso, destinazione)
     return destinazione
 
 
@@ -252,8 +301,9 @@ def main():
     print(f'file: {percorso}')
     with open(os.path.join(DATI, sotto, 'base.json'), encoding='utf-8') as f:
         base = json.load(f)
+    testo = percorso.lower().endswith('.txt')   # testo delle pagine (QI) invece dei file
     try:
-        righe, diversi = classifica(leggi_classifica(percorso), base)
+        righe, diversi = classifica((leggi_testo_classifica if testo else leggi_classifica)(percorso), base)
     except ValueError as e:
         print('Classifica NON aggiornata, il file non è plausibile:\n' + str(e))
         sys.exit(1)
@@ -265,15 +315,21 @@ def main():
     # il calendario, scaricato insieme alla classifica, nella stessa cartella: le
     # giornate già giocate diventano dati/lega.json → risultati. Un problema qui
     # non blocca la classifica.
-    trovati = glob.glob(os.path.join(os.path.dirname(os.path.abspath(percorso)), 'Calendario_*.xlsx'))
-    calendario = max(trovati, key=os.path.getmtime) if trovati else None
+    # Col testo il calendario è il secondo argomento e ha solo le giornate giocate.
+    if testo:
+        calendario = argomenti[1] if len(argomenti) > 1 else None
+    else:
+        trovati = glob.glob(os.path.join(os.path.dirname(os.path.abspath(percorso)), 'Calendario_*.xlsx'))
+        calendario = max(trovati, key=os.path.getmtime) if trovati else None
     risultati_nuovi = {}
     if not calendario:
-        print('nessun file Calendario_*.xlsx accanto alla classifica: risultati non aggiornati.')
+        print('nessun calendario (file Calendario_*.xlsx accanto alla classifica, o secondo testo): '
+              'risultati non aggiornati.')
     else:
         print(f'calendario: {calendario}')
         try:
-            risultati_nuovi, diversi_cal = risultati_da_calendario(leggi_calendario(calendario), base)
+            risultati_nuovi, diversi_cal = risultati_da_calendario(
+                leggi_testo_calendario(calendario) if testo else leggi_calendario(calendario, len(base['g'])), base)
             for dal_file, in_jarvis in diversi_cal:
                 print(f'  nel calendario «{dal_file}» è «{in_jarvis}»')
             if risultati_nuovi:
@@ -307,9 +363,9 @@ def main():
     print('classifica aggiornata.')
     # i file scaricati passano nell'archivio, letti bene o no: non si cancella niente
     for f in [percorso] + ([calendario] if calendario else []):
-        spostato = archivia(f)
+        spostato = archivia(f, copia=testo)
         if spostato:
-            print(f'file spostato nell\'archivio: {spostato}')
+            print(f'file {"copiato" if testo else "spostato"} nell\'archivio: {spostato}')
 
 
 if __name__ == '__main__':

@@ -269,5 +269,118 @@ if veri_cal:
 else:
     print('  --   nessun calendario vero in archivio: prova saltata')
 
+print('\n7. Testo delle pagine (QI: «Scarica ora» non scarica), nomi da base.json')
+def testo_classifica(nomi=SQUADRE):
+    righe = ['Classifica', 'Pos Squadra G V N P Gf Gs Dr Pt. Pt. Totali']
+    righe += [f'{k + 1} {s} 2 1 1 0 3 1 2 4 {150.5 - k}' for k, s in enumerate(nomi)]
+    return '\n'.join(righe + ['Termini e condizioni', ''])
+
+def testo_calendario(giocate):
+    """giocate: {giornata: {(casa, fuori): (fp_casa, fp_fuori, gol_casa, gol_fuori)}}, dalle sfide di base."""
+    righe = ['Calendario']
+    for g in base['g']:
+        if g[0] not in giocate:
+            continue
+        righe.append(f'{g[0]}° GIORNATA ({g[0] + 4}° giornata di Serie A)')
+        for casa, fuori in g[3]:
+            pc, pf, gc, gf = giocate[g[0]][(casa, fuori)]
+            righe += [casa, str(gc), str(pc), fuori, str(gf), str(pf)]
+    return '\n'.join(righe) + '\n'
+
+GIOCATE = {g[0]: {tuple(sf): (70.5 + k, 66, 1, 0) for k, sf in enumerate(g[3])} for g in base['g'][:2]}
+with tempfile.TemporaryDirectory() as d:
+    pc, pk = os.path.join(d, 'classifica.txt'), os.path.join(d, 'calendario.txt')
+    with open(pc, 'w', encoding='utf-8') as f:
+        f.write(testo_classifica())
+    with open(pk, 'w', encoding='utf-8') as f:
+        f.write(testo_calendario(GIOCATE))
+    righe, diversi = mod.classifica(mod.leggi_testo_classifica(pc), base)
+    verifica('classifica dal testo: 10 squadre, stessi numeri del file', len(righe) == 10 and not diversi
+             and righe[0] == [1, SQUADRE[0], 2, 1, 1, 0, 3, 1, 2, 4, 150.5], righe[0])
+    giornate = mod.leggi_testo_calendario(pk)
+    verifica('calendario dal testo: solo le 2 giornate giocate', sorted(giornate) == [1, 2], sorted(giornate))
+    risultati, diversi = mod.risultati_da_calendario(giornate, base)
+    casa, fuori = base['g'][0][3][0]
+    verifica('risultato letto: squadre, fantapunti e gol', risultati['1'][0] == [casa, 70.5, fuori, 66, 1, 0], risultati['1'][0])
+    rotto = testo_calendario(GIOCATE).replace('\n1\n', '\nx\n', 1)
+    with open(pk, 'w', encoding='utf-8') as f:
+        f.write(rotto)
+    try:
+        mod.leggi_testo_calendario(pk)
+        verifica('gol non numerico: deve fermarsi', False)
+    except ValueError as e:
+        verifica('gol non numerico: si ferma', True, str(e))
+    with open(pk, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(testo_calendario(GIOCATE).splitlines()[:-6]))
+    try:
+        mod.leggi_testo_calendario(pk)
+        verifica('giornata con 4 partite: deve fermarsi', False)
+    except ValueError as e:
+        verifica('giornata con 4 partite: si ferma', True, str(e))
+    with open(pc, 'w', encoding='utf-8') as f:
+        f.write(testo_classifica(SQUADRE[:9]))
+    try:
+        mod.classifica(mod.leggi_testo_classifica(pc), base)
+        verifica('9 squadre nel testo: deve fermarsi', False)
+    except ValueError as e:
+        verifica('9 squadre nel testo: si ferma', True, str(e).splitlines()[0])
+
+    # main() col testo: scrive lega.json in upsert e copia (non sposta) i testi nell'archivio
+    dati3, archivio3 = os.path.join(d, 'dati3'), os.path.join(d, 'archivio3')
+    os.makedirs(dati3)
+    with open(os.path.join(dati3, 'base.json'), 'w', encoding='utf-8') as f:
+        json.dump(base, f)
+    with open(os.path.join(dati3, 'lega.json'), 'w', encoding='utf-8') as f:
+        json.dump({'risultati': {'9': []}, 'stemmi': {'x': 'y'}}, f)
+    with open(pc, 'w', encoding='utf-8') as f:
+        f.write(testo_classifica())
+    with open(pk, 'w', encoding='utf-8') as f:
+        f.write(testo_calendario(GIOCATE))
+    mod.DATI, mod.ARCHIVIO = dati3, archivio3
+    vecchi_argv = sys.argv
+    sys.argv = ['importa_lega.py', pc, pk]
+    try:
+        mod.main()
+    finally:
+        sys.argv = vecchi_argv
+    with open(os.path.join(dati3, 'lega.json'), encoding='utf-8') as f:
+        lega = json.load(f)
+    verifica('main col testo: giornate 1 e 2 aggiunte, la 9 resta, stemmi salvi',
+             sorted(lega['risultati']) == ['1', '2', '9'] and lega.get('stemmi') == {'x': 'y'}, sorted(lega['risultati']))
+    verifica('testi copiati in archivio con la data, originali al loro posto',
+             os.path.exists(pc) and os.path.exists(pk) and len(os.listdir(archivio3)) == 2, os.listdir(archivio3))
+
+    # leggi_calendario: le giornate le dice la lega, non 34 fisso
+    for k in (33, 35):
+        try:
+            mod.leggi_calendario(file_calendario(d, partite_da_base()), k)
+            verifica(f'calendario di 34 giornate atteso da {k}: deve fermarsi', False)
+        except ValueError as e:
+            verifica(f'calendario di 34 giornate atteso da {k}: si ferma', True, str(e))
+
+print('\n8. schiera.py --mancanti: giornate di lega contro giornate di Serie A')
+from datetime import datetime, timedelta, timezone
+spec_s = importlib.util.spec_from_file_location('schiera', os.path.join(REPO, 'scripts', 'schiera.py'))
+schiera = importlib.util.module_from_spec(spec_s)
+spec_s.loader.exec_module(schiera)
+with tempfile.TemporaryDirectory() as d:
+    adesso = datetime(2026, 10, 20, 12, tzinfo=timezone.utc)
+    fine = lambda ore: (adesso - timedelta(hours=ore)).isoformat()
+    # Serie A 5, 6, 7 finite; la 7 da sola un'ora
+    orari = {'giornate': {'5': {'ufficiale': True, 'fine': fine(200)}, '6': {'ufficiale': True, 'fine': fine(30)},
+                          '7': {'ufficiale': True, 'fine': fine(1)}}}
+    for nome, dato in [('orari.json', orari), ('lega.json', {'risultati': {'1': [], '2': [], '3': []}}),
+                       ('formazioni.json', {'giornate': {'1': {}}})]:
+        with open(os.path.join(d, nome), 'w', encoding='utf-8') as f:
+            json.dump(dato, f)
+    schiera.DATI, schiera.lega_cfg.DATI = d, d
+    bf = {'cartella': '', 'prima_giornata_serie_a': 5}
+    m = schiera.mancanti(adesso, bf)
+    verifica('BF (dalla 5ª): manca la 2 (Serie A 6); la 3 è Serie A 7, finita da 1 ora', m == [2], m)
+    m = schiera.mancanti(adesso, dict(bf, prima_giornata_serie_a=6))
+    verifica('QI (dalla 6ª): la 2 è Serie A 7, finita da 1 ora: niente', m == [], m)
+    m = schiera.mancanti(adesso + timedelta(hours=2), bf)
+    verifica('due ore dopo: BF manca anche la 3', m == [2, 3], m)
+
 print(f'\n{esiti - falliti}/{esiti} verifiche superate')
 sys.exit(1 if falliti else 0)

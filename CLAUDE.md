@@ -129,9 +129,10 @@ identificativi.**
 
 ## Controllo a inizio sessione (sul PC, non dal cloud)
 
-Guarda l'ultima giornata in `dati/orari.json` con `fine` passata da almeno due ore; se
-`dati/lega.json` → `risultati` non ha ancora quella giornata, o `dati/formazioni.json` non ha
-ancora la tua formazione di quella giornata, **proponi** «dati di lega» e/o «formazione
+Guarda l'ultima giornata in `dati/orari.json` con `fine` passata da almeno due ore. È una
+giornata di **Serie A**: per ogni lega la giornata di lega è quella − `prima_giornata_serie_a` + 1
+(`dati/leghe.json`: BF 5, QI 6; G7 = BF 3, QI 2). Se `lega.json` → `risultati` della lega non ha
+ancora quella giornata di lega, o `python scripts/schiera.py [--lega qi] --mancanti` ne elenca, **proponi** «dati di lega» e/o «formazione
 schierata» invece di aspettare che le chieda. Resta l'utente a confermare (regola 9): non
 partire da soli. Le routine passo passo sono in `PROCEDURE.md`.
 

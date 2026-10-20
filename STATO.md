@@ -3,7 +3,9 @@
 ## Prossimo
 <!-- pannello «Punti aperti»: max 3 punti, una riga ciascuno; si aggiorna a fine sessione -->
 Stato: in corso
-1. Dopo la G8: «dati di lega» e «formazione schierata» per entrambe le leghe (G8 = BF giornata di lega 4, QI 3). Da sistemare prima: il lettore del testo delle pagine QI (20/10) era uno script temporaneo, va messo in `importa_lega.py` (numero di giornate da `leghe.json`, non 34 fisso) con una prova in `prove/lega.py`; il controllo a inizio sessione e la guardia delle 2 ore di `schiera.py --mancanti` confondono giornata di Serie A e di lega (manca `prima_giornata_serie_a: 5` per la BF in `leghe.json`)
+1. Dopo la G8: «dati di lega» e «formazione schierata» per entrambe le leghe (G8 = BF giornata di lega 4, QI 3). QI: classifica e calendario dal testo delle pagine con `importa_lega.py --lega qi <classifica.txt> <calendario.txt>` (PROCEDURE.md).
+
+**Lettore QI e giornate di lega (20/10/2026, fatto):** `importa_lega.py` legge anche il testo delle pagine (`leggi_testo_classifica`, `leggi_testo_calendario`, stessi controlli, testi copiati in archivio); `leggi_calendario` vuole le giornate della lega (`len(base['g'])`, BF 34, QI 33). `leghe.json`: BF `prima_giornata_serie_a: 5`. `schiera.mancanti()` controlla le 2 ore sulla giornata di Serie A = lega + prima − 1; controllo a inizio sessione corretto in CLAUDE.md e PROCEDURE.md. Prove: lega 47/47 (testo, main, mancanti), tutte verdi. Commit locale, push da decidere.
 2. Cervello calcistico: restano i passi 5-6 (news: misura rifare con più giornate; PESI a fine novembre) Ipotesi da misurare al backtest (17/10): prima delle probabili, il posto di un titolare indisponibile va ai compagni di reparto (oggi il tetto dei ballottaggi solo abbassa).
 3. «Ragiona con Jarvis» FATTO (17/10): un solo bottone in Giornata sotto la sfida, copia il fascicolo (`dossierDi`) e apre claude.ai/code; in chat l'utente manda gli screen di Leghe e ragiona con la skill `dubbio` (nel repo, valida anche nel cloud). Prove 344/344. NON verificato sull'iPhone: se dalla schermata Home il link apre l'app Claude, e la copia negli appunti
 

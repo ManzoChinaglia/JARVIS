@@ -44,11 +44,13 @@ def mancanti(ora=None, cfg=None):
     ora = ora or datetime.now(timezone.utc)
     schierate = set((carica('formazioni.json', cfg).get('giornate') or {}))
     giocate = set((carica('lega.json', cfg).get('risultati') or {}))   # la lega le ha giocate
+    # giornata di lega n = giornata di Serie A n + prima - 1 (BF dalla 5ª, QI dalla 6ª)
+    prima = (cfg or lega_cfg.lega()).get('prima_giornata_serie_a', 1)
+    orari = carica('orari.json').get('giornate') or {}
     esito = []
-    for n, g in (carica('orari.json').get('giornate') or {}).items():
-        if not g.get('ufficiale'):
-            continue
-        if datetime.fromisoformat(g['fine']) + timedelta(hours=2) <= ora and n in giocate and n not in schierate:
+    for n in giocate - schierate:
+        g = orari.get(str(int(n) + prima - 1)) or {}
+        if g.get('ufficiale') and datetime.fromisoformat(g['fine']) + timedelta(hours=2) <= ora:
             esito.append(int(n))
     return sorted(esito)
 

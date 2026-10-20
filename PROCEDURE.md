@@ -7,8 +7,9 @@ Spostate da `CLAUDE.md` il 23/09/2026 (testo invariato). Si leggono quando l'ute
 
 - **Controllo a inizio sessione, sul PC** (non dal cloud: niente Chrome collegato a
   Leghe lì): guarda l'ultima giornata in `dati/orari.json` con `fine` passata da almeno
-  due ore; se `dati/lega.json` → `risultati` non ha ancora quella giornata, o
-  `dati/formazioni.json` non ha ancora la tua formazione di quella giornata, **proponi**
+  due ore; è di Serie A: la giornata di lega è quella − `prima_giornata_serie_a` + 1
+  (`dati/leghe.json`: BF 5, QI 6). Se `lega.json` → `risultati` della lega non ha ancora
+  quella giornata di lega, o `schiera.py [--lega qi] --mancanti` ne elenca, **proponi**
   all'utente «dati di lega» e/o «formazione schierata» invece di aspettare che le chieda
   — resta lui a confermare (regola 9), non partire da solo.
 - **Rose** (dopo scambi e mercato): file `rivoluzione-fantacalcio-rosters-<numero>.xlsx`
@@ -32,9 +33,10 @@ Spostate da `CLAUDE.md` il 23/09/2026 (testo invariato). Si leggono quando l'ute
   Il calendario può chiamare le squadre in modo diverso: `mappa_nomi_calendario` le
   ricava dalla posizione; il risultato si accetta solo scritto «N-N».
   **QI (`fantalega-qi`)**: «SCARICA ORA» di classifica e calendario non scarica nulla (la competizione
-  si chiama «QI VINCE?»), e `leggi_calendario` vuole 34 giornate (la QI ne ha 33). Il 20/10 si è letto il
-  testo delle due pagine (`get_page_text`) e lo si è passato a `classifica()` e `risultati_da_calendario()`
-  di `importa_lega.py` (stessi controlli), testi conservati in `archivio/qi/` con la data.
+  si chiama «QI VINCE?»), quindi si legge il testo delle due pagine (`get_page_text`), lo si salva in due file .txt e
+  `python scripts/importa_lega.py --lega qi <classifica.txt> <calendario.txt>` (prima `--prova`) fa gli
+  stessi controlli dei file e copia i testi in `archivio/qi/` con la data. Il numero di giornate viene dal
+  calendario della lega (`base.json`: BF 34, QI 33).
   Giornata di lega ≠ giornata di Serie A: BF parte dalla 5ª, QI dalla 6ª (G7 = BF 3, QI 2).
   Pagina della partita QI: `/fantalega-qi/view/competition/886465/round/<giornata di lega>` (aspettare
   qualche secondo prima di leggere il testo).
