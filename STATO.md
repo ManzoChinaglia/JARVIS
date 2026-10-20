@@ -4,8 +4,6 @@
 <!-- pannello «Punti aperti»: max 3 punti, una riga ciascuno; si aggiorna a fine sessione -->
 Stato: in corso
 1. Dopo la G8: «dati di lega» e «formazione schierata» per entrambe le leghe (G8 = BF giornata di lega 4, QI 3). QI: classifica e calendario dal testo delle pagine con `importa_lega.py --lega qi <classifica.txt> <calendario.txt>` (PROCEDURE.md).
-
-**Lettore QI e giornate di lega (20/10/2026, fatto):** `importa_lega.py` legge anche il testo delle pagine (`leggi_testo_classifica`, `leggi_testo_calendario`, stessi controlli, testi copiati in archivio); `leggi_calendario` vuole le giornate della lega (`len(base['g'])`, BF 34, QI 33). `leghe.json`: BF `prima_giornata_serie_a: 5`. `schiera.mancanti()` controlla le 2 ore sulla giornata di Serie A = lega + prima − 1; controllo a inizio sessione corretto in CLAUDE.md e PROCEDURE.md. Prove: lega 47/47 (testo, main, mancanti), tutte verdi. Commit locale, push da decidere.
 2. Cervello calcistico: restano i passi 5-6 (news: misura rifare con più giornate; PESI a fine novembre) Ipotesi da misurare al backtest (17/10): prima delle probabili, il posto di un titolare indisponibile va ai compagni di reparto (oggi il tetto dei ballottaggi solo abbassa).
 3. «Ragiona con Jarvis» FATTO (17/10): un solo bottone in Giornata sotto la sfida, copia il fascicolo (`dossierDi`) e apre claude.ai/code; in chat l'utente manda gli screen di Leghe e ragiona con la skill `dubbio` (nel repo, valida anche nel cloud). Prove 344/344. NON verificato sull'iPhone: se dalla schermata Home il link apre l'app Claude, e la copia negli appunti
 
@@ -14,6 +12,8 @@ Altri punti aperti: grafica wow e sfida in tempo reale pushate (`657ecee`), rest
 (al 17/10/2026 sera — campo ridisegnato con avversario, consiglio ridotto al solo banner del modificatore (non cliccabile; vista e `apriConsiglio` tolti), mercato tolto, stemmi delle altre squadre come data URI in `dati/lega.json` → `stemmi` (cifrato; `importa_lega.py` li conserva), podio in Lega; prove 339/339)
 
 ## Dati di lega G7 (20/10/2026, fatto)
+**Lettore QI e giornate di lega (20/10/2026, fatto):** `importa_lega.py` legge anche il testo delle pagine (`leggi_testo_classifica`, `leggi_testo_calendario`, stessi controlli, testi copiati in archivio); `leggi_calendario` vuole le giornate della lega (`len(base['g'])`, BF 34, QI 33). `leghe.json`: BF `prima_giornata_serie_a: 5`. `schiera.mancanti()` controlla le 2 ore sulla giornata di Serie A = lega + prima − 1; controllo a inizio sessione corretto in CLAUDE.md e PROCEDURE.md. Prove: lega 47/47 (testo, main, mancanti), tutte verdi. Commit locale, push da decidere.
+
 BF: classifica e risultati fino alla giornata di lega 3, rose senza cambi; un'altra squadra ora si chiama diversamente su Leghe (mappata da sola, nomi di Jarvis non cambiati). Formazione BF giornata 3 c'era già (16/10). QI: classifica e risultati fino alla giornata 2 letti dal testo delle pagine («Scarica ora» non scarica, vedi PROCEDURE.md); formazione giornata 2 importata (4-3-3); rose senza cambi. `importa_rose.py`: nuovo formato del sito `Rose_<slug>.xlsx` (`blocchi_sito`) e `--lega`. Prove: rose 28/28, app 344/344, tutte verdi.
 
 ## «Ragiona con Jarvis» (17/10/2026, fatto)
