@@ -4,7 +4,7 @@
 <!-- pannello «Punti aperti»: max 3 punti, una riga ciascuno; si aggiorna a fine sessione -->
 Stato: in corso
 1. Dopo la G8: «dati di lega» e «formazione schierata» per entrambe le leghe (G8 = BF giornata di lega 4, QI 3). QI: classifica e calendario dal testo delle pagine con `importa_lega.py --lega qi <classifica.txt> <calendario.txt>` (PROCEDURE.md).
-2. Cervello calcistico a 360°: fase A fatta (commit locale, push prima della G8: scadenza 23/10 20:30), B1 rigorista misurato e scartato. Restano B2-B3 alla ricalibrazione di fine novembre.
+2. Cervello calcistico a 360°: fase A + news PUSHATI il 22/10 (`8dca4de`, giro manuale verde). Il 23/10 dopo il giro delle 19:45: controllare che `statistiche.json` abbia i rigori (12 campi). B1 scartato; B2-B3 alla ricalibrazione di fine novembre.
 3. «Ragiona con Jarvis» FATTO (17/10): un solo bottone in Giornata sotto la sfida, copia il fascicolo (`dossierDi`) e apre claude.ai/code; in chat l'utente manda gli screen di Leghe e ragiona con la skill `dubbio` (nel repo, valida anche nel cloud). Prove 344/344. NON verificato sull'iPhone: se dalla schermata Home il link apre l'app Claude, e la copia negli appunti
 
 Altri punti aperti: grafica wow e sfida in tempo reale pushate (`657ecee`), resta la prova sul telefono; sfida in tempo reale: non provato che Leghe mostri l'avversario PRIMA della scadenza (verificare alla prossima; nessun automatismo, lo legge Claude quando l'utente scrive «formazione schierata»); una squadra della QI senza stemma; probabili: i 15 non abbinati controllati il 17/10, listone completo (603 = pagina quotazioni), 13 non sono nel listone ufficiale (non acquistabili), Fernandez A. del Venezia non verificabile; Romero D. del Parma ora abbinato con alias (fonte «ROMERO J»), dal 17/10.
