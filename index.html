@@ -1694,14 +1694,14 @@ async function carica(){
   try{ const v = sessionStorage.getItem('jarvis-verso'); if(v){ sessionStorage.removeItem('jarvis-verso');
     document.documentElement.style.setProperty('--verso', v); document.body.classList.add('lega-entra'); } }catch(x){}
   const CL = LEGA.cartella || '';
-  const pubblici = ['infortuni.json', 'titolari.json', 'orari.json', 'squadre.json', 'statistiche.json', 'voti.json', 'modello.json', 'titolari-storico.json', 'quote.json']
+  const pubblici = ['infortuni.json', 'titolari.json', 'orari.json', 'squadre.json', 'statistiche.json', 'voti.json', 'modello.json', 'titolari-storico.json', 'quote.json', 'news.json']
     .map(f=>leggi(f, false));
   /* il lucchetto: senza dati/lucchetto.json tutto in chiaro, come prima */
   LUCCHETTO = await leggi('lucchetto.json', false);
   if(LUCCHETTO && !CHIAVE) CHIAVE = await chiaveSalvata(LUCCHETTO) || await chiediPassword(LUCCHETTO);
   const [base, lg, cs, fz] = await Promise.all([leggi(CL+'base.json', true), leggi(CL+'lega.json', false), leggi(CL+'consigli.json', false),
                                                 leggi(CL+'formazioni.json', false)]);
-  const [inf, tit, ora, sq, st, vt, md, ts, qt] = await Promise.all(pubblici);
+  const [inf, tit, ora, sq, st, vt, md, ts, qt, nw] = await Promise.all(pubblici);
 
   D = base;
   ME = D.me;
@@ -1712,6 +1712,8 @@ async function carica(){
   D.titStorico = ts && ts.giornate ? ts.giornate : null;
   /* i gol attesi dalle quote dei bookmaker, per giornata di Serie A (scripts/quote.py): senza, il modello resta quello senza quote */
   D.quote = qt && qt.giornate ? qt.giornate : null;
+  /* le news recenti, solo [data, tag, link] (scripts/aggiorna.py --news): servono al fascicolo per Claude */
+  D.news = nw && nw.giocatori ? nw : null;
   FATTORI_TIT = {};
   /* voti di ogni giornata di Serie A finita e undici consigliati salvati prima delle scadenze */
   D.voti  = vt && vt.giornate && Object.keys(vt.giornate).length ? vt.giornate : null;
@@ -2815,11 +2817,17 @@ function dossierDi(g, dubbio){
     const gg = a && b ? Math.round((b - a)/86400000) : null;
     return gg !== null && gg <= 4 ? ', rigioca tra '+gg+' gg' : '';
   };
+  /* le news recenti (al massimo 2 per giocatore, 1 per club): data, tag e link, Claude apre il link */
+  const voceNews = x => x[0].slice(8,10)+'/'+x[0].slice(5,7)+(x[1].length ? ' '+x[1].join('/') : '')+' '+x[2];
+  const newsDi = p => {
+    const v = D.news && D.news.giocatori[String(p.id)];
+    return v && v.length ? '\n   news: '+v.slice(0,2).map(voceNews).join(' · ') : '';
+  };
   const riga = p => {
     const m = avversarioClub(p.club, g[1]), t = titolarita(p, g);
     return p.ruolo+' '+p.nome+' ('+p.club+(m ? (m.casa ? ' vs ' : ' @ ')+m.avv : '')+') atteso '+num(att(p))+
       (t && t.perc !== undefined ? ', gioca '+Math.round(t.perc)+'%' : '')+ultimi(p)+
-      (p.rigC ? ', rigori '+p.rigS+'/'+p.rigC : '')+dopo(p);
+      (p.rigC ? ', rigori '+p.rigS+'/'+p.rigC : '')+dopo(p)+newsDi(p);
   };
   const tutti = x => [].concat(x.P, x.D, x.C, x.A);
   const moduli = Object.keys(MODULI).map(m=>m+' '+num(totaleModulo(g, m).tot)+(m===cons ? '*' : '')).join(' · ');
@@ -2835,6 +2843,8 @@ function dossierDi(g, dubbio){
     'Il mio undici '+modulo+(modulo===cons ? ' (consigliato)' : ' (scelto nell\'app; il consigliato è '+cons+')')+':',
     tutti(u).map(riga).join('\n'),
     d ? 'Difesa: modificatore atteso '+(d.m.atteso>=0.05 ? '+' : '')+num(d.m.atteso)+', fascia più probabile '+etichettaFascia(d.alta.bonus)+' ('+pc(d.alta.prob)+')' : '',
+    (()=>{ const sq = D.news && D.news.squadre || {}, club = [...new Set(tutti(u).map(p=>p.club))].filter(c=>sq[c] && sq[c].length);
+      return club.length ? 'News dei club: '+club.map(c=>c+' '+voceNews(sq[c][0])).join(' · ') : ''; })(),
     'Panchina: '+panchina(g).map(p=>p.ruolo+' '+p.nome+' '+num(att(p))+(p.rigC ? ' (rigori '+p.rigS+'/'+p.rigC+')' : '')).join(', '),
     '',
     'Avversario: '+s.avv+', '+loro.modulo+(loro.vero ? ', formazione VERA letta da Leghe' : ', formazione STIMATA da Jarvis (non ancora schierata)')+':',

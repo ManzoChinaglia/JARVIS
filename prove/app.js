@@ -1311,6 +1311,15 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('rigioca solo se entro 4 giorni', (dos38.match(/rigioca tra (\d+) gg/g) || []).every(x => +x.match(/\d+/)[0] <= 4));
   verifica('ancora niente undefined né NaN, sotto i 5.000 caratteri', !/undefined|NaN/.test(dos38) && dos38.length < 5000, dos38.length + ' caratteri');
   delete r38.rigS; delete r38.rigC; delete r38b.rigS; delete r38b.rigC;
+  const prima38 = t.D.news, L = 'https://www.fantacalcio.it/news/x';
+  t.D.news = { giocatori: { [String(r38.id)]: [['2026-10-22', ['infortunio'], L + '1'], ['2026-10-21', [], L + '2'], ['2026-10-20', ['conferenza'], L + '3']] },
+               squadre: { [r38.club]: [['2026-10-21', ['conferenza'], L + '4']] } };
+  const dos38n = t.dossierDi(g, '');
+  verifica('le news del giocatore: al massimo 2, con data, tag e link', dos38n.includes('news: 22/10 infortunio ' + L + '1 · 21/10 ' + L + '2') && !dos38n.includes(L + '3'));
+  verifica('le news del club, una per club', dos38n.includes('News dei club: ' + r38.club + ' 21/10 conferenza ' + L + '4'));
+  t.D.news = null;
+  verifica('senza news il fascicolo non cambia', !/news/i.test(t.dossierDi(g, '')));
+  t.D.news = prima38;
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
 })().catch(e => { console.error('ERRORE', e); process.exit(2); });

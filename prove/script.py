@@ -511,5 +511,29 @@ with tempfile.TemporaryDirectory() as td:
     verifica('copia identica all ultima: niente di nuovo; contenuto cambiato: file nuovo, il vecchio resta',
              f1 == f2 and f3 != f1 and open(f1).read() == 'uno' and open(f3).read() == 'due' and '_1900' in f1, (f1, f3))
 
+print('\nNews recenti per il fascicolo (22/10/2026)')
+with tempfile.TemporaryDirectory() as td:
+    def giorno(data, righe):
+        p = os.path.join(td, data[:4], data[5:7]); os.makedirs(p, exist_ok=True)
+        with open(os.path.join(p, data[8:] + '.jsonl'), 'w', encoding='utf-8') as f:
+            f.write('\n'.join(json.dumps(r) for r in righe) + '\nnon json\n')
+    L = 'https://www.fantacalcio.it/news/calcio-italia/'
+    giorno('2026-10-22', [{'id': 1, 'data': '2026-10-22', 'titolo': 'T', 'sommario': 'S', 'link': L + 'a-1', 'squadre': ['Roma'],
+                           'giocatori': [{'id': 5841, 'nome': 'Svilar', 'squadra': 'Roma'}], 'tag': ['infortunio']},
+                          {'id': 2, 'data': '2026-10-22', 'titolo': 'T', 'sommario': 'S', 'link': L + 'b-2', 'squadre': ['Roma'], 'giocatori': [], 'tag': ['conferenza']},
+                          {'id': 3, 'data': '2026-10-22', 'link': 'https://altro.it/x', 'squadre': ['Roma'], 'giocatori': [], 'tag': []}])
+    giorno('2026-10-20', [{'id': 4, 'data': '2026-10-20', 'link': L + 'c-4', 'squadre': ['Roma'],
+                           'giocatori': [{'id': 5841, 'nome': 'Svilar', 'squadra': 'Roma'}], 'tag': []}])
+    giorno('2026-10-15', [{'id': 5, 'data': '2026-10-15', 'link': L + 'd-5', 'squadre': ['Roma'],
+                           'giocatori': [{'id': 5841, 'nome': 'Svilar', 'squadra': 'Roma'}], 'tag': []}])
+    nr = mod.news_recenti(td, datetime(2026, 10, 22, 12, tzinfo=timezone.utc))
+    verifica('news del giocatore: solo gli ultimi 3 giorni, la più recente prima',
+             nr['giocatori'].get('5841') == [['2026-10-22', ['infortunio'], L + 'a-1'], ['2026-10-20', [], L + 'c-4']], nr['giocatori'])
+    verifica('news senza giocatori vanno alla squadra; link di altri siti scartati',
+             nr['squadre'] == {'Roma': [['2026-10-22', ['conferenza'], L + 'b-2']]}, nr['squadre'])
+    verifica('nessun titolo né sommario nel file pubblico: solo [data, tag, link]',
+             all(len(v) == 3 and isinstance(v[1], list) and v[2].startswith(L) for d in (nr['giocatori'], nr['squadre']) for x in d.values() for v in x), nr)
+    verifica('senza archivio: nessun errore, nessun file', mod.solo_news(os.path.join(td, 'manca')) == 0)
+
 print(f'\n{esiti - falliti}/{esiti} verifiche superate')
 sys.exit(1 if falliti else 0)

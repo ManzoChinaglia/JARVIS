@@ -12,14 +12,18 @@ Scrive cinque file in dati/:
   dati/squadre.json     { "aggiornato": "...", "squadre": { "<squadra>": {...} }, ... }
   dati/jarvis.ics       calendario da sottoscrivere: scadenze di schieramento
   dati/statistiche.json { "aggiornato": "...", "giocatori": { "<id>": [partite, MV, FM, quotazione,
-                          gol, gol subiti, rigori parati, assist, ammonizioni, espulsioni] } }
+                          gol, gol subiti, rigori parati, assist, ammonizioni, espulsioni,
+                          rigori segnati, rigori calciati] } }
   dati/voti.json        { "aggiornato": "...", "giornate": { "<n>": { "<id>": [voto, fantavoto] } } }
+  dati/news.json        (--news <cartella>) { "aggiornato": "...", "giocatori": { "<id>": [[data, [tag], link]] },
+                          "squadre": { "<squadra>": [...] } }: solo link e tag, dall'archivio privato
 
 Regole di sicurezza:
  - se una fonte non risponde o cambia struttura, il file esistente NON viene toccato
  - ogni scrittura avviene solo se il risultato supera un controllo di plausibilita'
 """
 import json, os, re, sys, time, unicodedata
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
 import requests
@@ -800,11 +804,67 @@ def solo_voti():
         return guasto(e)
 
 
+NEWS_GIORNI = 3     # le news delle ultime 72 ore circa (la data è quella del link)
+NEWS_MAX = 3        # per giocatore e per squadra, le più recenti
+
+
+def news_recenti(cartella, ora=None):
+    """Dall'archivio privato JARVIS-conoscenza (news/AAAA/MM/GG.jsonl) le news recenti come
+    [data, tag, link], per Id del giocatore e per squadra, le più recenti prima. Niente titoli né
+    sommari (copyright): Claude apre il link. Le news senza giocatori contano per le squadre."""
+    oggi = (ora or datetime.now(timezone.utc)).date()
+    giocatori, squadre = defaultdict(list), defaultdict(list)
+    for d in range(NEWS_GIORNI + 1):
+        g = oggi - timedelta(days=d)
+        f = os.path.join(cartella, f'{g.year:04d}', f'{g.month:02d}', f'{g.day:02d}.jsonl')
+        if not os.path.exists(f):
+            continue
+        with open(f, encoding='utf-8') as fh:
+            for riga in fh:
+                try:
+                    n = json.loads(riga)
+                except ValueError:
+                    continue
+                if not str(n.get('link', '')).startswith('https://www.fantacalcio.it/'):
+                    continue
+                voce = [n.get('data') or g.isoformat(), list(n.get('tag') or []), n['link']]
+                for x in n.get('giocatori') or []:
+                    if x.get('id') is not None:
+                        giocatori[str(x['id'])].append(voce)
+                if not n.get('giocatori'):
+                    for s in n.get('squadre') or []:
+                        squadre[s].append(voce)
+    taglia = lambda dd: {k: sorted(v, key=lambda x: x[0], reverse=True)[:NEWS_MAX] for k, v in sorted(dd.items())}
+    return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'),
+            'giocatori': taglia(giocatori), 'squadre': taglia(squadre)}
+
+
+def solo_news(cartella):
+    """dati/news.json dalle news recenti; un archivio che manca è solo un avviso."""
+    if not os.path.isdir(cartella):
+        print(f'[news] archivio {cartella} non disponibile: niente news.')
+        return 0
+    try:
+        nuovo = news_recenti(cartella)
+        percorso = os.path.join(DATI, 'news.json')
+        vecchio = precedenti(percorso, 'giocatori'), precedenti(percorso, 'squadre')
+        if (nuovo['giocatori'], nuovo['squadre']) != vecchio:
+            scrivi(percorso, nuovo, 0, 'news', n=len(nuovo['giocatori']))
+        else:
+            print('[news] nessuna news nuova.')
+        return 0
+    except Exception as e:
+        print('[news] fallito:', e)
+        return 0
+
+
 def main():
     if '--solo-titolari' in sys.argv:
         sys.exit(solo_titolari())
     if '--solo-voti' in sys.argv:
         sys.exit(solo_voti())
+    if '--news' in sys.argv:
+        sys.exit(solo_news(sys.argv[sys.argv.index('--news') + 1]))
     uscita = 0
     # prima di tutto: i giocatori arrivati dopo l'asta (mercato, esordienti) entrano nel listone,
     # altrimenti le probabili e gli infortuni non li riconoscono

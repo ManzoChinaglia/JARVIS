@@ -83,6 +83,14 @@ jobs:
           [ -d conoscenza/.git ] || { echo "::warning::archivio privato non disponibile (CONOSCENZA_TOKEN?): i CSV restano solo nell'artefatto."; export QUOTE_ARCHIVIO="$RUNNER_TEMP/football-data"; echo "QUOTE_ARCHIVIO=$QUOTE_ARCHIVIO" >> "$GITHUB_ENV"; }
           python scripts/quote.py --automatico
 
+      # le news recenti per il fascicolo di «Ragiona con Jarvis» (22/10/2026): dall'archivio
+      # privato solo data, tag e link per giocatore e squadra in dati/news.json. Mai titoli
+      # né testi. Senza archivio (token) è solo un avviso.
+      - name: News recenti per il fascicolo
+        if: always()
+        continue-on-error: true
+        run: python scripts/aggiorna.py --news conoscenza/news
+
       - name: Conserva i CSV delle quote (artefatto)
         if: always()
         uses: actions/upload-artifact@v4

@@ -54,6 +54,12 @@ pesata dei rigori della squadra calciati dal giocatore, calcolata prima di ogni 
 2024-25 e 2025-26 (92.770 righe): fantavoto C 0,197 → 0,199, A 0,165 → 0,166, D 0,189 → 0,188, P uguale; con quote
 C 0,213 → 0,215, A 0,190 → 0,193. Differenze alla terza cifra: non si tiene. Probabile perché il rigorista ha già il
 fantavoto alto nella sua storia. Il rigorista resta un fatto per Claude (fascicolo v2 e skill), non un numero del motore.
+**A4 news nel fascicolo, fatto 22/10 (in chiaro, decisione dell'utente: dati pubblici).** `aggiorna.py --news conoscenza/news`
+(passo di `aggiorna.yml` dopo le quote, mai bloccante) scrive `dati/news.json`: ultimi 3 giorni dell'archivio privato,
+solo `[data, tag, link]` (link solo fantacalcio.it), max 3 per giocatore (tutti i giocatori, non solo le rose) e per
+squadra (le news senza giocatori). Mai titoli né testi. Il fascicolo mette per giocatore «news: GG/MM tag link» (max 2)
+e una riga «News dei club» (1 per club dell'undici): Claude apre i link. Visto sui dati veri: BF 6 righe news, QI 3,
+nessun undefined, ~4.100 caratteri. Prove: app 351/351, script 119/119, privacy 8/8.
 **Chiuso quando:** A1-A3 in produzione prima della G8 e B1 misurato (tenuto o scartato). B2-B3 restano alla
 ricalibrazione. **Fuori:** Atlante, xG, riassunti delle news dal locale (più avanti).
 
