@@ -27,7 +27,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   // lucchetto non vero (sul PC c'è): le prove partono in chiaro; il
   // lucchetto ha la sua sezione (34)
   // e senza la formazione schierata vera (dati/formazioni.json): il giudizio «rivelato» ha la sua (35)
-  dati = Object.assign({ 'modello.json': null, 'lucchetto.json': null, 'formazioni.json': null, 'quote.json': null }, dati);
+  dati = Object.assign({ 'modello.json': null, 'lucchetto.json': null, 'formazioni.json': null, 'quote.json': null, 'news.json': null }, dati);
   const RealDate = Date;
   const fisso = new RealDate(adesso).getTime();
   class FintaData extends RealDate {

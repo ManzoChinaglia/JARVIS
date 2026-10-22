@@ -49,6 +49,8 @@ controlla, e cita fonte e ora:
 5. **Disponibilità**: squalificati e diffidati, rientri da infortunio (spesso 30-60 minuti), stato dopo un acciacco.
 6. **Forma**: gli ultimi 3 voti nel fascicolo; se sono molto sopra o sotto l'atteso, cerca il perché (ruolo nuovo,
    posizione in campo, minuti) prima di fidarti di una serie corta.
+7. **News**: per i giocatori in ballo apri i link «news:» del fascicolo e la riga «News dei club» (ultimi 3 giorni,
+   fantacalcio.it) prima di giudicare; cita data e fonte. Se un link non si apre, dillo e cerca da te.
 Non serve elencarli all'utente: usa quelli che cambiano la scelta e dillo in una riga («Thuram rigorista e l'Inter
 non gioca le coppe: lo tengo»).
 
