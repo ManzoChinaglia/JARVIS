@@ -440,8 +440,10 @@ def statistiche():
         s, q = stat.get(i), quot.get(i)
         riga = [int(numero(s[5])) if s else 0, round(numero(s[6]), 2) if s else 0.0,
                 round(numero(s[7]), 2) if s else 0.0, int(numero(q[6])) if q else 0]
-        if bonus:   # Gol, GS, RP, Ass, Amm, Esp (Rig, «segnati / calciati», non serve)
+        if bonus:   # Gol, GS, RP, Ass, Amm, Esp, poi in fondo Rig («segnati / calciati») come due numeri
             riga += [int(numero(s[k])) if s and len(s) > k else 0 for k in (8, 9, 11, 12, 13, 14)]
+            rig = re.fullmatch(r'\s*(\d+)\s*/\s*(\d+)\s*', s[10]) if s and len(s) > 10 else None
+            riga += [int(rig[1]), int(rig[2])] if rig else [0, 0]
         giocatori[str(i)] = riga
         # la quotazione iniziale, a parte: la usa il modello (scripts/modello.py), perché è
         # nota prima delle partite; quella attuale si muove con il rendimento della stagione

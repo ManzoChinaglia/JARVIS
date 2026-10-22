@@ -4,18 +4,59 @@
 <!-- pannello «Punti aperti»: max 3 punti, una riga ciascuno; si aggiorna a fine sessione -->
 Stato: in corso
 1. Dopo la G8: «dati di lega» e «formazione schierata» per entrambe le leghe (G8 = BF giornata di lega 4, QI 3). QI: classifica e calendario dal testo delle pagine con `importa_lega.py --lega qi <classifica.txt> <calendario.txt>` (PROCEDURE.md).
-2. Cervello calcistico: restano i passi 5-6 (news: misura rifare con più giornate; PESI a fine novembre) Ipotesi da misurare al backtest (17/10): prima delle probabili, il posto di un titolare indisponibile va ai compagni di reparto (oggi il tetto dei ballottaggi solo abbassa).
+2. Cervello calcistico a 360°: piano del 22/10 (sezione sotto). Fase A prima della G8 (scadenza 23/10 20:45), poi B1 rigorista.
 3. «Ragiona con Jarvis» FATTO (17/10): un solo bottone in Giornata sotto la sfida, copia il fascicolo (`dossierDi`) e apre claude.ai/code; in chat l'utente manda gli screen di Leghe e ragiona con la skill `dubbio` (nel repo, valida anche nel cloud). Prove 344/344. NON verificato sull'iPhone: se dalla schermata Home il link apre l'app Claude, e la copia negli appunti
 
 Altri punti aperti: grafica wow e sfida in tempo reale pushate (`657ecee`), resta la prova sul telefono; sfida in tempo reale: non provato che Leghe mostri l'avversario PRIMA della scadenza (verificare alla prossima; nessun automatismo, lo legge Claude quando l'utente scrive «formazione schierata»); una squadra della QI senza stemma; probabili: i 15 non abbinati controllati il 17/10, listone completo (603 = pagina quotazioni), 13 non sono nel listone ufficiale (non acquistabili), Fernandez A. del Venezia non verificabile; Romero D. del Parma ora abbinato con alias (fonte «ROMERO J»), dal 17/10.
 
 (al 17/10/2026 sera — campo ridisegnato con avversario, consiglio ridotto al solo banner del modificatore (non cliccabile; vista e `apriConsiglio` tolti), mercato tolto, stemmi delle altre squadre come data URI in `dati/lega.json` → `stemmi` (cifrato; `importa_lega.py` li conserva), podio in Lega; prove 339/339)
 
+## CERVELLO A 360° — piano (Opus, 22/10/2026; si esegue con Sonnet)
+
+**Richiesta dell'utente (22/10):** Jarvis deve avere conoscenza calcistica a 360°, da chiudere il prima possibile.
+**Atlante fuori da Jarvis (deciso con l'utente, 22/10):** `calcio-atlante` esiste (R2 fatto, 70,7/100) ma sono eventi
+Wyscout 2017-18 su come si muove il pallone; non dice chi gioca oggi, chi è in forma, chi tira i rigori. Resta a THE CLUB.
+
+**Diagnosi (inventario 22/10):** il motore (`modello.py`, `VOCI`) sa solo storia del fantavoto, quotazione, casa,
+avversario, attacco/difesa squadra (o quote), più la titolarità dalle probabili. **Non sa:** chi tira i rigori (la colonna
+«Rig» delle statistiche è scartata in `statistiche()`; lo storico 2015-26 ha invece `Rigori segnati/sbagliati` per partita),
+forma recente leggibile, turno infrasettimanale e coppe (turnover), allenatore/crisi, piazzati. Il fascicolo
+(`dossierDi`, v1) passa a Claude solo atteso e % di gioco; la skill `dubbio` dice già di cercare sul web, ma senza un
+elenco fisso di cosa controllare. Con 60 squadre-giornata il backtest non vede effetti piccoli: tutto ciò che non si
+può misurare va **a Claude come fatto**, non nel motore.
+
+**Divisione:** numeri nel motore solo se migliorano `modello.py --verifica` (storico di 11 stagioni); il resto è
+contesto per Claude (fascicolo + skill), che ragiona con l'utente e verifica sul web.
+
+**Fase A — subito, prima della G8 (solo dati pubblici già nel repo):**
+- A1. Fascicolo v2 (`dossierDi`): per ogni giocatore dell'undici e della panchina gli ultimi 3 voti (da `voti.json`),
+  rigori della stagione se ne ha calciati, e una riga in testa sul calendario del club (giorni alla partita dopo: G9 è
+  un turno infrasettimanale dal 27/10 → rischio turnover). Prova in `prove/app.js`.
+- A2. Skill `dubbio`: elenco fisso dei controlli a 360° sul nodo della scelta (rigorista e piazzati, turnover per coppe e
+  infrasettimanali, allenatore/crisi/esonero, motivazioni di classifica, squalifiche e diffidati, condizioni dopo la
+  nazionale), con fonte e ora.
+- A3. `statistiche()`: tenere anche «Rig» (segnati/calciati) per giocatore, senza cambiare gli indici di oggi; prova in
+  `prove/`. Serve ad A1 e a B1.
+
+**Fase B — numeri, con misura:**
+- B1. Voce «rigorista» in `modello.py`: quota dei rigori della squadra calciati dal giocatore nella storia pesata
+  (dallo storico). Si tiene solo se `--verifica` migliora (fantavoto per ruolo, soprattutto C e A). Al locale (dati sul PC).
+- B2. Indisponibile → compagni di reparto (ipotesi del 17/10), al backtest.
+- B3. Passo 2 (valore atteso vero) e news rifatti alla ricalibrazione dei PESI di fine novembre, con più giornate.
+
+**Fatto il 22/10 (non pushato, aspetta l'ok):** A1 fascicolo v2 (`dossierDi`: «ultimi fv», «rigori S/C», «rigioca tra N gg»
+se ≤ 4; visto sui dati veri di entrambe le leghe, nessun undefined), A2 sezione «I controlli a 360°» nella skill, A3
+`statistiche()` aggiunge in fondo `[rigori segnati, calciati]` (da «S / C»), l'app li legge con `v.length>=12`.
+I rigori nel fascicolo compaiono dopo il primo giro di `aggiorna.yml` successivo al push. Prove: app 348/348, script
+115/115, privacy 8/8. Il service worker prende la pagina sempre dalla rete: nessun cambio di cache.
+**Chiuso quando:** A1-A3 in produzione prima della G8 e B1 misurato (tenuto o scartato). B2-B3 restano alla
+ricalibrazione. **Fuori:** Atlante, xG, riassunti delle news dal locale (più avanti).
+
 ## Voti in ritardo dopo la giornata (20/10/2026)
 Dopo l'import G7 «Com'è andata», Stagione (Tu/Jarvis/massimo, Gli 11, Affidabilità, Chi produce) e il grafico dei voti restavano alla G6: non era l'import, mancavano in `dati/voti.json` i voti della G7 di Serie A. `voti()` li scarica solo 6 ore dopo l'ultimo calcio d'inizio (19/10 18:45 UTC → dal 20/10 00:45 UTC); l'ultimo giro completo era delle 22:37 del 19/10 e quello delle 10:45 UTC del 20/10 GitHub lo stava ritardando (il giro delle 17:45 del 19/10 è partito alle 22:37). Risolto lanciando a mano *Aggiorna Jarvis* dal cloud (`3f8450e`, 288 voti della G7). **Per velocizzare (fatto, provato su Actions il 20/10, run 39417391755 verde):** `aggiorna.py --solo-voti` (`voti_mancanti()`: giornate finite da 6 ore a 3 giorni senza voti) nel giro leggero `probabili.yml` ogni 30 minuti; salva e manda le notifiche se cambiano `titolari.json` o `voti.json`. Se le probabili falliscono, lucchetto e salvataggio dei voti partono lo stesso (`89636bc`). Prove: script 114/114, tutte verdi. Di riserva resta: Actions → *Aggiorna Jarvis* → *Run workflow*.
 
 ## Dati di lega G7 (20/10/2026, fatto)
-**Lettore QI e giornate di lega (20/10/2026, fatto):** `importa_lega.py` legge anche il testo delle pagine (`leggi_testo_classifica`, `leggi_testo_calendario`, stessi controlli, testi copiati in archivio); `leggi_calendario` vuole le giornate della lega (`len(base['g'])`, BF 34, QI 33). `leghe.json`: BF `prima_giornata_serie_a: 5`. `schiera.mancanti()` controlla le 2 ore sulla giornata di Serie A = lega + prima − 1; controllo a inizio sessione corretto in CLAUDE.md e PROCEDURE.md. Prove: lega 47/47 (testo, main, mancanti), tutte verdi. Commit locale, push da decidere.
+**Lettore QI e giornate di lega (20/10/2026, fatto):** `importa_lega.py` legge anche il testo delle pagine (`leggi_testo_classifica`, `leggi_testo_calendario`, stessi controlli, testi copiati in archivio); `leggi_calendario` vuole le giornate della lega (`len(base['g'])`, BF 34, QI 33). `leghe.json`: BF `prima_giornata_serie_a: 5`. `schiera.mancanti()` controlla le 2 ore sulla giornata di Serie A = lega + prima − 1; controllo a inizio sessione corretto in CLAUDE.md e PROCEDURE.md. Prove: lega 47/47 (testo, main, mancanti), tutte verdi. Pushato (al 22/10 `main` allineato a `origin/main`).
 
 BF: classifica e risultati fino alla giornata di lega 3, rose senza cambi; un'altra squadra ora si chiama diversamente su Leghe (mappata da sola; il 20/10 Jarvis ha adottato il nome nuovo nei dati chiusi). Formazione BF giornata 3 c'era già (16/10). QI: classifica e risultati fino alla giornata 2 letti dal testo delle pagine («Scarica ora» non scarica, vedi PROCEDURE.md); formazione giornata 2 importata (4-3-3); rose senza cambi. `importa_rose.py`: nuovo formato del sito `Rose_<slug>.xlsx` (`blocchi_sito`) e `--lega`. Prove: rose 28/28, app 344/344, tutte verdi.
 

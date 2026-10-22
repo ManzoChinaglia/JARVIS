@@ -230,7 +230,8 @@ servi({mod.URL_STATISTICHE: tabella(TESTA_BONUS, [(5841, 'Svilar', ['ROM', '3', 
                                                (5585, 'Malen', ['ROM', '34', '37', '445'])])})
 st = mod.statistiche()['giocatori']
 verifica('bonus e malus: gol, gol subiti, rigori parati, assist, ammonizioni, espulsioni',
-         st['5841'] == [3, 6.5, 7.17, 18, 0, 2, 1, 0, 0, 0] and st['5585'] == [4, 7.0, 12.33, 37, 5, 0, 0, 2, 1, 0], st)
+         st['5841'][:10] == [3, 6.5, 7.17, 18, 0, 2, 1, 0, 0, 0] and st['5585'][:10] == [4, 7.0, 12.33, 37, 5, 0, 0, 2, 1, 0], st)
+verifica('rigori segnati e calciati in fondo, da «segnati / calciati»', st['5841'][10:] == [0, 0] and st['5585'][10:] == [1, 1], st)
 servi({mod.URL_STATISTICHE: tabella(['Calciatore', '', '', '', 'Sq', 'Pres', 'MV', 'FM'], [(5841, 'Svilar', ['ROM', '3', '6,5', '7,17'])]),
        mod.URL_QUOTAZIONI: tabella(TESTA_QU, [])})
 try:

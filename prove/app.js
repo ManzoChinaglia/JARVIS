@@ -1294,12 +1294,23 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31 } }));
   g = t.prossima();
   const dos = t.dossierDi(g, 'Meglio il 3-5-2 o il 4-3-3?');
-  verifica('il fascicolo apre con la riga di riconoscimento e porta il dubbio', dos.startsWith('JARVIS · DOSSIER v1') && dos.includes('Meglio il 3-5-2 o il 4-3-3?'));
+  verifica('il fascicolo apre con la riga di riconoscimento e porta il dubbio', dos.startsWith('JARVIS · DOSSIER v2') && dos.includes('Meglio il 3-5-2 o il 4-3-3?'));
   verifica('niente undefined né NaN, e sta in meno di 4.000 caratteri', !/undefined|NaN/.test(dos) && dos.length < 4000, dos.length + ' caratteri');
   const u37 = t.undiciDi(t.mia, g, t.modulo), tit37 = [].concat(u37.P, u37.D, u37.C, u37.A);
   verifica('ci sono tutti gli undici dell\'undici dell\'app', tit37.length === 11 && tit37.every(p => dos.includes(p.nome)));
   verifica('dice se la formazione avversaria è stimata (non ancora vera)', dos.includes('STIMATA') && !dos.includes('formazione VERA'));
   verifica('senza dubbio scritto non lo inventa, con dubbio lo porta', !t.dossierDi(g, '  ').includes('Il mio dubbio') && t.dossierDi(g, 'x?').includes('Il mio dubbio: x?'));
+  console.log('\n38. Fascicolo v2: i fatti a 360° per Claude');
+  const r38 = tit37[0], r38b = tit37[1];
+  r38.rigS = 2; r38.rigC = 3; r38b.rigS = 0; r38b.rigC = 0;
+  const dos38 = t.dossierDi(g, '');
+  verifica('i rigori della stagione solo per chi ne ha calciati', dos38.includes(r38.nome + ' (') && dos38.includes('rigori 2/3')
+           && !dos38.split('\n').find(l => l.includes(' ' + r38b.nome + ' (')).includes('rigori'));
+  verifica('gli ultimi fantavoti, al massimo 3, come numeri o sv',
+           dos38.split('\n').filter(l => l.includes('ultimi fv')).every(l => /ultimi fv (\d+(,\d+)?|sv)( (\d+(,\d+)?|sv)){0,2}(,|$)/.test(l)));
+  verifica('rigioca solo se entro 4 giorni', (dos38.match(/rigioca tra (\d+) gg/g) || []).every(x => +x.match(/\d+/)[0] <= 4));
+  verifica('ancora niente undefined né NaN, sotto i 5.000 caratteri', !/undefined|NaN/.test(dos38) && dos38.length < 5000, dos38.length + ' caratteri');
+  delete r38.rigS; delete r38.rigC; delete r38b.rigS; delete r38b.rigC;
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
 })().catch(e => { console.error('ERRORE', e); process.exit(2); });

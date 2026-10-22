@@ -1744,7 +1744,9 @@ function applicaStatistiche(st){
     const v = st.giocatori[String(p.id)];
     if(v){ p.pgv = v[0]; p.mv = v[1]; p.fm = v[2]; if(v[3]) p.quot = v[3];
       /* bonus e malus, se la fonte li ha dati: gol, gol subiti, rigori parati, assist, ammonizioni, espulsioni */
-      if(v.length>=10) [p.gol, p.gs, p.rp, p.ass, p.amm, p.esp] = v.slice(4, 10); }
+      if(v.length>=10) [p.gol, p.gs, p.rp, p.ass, p.amm, p.esp] = v.slice(4, 10);
+      /* rigori della stagione, segnati e calciati (dal 22/10/2026) */
+      if(v.length>=12) [p.rigS, p.rigC] = v.slice(10, 12); }
   });
   D.st_v = st.aggiornato || null;
   return true;
@@ -2798,16 +2800,32 @@ function dossierDi(g, dubbio){
   const s = sfidaDati(g), ps = probabilitaSfida(g), cons = moduloConsigliato(g), u = undici(g);
   const sc = scadenza(g), d = bloccoDifesa(g), pc = x => Math.round(100*x)+'%';
   const att = p => { const a = attesoModello('fantavoto', p, g); return a ? a.media : fmStimata(p); };
+  /* v2 (22/10/2026, cervello a 360°): ultimi 3 fantavoti (sv = senza voto), rigori della stagione,
+     e se il club rigioca entro 4 giorni (turnover): i fatti che il modello non pesa, per Claude */
+  const ultimi = p => {
+    const out = [];
+    for(let sa = g[1]-1; sa >= 1 && out.length < 3; sa--){
+      if(!D.voti || !D.voti[String(sa)]) continue;
+      const v = votoDi(p, sa); out.push(v ? num(v[1]) : 'sv');
+    }
+    return out.length ? ', ultimi fv '+out.join(' ') : '';
+  };
+  const dopo = p => {
+    const a = oraPartita(p.club, g[1]), b = oraPartita(p.club, g[1]+1);
+    const gg = a && b ? Math.round((b - a)/86400000) : null;
+    return gg !== null && gg <= 4 ? ', rigioca tra '+gg+' gg' : '';
+  };
   const riga = p => {
     const m = avversarioClub(p.club, g[1]), t = titolarita(p, g);
     return p.ruolo+' '+p.nome+' ('+p.club+(m ? (m.casa ? ' vs ' : ' @ ')+m.avv : '')+') atteso '+num(att(p))+
-      (t && t.perc !== undefined ? ', gioca '+Math.round(t.perc)+'%' : '');
+      (t && t.perc !== undefined ? ', gioca '+Math.round(t.perc)+'%' : '')+ultimi(p)+
+      (p.rigC ? ', rigori '+p.rigS+'/'+p.rigC : '')+dopo(p);
   };
   const tutti = x => [].concat(x.P, x.D, x.C, x.A);
   const moduli = Object.keys(MODULI).map(m=>m+' '+num(totaleModulo(g, m).tot)+(m===cons ? '*' : '')).join(' · ');
   const loro = s.loro;
   return [
-    'JARVIS · DOSSIER v1 — usa la skill dubbio',
+    'JARVIS · DOSSIER v2 — usa la skill dubbio (controlli a 360°)',
     'Sono Jarvis (l\'app), ti passo i miei numeri. Ora ti mando gli screen delle formazioni da Leghe: ragioniamo insieme sulle ultime scelte, una domanda alla volta.',
     '',
     'Lega: '+(LEGA && LEGA.nome || '')+' · squadra '+ME+' · giornata '+g[0]+' (Serie A '+g[1]+')'+(sc ? ' · scadenza '+quando(sc) : ''),
@@ -2817,7 +2835,7 @@ function dossierDi(g, dubbio){
     'Il mio undici '+modulo+(modulo===cons ? ' (consigliato)' : ' (scelto nell\'app; il consigliato è '+cons+')')+':',
     tutti(u).map(riga).join('\n'),
     d ? 'Difesa: modificatore atteso '+(d.m.atteso>=0.05 ? '+' : '')+num(d.m.atteso)+', fascia più probabile '+etichettaFascia(d.alta.bonus)+' ('+pc(d.alta.prob)+')' : '',
-    'Panchina: '+panchina(g).map(p=>p.ruolo+' '+p.nome+' '+num(att(p))).join(', '),
+    'Panchina: '+panchina(g).map(p=>p.ruolo+' '+p.nome+' '+num(att(p))+(p.rigC ? ' (rigori '+p.rigS+'/'+p.rigC+')' : '')).join(', '),
     '',
     'Avversario: '+s.avv+', '+loro.modulo+(loro.vero ? ', formazione VERA letta da Leghe' : ', formazione STIMATA da Jarvis (non ancora schierata)')+':',
     tutti(loro.u).map(p=>p.ruolo+' '+p.nome+' ('+p.club+') '+num(att(p))).join(', '),
