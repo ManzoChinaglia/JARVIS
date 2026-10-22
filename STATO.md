@@ -4,7 +4,7 @@
 <!-- pannello «Punti aperti»: max 3 punti, una riga ciascuno; si aggiorna a fine sessione -->
 Stato: in corso
 1. Dopo la G8: «dati di lega» e «formazione schierata» per entrambe le leghe (G8 = BF giornata di lega 4, QI 3). QI: classifica e calendario dal testo delle pagine con `importa_lega.py --lega qi <classifica.txt> <calendario.txt>` (PROCEDURE.md).
-2. Cervello calcistico a 360°: piano del 22/10 (sezione sotto). Fase A prima della G8 (scadenza 23/10 20:45), poi B1 rigorista.
+2. Cervello calcistico a 360°: fase A fatta (commit locale, push prima della G8: scadenza 23/10 20:30), B1 rigorista misurato e scartato. Restano B2-B3 alla ricalibrazione di fine novembre.
 3. «Ragiona con Jarvis» FATTO (17/10): un solo bottone in Giornata sotto la sfida, copia il fascicolo (`dossierDi`) e apre claude.ai/code; in chat l'utente manda gli screen di Leghe e ragiona con la skill `dubbio` (nel repo, valida anche nel cloud). Prove 344/344. NON verificato sull'iPhone: se dalla schermata Home il link apre l'app Claude, e la copia negli appunti
 
 Altri punti aperti: grafica wow e sfida in tempo reale pushate (`657ecee`), resta la prova sul telefono; sfida in tempo reale: non provato che Leghe mostri l'avversario PRIMA della scadenza (verificare alla prossima; nessun automatismo, lo legge Claude quando l'utente scrive «formazione schierata»); una squadra della QI senza stemma; probabili: i 15 non abbinati controllati il 17/10, listone completo (603 = pagina quotazioni), 13 non sono nel listone ufficiale (non acquistabili), Fernandez A. del Venezia non verificabile; Romero D. del Parma ora abbinato con alias (fonte «ROMERO J»), dal 17/10.
@@ -49,6 +49,11 @@ se ≤ 4; visto sui dati veri di entrambe le leghe, nessun undefined), A2 sezion
 `statistiche()` aggiunge in fondo `[rigori segnati, calciati]` (da «S / C»), l'app li legge con `v.length>=12`.
 I rigori nel fascicolo compaiono dopo il primo giro di `aggiorna.yml` successivo al push. Prove: app 348/348, script
 115/115, privacy 8/8. Il service worker prende la pagina sempre dalla rete: nessun cambio di cache.
+**B1 CHIUSO 22/10, scartato** (il locale Bonsai non ha prodotto nulla in 4 min, fatto dal cloud e poi tolto): quota
+pesata dei rigori della squadra calciati dal giocatore, calcolata prima di ogni giornata, come voce in più. `--verifica` su
+2024-25 e 2025-26 (92.770 righe): fantavoto C 0,197 → 0,199, A 0,165 → 0,166, D 0,189 → 0,188, P uguale; con quote
+C 0,213 → 0,215, A 0,190 → 0,193. Differenze alla terza cifra: non si tiene. Probabile perché il rigorista ha già il
+fantavoto alto nella sua storia. Il rigorista resta un fatto per Claude (fascicolo v2 e skill), non un numero del motore.
 **Chiuso quando:** A1-A3 in produzione prima della G8 e B1 misurato (tenuto o scartato). B2-B3 restano alla
 ricalibrazione. **Fuori:** Atlante, xG, riassunti delle news dal locale (più avanti).
 
