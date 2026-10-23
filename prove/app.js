@@ -1294,7 +1294,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31 } }));
   g = t.prossima();
   const dos = t.dossierDi(g, 'Meglio il 3-5-2 o il 4-3-3?');
-  verifica('il fascicolo apre con la riga di riconoscimento e porta il dubbio', dos.startsWith('JARVIS · DOSSIER v2') && dos.includes('Meglio il 3-5-2 o il 4-3-3?'));
+  verifica('il fascicolo apre con la riga di riconoscimento e porta il dubbio', dos.startsWith('JARVIS · DOSSIER v3') && dos.includes('Meglio il 3-5-2 o il 4-3-3?'));
   verifica('niente undefined né NaN, e sta in meno di 4.000 caratteri', !/undefined|NaN/.test(dos) && dos.length < 4000, dos.length + ' caratteri');
   const u37 = t.undiciDi(t.mia, g, t.modulo), tit37 = [].concat(u37.P, u37.D, u37.C, u37.A);
   verifica('ci sono tutti gli undici dell\'undici dell\'app', tit37.length === 11 && tit37.every(p => dos.includes(p.nome)));
@@ -1324,6 +1324,24 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const stessoClub = tit37.some((p, i) => tit37.findIndex(q => q.club === p.club) !== i && t.avversarioClub(p.club, g[1]));
   verifica('incastro: c\'è se due dei miei giocano la stessa partita, righe «- Casa-Fuori: io ...; loro ...»',
            (!stessoClub || righeInc.length > 0) && righeInc.every(l => /^- \S.*-.+: (io|loro) .+$/.test(l)), righeInc.length + ' partite');
+  console.log('\n39. Fascicolo v3: le due leghe insieme');
+  const mem39 = {};
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31 }, memoria: mem39 }));
+  g = t.prossima();
+  const b39 = mem39['jarvis-sfida-bf'] ? JSON.parse(mem39['jarvis-sfida-bf']) : null;
+  verifica('disegnando la Giornata la lega lascia i suoi due undici, per giornata di Serie A', b39 && b39.sa === g[1] && b39.io.length === 11 && b39.loro.length === 11);
+  const senza39 = t.dossierDi(g, '');
+  verifica('senza l\'altra lega: una riga che dice di aprirla, nessuna sezione vuota', /Altra lega \(.+\): non ho i suoi undici/.test(senza39) && !senza39.includes('Incastro tra le due leghe'));
+  const io39 = b39.io.slice(0, 3);
+  mem39['jarvis-sfida-qi'] = JSON.stringify({ sa: g[1], g: 3, id: 'qi', lega: 'Fantalega QI', squadra: 'IO', avv: 'LORO', modulo: '4-4-2', loroModulo: '4-3-3',
+                                              vero: true, io: io39, loro: b39.loro.slice(0, 2), vinco: 48, ora: Date.now() });
+  const con39 = t.dossierDi(g, ''), inc39 = (con39.split('Incastro tra le due leghe (partite con giocatori in tutte e due):\n')[1] || '').split('\n').filter(l => l.startsWith('- '));
+  verifica('con l\'altra lega: i suoi undici, vero o stimato, e la probabilità di vittoria', con39.includes('Altra lega (QI): Fantalega QI') && con39.includes('vinco 48%') && con39.includes('Loro là (4-3-3, formazione VERA)'));
+  verifica('incastro tra le leghe: righe «- Casa-Fuori: BF io ...; QI io ...» con tutte e due le leghe', inc39.length > 0 && inc39.every(l => /^- \S.*-.+: /.test(l) && l.includes('BF ') && l.includes('QI ')), inc39.length + ' partite');
+  verifica('i controlli da fare sul web citano i club delle due leghe', /Da controllare sul web.*coppe/.test(con39) && io39.every(x => con39.split('Da controllare sul web')[1].includes(x[2])));
+  mem39['jarvis-sfida-qi'] = JSON.stringify({ sa: g[1] - 1, io: io39, loro: [] });
+  verifica('l\'altra lega di un\'altra giornata non vale', t.dossierDi(g, '').includes('non ho i suoi undici'));
+  verifica('niente undefined né NaN', !/undefined|NaN/.test(con39), con39.length + ' caratteri');
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
 })().catch(e => { console.error('ERRORE', e); process.exit(2); });

@@ -2798,6 +2798,25 @@ function renderSfida(g){
    sul repo JARVIS, skill «dubbio») e il blocco «SCELTA» che torna indietro. Niente di nuovo nei calcoli: tutto da qui sopra.
    Il fascicolo esce solo per mano dell'utente (appunti), mai in un URL. */
 const normNome = s => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+/* le due leghe insieme (23/10/2026, come ragiona l'utente): l'app tiene in memoria una lega alla volta, quindi ogni lega,
+   quando disegna la Giornata, lascia qui i suoi due undici; il fascicolo dell'altra li legge per l'incastro tra le leghe.
+   Si accoppiano per giornata di Serie A (le giornate di lega sono sfalsate: G8 = BF 4, QI 3) */
+function salvaBloccoLega(g){
+  try{
+    const s = sfidaDati(g), ps = SFIDE[g[0]+':'+modulo+(CALCOLO_VECCHIO ? ':prima' : '')];
+    const lista = u => [].concat(u.P, u.D, u.C, u.A).map(p=>[p.ruolo, p.nome, p.club]);
+    localStorage.setItem('jarvis-sfida-'+(LEGA && LEGA.id || ''), JSON.stringify({sa:g[1], g:g[0], id:LEGA && LEGA.id || '', lega:LEGA && LEGA.nome || '',
+      squadra:ME, avv:s.avv, modulo, loroModulo:s.loro.modulo, vero:!!s.loro.vero, io:lista(s.mio.u), loro:lista(s.loro.u),
+      vinco:ps ? Math.round(100*ps.vittoria) : null, ora:Date.now()}));
+  }catch(e){}
+}
+function bloccoAltraLega(sa){
+  const altra = (LEGHE && LEGHE.leghe || []).find(l=>l.id !== (LEGA && LEGA.id));
+  if(!altra) return null;
+  let b = null;
+  try{ b = JSON.parse(localStorage.getItem('jarvis-sfida-'+altra.id) || 'null'); }catch(e){}
+  return b && b.sa === sa && Array.isArray(b.io) ? b : {manca:altra.nome};
+}
 function dossierDi(g, dubbio){
   const s = sfidaDati(g), ps = probabilitaSfida(g), cons = moduloConsigliato(g), u = undici(g);
   const sc = scadenza(g), d = bloccoDifesa(g), pc = x => Math.round(100*x)+'%';
@@ -2846,10 +2865,40 @@ function dossierDi(g, dubbio){
       .map(([nome, x]) => '- '+nome+': '+[x.io.length ? 'io '+x.io.join(', ') : '', x.loro.length ? 'loro '+x.loro.join(', ') : ''].filter(Boolean).join('; '));
     return righe.length ? 'Incastro (partite con almeno 2 giocatori della sfida):\n'+righe.join('\n') : '';
   };
+  /* l'altra lega: i suoi undici e l'incastro per partita fra tutte e due (chi copre chi tra le leghe) */
+  const sigla = id => String(id || '').toUpperCase();
+  const dueLeghe = () => {
+    const b = bloccoAltraLega(g[1]);
+    if(!b) return '';
+    if(b.manca) return 'Altra lega ('+b.manca+'): non ho i suoi undici di questa giornata. Apri quella lega in Jarvis e ricopia il fascicolo.';
+    const qui = sigla(LEGA && LEGA.id), la = sigla(b.id), nomi = l => l.map(x=>x[0]+' '+x[1]+' ('+x[2]+')').join(', ');
+    const partite = new Map();
+    const metti = (lega, chi, l) => l.forEach(([, nome, club]) => {
+      const m = avversarioClub(club, g[1]);
+      if(!m) return;
+      const k = m.casa ? club+'-'+m.avv : m.avv+'-'+club;
+      if(!partite.has(k)) partite.set(k, {ora: oraPartita(club, g[1]), leghe: new Set(), v: []});
+      const x = partite.get(k); x.leghe.add(lega); x.v.push(lega+' '+chi+' '+nome+' ('+club+')');
+    });
+    metti(qui, 'io', tutti(u).map(p=>[p.ruolo, p.nome, p.club])); metti(qui, 'loro', tutti(s.loro.u).map(p=>[p.ruolo, p.nome, p.club]));
+    metti(la, 'io', b.io); metti(la, 'loro', b.loro);
+    const righe = [...partite].filter(([, x]) => x.leghe.size === 2)
+      .sort(([, a], [, b2]) => (a.ora && b2.ora ? a.ora - b2.ora : 0)).map(([k, x]) => '- '+k+': '+x.v.join('; '));
+    const ora = new Date(b.ora).toLocaleString('it-IT', {weekday:'short', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Rome'});
+    return ['Altra lega ('+la+'): '+b.lega+' · '+b.squadra+' contro '+b.avv+' · giornata '+b.g+(b.vinco !== null ? ' · vinco '+b.vinco+'%' : '')+' · salvata '+ora,
+      'Il mio undici là ('+b.modulo+'): '+nomi(b.io),
+      'Loro là ('+b.loroModulo+(b.vero ? ', formazione VERA' : ', STIMATA')+'): '+nomi(b.loro),
+      righe.length ? 'Incastro tra le due leghe (partite con giocatori in tutte e due):\n'+righe.join('\n') : ''].filter(Boolean).join('\n');
+  };
+  const daControllare = () => {
+    const b = bloccoAltraLega(g[1]), club = new Set(tutti(u).map(p=>p.club));
+    if(b && b.io) b.io.forEach(x=>club.add(x[2]));
+    return 'Da controllare sul web prima di rispondere: coppe europee e Coppa Italia giocate in settimana o in arrivo, forma vista, malanni e partite pericolose per '+[...club].join(', ')+'.';
+  };
   const moduli =Object.keys(MODULI).map(m=>m+' '+num(totaleModulo(g, m).tot)+(m===cons ? '*' : '')).join(' · ');
   const loro = s.loro;
   return [
-    'JARVIS · DOSSIER v2 — usa la skill dubbio (controlli a 360°)',
+    'JARVIS · DOSSIER v3 — usa la skill dubbio (controlli a 360°, incastro tra le due leghe)',
     'Sono Jarvis (l\'app), ti passo i miei numeri. Ora ti mando gli screen delle formazioni da Leghe: ragioniamo insieme sulle ultime scelte, una domanda alla volta.',
     '',
     'Lega: '+(LEGA && LEGA.nome || '')+' · squadra '+ME+' · giornata '+g[0]+' (Serie A '+g[1]+')'+(sc ? ' · scadenza '+quando(sc) : ''),
@@ -2867,6 +2916,9 @@ function dossierDi(g, dubbio){
     tutti(loro.u).map(p=>p.ruolo+' '+p.nome+' ('+p.club+') '+num(att(p))).join(', '),
     incastro(),
     'Totali attesi:io '+num(ps ? ps.mio : s.mio.tot)+' contro '+num(ps ? ps.loro : s.loro.tot)+(ps ? ' · vinco '+pc(ps.vittoria)+', pareggio '+pc(ps.pareggio)+', perdo '+pc(ps.sconfitta) : ''),
+    '',
+    dueLeghe(),
+    daControllare(),
     String(dubbio||'').trim() ? '\nIl mio dubbio: '+String(dubbio).trim() : ''
   ].filter((r, i, a) => r !== '' || a[i-1] !== '').join('\n');
 }
@@ -2875,6 +2927,7 @@ function dossierDi(g, dubbio){
 let ragionaChiave = '';
 function renderRagiona(g){
   const box = document.getElementById('ragiona'), chiave = (LEGA && LEGA.id || '')+':'+g[0];
+  salvaBloccoLega(g);
   if(!box || chiave === ragionaChiave) return;
   ragionaChiave = chiave;
   box.innerHTML = '<button class="rg-btn" id="rg-apri" type="button"><span class="rg-ico" aria-hidden="true">'+
