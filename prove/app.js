@@ -1320,6 +1320,10 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   t.D.news = null;
   verifica('senza news il fascicolo non cambia', !/news/i.test(t.dossierDi(g, '')));
   t.D.news = prima38;
+  const inc = dos38.split('Incastro (partite con almeno 2 giocatori della sfida):\n')[1], righeInc = inc ? inc.split('\n').filter(l => l.startsWith('- ')) : [];
+  const stessoClub = tit37.some((p, i) => tit37.findIndex(q => q.club === p.club) !== i && t.avversarioClub(p.club, g[1]));
+  verifica('incastro: c\'è se due dei miei giocano la stessa partita, righe «- Casa-Fuori: io ...; loro ...»',
+           (!stessoClub || righeInc.length > 0) && righeInc.every(l => /^- \S.*-.+: (io|loro) .+$/.test(l)), righeInc.length + ' partite');
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
 })().catch(e => { console.error('ERRORE', e); process.exit(2); });

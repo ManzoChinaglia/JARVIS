@@ -2830,7 +2830,23 @@ function dossierDi(g, dubbio){
       (p.rigC ? ', rigori '+p.rigS+'/'+p.rigC : '')+dopo(p)+newsDi(p);
   };
   const tutti = x => [].concat(x.P, x.D, x.C, x.A);
-  const moduli = Object.keys(MODULI).map(m=>m+' '+num(totaleModulo(g, m).tot)+(m===cons ? '*' : '')).join(' · ');
+  /* incastro (23/10/2026, come ragiona l'utente): le partite con almeno 2 giocatori della sfida, miei e suoi,
+     per vedere chi affonda o si salva insieme */
+  const incastro = () => {
+    const partite = new Map();
+    [['io', tutti(u)], ['loro', tutti(s.loro.u)]].forEach(([chi, gg]) => gg.forEach(p => {
+      const m = avversarioClub(p.club, g[1]);
+      if(!m) return;
+      const nome = m.casa ? p.club+'-'+m.avv : m.avv+'-'+p.club;
+      if(!partite.has(nome)) partite.set(nome, {ora: oraPartita(p.club, g[1]), io: [], loro: []});
+      partite.get(nome)[chi].push(p.nome+' ('+p.club+')');
+    }));
+    const righe = [...partite].filter(([, x]) => x.io.length + x.loro.length >= 2)
+      .sort(([, a], [, b]) => (a.ora && b.ora ? a.ora - b.ora : 0))
+      .map(([nome, x]) => '- '+nome+': '+[x.io.length ? 'io '+x.io.join(', ') : '', x.loro.length ? 'loro '+x.loro.join(', ') : ''].filter(Boolean).join('; '));
+    return righe.length ? 'Incastro (partite con almeno 2 giocatori della sfida):\n'+righe.join('\n') : '';
+  };
+  const moduli =Object.keys(MODULI).map(m=>m+' '+num(totaleModulo(g, m).tot)+(m===cons ? '*' : '')).join(' · ');
   const loro = s.loro;
   return [
     'JARVIS · DOSSIER v2 — usa la skill dubbio (controlli a 360°)',
@@ -2849,7 +2865,8 @@ function dossierDi(g, dubbio){
     '',
     'Avversario: '+s.avv+', '+loro.modulo+(loro.vero ? ', formazione VERA letta da Leghe' : ', formazione STIMATA da Jarvis (non ancora schierata)')+':',
     tutti(loro.u).map(p=>p.ruolo+' '+p.nome+' ('+p.club+') '+num(att(p))).join(', '),
-    'Totali attesi: io '+num(ps ? ps.mio : s.mio.tot)+' contro '+num(ps ? ps.loro : s.loro.tot)+(ps ? ' · vinco '+pc(ps.vittoria)+', pareggio '+pc(ps.pareggio)+', perdo '+pc(ps.sconfitta) : ''),
+    incastro(),
+    'Totali attesi:io '+num(ps ? ps.mio : s.mio.tot)+' contro '+num(ps ? ps.loro : s.loro.tot)+(ps ? ' · vinco '+pc(ps.vittoria)+', pareggio '+pc(ps.pareggio)+', perdo '+pc(ps.sconfitta) : ''),
     String(dubbio||'').trim() ? '\nIl mio dubbio: '+String(dubbio).trim() : ''
   ].filter((r, i, a) => r !== '' || a[i-1] !== '').join('\n');
 }
