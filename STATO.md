@@ -3,7 +3,7 @@
 ## Prossimo
 <!-- pannello «Punti aperti»: max 3 punti, una riga ciascuno; si aggiorna a fine sessione -->
 Stato: in corso
-1. Dopo la G8: «dati di lega» e «formazione schierata» per entrambe le leghe (G8 = BF giornata di lega 4, QI 3). QI: classifica e calendario dal testo delle pagine con `importa_lega.py --lega qi <classifica.txt> <calendario.txt>` (PROCEDURE.md).
+1. Formazioni G8 definitive importate il 23/10 (BF 4 4-3-3 con Perrone, QI 3 4-4-2 con Rowe). Dopo le partite della G8 (dom 25/10): «dati di lega» per entrambe (QI: `importa_lega.py --lega qi <classifica.txt> <calendario.txt>`, PROCEDURE.md). Poi: verificare da una sessione cloud che si apra www.fantacalcio.it (domini aggiunti dall'utente il 23/10) e solo allora aggiornare CLAUDE.md e skill dubbio; ripensare «Ragiona con Jarvis» (coppe e Champions nel fascicolo, incastro tra le due leghe, forse duelli partita per partita). Incastro nel fascicolo e nella skill FATTO 23/10 (prove 352/352).
 2. Cervello calcistico a 360°: fase A + news PUSHATI il 22/10 (`8dca4de`, giro manuale verde). Il 23/10 dopo il giro delle 19:45: controllare che `statistiche.json` abbia i rigori (12 campi). B1 scartato; B2-B3 alla ricalibrazione di fine novembre.
 3. «Ragiona con Jarvis» FATTO (17/10): un solo bottone in Giornata sotto la sfida, copia il fascicolo (`dossierDi`) e apre claude.ai/code; in chat l'utente manda gli screen di Leghe e ragiona con la skill `dubbio` (nel repo, valida anche nel cloud). Prove 344/344. NON verificato sull'iPhone: se dalla schermata Home il link apre l'app Claude, e la copia negli appunti
 
