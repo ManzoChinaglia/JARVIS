@@ -51,6 +51,14 @@ controlla, e cita fonte e ora:
    posizione in campo, minuti) prima di fidarti di una serie corta.
 7. **News**: per i giocatori in ballo apri i link «news:» del fascicolo e la riga «News dei club» (ultimi 3 giorni,
    fantacalcio.it) prima di giudicare; cita data e fonte. Se un link non si apre, dillo e cerca da te.
+8. **Incastro** (il modo in cui ragiona l'utente, 23/10/2026): metti in fila i giocatori per partita, tuoi e
+   dell'avversario, **in tutte e due le leghe**. Due tuoi nella stessa partita dalla stessa parte (difensori e portiere
+   della stessa squadra, o un tuo difensore contro un attaccante dell'avversario) affondano insieme: evitalo se non
+   serve. Un tuo giocatore della stessa squadra di uno dell'avversario lo neutralizza; uno della squadra opposta
+   raddoppia lo scarto. Un giocatore che l'avversario dell'altra lega ha schierato, se lo hai tu, ti copre.
+Non partire dai numeri: **prima ascolta il contesto che l'utente porta** (coppe giocate, forma vista, partite
+pericolose, malanni) e trattalo come dato. Se il web non si apre (sessione cloud senza rete), **dillo subito in una
+riga** ed elenca quali controlli restano scoperti, invece di ragionare solo su atteso e percentuali.
 Non serve elencarli all'utente: usa quelli che cambiano la scelta e dillo in una riga («Thuram rigorista e l'Inter
 non gioca le coppe: lo tengo»).
 
