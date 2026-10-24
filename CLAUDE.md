@@ -161,3 +161,9 @@ Norton intercetta HTTPS: gli script che scaricano si lanciano con `truststore`:
 ```
 python -c "import truststore, runpy; truststore.inject_into_ssl(); runpy.run_path('scripts/aggiorna.py', run_name='__main__')"
 ```
+
+## Collaudo MANZO (regola 12 globale, 24/10/2026)
+- Pilota: `python -I ~/.claude/manzo/pilota_web.py <copione.json> <uscita> <cartella del progetto>` (istruzioni in testa al file). Serve la cartella su 127.0.0.1 e blocca la rete esterna.
+- Dati: prima `node scripts/lucchetto.js apri`, poi nel copione `{"nascondi": ["dati/lucchetto.json"]}` prima di `apri`: la pagina usa le copie in chiaro, senza password. Alla fine `lucchetto.js chiudi` (lezione apri→chiudi).
+- Misura: telefono 375x812 (default del pilota) e una grande (1280x800).
+- Mai la password in un campo, in chat o nel codice; copioni e catture solo nella cartella temporanea (repo pubblico: niente percorsi con il nome utente).
