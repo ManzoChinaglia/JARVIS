@@ -80,7 +80,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
     'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,cartaAtteso,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,dossierDi,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,forma,movimentoLega,risultatoLega,forfaitLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,campioneVoti,campioneFantavoti,partitaCondivisa,esitoPartita,quotePartita,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,dossierDi,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,forma,movimentoLega,risultatoLega,forfaitLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (attendi && el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -1342,6 +1342,54 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   mem39['jarvis-sfida-qi'] = JSON.stringify({ sa: g[1] - 1, io: io39, loro: [] });
   verifica('l\'altra lega di un\'altra giornata non vale', t.dossierDi(g, '').includes('non ho i suoi undici'));
   verifica('niente undefined né NaN', !/undefined|NaN/.test(con39), con39.length + ' caratteri');
+
+  console.log('\n40. La partita di Serie A condivisa nella simulazione (26/10/2026)');
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31 } }));
+  g = t.prossima();
+  // quote per tutte le partite dei club della mia rosa: in casa 1,9 gol attesi, fuori 0,8
+  const part40 = new Map();
+  t.mia.forEach(p => { const m = t.avversarioClub(p.club, g[1]); if(m) part40.set(m.casa ? p.club + '|' + m.avv : m.avv + '|' + p.club, 1); });
+  const quote40 = { aggiornato: 'x', giornate: { [String(g[1])]: [...part40.keys()].map(k => k.split('|').concat([1.9, 0.8, 'fixtures'])) } };
+  const media40 = x => x.reduce((a, b) => a + b, 0) / x.length;
+  const sd40 = x => { const m = media40(x); return Math.sqrt(x.reduce((a, b) => a + (b - m) ** 2, 0) / x.length); };
+  const corr40 = (x, y) => { const mx = media40(x), my = media40(y); let s = 0; for(let i = 0; i < x.length; i++) s += (x[i] - mx) * (y[i] - my);
+    return s / x.length / (sd40(x) * sd40(y)); };
+  // due compagni di squadra con il modello, per misurare quanto si muovono insieme
+  const conMod40 = p => t.votoAtteso(p, g) && t.attesoModello('fantavoto', p, g);
+  // (di movimento: due portieri dello stesso club non giocano insieme)
+  const mov40 = p => p.ruolo !== 'P' && conMod40(p);
+  const club40 = [...new Set(t.mia.map(p => p.club))].find(c => t.mia.filter(p => p.club === c && mov40(p)).length >= 2);
+  const [pa40, pb40] = t.mia.filter(p => p.club === club40 && mov40(p));
+  const indip40 = corr40(t.campioneFantavoti(pa40, 2000, g), t.campioneFantavoti(pb40, 2000, g));
+  ({ t, el } = await avvia({ adesso: giovedi, dati: { 'modello.json': m31, 'quote.json': quote40 } }));
+  g = t.prossima();
+  const qa40 = t.mia.find(p => p.id === pa40.id), qb40 = t.mia.find(p => p.id === pb40.id);
+  const va40 = t.campioneVoti(qa40, 2000, g), fa40 = t.campioneFantavoti(qa40, 2000, g), fb40 = t.campioneFantavoti(qb40, 2000, g);
+  const corrCon40 = corr40(fa40, fb40);
+  verifica('senza quote due compagni sono indipendenti, con le quote si muovono insieme', Math.abs(indip40) < 0.08 && corrCon40 > 0.05,
+           qa40.ruolo + qb40.ruolo + ': ' + indip40.toFixed(3) + ' → ' + corrCon40.toFixed(3));
+  const at40 = t.attesoModello('fantavoto', qa40, g), vt40 = t.votoAtteso(qa40, g);
+  verifica('media e ballo del giocatore restano quelli del modello', Math.abs(media40(fa40) - at40.media) < 0.15 && Math.abs(sd40(fa40) - at40.sd) < 0.2
+           && Math.abs(media40(va40) - vt40.media) < 0.1, media40(fa40).toFixed(2) + '±' + sd40(fa40).toFixed(2) + ' contro ' + at40.media.toFixed(2) + '±' + at40.sd.toFixed(2));
+  const pc40 = t.partitaCondivisa(qa40.club, g, 2000), m40 = t.avversarioClub(qa40.club, g[1]);
+  verifica('i gol estratti hanno la media dei gol attesi e il club giusto in casa', pc40 && Math.abs(media40(pc40.f)) < 0.1 && Math.abs(media40(pc40.s)) < 0.1
+           && pc40.lf === (m40.casa ? 1.9 : 0.8));
+  t.stimaVoti();
+  const fa40b = t.campioneFantavoti(t.mia.find(p => p.id === pa40.id), 2000, g);
+  verifica('ripetibile: ricalcolata da capo dà gli stessi campioni', fa40b && fa40b.every((x, i) => x === fa40[i]));
+  t.CALCOLO_VECCHIO = true;
+  const vec40 = corr40(t.campioneVoti(qa40, 2000, g), t.campioneVoti(qb40, 2000, g));
+  verifica('col calcolo di prima niente partita condivisa', t.partitaCondivisa(qa40.club, g, 2000) === null && Math.abs(vec40) < 0.08);
+  t.CALCOLO_VECCHIO = false;
+  const e40 = t.esitoPartita(1.9, 0.8);
+  verifica('esito 1X2 dai gol attesi: somma 1, favorita chi ha più gol attesi', circa(e40.uno + e40.x + e40.due, 1) && e40.uno > 0.55 && e40.due < 0.2
+           && e40.risultato === '1-0' && circa(e40.inviolataCasa, Math.exp(-0.8)), Math.round(100 * e40.uno) + '/' + Math.round(100 * e40.x) + '/' + Math.round(100 * e40.due) + ' ' + e40.risultato);
+  const ps40 = t.probabilitaSfida(g);
+  verifica('la sfida con la partita condivisa: probabilità valide', ps40 && circa(ps40.vittoria + ps40.pareggio + ps40.sconfitta, 1),
+           ps40 && Math.round(100 * ps40.vittoria) + '%');
+  const dos40 = t.dossierDi(g, '');
+  verifica('nel fascicolo gli esiti delle partite: 1X2, gol attesi, più probabile, porta inviolata',
+           /Esiti delle partite[^\n]*\n- \S.*: 1 \d+% X \d+% 2 \d+%, gol attesi .+, più probabile \d+-\d+, porta inviolata /.test(dos40) && !/undefined|NaN/.test(dos40));
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
 })().catch(e => { console.error('ERRORE', e); process.exit(2); });

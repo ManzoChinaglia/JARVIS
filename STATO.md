@@ -5,11 +5,40 @@
 Stato: in corso
 1. Formazioni G8 definitive importate il 23/10 (BF 4 4-3-3 con Perrone, QI 3 4-4-2 con Rowe). Dopo le partite della G8 (dom 25/10): «dati di lega» per entrambe (QI: `importa_lega.py --lega qi <classifica.txt> <calendario.txt>`, PROCEDURE.md). Poi: verificare da una sessione cloud che si apra www.fantacalcio.it (domini aggiunti dall'utente il 23/10) e solo allora aggiornare CLAUDE.md e skill dubbio. «Ragiona con Jarvis» v3 FATTO 23/10 (`6154f2b`, prove 359/359): il fascicolo porta l'altra lega (salvata in localStorage quando si apre la sua Giornata, accoppiata per giornata di Serie A) e l'incastro tra le leghe, più i controlli da fare sul web; la skill dubbio ha il modo di ragionare concordato (verdetto prima, quote 1X2, scommessa/protezione, coperture tra leghe). Da provare sull'iPhone: aprire tutte e due le leghe nello stesso posto (app Home e Safari hanno memorie separate).
 2. Cervello calcistico a 360°: fase A + news PUSHATI il 22/10 (`8dca4de`, giro manuale verde). Il 23/10 dopo il giro delle 19:45: controllare che `statistiche.json` abbia i rigori (12 campi). B1 scartato; B2-B3 alla ricalibrazione di fine novembre.
-3. «Ragiona con Jarvis» FATTO (17/10): un solo bottone in Giornata sotto la sfida, copia il fascicolo (`dossierDi`) e apre claude.ai/code; in chat l'utente manda gli screen di Leghe e ragiona con la skill `dubbio` (nel repo, valida anche nel cloud). Prove 344/344. NON verificato sull'iPhone: se dalla schermata Home il link apre l'app Claude, e la copia negli appunti
+3. Simulatore degli esiti / partita condivisa (26/10, commit locale, NON pushato): push solo col sì dell'utente (cambia il consiglio: QI G8 modulo 5-3-2 → 4-3-3; G9 ancora senza quote). Prova G8 «come se non giocata»: serve I1.csv nuovo (download da confermare) o i voti G8. Sezione sotto. (Prima qui: «Ragiona con Jarvis» del 17/10, non verificato sull'iPhone se il link apre l'app Claude e la copia negli appunti)
 
 Altri punti aperti: grafica wow e sfida in tempo reale pushate (`657ecee`), resta la prova sul telefono; sfida in tempo reale: non provato che Leghe mostri l'avversario PRIMA della scadenza (verificare alla prossima; nessun automatismo, lo legge Claude quando l'utente scrive «formazione schierata»); una squadra della QI senza stemma; probabili: i 15 non abbinati controllati il 17/10, listone completo (603 = pagina quotazioni), 13 non sono nel listone ufficiale (non acquistabili), Fernandez A. del Venezia non verificabile; Romero D. del Parma ora abbinato con alias (fonte «ROMERO J»), dal 17/10.
 
 (al 17/10/2026 sera — campo ridisegnato con avversario, consiglio ridotto al solo banner del modificatore (non cliccabile; vista e `apriConsiglio` tolti), mercato tolto, stemmi delle altre squadre come data URI in `dati/lega.json` → `stemmi` (cifrato; `importa_lega.py` li conserva), podio in Lega; prove 339/339)
+
+## SIMULATORE DEGLI ESITI DI SERIE A — idea dell'utente (Opus, 26/10/2026), aspetta la sua decisione
+
+**Richiesta (26/10):** Jarvis calcola anche gli esiti delle partite di Serie A (simulazione su un campione), lo si
+prova su una giornata già giocata e, se ci va vicino, diventa un peso per i singoli giocatori.
+**Cosa c'è già:** gol attesi da 1X2 e Over/Under 2,5 (`lambda_da_quote`, `dati/quote.json`, storico 2017-26), serie
+«con quote» del modello tenuta per ruolo solo se `--verifica` migliora; simulazione della sfida (`probabilitaSfida`,
+2000 giri) e suggerimento pavimento/soffitto da favorito/sfavorito (B3).
+**Cosa manca:** la simulazione estrae voti e bonus **indipendenti per giocatore** (`campioneVoti`, `campioneFantavoti`,
+seme per id): non c'è un risultato della partita condiviso dai compagni di squadra.
+**Misura sullo storico (26/10, 2017-26, scarto dal fantavoto medio stagionale del giocatore, coppie di compagni nella
+stessa partita):** correlazione D-P 0,23, D-D 0,14, C-D 0,11, A-A 0,11, A-C 0,11, A-P 0,05. Nelle formazioni vere
+(BF G1-G4, QI G1-G3) le coppie della stessa squadra sono 1-5, quindi la varianza del totale sale del 2-10%
+(stima con correlazione media 0,11): sotto la soglia di 1,1 concordata con l'advisor, salvo la BF della G1.
+L'utente ha scelto di farlo lo stesso («anche se pesa poco»).
+**Fatto il 26/10 (non pushato, aspetta l'ok):** dallo storico, regressione dello scarto di voto e fantavoto sui gol
+fatti e subiti della squadra (fantavoto per gol fatto/subito: A +0,91/−0,08, C +0,46/−0,15, D +0,24/−0,27, P 0/−1,13);
+dopo i gol la correlazione fra compagni resta ~0 (−0,15/+0,01): i gol spiegano tutto. In `index.html` `partitaCondivisa`,
+`parteGol`, `esitoPartita`, `quotePartita`, `BETA_PARTITA` (dettagli in RIFERIMENTO.md); fascicolo con «Esiti delle
+partite». `quote.py --calibra`: 3478 partite 2017-27, Brier 1X2 dai gol attesi 0,5669, quote nude 0,5653, sole
+frequenze 0,6547; esito più probabile 55%; gol casa attesi 1,52 veri 1,46 (leggera sovrastima), porta inviolata
+nelle fasce 10-30% sovrastimata di 2-3 punti. G8 provata come se non giocata: archivio quote fermo al 13/10, va
+riscaricato I1 (download da confermare) per vederla. Effetto sulla sfida BF G8 (banco con dati veri al 24/10, 20.000 simulazioni): vinco
+46,0 → 45,7%, pari 25,5 → 25,9%, perdo 28,5 → 28,4%; ballo del totale 5,60 → 5,94; correlazione fra i due totali
+−0,003 → +0,026 (5 partite in comune); nessun suggerimento in tutti e due i casi. Con 2000 simulazioni (quelle
+mostrate) il rumore è ±1 punto: il salto 24,9 → 27,5 dei pareggi visto a 2000 era rumore. Consiglio: BF G8 e G9
+uguali; QI G8 modulo consigliato 5-3-2 → 4-3-3 (modificatore col blocco difensivo correlato). QI G8: nel banco la probabilità non esce né prima né dopo (3 avversari senza modello: Hainaut, Comuzzo,
+Adopo), da controllare. Prove: app 367/367, script 120/120, tutte le altre verdi. MANZO: non collaudabile (manca il
+pilota di JARVIS); nessuna interfaccia nuova.
 
 ## CERVELLO A 360° — piano (Opus, 22/10/2026; si esegue con Sonnet)
 

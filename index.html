@@ -2052,7 +2052,7 @@ function bonusModificatore(media){
 const PARTITE_PRIOR_VOTO = 4;
 let VOTO_RUOLO = {}, BALLO = null;
 function stimaVoti(){
-  VOTO_RUOLO = {}; BALLO = null; CAMPIONI = {}; BLOCCHI = {}; CAMPIONI_FV = {}; SFIDE = {};
+  VOTO_RUOLO = {}; BALLO = null; CAMPIONI = {}; BLOCCHI = {}; CAMPIONI_FV = {}; SFIDE = {}; PARTITE = {};
   ['P','D','C','A'].forEach(r=>{
     const g = players.filter(p=>p.ruolo===r && p.pgv>0), W = g.reduce((s,p)=>s+p.pgv, 0);
     VOTO_RUOLO[r] = W ? g.reduce((s,p)=>s+p.pgv*p.mv, 0)/W : null;
@@ -2180,6 +2180,56 @@ function normale(r){
   while(u === 0) u = r();
   return Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*r());
 }
+/* La partita di Serie A condivisa (26/10/2026, idea dell'utente): in ogni simulazione i gol di ogni partita si
+   estraggono una volta dalle quote (Poisson sui gol attesi) e valgono per tutti i giocatori dei due club, di tutte
+   e due le squadre della sfida. Voto e fantavoto si spostano coi gol fatti e subiti della propria squadra (scarto
+   dai gol attesi), con i coefficienti misurati sullo storico 2017-26: i gol spiegano tutta la correlazione fra
+   compagni (dopo, quella che resta è ~0). Media e ballo del giocatore non cambiano: il ballo spiegato dai gol si
+   toglie da quello suo. Senza quote per la partita, o col calcolo di prima, i giocatori restano indipendenti. */
+const BETA_PARTITA = {voto: {P:[0.004, -0.153], D:[0.122, -0.255], C:[0.191, -0.139], A:[0.309, -0.082]},
+                      fantavoto: {P:[0.005, -1.125], D:[0.243, -0.268], C:[0.461, -0.149], A:[0.913, -0.084]}};
+let PARTITE = {};
+/* quanto della varianza v spiegano i gol (coefficienti b sugli scarti di gol fatti e subiti, Poisson: varianza = gol
+   attesi): se supera il 90% di v (un giocatore che balla meno del suo ruolo) i coefficienti si riducono, così il ballo
+   totale resta quello del modello. {k: fattore sui coefficienti, resto: varianza che resta al giocatore} */
+function parteGol(v, b, pa){
+  const sv = b[0]*b[0]*pa.lf + b[1]*b[1]*pa.ls, k = sv > 0.9*v ? Math.sqrt(0.9*v/sv) : 1;
+  return {k, resto: Math.max(0.01, v - k*k*sv)};
+}
+function semeTesto(s){ let h = 2166136261; for(let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return h|0; }
+function poisson(l, r){ let k = 0, p = Math.exp(-l), c = p; const u = r(); while(u > c && k < 20){ k++; p *= l/k; c += p; } return k; }
+/* gol attesi della partita del club nella giornata di Serie A sa, dalle quote: {casa, trasf, gol attesi, club in casa} o null */
+function quotePartita(club, sa){
+  const m = D.quote && avversarioClub(club, sa);
+  const q = m && (D.quote[String(sa)] || []).find(x=>m.casa ? x[0]===club && x[1]===m.avv : x[0]===m.avv && x[1]===club);
+  return q ? {casa: q[0], trasf: q[1], lc: q[2], lt: q[3], inCasa: m.casa} : null;
+}
+/* per il club: scarti dai gol attesi, fatti (f) e subiti (s), nelle n simulazioni, e i gol attesi (lf, ls) */
+function partitaCondivisa(club, g, n){
+  const q = g && !CALCOLO_VECCHIO && quotePartita(club, g[1]);
+  if(!q) return null;
+  const chiave = g[1]+':'+q.casa+':'+q.trasf+':'+n;
+  let x = PARTITE[chiave];
+  if(!x){
+    const r = casuale(semeTesto(chiave)), gc = new Float64Array(n), gt = new Float64Array(n);
+    for(let i = 0; i < n; i++){ gc[i] = poisson(q.lc, r) - q.lc; gt[i] = poisson(q.lt, r) - q.lt; }
+    x = PARTITE[chiave] = {gc, gt};
+  }
+  return q.inCasa ? {f: x.gc, s: x.gt, lf: q.lc, ls: q.lt} : {f: x.gt, s: x.gc, lf: q.lt, ls: q.lc};
+}
+/* esito della partita dai gol attesi (Poisson indipendenti): 1, X, 2, il risultato più probabile, porta inviolata */
+function esitoPartita(lc, lt){
+  const pc = k => Math.exp(-lc)*Math.pow(lc, k)/[1,1,2,6,24,120,720,5040,40320,362880,3628800][k];
+  const pt = k => Math.exp(-lt)*Math.pow(lt, k)/[1,1,2,6,24,120,720,5040,40320,362880,3628800][k];
+  let uno = 0, x = 0, due = 0, top = [0, 0, -1];
+  for(let a = 0; a <= 10; a++) for(let b = 0; b <= 10; b++){
+    const p = pc(a)*pt(b);
+    if(a > b) uno += p; else if(a === b) x += p; else due += p;
+    if(p > top[2]) top = [a, b, p];
+  }
+  const t = uno + x + due;
+  return {uno: uno/t, x: x/t, due: due/t, risultato: top[0]+'-'+top[1], inviolataCasa: Math.exp(-lt), inviolataTrasf: Math.exp(-lc)};
+}
 const SIMULAZIONI = 2000;        // per il numero che si mostra
 const SIMULAZIONI_SCELTA = 250;  // per confrontare le combinazioni fra loro (confronto appaiato: bastano poche)
 /* i campioni si tengono da parte: provare settanta combinazioni rigenerandoli ogni
@@ -2191,8 +2241,10 @@ function campioneVoti(p, n, g){
   if(CAMPIONI[chiave]) return CAMPIONI[chiave];
   const v = votoAtteso(p, g);
   if(!v) return null;
+  const pa = partitaCondivisa(p.club, g, n), b = pa && BETA_PARTITA.voto[p.ruolo], pg = b && parteGol(v.sd*v.sd, b, pa);
+  const sd = pg ? Math.sqrt(pg.resto) : v.sd, bf = pg ? pg.k*b[0] : 0, bs = pg ? pg.k*b[1] : 0;
   const r = casuale(p.id*7919 + 13), out = new Float64Array(n);
-  for(let i = 0; i < n; i++) out[i] = arrotondaVoto(v.media + v.sd*normale(r));
+  for(let i = 0; i < n; i++) out[i] = arrotondaVoto(v.media + (pg ? bf*pa.f[i] + bs*pa.s[i] : 0) + sd*normale(r));
   return (CAMPIONI[chiave] = out);
 }
 
@@ -2687,9 +2739,13 @@ function campioneFantavoti(p, n, g){
   if(CAMPIONI_FV[chiave]) return CAMPIONI_FV[chiave];
   const a = attesoModello('fantavoto', p, g), va = votoAtteso(p, g), v = campioneVoti(p, n, g);
   if(!a || !va || !v) return null;
-  const mb = a.media - va.media, sdb = Math.sqrt(Math.max(0.05, a.sd*a.sd - va.sd*va.sd));
+  /* i bonus seguono la partita per la parte che il voto non ha già preso (fantavoto meno voto) */
+  const pa = partitaCondivisa(p.club, g, n), bf = pa && BETA_PARTITA.fantavoto[p.ruolo], bv = pa && BETA_PARTITA.voto[p.ruolo];
+  const vb = Math.max(0.05, a.sd*a.sd - va.sd*va.sd), pg = pa && parteGol(vb, [bf[0] - bv[0], bf[1] - bv[1]], pa);
+  const df = pg ? pg.k*(bf[0] - bv[0]) : 0, ds = pg ? pg.k*(bf[1] - bv[1]) : 0;
+  const mb = a.media - va.media, sdb = Math.sqrt(pg ? Math.max(0.05, pg.resto) : vb);
   const r = casuale(p.id*104729 + 7), out = new Float64Array(n);
-  for(let i = 0; i < n; i++) out[i] = v[i] + mb + sdb*normale(r);
+  for(let i = 0; i < n; i++) out[i] = v[i] + mb + (pg ? df*pa.f[i] + ds*pa.s[i] : 0) + sdb*normale(r);
   return (CAMPIONI_FV[chiave] = out);
 }
 /* i totali di una squadra nelle simulazioni: fantavoti dei suoi undici più il suo
@@ -2865,6 +2921,19 @@ function dossierDi(g, dubbio){
       .map(([nome, x]) => '- '+nome+': '+[x.io.length ? 'io '+x.io.join(', ') : '', x.loro.length ? 'loro '+x.loro.join(', ') : ''].filter(Boolean).join('; '));
     return righe.length ? 'Incastro (partite con almeno 2 giocatori della sfida):\n'+righe.join('\n') : '';
   };
+  /* gli esiti delle partite dei giocatori della sfida, dalle quote (26/10/2026): 1X2, risultato più probabile, porta inviolata */
+  const esiti = () => {
+    const viste = new Map();
+    tutti(u).concat(tutti(s.loro.u)).forEach(p => {
+      const q = quotePartita(p.club, g[1]);
+      if(q && !viste.has(q.casa+'-'+q.trasf)) viste.set(q.casa+'-'+q.trasf, q);
+    });
+    const righe = [...viste].sort(([, a], [, b]) => { const x = oraPartita(a.casa, g[1]), y = oraPartita(b.casa, g[1]); return x && y ? x - y : 0; })
+      .map(([k, q]) => { const e = esitoPartita(q.lc, q.lt);
+        return '- '+k+': 1 '+pc(e.uno)+' X '+pc(e.x)+' 2 '+pc(e.due)+', gol attesi '+num(q.lc)+'-'+num(q.lt)+', più probabile '+e.risultato+
+          ', porta inviolata '+q.casa+' '+pc(e.inviolataCasa)+' '+q.trasf+' '+pc(e.inviolataTrasf); });
+    return righe.length ? 'Esiti delle partite (dalle quote, la simulazione della sfida li usa):\n'+righe.join('\n') : '';
+  };
   /* l'altra lega: i suoi undici e l'incastro per partita fra tutte e due (chi copre chi tra le leghe) */
   const sigla = id => String(id || '').toUpperCase();
   const dueLeghe = () => {
@@ -2915,6 +2984,7 @@ function dossierDi(g, dubbio){
     'Avversario: '+s.avv+', '+loro.modulo+(loro.vero ? ', formazione VERA letta da Leghe' : ', formazione STIMATA da Jarvis (non ancora schierata)')+':',
     tutti(loro.u).map(p=>p.ruolo+' '+p.nome+' ('+p.club+') '+num(att(p))).join(', '),
     incastro(),
+    esiti(),
     'Totali attesi:io '+num(ps ? ps.mio : s.mio.tot)+' contro '+num(ps ? ps.loro : s.loro.tot)+(ps ? ' · vinco '+pc(ps.vittoria)+', pareggio '+pc(ps.pareggio)+', perdo '+pc(ps.sconfitta) : ''),
     '',
     dueLeghe(),

@@ -21,6 +21,7 @@ Uso: python scripts/quote.py                 scarica I1.csv e fixtures.csv, aggi
                                              veri di orari.json); un guasto di rete non è un errore (Actions)
      python scripts/quote.py --file X.csv... usa file già scaricati (nessuna rete)
      python scripts/quote.py --storico       ricostruisce dati/quote-storico.json.gz dall'archivio
+     python scripts/quote.py --calibra       banco degli esiti sull'archivio: 1X2, gol, porta inviolata (solo a schermo)
 Su questo PC (Norton intercetta HTTPS) lanciarlo con truststore, come aggiorna.py.
 """
 import csv, glob, gzip, io, json, math, os, re, sys
@@ -228,6 +229,73 @@ def storico_da_archivio(cartella=ARCHIVIO):
     return out
 
 
+def esito_poisson(lc, lt):
+    """(P(1), P(X), P(2), risultato più probabile) da gol attesi indipendenti: come esitoPartita in index.html."""
+    x, y = _pmf(lc), _pmf(lt)
+    p = [[x[i] * y[j] for j in range(11)] for i in range(11)]
+    uno = sum(p[i][j] for i in range(11) for j in range(11) if i > j)
+    pari = sum(p[i][i] for i in range(11))
+    due = sum(p[i][j] for i in range(11) for j in range(11) if i < j)
+    t = uno + pari + due
+    i, j = max(((i, j) for i in range(11) for j in range(11)), key=lambda ij: p[ij[0]][ij[1]])
+    return uno / t, pari / t, due / t, (i, j)
+
+
+def calibra(cartella=ARCHIVIO):
+    """Banco degli esiti (26/10/2026): sulle partite giocate dell'archivio, quanto tornano 1X2, gol e porta
+    inviolata ricavati dai gol attesi, contro le quote 1X2 nude e contro le sole frequenze del campionato.
+    Brier sull'1X2 (più basso = meglio). Solo lettura, scrive a schermo."""
+    ultimi = {}
+    for p in sorted(glob.glob(os.path.join(cartella, 'I1_????_*.csv'))):
+        ultimi[os.path.basename(p).split('_')[1]] = p
+    righe = []      # (stagione, casa, trasf, lc, lt, quote 1X2 normalizzate, gol casa, gol trasf)
+    for s, p in sorted(ultimi.items()):
+        for x in csv.DictReader(io.StringIO(_leggi(p).lstrip('﻿'))):
+            gc, gt = _num(x.get('FTHG')), _num(x.get('FTAG'))
+            g = lambda k, b: _num(x.get(k)) or _num(x.get(b))
+            q = [g('AvgH', 'BbAvH'), g('AvgD', 'BbAvD'), g('AvgA', 'BbAvA')]
+            lam = lambda_da_quote(*q, g('Avg>2.5', 'BbAv>2.5'), g('Avg<2.5', 'BbAv<2.5'))
+            if gc is None or gt is None or not lam:
+                continue
+            s1 = sum(1 / v for v in q)
+            righe.append((s, x['HomeTeam'], x['AwayTeam'], lam[0], lam[1], [1 / v / s1 for v in q], int(gc), int(gt)))
+    if not righe:
+        print('[quote] nessuna partita giocata con quote nell\'archivio.')
+        return 1
+    vero = lambda r: [1.0 * (r[6] > r[7]), 1.0 * (r[6] == r[7]), 1.0 * (r[6] < r[7])]
+    brier = lambda p, v: sum((a - b) ** 2 for a, b in zip(p, v))
+    freq = [sum(vero(r)[k] for r in righe) / len(righe) for k in range(3)]
+    b_pois = b_quote = b_freq = azz = esatti = 0
+    for r in righe:
+        e = esito_poisson(r[3], r[4])
+        v = vero(r)
+        b_pois += brier(e[:3], v); b_quote += brier(r[5], v); b_freq += brier(freq, v)
+        azz += max(range(3), key=lambda k: e[k]) == v.index(1.0)
+        esatti += e[3] == (r[6], r[7])
+    n = len(righe)
+    print(f'[quote] banco degli esiti: {n} partite giocate, stagioni {righe[0][0]}-{righe[-1][0]}')
+    print(f'  Brier 1X2: dai gol attesi {b_pois / n:.4f} · quote nude {b_quote / n:.4f} · solo frequenze {b_freq / n:.4f}')
+    print(f'  esito più probabile azzeccato {100 * azz / n:.1f}% · risultato esatto più probabile {100 * esatti / n:.1f}%')
+    print(f'  gol a partita: attesi casa {sum(r[3] for r in righe) / n:.3f} veri {sum(r[6] for r in righe) / n:.3f}'
+          f' · attesi trasferta {sum(r[4] for r in righe) / n:.3f} veri {sum(r[7] for r in righe) / n:.3f}')
+    print('  porta inviolata (prevista → vera, per fasce):')
+    fasce = {}
+    for r in righe:
+        for prev, subiti in ((math.exp(-r[4]), r[7]), (math.exp(-r[3]), r[6])):
+            f = fasce.setdefault(min(int(prev * 10), 9), [0, 0.0, 0])
+            f[0] += 1; f[1] += prev; f[2] += subiti == 0
+    for k in sorted(fasce):
+        f = fasce[k]
+        if f[0] >= 30:
+            print(f'    {10 * k:>2}-{10 * k + 10}%: {100 * f[1] / f[0]:5.1f}% → {100 * f[2] / f[0]:5.1f}%  ({f[0]} squadre)')
+    ultime = [r for r in righe if r[0] == righe[-1][0]][-10:]
+    print(f'  ultime {len(ultime)} partite giocate in archivio (stagione {righe[-1][0]}), previste come se non giocate:')
+    for r in ultime:
+        e = esito_poisson(r[3], r[4])
+        print(f'    {r[1]}-{r[2]}: 1 {100 * e[0]:.0f}% X {100 * e[1]:.0f}% 2 {100 * e[2]:.0f}%, più probabile {e[3][0]}-{e[3][1]}, finita {r[6]}-{r[7]}')
+    return 0
+
+
 def in_finestra(orari, adesso, ore=72):
     """Giornate con almeno una partita che inizia nelle prossime `ore` ore (dall'orario vero di
     ogni partita in orari.json): finché c'è una partita da giocare le quote si riscaricano a ogni
@@ -251,6 +319,8 @@ def _leggi(percorso):
 
 
 def main(argv):
+    if '--calibra' in argv:
+        return calibra()
     with open(os.path.join(DATI, 'orari.json'), encoding='utf-8') as f:
         orari = json.load(f)
     if '--storico' in argv:

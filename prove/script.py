@@ -454,6 +454,9 @@ fav = qt.lambda_da_quote(1.5, 4.2, 6.5, 1.8, 2.0)
 verifica('favorita in casa: piu\' gol attesi in casa che fuori', fav and fav[0] > fav[1] > 0, fav)
 verifica('totale coerente col piu\'/meno 2,5 (quota 1,9/1,9 = totale attorno a 2,5)', 2.0 < sum(pari) < 3.2, sum(pari))
 verifica('manca una quota: nessun valore inventato', qt.lambda_da_quote(2.0, 3.0, None, 1.9, 1.9) is None)
+e19 = qt.esito_poisson(1.9, 0.8)
+verifica('esito dai gol attesi: somma 1, come esitoPartita dell\'app (63/22/15, 1-0)', abs(sum(e19[:3]) - 1) < 1e-9
+         and [round(100 * x) for x in e19[:3]] == [63, 22, 15] and e19[3] == (1, 0), e19)
 CSV_Q = ('Div,HomeTeam,AwayTeam,FTHG,AvgH,AvgD,AvgA,Avg>2.5,Avg<2.5\n'
          'I1,Spal,Roma,1,2.6,3.4,2.6,1.9,1.9\n'
          'E0,Altra,Altra2,0,2.0,3.0,3.5,1.9,1.9\n'

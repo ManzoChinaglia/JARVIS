@@ -143,6 +143,12 @@ l'iPhone le riprende solo togliendo e rimettendo l'app sulla Home.
   più bonus per ogni giocatore, modificatore per squadra, gol con `REGOLE_GOL` = **primo
   gol a 66, poi uno ogni 5** (verificato dall'utente). `suggerimentoSfida`: un cambio in C
   o A solo se la vittoria sale di ≥ 2 punti (`SOGLIA_SUGGERIMENTO`) e i due sono entro 0,5.
+- **Partita condivisa** (dal 26/10/2026, `partitaCondivisa`): in ogni simulazione i gol di ogni partita di Serie A
+  si estraggono una volta dalle quote (Poisson sui gol attesi di `quote.json`), uguali per tutti i giocatori dei due
+  club e per tutte e due le squadre della sfida; voto e bonus si spostano con gli scarti dei gol fatti e subiti
+  (`BETA_PARTITA`, misurati sullo storico 2017-26), il resto del ballo resta del giocatore (`parteGol`: media e
+  ballo invariati). Senza quote o col calcolo di prima, giocatori indipendenti come prima. `esitoPartita`: 1X2,
+  risultato più probabile e porta inviolata, nel fascicolo («Esiti delle partite»). Banco: `quote.py --calibra`.
 - **Difesa a tre** (`conModificatore(mod)` falso): difensori uno per uno, niente
   modificatore. Migliore a posteriori (`miglioreUndici`) e mercato restano sui moduli a
   quattro (`MODULI_4`).
