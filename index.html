@@ -796,7 +796,7 @@
   .pb-num em{margin-left:2px; font-style:normal; font-size:11px; color:var(--dim);}
   .pb-num small{display:block; margin-top:3px; font-size:10.5px; color:var(--dim); white-space:nowrap;}
   .pb-andamento{display:inline-flex; gap:2px; align-items:flex-end; height:11px; margin-left:4px; vertical-align:-1px;}
-  .pb-andamento i{width:3px; border-radius:1px; background:rgba(240,199,94,.85);}
+  .pb-andamento i{width:3px; border-radius:1px; background:rgba(243,239,230,.6);}
   .pb-andamento i.sv{height:3px; background:rgba(255,255,255,.2);}
   .ruolo-P{color:#E4B451;} .ruolo-D{color:#7FB3D5;} .ruolo-C{color:#71C295;} .ruolo-A{color:#E0605C;}
   .pb-sigla.ruolo-P{background:#E4B451;} .pb-sigla.ruolo-D{background:#7FB3D5;}
@@ -1214,14 +1214,16 @@
   #campo .av b{font-weight:700; letter-spacing:.05em;}
 
   /* --- Focus sezioni non viste nei mockup (17/10): stesso linguaggio di gala --- */
-  .pb-reparto{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015)); border:1px solid rgba(255,255,255,.09); position:relative;}
+  /* vetro scuro e sfocato: lo stemma dietro non deve passare sotto le righe secondarie */
+  .pb-reparto{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015)), rgba(12,14,13,.92); border:1px solid rgba(255,255,255,.09); position:relative;
+              -webkit-backdrop-filter:var(--vetro-sfoca); backdrop-filter:var(--vetro-sfoca);}
   .pb-reparto::before{content:""; position:absolute; left:14px; right:14px; top:0; height:1px; background:linear-gradient(90deg,transparent,rgba(240,199,94,.55),transparent);}
   .pb-testa{font-family:"Space Grotesk",sans-serif; font-weight:600; color:var(--dim);}
   .pb-sigla{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:14px; box-shadow:0 0 12px -2px currentColor;}
   .pb-sigla.ruolo-P{box-shadow:0 0 12px -2px #E4B451;} .pb-sigla.ruolo-D{box-shadow:0 0 12px -2px #7FB3D5;}
   .pb-sigla.ruolo-C{box-shadow:0 0 12px -2px #71C295;} .pb-sigla.ruolo-A{box-shadow:0 0 12px -2px #E0605C;}
   .pb-riga + .pb-riga{border-top:1px solid rgba(255,255,255,.06);}
-  .pb-ord small{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:17px; color:var(--oro);}
+  .pb-ord small{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:17px; color:var(--dim);}
   .pb-chi b, .ko-chi b, .qg-testa b{font-family:"Big Shoulders Display",sans-serif; font-weight:700; font-size:19px; letter-spacing:.01em;}
   .pb-chip{font-family:"Space Grotesk",sans-serif;}
   .pb-num b{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:30px; color:#fff;}
