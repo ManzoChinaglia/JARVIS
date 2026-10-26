@@ -458,7 +458,7 @@
   /* classifica: dettaglio con le intestazioni, punti in un riquadro loro */
   .team.cl{align-items:flex-start;}
   .team.cl .pos, .team.cl .stemma{margin-top:4px;}
-  .cl-nome{display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600;}
+  .cl-nome{display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:anywhere; line-height:1.25; font-weight:600;}
   .cl-st{display:grid; grid-template-columns:repeat(6,minmax(0,1fr)) minmax(0,1.5fr); gap:2px; max-width:230px; margin-top:7px;}
   .cl-st span{text-align:center;}
   .cl-st i{display:block; font-style:normal; font-size:9px; letter-spacing:.06em; color:rgba(243,239,230,.42);}
@@ -993,7 +993,8 @@
       -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); box-shadow:0 8px 20px rgba(0,0,0,.25);
       animation:sale .45s var(--morbida) both; animation-delay:calc(var(--i) * .025s);}
   .rc .sagoma{width:48px; height:48px; margin-bottom:6px;}
-  .rc-nome{max-width:100%; font-size:12.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .rc-nome{max-width:100%; font-size:12.5px; line-height:1.2; font-weight:600; overflow:hidden; overflow-wrap:anywhere;
+           display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;}
   .rc-sotto{max-width:100%; font-size:10.5px; line-height:1.3; text-align:center; color:var(--dim); overflow:hidden;}
   .rc[data-stato="dubbio"]{border-color:rgba(252,209,22,.35);}
   .rc.fuori{opacity:.6;}
@@ -1271,7 +1272,8 @@
   .pd-n{position:absolute; right:-2px; bottom:-2px; width:24px; height:24px; display:grid; place-items:center; border-radius:50%; font-size:16px; font-weight:800; font-style:normal; color:#1b1405;
         background:linear-gradient(180deg,#fbe7a6,#d9a63a); box-shadow:0 2px 8px rgba(0,0,0,.5);}
   .pd2 .pd-n{background:linear-gradient(180deg,#f3f5f8,#a7b0bd);} .pd3 .pd-n{background:linear-gradient(180deg,#f1c79b,#b9753a);}
-  .pd-nome{margin-top:6px; max-width:100%; padding:0 2px; font:600 12px/1.15 "Space Grotesk",sans-serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .pd-nome{margin-top:6px; max-width:100%; padding:0 2px; font:600 12px/1.15 "Space Grotesk",sans-serif; overflow:hidden; overflow-wrap:anywhere;
+          display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;}
   .pd.io .pd-nome{color:var(--oro-chiaro);}
   .pd-pt{margin-top:2px; font-size:30px; font-weight:800; line-height:1; background:linear-gradient(180deg,#fff6d6,#f0c75e 60%,#b98a2a); -webkit-background-clip:text; background-clip:text; color:transparent;}
   .pd1 .pd-pt{font-size:40px;}
@@ -2498,7 +2500,8 @@ function disegnaCampo(g){
   const ko = mia.filter(p=>!disponibile(p,g[2]));
   const koHtml = !ko.length ? '' : '<h2>Non disponibili</h2>'+(ko.length === 1 ? cartaKo(ko[0], g)
     : '<div data-ko-tutti>'+invito('<b class="cond ko-conta">'+ko.length+'</b>', ko.length+' giocatori', ko.map(p=>p.nome).join(', '),
-        ko.map(p=>{ const v = fuoriGiornata(p, g[2]); return v ? v.motivo : p.motivo || 'fuori'; }).join(' · '))+'</div>');
+        Object.entries(ko.reduce((c, p)=>{ const v = fuoriGiornata(p, g[2]), m = v ? v.motivo : p.motivo || 'fuori';
+          c[m] = (c[m] || 0) + 1; return c; }, {})).map(([m, n])=>(n > 1 ? n+'× ' : '')+m).join(' · '))+'</div>');
   if(koHtml !== koDisegnato){ koDisegnato = koHtml; document.getElementById('kobox').innerHTML = koHtml; }
 }
 let koDisegnato = null;
