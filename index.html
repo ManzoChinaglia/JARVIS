@@ -281,12 +281,13 @@
             white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.9);}
 
   /* ---- la sfida, sulla carta ---- */
-  .sfida-carta{padding:16px 14px 12px; background:rgba(20,26,23,.86);}
+  .sfida-carta{padding:16px 14px 12px; background:linear-gradient(100deg,rgba(67,224,143,.16) 0%,rgba(20,26,23,.86) 45%,rgba(20,26,23,.86) 55%,rgba(255,122,122,.16) 100%);}
   .sf-testa{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px;}
   .sf-sq{display:flex; flex-direction:column; align-items:center; gap:5px; min-width:0; text-align:center;}
   .sf-sq .stemma{width:36px; height:41px;}
   .sf-sq b{max-width:100%; font-size:14px; line-height:1.05; font-weight:700; text-transform:uppercase; overflow-wrap:anywhere;}
-  .sf-tot{padding:4px 10px; border-radius:10px; background:#0b0e0d; font-size:27px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
+  .sf-tot{font-size:44px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
+  .sf-tot.perde{opacity:.5;}
   .sf-vs{font-size:13px; letter-spacing:.2em; color:var(--oro);}
   .sf-barra{height:8px; margin:13px 0 8px; border-radius:4px; background:rgba(255,255,255,.12); overflow:hidden;}
   .sf-barra i{display:block; height:100%; border-radius:4px; transform-origin:left; animation:cresce 1s var(--morbida) both;
@@ -306,9 +307,10 @@
   .sf-nomi{font-size:12.5px; line-height:1.4; text-align:right;}
   .sf-nomi.sf-destra{text-align:left;}
   .sf-nomi span{cursor:pointer;}
-  .sf-nomi small{display:block; margin-top:2px; font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:14px; color:var(--dim);}
-  .sf-nomi small.meglio{color:#43E08F;}
-  .sf-ruolo{width:26px; height:26px; border-radius:8px; display:grid; place-items:center; background:rgba(255,255,255,.06); font-size:14px;}
+  .sf-nomi small{display:block; margin-top:4px; font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:30px; line-height:1; color:rgba(241,243,239,.5);}
+  .sf-nomi small.meglio{color:var(--ink);}
+  .sf-nomi{color:var(--dim);}
+  .sf-ruolo{margin-top:4px; width:26px; height:26px; border-radius:8px; display:grid; place-items:center; background:rgba(255,255,255,.06); font-size:14px;}
   .sf-nota{margin:10px 0 0; font-size:11px; line-height:1.45; color:var(--dim);}
 
   /* ---- quando giocano i tuoi, formazione da copiare ---- */
@@ -335,16 +337,16 @@
   .qg-nomi em{margin-left:auto; font-style:normal; font-size:11px; color:var(--dim);}
   /* esiti «Duello» (26/10/2026): il numero in inchiostro, il colore della squadra su sottolineatura e barra */
   /* fondo scuro dietro al Duello: lo stemma del fondo passava sotto i numeri (collaudo MANZO 26/10) */
-  .qd{margin-top:10px; padding:10px 10px 8px; border-top:1px solid rgba(255,255,255,.08); border-radius:12px; background:rgba(6,8,7,.5); max-width:520px; margin-left:auto; margin-right:auto;}
+  .qd{margin-top:10px; padding:10px 10px 8px; border-top:1px solid rgba(255,255,255,.08); border-radius:12px; background:none; max-width:520px; margin-left:auto; margin-right:auto;}
   .qd-numeri{display:grid; grid-template-columns:1fr auto 1fr; align-items:end;}
   .qd-lato b, .qd-x b{display:block; font-family:"Barlow Condensed",sans-serif; font-weight:700; line-height:1; font-variant-numeric:tabular-nums;}
-  .qd-lato b{font-size:28px; color:var(--dim);}
-  .qd-lato.mio b{color:var(--ink);}
+  .qd-lato b{font-size:40px; color:rgba(241,243,239,.5);}
+  .qd-lato.vince b{color:var(--ink);}
   .qd-lato small, .qd-x small{display:block; margin-top:2px; font-size:11px; color:var(--dim);}
   .qd-lato.mio small{color:var(--ink); text-decoration:underline; text-decoration-color:var(--t); text-decoration-thickness:2px; text-underline-offset:3px;}
   .qd-lato.dx{text-align:right;}
   .qd-x{text-align:center;}
-  .qd-x b{font-size:18px; color:var(--dim);}
+  .qd-x b{font-size:20px; color:var(--dim);}
   .qd-barra{display:flex; gap:3px; height:8px; margin:8px 0; border-radius:999px; overflow:hidden;}
   .qd-barra i{display:block;}
   .qd-barra i.x{background:rgba(255,255,255,.22);}
@@ -447,8 +449,8 @@
   .forma{display:flex; gap:4px; margin-top:6px;}
   .forma .fp{width:16px; height:16px; flex:none; display:grid; place-items:center; border-radius:50%; font-style:normal;
              font-family:"Barlow Condensed",sans-serif; font-size:11px; font-weight:700; line-height:1;}
-  .forma .fp.v{background:var(--bf-verde); color:#EFFFF4;} .forma .fp.n{background:var(--bf-stella); color:#3A2F05;}
-  .forma .fp.p{background:var(--bf-rosso); color:#FFF1F1;}
+  .forma .fp.v{background:#007A38; color:#FFFFFF;} .forma .fp.n{background:var(--bf-stella); color:#3A2F05;}
+  .forma .fp.p{background:#C41B1D; color:#FFFFFF;}
   .forma .fp.da-giocare{border:1px dashed rgba(255,255,255,.22);}
   /* classifica: dettaglio con le intestazioni, punti in un riquadro loro */
   .team.cl{align-items:flex-start;}
@@ -836,8 +838,8 @@
   .lg-forma{display:flex; align-items:center; gap:5px; margin-top:5px; font-size:12px; color:var(--dim);}
   .lg-forma i{width:16px; height:16px; flex:none; display:grid; place-items:center; border-radius:50%; border:1px dashed rgba(255,255,255,.25);
              font-style:normal; font-family:"Barlow Condensed",sans-serif; font-size:11px; font-weight:700; line-height:1;}
-  .lg-forma i.v{background:var(--bf-verde); border:0; color:#EFFFF4;} .lg-forma i.n{background:var(--bf-stella); border:0; color:#3A2F05;}
-  .lg-forma i.p{background:var(--bf-rosso); border:0; color:#FFF1F1;}
+  .lg-forma i.v{background:#007A38; border:0; color:#FFFFFF;} .lg-forma i.n{background:var(--bf-stella); border:0; color:#3A2F05;}
+  .lg-forma i.p{background:#C41B1D; border:0; color:#FFFFFF;}
   .lg-trend{width:70px; height:48px; flex:none; overflow:visible;}
   .lg-trend line{stroke:rgba(255,255,255,.08);}
   .lg-trend polyline{fill:none; stroke:var(--oro); stroke-width:2; stroke-linejoin:round;}
@@ -977,7 +979,7 @@
   .filtri button.on, .vista button.on{color:var(--oro-chiaro); border-color:rgba(252,209,22,.45);
      background:linear-gradient(180deg,rgba(255,240,190,.22),rgba(228,180,81,.08)), rgba(46,36,10,.4);}
   .vista{display:flex; gap:4px; flex-shrink:0;}
-  .vista button{display:grid; place-items:center; padding:7px 9px;}
+  .vista button{display:grid; place-items:center; padding:7px 9px; min-width:44px; min-height:44px;}
   .vista svg{width:16px; height:16px;}
   #rosa[data-vista="maglie"] .lista, #rosa[data-vista="elenco"] .rosa-griglia{display:none;}
   .reparto-t small{margin-left:4px; font-size:11px; color:var(--dim);}
@@ -1222,7 +1224,9 @@
   .ko-voce span{font-family:"Space Grotesk",sans-serif; font-weight:600;}
   .qg-giorno{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:17px; letter-spacing:.14em;}
   .qg-ora{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:19px; border:1px solid currentColor;}
-  .qg-partita.forte{background:linear-gradient(180deg,rgba(233,185,73,.16),rgba(233,185,73,.04)); box-shadow:0 8px 24px -14px rgba(233,185,73,.6);}
+  .qg-partita.forte{box-shadow:0 8px 24px -14px rgba(233,185,73,.6);}
+  /* direzione A (Apple Sports, 26/10/2026): la card prende i colori delle due squadre, uno per lato, sopra il vetro */
+  .qg-partita, .qg-partita.forte{background:linear-gradient(100deg,color-mix(in srgb,var(--ca,#444) 38%,rgba(20,26,23,.66)) 0%,rgba(20,26,23,.66) 48%,rgba(20,26,23,.66) 52%,color-mix(in srgb,var(--cb,#444) 38%,rgba(20,26,23,.66)) 100%);}
   .qg-nomi span{font-family:"Space Grotesk",sans-serif; font-weight:500;}
   .qg-nomi span.in{background:linear-gradient(180deg,var(--oro-chiaro),var(--oro)); box-shadow:0 2px 10px -3px rgba(233,185,73,.7);}
   .sc-r{font-family:"Space Grotesk",sans-serif;}
@@ -2888,9 +2892,9 @@ function renderSfida(g){
     (senzaModello.length ? '<p class="sf-nota">Niente probabilità di vittoria: Jarvis non ha ancora un modello per '+
       senzaModello.join(', ')+'.</p>' : '');
   const html = '<h2>'+(s.loro.vero ? 'La sfida, con la formazione vera' : 'La sfida, sulla carta')+'</h2><div class="carta sfida-carta">'+
-    '<div class="sf-testa"><div class="sf-sq">'+stemma(ME)+'<b class="cond">'+ME+'</b><span class="sf-tot cond">'+num(s.mio.att.tot,1)+'</span></div>'+
+    '<div class="sf-testa"><div class="sf-sq">'+stemma(ME)+'<b class="cond">'+ME+'</b><span class="sf-tot cond'+(diff < 0 ? ' perde' : '')+'">'+num(s.mio.att.tot,1)+'</span></div>'+
     '<span class="sf-vs cond">VS</span>'+
-    '<div class="sf-sq">'+stemma(s.avv)+'<b class="cond">'+s.avv+'</b><span class="sf-tot cond">'+num(s.loro.att.tot,1)+'</span></div></div>'+
+    '<div class="sf-sq">'+stemma(s.avv)+'<b class="cond">'+s.avv+'</b><span class="sf-tot cond'+(diff > 0 ? ' perde' : '')+'">'+num(s.loro.att.tot,1)+'</span></div></div>'+
     barra+
     ['P','D','C','A'].map(reparto).join('')+
     '<p class="sf-nota">Tu '+s.mio.modulo+' · loro '+s.loro.modulo+(s.loro.vero ? ' <b class="sf-vero">schierato davvero</b>' + (s.loro.letto ? ' · letto alle '+oraBreve(new Date(s.loro.letto)).replace(/^\S+\s/, '') : '') : ' · stima di Jarvis')+
@@ -3099,7 +3103,7 @@ function renderQuando(g){
     const d = new Date(iso), [gg, hh] = oraBreve(d).split(' '), colore = COLORI_GIORNI[gg] || '#E4B451';
     const inCampo = miei.filter(p=>scelti.has(p.id)).length;
     if(gg !== giorno){ giorno = gg; partite += '<div class="qg-giorno" style="--c:'+colore+'">'+gg+'<i></i></div>'; }
-    partite += '<div class="qg-partita'+(inCampo >= 3 ? ' forte' : '')+(d.getTime()+2*3600000 < ora ? ' passata' : '')+'" style="--c:'+colore+'">'+
+    partite += '<div class="qg-partita'+(inCampo >= 3 ? ' forte' : '')+(d.getTime()+2*3600000 < ora ? ' passata' : '')+'" style="--c:'+colore+'; --ca:'+coloreClub(casa)+'; --cb:'+coloreClub(fuori)+'">'+
       '<div class="qg-testa"><span class="qg-maglie">'+maglia(casa)+maglia(fuori)+'</span><b>'+casa+' – '+fuori+'</b>'+
       '<span class="qg-ora cond">'+hh+'</span></div>'+
       '<div class="qg-nomi">'+miei.map(p=>'<span data-id="'+p.id+'"'+(scelti.has(p.id) ? ' class="in"' : '')+'>'+p.nome+'</span>').join('')+
@@ -3129,7 +3133,7 @@ function esitiQuando(casa, fuori, miei, sa){
   const e = esitoPartita(q.lc, q.lt), pc = x => Math.round(100*x)+'%', tre = cento3(e.uno, e.x, e.due);
   const mio = c => miei.some(p=>p.club===c), dif = c => miei.some(p=>p.club===c && (p.ruolo==='P' || p.ruolo==='D'));
   const scudo = (c, v) => '<span class="qs'+(dif(c) ? ' su' : '')+'">'+ICONA_SCUDO+'inviolata '+pc(v)+'</span>';
-  const lato = (c, v, cls) => '<div class="qd-lato '+cls+(mio(c) ? ' mio' : '')+'" style="--t:'+coloreClub(c)+'"><b>'+v+'%</b><small>'+c+'</small></div>';
+  const lato = (c, v, cls) => '<div class="qd-lato '+cls+(mio(c) ? ' mio' : '')+(v === Math.max(tre[0], tre[2]) ? ' vince' : '')+'" style="--t:'+coloreClub(c)+'"><b>'+v+'%</b><small>'+c+'</small></div>';
   return '<div class="qd"><div class="qd-numeri">'+lato(casa, tre[0], 'sx')+
     '<div class="qd-x"><b>'+tre[1]+'%</b><small>pari</small></div>'+lato(fuori, tre[2], 'dx')+'</div>'+
     '<div class="qd-barra"><i style="flex:'+e.uno+';background:'+coloreClub(casa)+'"></i><i class="x" style="flex:'+e.x+'"></i>'+

@@ -4,6 +4,8 @@
 
 **AGGIORNAMENTO 26/10 sera (fine sessione):** dati di lega BF G4 / QI G3 importati e pushati (`979c2b0`). Totale unico (fantavoti + modificatore) in tessera, sfida, fascicolo. Difetti MANZO giro 2 corretti (stima grezza senza modello → BOCA ha la probabilità; 1X2 del fascicolo a 100; Duello opaco max 520px; nota sul campo; --dim schiarito). Commit locali `a295a58`, `7e28153` NON pushati. Collaudo MANZO giro 3 LANCIATO e non ancora tornato: se PROMOSSO, chiedere l'ok all'utente per il push; se BOCCIATO, fermarsi e portargli i difetti (max 2 giri, regola 12). Grafica direzione A (Apple Sports) scelta ma non iniziata: serve il sì dell'utente per scaricare 3-4 immagini di riferimento (solo PC).
 
+**AGGIORNAMENTO 26/10 notte:** grafica direzione A (Apple Sports) applicata a Duello (sfumatura colori squadre, % a 40px) e Sfida (totali 44px, perdente al 50%) in index.html (+ righe Sfida in stile A, pallini forma e tasti Rosa a norma). MANZO bocciato 2 volte per precollaudo falso (criteri mai giudicati); commit voluto dall'utente senza MANZO, decide dalle catture. Push da fare con ok.
+
 ## Prossimo
 <!-- pannello «Punti aperti»: max 3 punti, una riga ciascuno; si aggiorna a fine sessione -->
 Stato: in corso
