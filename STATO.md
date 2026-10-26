@@ -2,6 +2,8 @@
 
 **PROSSIMA SESSIONE (26/10 sera, sessione al limite):** 1) l'utente decide quale totale mostrare nella sfida (proposta: quello del modello, come tessera, probabilità e fascicolo); 2) riferimenti grafici scelti con lui; 3) ricollaudo MANZO giro 2, l'ultimo (se BOCCIATO decide l'utente), copia di prova `archivio/mockup/app-g8.html`; 4) rebase su origin (main avanti 2, indietro 3), push solo su PROMOSSO. `dati/modello.json` non committato: lo ricostruisce il workflow con `altre_rose` dopo il push.
 
+**AGGIORNAMENTO 26/10 sera (fine sessione):** dati di lega BF G4 / QI G3 importati e pushati (`979c2b0`). Totale unico (fantavoti + modificatore) in tessera, sfida, fascicolo. Difetti MANZO giro 2 corretti (stima grezza senza modello → BOCA ha la probabilità; 1X2 del fascicolo a 100; Duello opaco max 520px; nota sul campo; --dim schiarito). Commit locali `a295a58`, `7e28153` NON pushati. Collaudo MANZO giro 3 LANCIATO e non ancora tornato: se PROMOSSO, chiedere l'ok all'utente per il push; se BOCCIATO, fermarsi e portargli i difetti (max 2 giri, regola 12). Grafica direzione A (Apple Sports) scelta ma non iniziata: serve il sì dell'utente per scaricare 3-4 immagini di riferimento (solo PC).
+
 ## Prossimo
 <!-- pannello «Punti aperti»: max 3 punti, una riga ciascuno; si aggiorna a fine sessione -->
 Stato: in corso
