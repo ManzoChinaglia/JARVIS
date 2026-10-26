@@ -39,7 +39,7 @@
              src:url("font/space-grotesk.woff2") format("woff2");}
   :root{
     --bg:#0B0E0C; --surface:#151A17; --surface2:#1C231F; --line:rgba(255,255,255,.08);
-    --ink:#F1F3EF; --dim:#9AA59E;
+    --ink:#F1F3EF; --dim:#A4AFA8;
     /* bandiera del Burkina Faso: rosso sopra, verde sotto, stella gialla */
     --bf-rosso:#EF2B2D; --bf-verde:#009E49; --bf-stella:#FCD116;
     --accento:var(--bf-stella);   /* accento principale: il giallo della stella */
@@ -286,7 +286,7 @@
   .sf-sq{display:flex; flex-direction:column; align-items:center; gap:5px; min-width:0; text-align:center;}
   .sf-sq .stemma{width:36px; height:41px;}
   .sf-sq b{max-width:100%; font-size:14px; line-height:1.05; font-weight:700; text-transform:uppercase; overflow-wrap:anywhere;}
-  .sf-tot{font-size:27px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
+  .sf-tot{padding:4px 10px; border-radius:10px; background:#0b0e0d; font-size:27px; font-weight:700; line-height:1; color:var(--oro-chiaro);}
   .sf-vs{font-size:13px; letter-spacing:.2em; color:var(--oro);}
   .sf-barra{height:8px; margin:13px 0 8px; border-radius:4px; background:rgba(255,255,255,.12); overflow:hidden;}
   .sf-barra i{display:block; height:100%; border-radius:4px; transform-origin:left; animation:cresce 1s var(--morbida) both;
@@ -335,7 +335,7 @@
   .qg-nomi em{margin-left:auto; font-style:normal; font-size:11px; color:var(--dim);}
   /* esiti «Duello» (26/10/2026): il numero in inchiostro, il colore della squadra su sottolineatura e barra */
   /* fondo scuro dietro al Duello: lo stemma del fondo passava sotto i numeri (collaudo MANZO 26/10) */
-  .qd{margin-top:10px; padding:10px 10px 8px; border-top:1px solid rgba(255,255,255,.08); border-radius:12px; background:rgba(8,10,9,.62);}
+  .qd{margin-top:10px; padding:10px 10px 8px; border-top:1px solid rgba(255,255,255,.08); border-radius:12px; background:#0b0e0d; max-width:520px; margin-left:auto; margin-right:auto;}
   .qd-numeri{display:grid; grid-template-columns:1fr auto 1fr; align-items:end;}
   .qd-lato b, .qd-x b{display:block; font-family:"Barlow Condensed",sans-serif; font-weight:700; line-height:1; font-variant-numeric:tabular-nums;}
   .qd-lato b{font-size:28px; color:var(--dim);}
@@ -1411,6 +1411,7 @@ try{ const t = sessionStorage.getItem('jarvis-tr'); if(t){ sessionStorage.remove
     </div>
     <div class="moduli" id="modulo"></div>
     <div class="campo" id="campo"></div>
+    <p class="sf-nota campo-nota">Il numero sotto ogni nome è la fantamedia della stagione; i totali attesi della sfida sono un'altra misura (fantavoto atteso di questa partita).</p>
     <div id="difesa"></div>
     <div id="sfida"></div>
     <div id="ragiona"></div>
@@ -2764,7 +2765,10 @@ let CAMPIONI_FV = {}, SFIDE = {};
 function campioneFantavoti(p, n, g){
   const chiave = p.id + ':' + n + ':' + (g ? g[1] : '') + (CALCOLO_VECCHIO ? ':prima' : '');
   if(CAMPIONI_FV[chiave]) return CAMPIONI_FV[chiave];
-  const a = attesoModello('fantavoto', p, g), va = votoAtteso(p, g), v = campioneVoti(p, n, g);
+  const va = votoAtteso(p, g), v = campioneVoti(p, n, g);
+  /* senza modello (collaudo MANZO 26/10/2026: BOCA restava senza probabilità): stima grezza,
+     fantamedia stimata e ballo del voto un po' allargato; la sfida lo dice, nome per nome */
+  const a = attesoModello('fantavoto', p, g) || (va && {media: fmStimata(p), sd: va.sd*1.35});
   if(!a || !va || !v) return null;
   /* i bonus seguono la partita per la parte che il voto non ha già preso (fantavoto meno voto) */
   const pa = partitaCondivisa(p.club, g, n), bf = pa && BETA_PARTITA.fantavoto[p.ruolo], bv = pa && BETA_PARTITA.voto[p.ruolo];
@@ -2846,16 +2850,21 @@ function cento3(a, b, c){
   if(d){ const resto = v.map((x, i)=>x - r[i]), i = resto.indexOf(d > 0 ? Math.max(...resto) : Math.min(...resto)); r[i] += d; }
   return r;
 }
+/* chi, negli undici della sfida, non ha un modello e conta con la stima grezza */
+function stimatiGrezzi(s, g){
+  return D.mod ? [].concat(...['P','D','C','A'].map(r=>s.mio.u[r].concat(s.loro.u[r]))).filter(p=>!attesoModello('fantavoto', p, g)).map(p=>p.nome) : [];
+}
 function probabilitaHtml(g){
   const ps = probabilitaSfida(g);
   if(!ps) return null;
-  const sug = suggerimentoSfida(g), pc = x => Math.round(100*x)+'%', tre = cento3(ps.vittoria, ps.pareggio, ps.sconfitta);
+  const sug = suggerimentoSfida(g), pc = x => Math.round(100*x)+'%', tre = cento3(ps.vittoria, ps.pareggio, ps.sconfitta), grezzi = stimatiGrezzi(ps.s, g);
   return '<div class="sf-barra tre"><i class="v" style="width:'+(100*ps.vittoria).toFixed(1)+'%"></i>'+
     '<i class="x" style="width:'+(100*ps.pareggio).toFixed(1)+'%"></i><i class="s" style="width:'+(100*ps.sconfitta).toFixed(1)+'%"></i></div>'+
     '<p class="sf-verdetto">Vinci il <b>'+tre[0]+'%</b> · pareggi il '+tre[1]+'% · perdi il '+tre[2]+'%</p>'+
     (!sug ? '' : '<p class="sf-consiglio">Per battere '+ps.s.avv+': <b data-id="'+sug.entra.id+'">'+sug.entra.nome+
       '</b> al posto di <b data-id="'+sug.fuori.id+'">'+sug.fuori.nome+'</b>, vittoria dal '+tre[0]+'% al '+pc(sug.dopo)+
-      (sug.perche==='pavimento' ? ': da favorito conviene chi è più regolare.' : ': da sfavorito conviene chi può fare il colpo.')+'</p>');
+      (sug.perche==='pavimento' ? ': da favorito conviene chi è più regolare.' : ': da sfavorito conviene chi può fare il colpo.')+'</p>')+
+    (grezzi.length ? '<p class="sf-nota">Stima grezza per '+grezzi.join(', ')+': Jarvis non ha ancora un modello per '+(grezzi.length>1?'loro':'lui')+', conta la fantamedia.</p>' : '');
 }
 let sfidaDisegnata = '';
 function renderSfida(g){
@@ -2873,8 +2882,7 @@ function renderSfida(g){
     : diff > 0 ? 'Sulla carta sei avanti di '+num(diff,1)+'.' : 'Sulla carta sono avanti loro di '+num(-diff,1)+'.';
   const quota = Math.max(10, Math.min(90, 50 + diff*4));      // senza modello: la barra esagera il vantaggio, per vederlo
   /* senza probabilità, il perché (collaudo MANZO 26/10/2026): chi nei due undici non ha un modello */
-  const senzaModello = D.mod ? [].concat(...['P','D','C','A'].map(r=>s.mio.u[r].concat(s.loro.u[r])))
-    .filter(p=>!campioneFantavoti(p, SIMULAZIONI, g)).map(p=>p.nome) : [];
+  const senzaModello = stimatiGrezzi(s, g);
   const barra = probabilitaHtml(g) ||
     '<div class="sf-barra"><i style="width:'+quota.toFixed(0)+'%"></i></div><p class="sf-verdetto">'+verdetto+'</p>'+
     (senzaModello.length ? '<p class="sf-nota">Niente probabilità di vittoria: Jarvis non ha ancora un modello per '+
@@ -2970,8 +2978,8 @@ function dossierDi(g, dubbio){
       if(q && !viste.has(q.casa+'-'+q.trasf)) viste.set(q.casa+'-'+q.trasf, q);
     });
     const righe = [...viste].sort(([, a], [, b]) => { const x = oraPartita(a.casa, g[1]), y = oraPartita(b.casa, g[1]); return x && y ? x - y : 0; })
-      .map(([k, q]) => { const e = esitoPartita(q.lc, q.lt);
-        return '- '+k+': 1 '+pc(e.uno)+' X '+pc(e.x)+' 2 '+pc(e.due)+', gol attesi '+num(q.lc)+'-'+num(q.lt)+', più probabile '+e.risultato+
+      .map(([k, q]) => { const e = esitoPartita(q.lc, q.lt), t3 = cento3(e.uno, e.x, e.due);
+        return '- '+k+': 1 '+t3[0]+'% X '+t3[1]+'% 2 '+t3[2]+'%, gol attesi '+num(q.lc)+'-'+num(q.lt)+', più probabile '+e.risultato+
           ', porta inviolata '+q.casa+' '+pc(e.inviolataCasa)+' '+q.trasf+' '+pc(e.inviolataTrasf); });
     return righe.length ? 'Esiti delle partite (dalle quote, la simulazione della sfida li usa):\n'+righe.join('\n') :
       'Esiti delle partite: quote della giornata non ancora uscite (football-data), la simulazione della sfida tratta i giocatori come indipendenti.';
@@ -3027,7 +3035,7 @@ function dossierDi(g, dubbio){
     tutti(loro.u).map(p=>p.ruolo+' '+p.nome+' ('+p.club+') '+num(att(p))).join(', '),
     incastro(),
     esiti(),
-    'Totali attesi:io '+num(s.mio.att.tot)+' contro '+num(s.loro.att.tot)+(ps ? ' · vinco '+pc(ps.vittoria)+', pareggio '+pc(ps.pareggio)+', perdo '+pc(ps.sconfitta) : ''),
+    'Totali attesi: io '+num(s.mio.att.tot)+' contro '+num(s.loro.att.tot)+(ps ? (t3 => ' · vinco '+t3[0]+'%, pareggio '+t3[1]+'%, perdo '+t3[2]+'%')(cento3(ps.vittoria, ps.pareggio, ps.sconfitta)) : ''),
     '',
     dueLeghe(),
     daControllare(),
