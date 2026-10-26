@@ -151,7 +151,7 @@
   .reparto-t{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--oro); font-weight:600; margin:18px 2px 8px;}
   /* Liquid Glass di iOS 26 su tutti i riquadri (17/09/2026, scelta dell'utente): vetro più
      trasparente e più sfocato, con il riflesso in alto e il bordo chiaro, come barra e lente */
-  :root{--vetro-liquido:rgba(20,26,23,.93); --vetro-bordo:rgba(255,255,255,.16);
+  :root{--vetro-liquido:rgba(20,26,23,.66); --vetro-bordo:rgba(255,255,255,.16);
         --vetro-luce:inset 0 1px 0 rgba(255,255,255,.24), inset 0 -1px 1px rgba(255,255,255,.04);
         --vetro-sfoca:blur(22px) saturate(1.8);}
   .carta, .lista{background:var(--vetro-liquido); border:1px solid var(--vetro-bordo); border-radius:var(--r);
@@ -281,7 +281,7 @@
             white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.9);}
 
   /* ---- la sfida, sulla carta ---- */
-  .sfida-carta{padding:16px 14px 12px; background:#121714;}
+  .sfida-carta{padding:16px 14px 12px; background:rgba(20,26,23,.86);}
   .sf-testa{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px;}
   .sf-sq{display:flex; flex-direction:column; align-items:center; gap:5px; min-width:0; text-align:center;}
   .sf-sq .stemma{width:36px; height:41px;}
@@ -335,7 +335,7 @@
   .qg-nomi em{margin-left:auto; font-style:normal; font-size:11px; color:var(--dim);}
   /* esiti «Duello» (26/10/2026): il numero in inchiostro, il colore della squadra su sottolineatura e barra */
   /* fondo scuro dietro al Duello: lo stemma del fondo passava sotto i numeri (collaudo MANZO 26/10) */
-  .qd{margin-top:10px; padding:10px 10px 8px; border-top:1px solid rgba(255,255,255,.08); border-radius:12px; background:#0b0e0d; max-width:520px; margin-left:auto; margin-right:auto;}
+  .qd{margin-top:10px; padding:10px 10px 8px; border-top:1px solid rgba(255,255,255,.08); border-radius:12px; background:rgba(6,8,7,.5); max-width:520px; margin-left:auto; margin-right:auto;}
   .qd-numeri{display:grid; grid-template-columns:1fr auto 1fr; align-items:end;}
   .qd-lato b, .qd-x b{display:block; font-family:"Barlow Condensed",sans-serif; font-weight:700; line-height:1; font-variant-numeric:tabular-nums;}
   .qd-lato b{font-size:28px; color:var(--dim);}
