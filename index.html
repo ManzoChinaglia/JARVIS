@@ -123,7 +123,7 @@
   .lega-stemma svg{width:100%; height:100%; display:block;}
   .lega-testo{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
   .lega-nome{font-size:10.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.72);}
-  .lega-squadra{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:22px; line-height:1; letter-spacing:.3px; color:#fff;
+  .lega-squadra{font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:22px; line-height:1.15; letter-spacing:.3px; color:#fff;
                 text-shadow:0 2px 8px rgba(0,0,0,.45); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .lega-freccia{flex-shrink:0; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; color:var(--oro-chiaro);
                 background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.22);}
@@ -776,20 +776,25 @@
   .pb-ord small{display:block; text-align:center; font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:15px;}
   .pb-riga .maglia{width:34px; height:34px; filter:drop-shadow(0 3px 3px rgba(0,0,0,.45));}
   .pb-chi{min-width:0;}
-  .pb-chi b{display:block; font-size:15px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .pb-chips{display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;}
-  .pb-chip{padding:2px 7px; border-radius:999px; font-size:11px; white-space:nowrap; color:rgba(243,239,230,.78);
-           background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1);}
-  .pb-chip.verde{color:#5BE3A0; background:rgba(67,224,143,.12);}
-  .pb-chip.giallo{color:#F2C94C; background:rgba(242,201,76,.12);}
-  .pb-chip.rosso{color:#FF8A8A; background:rgba(255,122,122,.12);}
+  .pb-chi b{font-size:15px; font-weight:600; line-height:1.15; overflow:hidden; display:-webkit-box;
+            -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow-wrap:anywhere;}
+  /* righe secondarie in testo tenue, come le note sotto i risultati di Apple Sports: il colore solo dove dice qualcosa */
+  .pb-chips{display:flex; flex-direction:column; align-items:flex-start; gap:1px; margin-top:3px;}
+  .pb-chip{font-size:12px; line-height:16px; color:var(--dim);}
+  .pb-chip.verde{color:#5BE3A0;}
+  .pb-chip.giallo{color:#F2C94C;}
+  .pb-chip.rosso{color:#FF8A8A;}
+  .pb-chip.avv{color:var(--dim);}
+  .pb-chip.avv.verde::before, .pb-chip.avv.rosso::before{content:""; display:inline-block; width:6px; height:6px; margin-right:5px;
+            border-radius:50%; vertical-align:1px; background:#5BE3A0;}
+  .pb-chip.avv.rosso::before{background:#FF8A8A;}
   .pb-barra{display:inline-block; width:22px; height:4px; margin-left:4px; vertical-align:1px; border-radius:2px;
             overflow:hidden; background:rgba(255,255,255,.14);}
   .pb-barra i{display:block; height:100%; background:currentColor;}
   .pb-num{text-align:right; line-height:1;}
   .pb-num b{font-size:22px; color:var(--oro-chiaro);}
   .pb-num em{margin-left:2px; font-style:normal; font-size:11px; color:var(--dim);}
-  .pb-num small{display:block; margin-top:4px; font-size:10.5px; color:var(--dim); white-space:nowrap;}
+  .pb-num small{display:block; margin-top:3px; font-size:10.5px; color:var(--dim); white-space:nowrap;}
   .pb-andamento{display:inline-flex; gap:2px; align-items:flex-end; height:11px; margin-left:4px; vertical-align:-1px;}
   .pb-andamento i{width:3px; border-radius:1px; background:rgba(240,199,94,.85);}
   .pb-andamento i.sv{height:3px; background:rgba(255,255,255,.2);}
@@ -1218,8 +1223,7 @@
   .pb-riga + .pb-riga{border-top:1px solid rgba(255,255,255,.06);}
   .pb-ord small{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:17px; color:var(--oro);}
   .pb-chi b, .ko-chi b, .qg-testa b{font-family:"Big Shoulders Display",sans-serif; font-weight:700; font-size:19px; letter-spacing:.01em;}
-  .pb-chip{font-family:"Space Grotesk",sans-serif; border:1px solid rgba(255,255,255,.07);}
-  .pb-chip.verde{border-color:rgba(67,224,143,.25);} .pb-chip.giallo{border-color:rgba(242,201,76,.25);} .pb-chip.rosso{border-color:rgba(255,122,122,.25);}
+  .pb-chip{font-family:"Space Grotesk",sans-serif;}
   .pb-num b{font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:30px; color:#fff;}
   .pb-num em, .pb-num small{font-family:"Space Grotesk",sans-serif;}
   .ko-carta, .qg-partita{position:relative; border-radius:20px;}
@@ -2634,16 +2638,16 @@ function rigaPanchina(p, g, n){
     : '<span class="pb-chip '+(t.stato==='t' && t.perc >= 70 ? 'verde' : t.stato==='r' ? 'rosso' : 'giallo')+'">'+
       (t.stato==='t' ? 'titolare '+t.perc+'%' : t.stato==='c' ? 'in panchina'+(t.perc ? ' '+t.perc+'%' : '') : 'non nelle probabili')+
       '<i class="pb-barra"><i style="width:'+t.perc+'%"></i></i></span>';
-  const avv = !f ? '' : '<span class="pb-chip'+(f.delta <= -0.2 ? ' rosso' : f.delta >= 0.2 ? ' verde' : '')+'">'+
+  const avv = !f ? '' : '<span class="pb-chip avv'+(f.delta <= -0.2 ? ' rosso' : f.delta >= 0.2 ? ' verde' : '')+'">'+
     (Math.abs(f.delta) < 0.2 ? 'avversario nella media'
-      : f.avv+(f.dietro ? ' segna ' : ' subisce ')+n1(f.val)+(f.campo==='casa' ? ' in casa' : ' fuori'))+(f.stima ? ' · stima' : '')+'</span>';
+      : f.avv+(f.dietro ? ' segna ' : ' subisce ')+n1(f.val))+(f.stima ? ' · stima' : '')+'</span>';
   const ultime = andamento(p).slice(-4);
   const barrette = !ultime.length ? '' : '<span class="pb-andamento">'+ultime.map(s=>s.v
     ? '<i style="height:'+Math.max(3, Math.min(11, Math.round(s.v[1]*0.9)))+'px"></i>' : '<i class="sv"></i>').join('')+'</span>';
   return '<div class="pb-riga" data-id="'+p.id+'"><span class="pb-ord ruolo-'+p.ruolo+'"><small>'+n+'°</small></span>'+maglia(p.club)+
     '<div class="pb-chi"><b>'+p.nome+'</b><div class="pb-chips"><span class="pb-chip">'+partita+'</span>'+tit+avv+'</div></div>'+
     '<div class="pb-num"><b class="cond">'+(a ? n1(a.media)+'</b><em>±'+n1(a.sd)+'</em>' : fm+'</b>')+
-    '<small>FM '+fm+' · '+(p.pgv || 0)+(p.pgv === 1 ? ' gara' : ' gare')+barrette+'</small></div></div>';
+    '<small>FM '+fm+'</small><small>'+(p.pgv || 0)+(p.pgv === 1 ? ' gara' : ' gare')+barrette+'</small></div></div>';
 }
 function riga(p, g, ordine){
   const m = avversarioClub(p.club, g[1]);
