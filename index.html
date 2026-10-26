@@ -138,7 +138,7 @@
   .lega-voce[aria-selected="true"] .lega-spunta{display:grid;}
   .versione{margin:30px 0 6px; text-align:center; font-size:11px; color:var(--dim);}
 
-  main{position:relative; z-index:1; padding:0 16px;}
+  main{position:relative; z-index:1; padding:0 16px; max-width:640px; margin-left:auto; margin-right:auto;}
   section{display:none;}
   section.on{display:block;}
   /* cambiando scheda i blocchi salgono uno dopo l'altro */
@@ -151,7 +151,7 @@
   .reparto-t{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--oro); font-weight:600; margin:18px 2px 8px;}
   /* Liquid Glass di iOS 26 su tutti i riquadri (17/09/2026, scelta dell'utente): vetro più
      trasparente e più sfocato, con il riflesso in alto e il bordo chiaro, come barra e lente */
-  :root{--vetro-liquido:rgba(20,26,23,.5); --vetro-bordo:rgba(255,255,255,.16);
+  :root{--vetro-liquido:rgba(20,26,23,.93); --vetro-bordo:rgba(255,255,255,.16);
         --vetro-luce:inset 0 1px 0 rgba(255,255,255,.24), inset 0 -1px 1px rgba(255,255,255,.04);
         --vetro-sfoca:blur(22px) saturate(1.8);}
   .carta, .lista{background:var(--vetro-liquido); border:1px solid var(--vetro-bordo); border-radius:var(--r);
@@ -281,7 +281,7 @@
             white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 3px rgba(0,0,0,.9);}
 
   /* ---- la sfida, sulla carta ---- */
-  .sfida-carta{padding:16px 14px 12px;}
+  .sfida-carta{padding:16px 14px 12px; background:#121714;}
   .sf-testa{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px;}
   .sf-sq{display:flex; flex-direction:column; align-items:center; gap:5px; min-width:0; text-align:center;}
   .sf-sq .stemma{width:36px; height:41px;}
@@ -1092,10 +1092,10 @@
   .anelli .arco{animation:g-riempi 1.4s var(--morbida) both;}
   .anelli .c{position:absolute; left:0; right:0; top:0; height:64px; display:grid; place-items:center;
              font:300 26px "Big Shoulders Display",sans-serif; color:var(--oro-chiaro);}
-  .anelli small{display:block; margin-top:5px; font:600 9px "Barlow Condensed",sans-serif; letter-spacing:.2em; text-transform:uppercase; color:#7E796C;}
+  .anelli small{display:block; margin-top:5px; font:600 9px "Barlow Condensed",sans-serif; letter-spacing:.2em; text-transform:uppercase; color:#A29C8A;}
   .anelli .big{font:300 46px/1 "Big Shoulders Display",sans-serif; color:#B9B4A6; display:flex; align-items:baseline; gap:10px;}
   .anelli .big small{margin:0; font-size:11px; letter-spacing:.18em;}
-  .countdown .dett{margin-left:auto; text-align:right; font-size:12px; line-height:1.45; color:#7E796C; margin-top:0;}
+  .countdown .dett{margin-left:auto; text-align:right; font-size:12px; line-height:1.45; color:#A29C8A; margin-top:0;}
   .solo-lettura{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
   .barra-tempo{position:relative; height:3px; margin-top:16px; border-radius:2px; background:rgba(255,255,255,.08); overflow:visible;}
   .barra-tempo i{border-radius:2px; overflow:visible; background:linear-gradient(90deg,#B8862C,#FFF1C8); box-shadow:0 0 12px rgba(228,180,81,.8);}
@@ -1411,7 +1411,6 @@ try{ const t = sessionStorage.getItem('jarvis-tr'); if(t){ sessionStorage.remove
     </div>
     <div class="moduli" id="modulo"></div>
     <div class="campo" id="campo"></div>
-    <p class="sf-nota campo-nota">Il numero sotto ogni nome è la fantamedia della stagione; i totali attesi della sfida sono un'altra misura (fantavoto atteso di questa partita).</p>
     <div id="difesa"></div>
     <div id="sfida"></div>
     <div id="ragiona"></div>
@@ -2464,7 +2463,7 @@ function disegnaCampo(g){
   const u = undici(g);
   const campo = document.getElementById('campo');
   let i = 0;                       // ordine di entrata: dal portiere all'attacco
-  const migliore = Math.max(...[].concat(u.P,u.D,u.C,u.A).map(p=>p.pgv ? p.fm : -1));
+  const migliore = Math.max(...[].concat(u.P,u.D,u.C,u.A).map(p=>p.pgv ? atteso(p, g) : -1));
   const html = pianoCampo() + ['P','D','C','A'].map(r=>
     u[r].map((p,k)=>cella(p, g, prospettiva(posizione(r, k, u[r].length)), i++, migliore)).join('')
   ).join('');
@@ -2548,6 +2547,8 @@ function pianoCampo(){
   o += '<polygon points="'+c.join(' ')+'" '+ln+'/>';
   return '<svg class="piano" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'+o+'</svg>';
 }
+/* il numero che si legge sul campo è lo stesso dei reparti della sfida: fantavoto atteso, o fantamedia stimata senza modello */
+function atteso(p, g){ const a = attesoModello('fantavoto', p, g); return a ? a.media : fmStimata(p); }
 function cella(p, g, pos, i, migliore){
   const m = avversarioClub(p.club, g[1]);
   const t = titolarita(p, g);
@@ -2556,7 +2557,7 @@ function cella(p, g, pos, i, migliore){
     '<span class="sagoma"><span class="ombra"></span>'+maglia(p.club)+
       (t ? '<i class="pallino '+statoTit(t)+'"></i>' : '')+'</span>'+
     '<span class="nm">'+cognome(p)+'</span>'+
-    '<span class="vl '+(!p.pgv ? '' : p.fm>=7 ? 'a' : p.fm<6 ? 'c' : '')+'">'+(p.pgv && p.fm===migliore ? '<i>★</i>' : '')+(p.pgv?p.fm.toFixed(1):'–')+'</span>'+
+    '<span class="vl '+(!p.pgv ? '' : p.fm>=7 ? 'a' : p.fm<6 ? 'c' : '')+'">'+(p.pgv && atteso(p, g)===migliore ? '<i>★</i>' : '')+(p.pgv ? num(atteso(p, g), 1) : '–')+'</span>'+
     '<span class="av">'+(m ? '<em>'+(m.casa?'vs':'@')+'</em>'+maglia(m.avv)+'<b>'+m.avv.slice(0,3).toUpperCase()+'</b>' : '')+'</span>'+
   '</button>';
 }
@@ -2857,14 +2858,13 @@ function stimatiGrezzi(s, g){
 function probabilitaHtml(g){
   const ps = probabilitaSfida(g);
   if(!ps) return null;
-  const sug = suggerimentoSfida(g), pc = x => Math.round(100*x)+'%', tre = cento3(ps.vittoria, ps.pareggio, ps.sconfitta), grezzi = stimatiGrezzi(ps.s, g);
+  const sug = suggerimentoSfida(g), pc = x => Math.round(100*x)+'%', tre = cento3(ps.vittoria, ps.pareggio, ps.sconfitta);
   return '<div class="sf-barra tre"><i class="v" style="width:'+(100*ps.vittoria).toFixed(1)+'%"></i>'+
     '<i class="x" style="width:'+(100*ps.pareggio).toFixed(1)+'%"></i><i class="s" style="width:'+(100*ps.sconfitta).toFixed(1)+'%"></i></div>'+
     '<p class="sf-verdetto">Vinci il <b>'+tre[0]+'%</b> · pareggi il '+tre[1]+'% · perdi il '+tre[2]+'%</p>'+
     (!sug ? '' : '<p class="sf-consiglio">Per battere '+ps.s.avv+': <b data-id="'+sug.entra.id+'">'+sug.entra.nome+
       '</b> al posto di <b data-id="'+sug.fuori.id+'">'+sug.fuori.nome+'</b>, vittoria dal '+tre[0]+'% al '+pc(sug.dopo)+
-      (sug.perche==='pavimento' ? ': da favorito conviene chi è più regolare.' : ': da sfavorito conviene chi può fare il colpo.')+'</p>')+
-    (grezzi.length ? '<p class="sf-nota">Stima grezza per '+grezzi.join(', ')+': Jarvis non ha ancora un modello per '+(grezzi.length>1?'loro':'lui')+', conta la fantamedia.</p>' : '');
+      (sug.perche==='pavimento' ? ': da favorito conviene chi è più regolare.' : ': da sfavorito conviene chi può fare il colpo.')+'</p>');
 }
 let sfidaDisegnata = '';
 function renderSfida(g){
@@ -2894,7 +2894,7 @@ function renderSfida(g){
     barra+
     ['P','D','C','A'].map(reparto).join('')+
     '<p class="sf-nota">Tu '+s.mio.modulo+' · loro '+s.loro.modulo+(s.loro.vero ? ' <b class="sf-vero">schierato davvero</b>' + (s.loro.letto ? ' · letto alle '+oraBreve(new Date(s.loro.letto)).replace(/^\S+\s/, '') : '') : ' · stima di Jarvis')+
-    '<p class="sf-nota">Totali = fantavoti attesi dei reparti + modificatore difesa (tu '+segnato(s.mio.att.mod)+' · loro '+segnato(s.loro.att.mod)+').</p></div>';
+    '</div>';
   if(html !== sfidaDisegnata){ sfidaDisegnata = html; document.getElementById('sfida').innerHTML = html; }
 }
 
@@ -3036,6 +3036,7 @@ function dossierDi(g, dubbio){
     incastro(),
     esiti(),
     'Totali attesi: io '+num(s.mio.att.tot)+' contro '+num(s.loro.att.tot)+(ps ? (t3 => ' · vinco '+t3[0]+'%, pareggio '+t3[1]+'%, perdo '+t3[2]+'%')(cento3(ps.vittoria, ps.pareggio, ps.sconfitta)) : ''),
+    (stimatiGrezzi(s, g).length ? 'Stima grezza (nessun modello, conta la fantamedia): '+stimatiGrezzi(s, g).join(', ') : ''),
     '',
     dueLeghe(),
     daControllare(),
