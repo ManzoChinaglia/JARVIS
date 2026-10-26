@@ -334,7 +334,8 @@
   .qg-nomi span.in{background:var(--oro); border-color:var(--oro); color:#1a1406; font-weight:600;}
   .qg-nomi em{margin-left:auto; font-style:normal; font-size:11px; color:var(--dim);}
   /* esiti «Duello» (26/10/2026): il numero in inchiostro, il colore della squadra su sottolineatura e barra */
-  .qd{margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,.08);}
+  /* fondo scuro dietro al Duello: lo stemma del fondo passava sotto i numeri (collaudo MANZO 26/10) */
+  .qd{margin-top:10px; padding:10px 10px 8px; border-top:1px solid rgba(255,255,255,.08); border-radius:12px; background:rgba(8,10,9,.62);}
   .qd-numeri{display:grid; grid-template-columns:1fr auto 1fr; align-items:end;}
   .qd-lato b, .qd-x b{display:block; font-family:"Barlow Condensed",sans-serif; font-weight:700; line-height:1; font-variant-numeric:tabular-nums;}
   .qd-lato b{font-size:28px; color:var(--dim);}
@@ -2399,8 +2400,10 @@ function undiciDi(rosa, g, mod){
 /* quanto rende ogni modulo: il fantavoto atteso dei suoi undici (senza modello la
    fantamedia stimata) più il modificatore atteso, che c'è solo con la difesa a quattro.
    Il modulo che rende di più è «consigliato»; a parità vince il primo dell'elenco. */
-function totaleModulo(g, mod){
-  const u = undiciDi(mia, g, mod), tutti = [].concat(u.P, u.D, u.C, u.A);
+function totaleModulo(g, mod){ return attesoUndici(undiciDi(mia, g, mod), mod, g); }
+/* il totale atteso di un undici (lo stesso numero in tessere, sfida, probabilità e fascicolo) */
+function attesoUndici(u, mod, g){
+  const tutti = [].concat(u.P, u.D, u.C, u.A);
   const fv = tutti.reduce((s,p)=>{ const a = attesoModello('fantavoto', p, g); return s + (a ? a.media : fmStimata(p)); }, 0);
   const m = conModificatore(mod) && u.P.length && u.D.length >= 4 ? modificatoreAtteso(u.P[0], u.D, SIMULAZIONI, g) : null;
   return {fv, mod: m ? m.atteso : 0, tot: fv + (m ? m.atteso : 0)};
@@ -2734,7 +2737,8 @@ function sfidaDati(g){
       loro = {modulo:vero.modulo, u, tot:t, vale:t + conMod(u, vero.modulo), vero:true, letto:vero.letto};
     }
   }
-  return {avv:av.nome, mio:{modulo, u:mio, tot:somma(mio)}, loro};
+  loro.att = attesoUndici(loro.u, loro.modulo, g);
+  return {avv:av.nome, mio:{modulo, u:mio, tot:somma(mio), att:attesoUndici(mio, modulo, g)}, loro};
 }
 /* ── B3: la probabilità di vincere la sfida ─────────────────────────────────────
    Si simula la giornata SIMULAZIONI volte, per ogni giocatore dei due undici: il voto
@@ -2855,11 +2859,12 @@ function probabilitaHtml(g){
 }
 let sfidaDisegnata = '';
 function renderSfida(g){
-  const s = sfidaDati(g), diff = s.mio.tot - s.loro.tot;
+  const s = sfidaDati(g), diff = s.mio.att.tot - s.loro.att.tot;   // totale del modello: fantavoti attesi più modificatore
   const lista = l => l.map(p=>'<span data-id="'+p.id+'">'+p.nome+'</span>').join(', ') || '—';
   const reparto = r => {
     const a = s.mio.u[r], b = s.loro.u[r];
-    const sa = a.reduce((x,p)=>x+punteggio(p,g), 0), sb = b.reduce((x,p)=>x+punteggio(p,g), 0);
+    const fa = p => { const m = attesoModello('fantavoto', p, g); return m ? m.media : fmStimata(p); };
+    const sa = a.reduce((x,p)=>x+fa(p), 0), sb = b.reduce((x,p)=>x+fa(p), 0);
     return '<div class="sf-riga"><div class="sf-nomi">'+lista(a)+'<small'+(sa>sb+0.05 ? ' class="meglio"' : '')+'>'+num(sa,1)+'</small></div>'+
       '<span class="sf-ruolo ruolo '+r+' cond">'+r+'</span>'+
       '<div class="sf-nomi sf-destra">'+lista(b)+'<small'+(sb>sa+0.05 ? ' class="meglio"' : '')+'>'+num(sb,1)+'</small></div></div>';
@@ -2875,12 +2880,13 @@ function renderSfida(g){
     (senzaModello.length ? '<p class="sf-nota">Niente probabilità di vittoria: Jarvis non ha ancora un modello per '+
       senzaModello.join(', ')+'.</p>' : '');
   const html = '<h2>'+(s.loro.vero ? 'La sfida, con la formazione vera' : 'La sfida, sulla carta')+'</h2><div class="carta sfida-carta">'+
-    '<div class="sf-testa"><div class="sf-sq">'+stemma(ME)+'<b class="cond">'+ME+'</b><span class="sf-tot cond">'+num(s.mio.tot,1)+'</span></div>'+
+    '<div class="sf-testa"><div class="sf-sq">'+stemma(ME)+'<b class="cond">'+ME+'</b><span class="sf-tot cond">'+num(s.mio.att.tot,1)+'</span></div>'+
     '<span class="sf-vs cond">VS</span>'+
-    '<div class="sf-sq">'+stemma(s.avv)+'<b class="cond">'+s.avv+'</b><span class="sf-tot cond">'+num(s.loro.tot,1)+'</span></div></div>'+
+    '<div class="sf-sq">'+stemma(s.avv)+'<b class="cond">'+s.avv+'</b><span class="sf-tot cond">'+num(s.loro.att.tot,1)+'</span></div></div>'+
     barra+
     ['P','D','C','A'].map(reparto).join('')+
-    '<p class="sf-nota">Tu '+s.mio.modulo+' · loro '+s.loro.modulo+(s.loro.vero ? ' <b class="sf-vero">schierato davvero</b>' + (s.loro.letto ? ' · letto alle '+oraBreve(new Date(s.loro.letto)).replace(/^\S+\s/, '') : '') : ' · stima di Jarvis')+'</p></div>';
+    '<p class="sf-nota">Tu '+s.mio.modulo+' · loro '+s.loro.modulo+(s.loro.vero ? ' <b class="sf-vero">schierato davvero</b>' + (s.loro.letto ? ' · letto alle '+oraBreve(new Date(s.loro.letto)).replace(/^\S+\s/, '') : '') : ' · stima di Jarvis')+
+    '<p class="sf-nota">Totali = fantavoti attesi dei reparti + modificatore difesa (tu '+segnato(s.mio.att.mod)+' · loro '+segnato(s.loro.att.mod)+').</p></div>';
   if(html !== sfidaDisegnata){ sfidaDisegnata = html; document.getElementById('sfida').innerHTML = html; }
 }
 
@@ -3021,7 +3027,7 @@ function dossierDi(g, dubbio){
     tutti(loro.u).map(p=>p.ruolo+' '+p.nome+' ('+p.club+') '+num(att(p))).join(', '),
     incastro(),
     esiti(),
-    'Totali attesi:io '+num(ps ? ps.mio : s.mio.tot)+' contro '+num(ps ? ps.loro : s.loro.tot)+(ps ? ' · vinco '+pc(ps.vittoria)+', pareggio '+pc(ps.pareggio)+', perdo '+pc(ps.sconfitta) : ''),
+    'Totali attesi:io '+num(s.mio.att.tot)+' contro '+num(s.loro.att.tot)+(ps ? ' · vinco '+pc(ps.vittoria)+', pareggio '+pc(ps.pareggio)+', perdo '+pc(ps.sconfitta) : ''),
     '',
     dueLeghe(),
     daControllare(),

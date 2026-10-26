@@ -582,6 +582,10 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const cartaSfida = el.sfida.innerHTML;
   verifica('scheda della sfida: totali, verdetto, 22 giocatori da toccare', /Sulla carta/.test(cartaSfida)
            && (cartaSfida.match(/data-id="\d+"/g) || []).length === 22 && cartaSfida.includes(AVV1), (cartaSfida.match(/data-id/g) || []).length);
+  const n1 = x => x.toFixed(1).replace('.', ',');
+  verifica('un solo totale: tessera del modulo, intestazione della sfida e fascicolo coincidono', Math.abs(sf.mio.att.tot - t.totaleModulo(g, sf.mio.modulo).tot) < 1e-9
+           && cartaSfida.includes('>' + n1(sf.mio.att.tot) + '<') && cartaSfida.includes('>' + n1(sf.loro.att.tot) + '<')
+           && t.dossierDi(g).includes('io ' + n1(sf.mio.att.tot) + ' contro ' + n1(sf.loro.att.tot)));
   verifica('niente spiegazioni, solo i moduli', !/una stima di Jarvis/.test(cartaSfida) && /Tu 4-\d-\d · loro \d-\d-\d/.test(cartaSfida));
   const altre = [...new Set(t.players.map(p => p.team))].filter(x => x !== t.ME);
   verifica('nove avversari, nove colori diversi', new Set(altre.map(t.coloreSquadra)).size === altre.length, altre.length + ' squadre');
