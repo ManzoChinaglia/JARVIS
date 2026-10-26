@@ -304,14 +304,17 @@
                 background:rgba(252,209,22,.08); border:1px solid rgba(252,209,22,.25);}
   .sf-consiglio b{cursor:pointer; color:var(--oro-chiaro);}
   .sf-riga{display:grid; grid-template-columns:1fr 26px 1fr; gap:8px; align-items:start; padding:9px 0; border-top:1px solid var(--line);}
-  .sf-nomi{font-size:12.5px; line-height:1.4; text-align:right;}
-  .sf-nomi.sf-destra{text-align:left;}
-  .sf-nomi span{cursor:pointer;}
-  .sf-nomi small{display:block; margin-top:4px; font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:30px; line-height:1; color:rgba(241,243,239,.5);}
+  .sf-nomi{font-size:12.5px; line-height:1.4; text-align:right; display:flex; flex-direction:column; align-self:stretch;}  .sf-nomi.sf-destra{text-align:left;}
+  .sf-nomi span[data-id]{cursor:pointer;}
+  .sf-nomi small{display:block; margin-top:auto; padding-top:4px; font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:30px; line-height:1; color:rgba(241,243,239,.5);}
   .sf-nomi small.meglio{color:var(--ink);}
   .sf-nomi{color:var(--dim);}
   .sf-ruolo{margin-top:4px; width:26px; height:26px; border-radius:8px; display:grid; place-items:center; background:rgba(255,255,255,.06); font-size:14px;}
   .sf-nota{margin:10px 0 0; font-size:11px; line-height:1.45; color:var(--dim);}
+  .sf-quota{grid-column:1/-1; display:flex; gap:3px; height:4px; margin-top:2px;}
+  .sf-quota i{height:100%; border-radius:2px; background:rgba(255,255,255,.18);}
+  .sf-quota i:last-child{flex:1;}
+  .sf-quota i.meglio{background:var(--oro-chiaro);}
 
   /* ---- quando giocano i tuoi, formazione da copiare ---- */
   /* «Quando giocano i tuoi», per giorno (17/09/2026, scelta dell'utente): un colore leggero per
@@ -476,7 +479,8 @@
   .cal:last-child{border-bottom:none;}
   .cal .d{display:flex; align-items:baseline; gap:7px; width:90px; flex-shrink:0; font-size:12px; color:var(--dim);}
   .cal .d b{width:28px; font-size:16px; color:var(--ink);}
-  .cal .m{flex:1; min-width:0; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .cal .m{flex:1; min-width:0; font-size:14px; line-height:1.25; overflow:hidden;
+          display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow-wrap:anywhere;}
   .cal .dove{font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:var(--dim);
              padding:3px 7px; border-radius:6px; border:1px solid var(--bordo);}
   .cal.io{margin:0 -14px; padding:10px 14px; background:linear-gradient(90deg,rgba(252,209,22,.16),transparent);}
@@ -2873,14 +2877,18 @@ function probabilitaHtml(g){
 let sfidaDisegnata = '';
 function renderSfida(g){
   const s = sfidaDati(g), diff = s.mio.att.tot - s.loro.att.tot;   // totale del modello: fantavoti attesi più modificatore
-  const lista = l => l.map(p=>'<span data-id="'+p.id+'">'+p.nome+'</span>').join(', ') || '—';
+  const lista = l => '<span>'+(l.map(p=>'<span data-id="'+p.id+'">'+p.nome+'</span>').join(', ') || '—')+'</span>';
   const reparto = r => {
     const a = s.mio.u[r], b = s.loro.u[r];
     const fa = p => { const m = attesoModello('fantavoto', p, g); return m ? m.media : fmStimata(p); };
     const sa = a.reduce((x,p)=>x+fa(p), 0), sb = b.reduce((x,p)=>x+fa(p), 0);
+    /* barra divisa sotto la riga, come le «Team Stats» di Apple Sports (riferimento scelto 26/10/2026) */
+    const qa = sa+sb > 0 ? 100*sa/(sa+sb) : 50;
     return '<div class="sf-riga"><div class="sf-nomi">'+lista(a)+'<small'+(sa>sb+0.05 ? ' class="meglio"' : '')+'>'+num(sa,1)+'</small></div>'+
       '<span class="sf-ruolo ruolo '+r+' cond">'+r+'</span>'+
-      '<div class="sf-nomi sf-destra">'+lista(b)+'<small'+(sb>sa+0.05 ? ' class="meglio"' : '')+'>'+num(sb,1)+'</small></div></div>';
+      '<div class="sf-nomi sf-destra">'+lista(b)+'<small'+(sb>sa+0.05 ? ' class="meglio"' : '')+'>'+num(sb,1)+'</small></div>'+
+      '<div class="sf-quota" aria-hidden="true"><i'+(sa>sb+0.05 ? ' class="meglio"' : '')+' style="width:'+qa.toFixed(1)+'%"></i>'+
+      '<i'+(sb>sa+0.05 ? ' class="meglio"' : '')+'></i></div></div>';
   };
   const verdetto = Math.abs(diff) < 1 ? 'Sulla carta è una sfida alla pari.'
     : diff > 0 ? 'Sulla carta sei avanti di '+num(diff,1)+'.' : 'Sulla carta sono avanti loro di '+num(-diff,1)+'.';
