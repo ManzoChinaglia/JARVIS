@@ -278,7 +278,7 @@ def calibra(cartella=ARCHIVIO):
     print(f'  esito più probabile azzeccato {100 * azz / n:.1f}% · risultato esatto più probabile {100 * esatti / n:.1f}%')
     print(f'  gol a partita: attesi casa {sum(r[3] for r in righe) / n:.3f} veri {sum(r[6] for r in righe) / n:.3f}'
           f' · attesi trasferta {sum(r[4] for r in righe) / n:.3f} veri {sum(r[7] for r in righe) / n:.3f}')
-    print('  porta inviolata (prevista → vera, per fasce):')
+    print('  porta inviolata (prevista -> vera, per fasce):')
     fasce = {}
     for r in righe:
         for prev, subiti in ((math.exp(-r[4]), r[7]), (math.exp(-r[3]), r[6])):
@@ -287,7 +287,7 @@ def calibra(cartella=ARCHIVIO):
     for k in sorted(fasce):
         f = fasce[k]
         if f[0] >= 30:
-            print(f'    {10 * k:>2}-{10 * k + 10}%: {100 * f[1] / f[0]:5.1f}% → {100 * f[2] / f[0]:5.1f}%  ({f[0]} squadre)')
+            print(f'    {10 * k:>2}-{10 * k + 10}%: {100 * f[1] / f[0]:5.1f}% -> {100 * f[2] / f[0]:5.1f}%  ({f[0]} squadre)')
     ultime = [r for r in righe if r[0] == righe[-1][0]][-10:]
     print(f'  ultime {len(ultime)} partite giocate in archivio (stagione {righe[-1][0]}), previste come se non giocate:')
     for r in ultime:

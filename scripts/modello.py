@@ -353,7 +353,7 @@ def n0(corr):
     return round(min(1000.0, max(5.0, 25 * (1 - c) / c)), 1)
 
 
-def costruisci(stagioni, voti_correnti, rose, iniziali, quot_attuali, adesso=None, quote=None):
+def costruisci(stagioni, voti_correnti, rose, iniziali, quot_attuali, adesso=None, quote=None, altre_rose=()):
     """Tutto il modello, pronto per dati/modello.json."""
     righe, storie = righe_e_storie(stagioni, quote)
     for sa in sorted(voti_correnti, key=int):
@@ -384,10 +384,13 @@ def costruisci(stagioni, voti_correnti, rose, iniziali, quot_attuali, adesso=Non
             modello[nome + '_quote'] = {r: {'coef': [round(c, 5) for c in modq[r]['coef']], 'sd': round(modq[r]['sd'], 4),
                                             'usa': usaq(r)} for r in RUOLI}
     giocatori, qi_ruolo = {}, defaultdict(list)
-    for pid, ruolo in rose:
+    # le rose delle altre leghe (26/10/2026): solo la parte del giocatore, la quotazione mediana
+    # per ruolo resta quella della lega principale (così i suoi numeri non cambiano)
+    dentro = {pid for pid, _ in rose}
+    for pid, ruolo in list(rose) + [x for x in altre_rose if x[0] not in dentro]:
         h = storie.get(pid)
         qi = iniziali.get(pid) or quot_attuali.get(pid) or None
-        if qi:
+        if qi and pid in dentro:
             qi_ruolo[ruolo].append(qi)
         tondo = lambda x: None if x is None else round(x, 3)
         giocatori[pid] = [tondo(h.W) if h else 0, tondo(h.media('fv')) if h else None, tondo(h.media('voto')) if h else None,
@@ -445,6 +448,15 @@ def quote_storico(percorso=os.path.join(DATI, 'quote-storico.json.gz')):
         return {}
 
 
+def altre_rose():
+    """i giocatori delle rose delle altre leghe (dati/<cartella>/base.json, da leghe.json)"""
+    out = []
+    for l in leggi_json('leghe.json').get('leghe') or []:
+        if l.get('cartella'):
+            out += [(str(a[0]), a[3]) for a in leggi_json(os.path.join(l['cartella'], 'base.json')).get('p', [])]
+    return out
+
+
 def stagioni_storico(cartella=os.path.join(DATI, 'storico')):
     out = []
     for p in sorted(glob.glob(os.path.join(cartella, '*.json.gz'))):
@@ -458,7 +470,7 @@ if __name__ == '__main__':
     m = costruisci(stagioni_storico(), (leggi_json('voti.json').get('giornate') or {}),
                    [(str(a[0]), a[3]) for a in base.get('p', [])], st.get('iniziali') or {},
                    {k: v[3] for k, v in (st.get('giocatori') or {}).items() if len(v) > 3 and v[3]},
-                   quote=quote_storico())
+                   quote=quote_storico(), altre_rose=altre_rose())
     print(f'[modello] {m["addestramento"]["righe"]} righe, stagioni {m["addestramento"]["stagioni"][0]} - '
           f'{m["addestramento"]["stagioni"][-1]}, verifica su {", ".join(m["addestramento"]["verifica_su"])}')
     for nome in ('fantavoto', 'voto'):

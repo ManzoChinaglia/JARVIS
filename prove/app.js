@@ -80,7 +80,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
     'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,cartaAtteso,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
     'prossima,scadenza,orario,undici,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,campioneVoti,campioneFantavoti,partitaCondivisa,esitoPartita,quotePartita,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,dossierDi,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,forma,movimentoLega,risultatoLega,forfaitLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,campioneVoti,campioneFantavoti,partitaCondivisa,esitoPartita,quotePartita,cento3,coloreClub,esitiQuando,renderQuando,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,dossierDi,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,forma,movimentoLega,risultatoLega,forfaitLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (attendi && el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -1390,6 +1390,23 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const dos40 = t.dossierDi(g, '');
   verifica('nel fascicolo gli esiti delle partite: 1X2, gol attesi, più probabile, porta inviolata',
            /Esiti delle partite[^\n]*\n- \S.*: 1 \d+% X \d+% 2 \d+%, gol attesi .+, più probabile \d+-\d+, porta inviolata /.test(dos40) && !/undefined|NaN/.test(dos40));
+  const q40 = t.D.quote[String(g[1])];
+  delete t.D.quote[String(g[1])]; t.SFIDE = {}; t.PARTITE = {};
+  verifica('senza quote della giornata il fascicolo lo dice', /quote della giornata non ancora uscite/.test(t.dossierDi(g, '')));
+  t.renderQuando(g);
+  const qs40 = el.quando.innerHTML;
+  verifica('«Quando giocano i tuoi» senza quote: avviso e niente esiti', /qe-avviso/.test(qs40) && !/class="qd"/.test(qs40));
+  t.D.quote[String(g[1])] = q40;
+  t.renderQuando(g);
+  const qc40 = el.quando.innerHTML, nq40 = (qc40.match(/class="qd"/g) || []).length;
+  verifica('«Quando giocano i tuoi» con le quote: esiti Duello sotto le partite, niente avviso',
+           nq40 > 0 && !/qe-avviso/.test(qc40) && /inviolata \d+%/.test(qc40) && /più probabile <b>\d+-\d+<\/b>/.test(qc40) && !/undefined|NaN/.test(qc40), nq40 + ' partite');
+  const scuri40 = Object.keys(t.MAGLIE).filter(c => { const m = /rgb\((\d+),(\d+),(\d+)\)|#(\w\w)(\w\w)(\w\w)/.exec(t.coloreClub(c));
+    const v = m[1] ? [m[1], m[2], m[3]].map(Number) : [m[4], m[5], m[6]].map(h => parseInt(h, 16));
+    return (0.299 * v[0] + 0.587 * v[1] + 0.114 * v[2]) / 255 <= 0.22; });
+  const c40 = [[0.454, 0.276, 0.27], [0.333, 0.333, 0.334], [0.5, 0.5, 0], [0.004, 0.006, 0.99]].map(x => t.cento3(...x));
+  verifica('percentuali 1X2 e sfida: sempre 100 in tutto', c40.every(r => r[0] + r[1] + r[2] === 100), c40.map(r => r.join('/')).join(' '));
+  verifica('i colori dei club negli esiti si leggono sul fondo scuro', !scuri40.length, scuri40.length + ' scuri');
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
 })().catch(e => { console.error('ERRORE', e); process.exit(2); });

@@ -333,6 +333,29 @@
                 color:rgba(243,239,230,.82); cursor:pointer;}
   .qg-nomi span.in{background:var(--oro); border-color:var(--oro); color:#1a1406; font-weight:600;}
   .qg-nomi em{margin-left:auto; font-style:normal; font-size:11px; color:var(--dim);}
+  /* esiti «Duello» (26/10/2026): il numero in inchiostro, il colore della squadra su sottolineatura e barra */
+  .qd{margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,.08);}
+  .qd-numeri{display:grid; grid-template-columns:1fr auto 1fr; align-items:end;}
+  .qd-lato b, .qd-x b{display:block; font-family:"Barlow Condensed",sans-serif; font-weight:700; line-height:1; font-variant-numeric:tabular-nums;}
+  .qd-lato b{font-size:28px; color:var(--dim);}
+  .qd-lato.mio b{color:var(--ink);}
+  .qd-lato small, .qd-x small{display:block; margin-top:2px; font-size:11px; color:var(--dim);}
+  .qd-lato.mio small{color:var(--ink); text-decoration:underline; text-decoration-color:var(--t); text-decoration-thickness:2px; text-underline-offset:3px;}
+  .qd-lato.dx{text-align:right;}
+  .qd-x{text-align:center;}
+  .qd-x b{font-size:18px; color:var(--dim);}
+  .qd-barra{display:flex; gap:3px; height:8px; margin:8px 0; border-radius:999px; overflow:hidden;}
+  .qd-barra i{display:block;}
+  .qd-barra i.x{background:rgba(255,255,255,.22);}
+  .qd-piede{display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:var(--dim);}
+  .qd-piede b{color:var(--ink);}
+  .qs{display:inline-flex; align-items:center; gap:3px; font-size:12px; color:var(--dim); font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .qs svg{width:13px; height:13px;}
+  .qs.su{color:var(--oro-chiaro);}
+  .qs.su svg{fill:rgba(228,180,81,.25);}
+  .qe-avviso{display:flex; gap:8px; align-items:center; margin:0 0 10px; padding:9px 12px; border-radius:14px; font-size:12.5px; line-height:1.4; color:var(--ink);
+             background:rgba(12,14,13,.72); border:1px solid var(--vetro-bordo); -webkit-backdrop-filter:var(--vetro-sfoca); backdrop-filter:var(--vetro-sfoca);}
+  .qe-avviso i{flex:none; width:7px; height:7px; border-radius:50%; background:var(--oro);}
   /* «Non disponibili» (17/09/2026, scelta dell'utente): il motivo sempre in vista, i dettagli si
      aprono toccando; titolo di ogni voce piccolo in oro, l'informazione chiara sotto */
   .ko-carta{margin-bottom:8px; border-radius:20px; overflow:hidden; background:var(--vetro-liquido);
@@ -2812,15 +2835,22 @@ function suggerimentoSfida(g){
 }
 /* barra e parole della probabilità di vittoria, e il suggerimento se c'è: nella sfida e
    nella vista del consiglio. null senza modello */
+/* tre probabilità in percentuali intere che fanno sempre 100 (collaudo MANZO 26/10: 45+28+28 = 101):
+   il punto che avanza o manca va a chi ha il resto più grande o più piccolo */
+function cento3(a, b, c){
+  const v = [a, b, c].map(x=>100*x), r = v.map(Math.round), d = 100 - r[0] - r[1] - r[2];
+  if(d){ const resto = v.map((x, i)=>x - r[i]), i = resto.indexOf(d > 0 ? Math.max(...resto) : Math.min(...resto)); r[i] += d; }
+  return r;
+}
 function probabilitaHtml(g){
   const ps = probabilitaSfida(g);
   if(!ps) return null;
-  const sug = suggerimentoSfida(g), pc = x => Math.round(100*x)+'%';
+  const sug = suggerimentoSfida(g), pc = x => Math.round(100*x)+'%', tre = cento3(ps.vittoria, ps.pareggio, ps.sconfitta);
   return '<div class="sf-barra tre"><i class="v" style="width:'+(100*ps.vittoria).toFixed(1)+'%"></i>'+
     '<i class="x" style="width:'+(100*ps.pareggio).toFixed(1)+'%"></i><i class="s" style="width:'+(100*ps.sconfitta).toFixed(1)+'%"></i></div>'+
-    '<p class="sf-verdetto">Vinci il <b>'+pc(ps.vittoria)+'</b> · pareggi il '+pc(ps.pareggio)+' · perdi il '+pc(ps.sconfitta)+'</p>'+
+    '<p class="sf-verdetto">Vinci il <b>'+tre[0]+'%</b> · pareggi il '+tre[1]+'% · perdi il '+tre[2]+'%</p>'+
     (!sug ? '' : '<p class="sf-consiglio">Per battere '+ps.s.avv+': <b data-id="'+sug.entra.id+'">'+sug.entra.nome+
-      '</b> al posto di <b data-id="'+sug.fuori.id+'">'+sug.fuori.nome+'</b>, vittoria dal '+pc(ps.vittoria)+' al '+pc(sug.dopo)+
+      '</b> al posto di <b data-id="'+sug.fuori.id+'">'+sug.fuori.nome+'</b>, vittoria dal '+tre[0]+'% al '+pc(sug.dopo)+
       (sug.perche==='pavimento' ? ': da favorito conviene chi è più regolare.' : ': da sfavorito conviene chi può fare il colpo.')+'</p>');
 }
 let sfidaDisegnata = '';
@@ -2837,8 +2867,13 @@ function renderSfida(g){
   const verdetto = Math.abs(diff) < 1 ? 'Sulla carta è una sfida alla pari.'
     : diff > 0 ? 'Sulla carta sei avanti di '+num(diff,1)+'.' : 'Sulla carta sono avanti loro di '+num(-diff,1)+'.';
   const quota = Math.max(10, Math.min(90, 50 + diff*4));      // senza modello: la barra esagera il vantaggio, per vederlo
+  /* senza probabilità, il perché (collaudo MANZO 26/10/2026): chi nei due undici non ha un modello */
+  const senzaModello = D.mod ? [].concat(...['P','D','C','A'].map(r=>s.mio.u[r].concat(s.loro.u[r])))
+    .filter(p=>!campioneFantavoti(p, SIMULAZIONI, g)).map(p=>p.nome) : [];
   const barra = probabilitaHtml(g) ||
-    '<div class="sf-barra"><i style="width:'+quota.toFixed(0)+'%"></i></div><p class="sf-verdetto">'+verdetto+'</p>';
+    '<div class="sf-barra"><i style="width:'+quota.toFixed(0)+'%"></i></div><p class="sf-verdetto">'+verdetto+'</p>'+
+    (senzaModello.length ? '<p class="sf-nota">Niente probabilità di vittoria: Jarvis non ha ancora un modello per '+
+      senzaModello.join(', ')+'.</p>' : '');
   const html = '<h2>'+(s.loro.vero ? 'La sfida, con la formazione vera' : 'La sfida, sulla carta')+'</h2><div class="carta sfida-carta">'+
     '<div class="sf-testa"><div class="sf-sq">'+stemma(ME)+'<b class="cond">'+ME+'</b><span class="sf-tot cond">'+num(s.mio.tot,1)+'</span></div>'+
     '<span class="sf-vs cond">VS</span>'+
@@ -2932,7 +2967,8 @@ function dossierDi(g, dubbio){
       .map(([k, q]) => { const e = esitoPartita(q.lc, q.lt);
         return '- '+k+': 1 '+pc(e.uno)+' X '+pc(e.x)+' 2 '+pc(e.due)+', gol attesi '+num(q.lc)+'-'+num(q.lt)+', più probabile '+e.risultato+
           ', porta inviolata '+q.casa+' '+pc(e.inviolataCasa)+' '+q.trasf+' '+pc(e.inviolataTrasf); });
-    return righe.length ? 'Esiti delle partite (dalle quote, la simulazione della sfida li usa):\n'+righe.join('\n') : '';
+    return righe.length ? 'Esiti delle partite (dalle quote, la simulazione della sfida li usa):\n'+righe.join('\n') :
+      'Esiti delle partite: quote della giornata non ancora uscite (football-data), la simulazione della sfida tratta i giocatori come indipendenti.';
   };
   /* l'altra lega: i suoi undici e l'incastro per partita fra tutte e due (chi copre chi tra le leghe) */
   const sigla = id => String(id || '').toUpperCase();
@@ -3052,9 +3088,38 @@ function renderQuando(g){
       '<div class="qg-testa"><span class="qg-maglie">'+maglia(casa)+maglia(fuori)+'</span><b>'+casa+' – '+fuori+'</b>'+
       '<span class="qg-ora cond">'+hh+'</span></div>'+
       '<div class="qg-nomi">'+miei.map(p=>'<span data-id="'+p.id+'"'+(scelti.has(p.id) ? ' class="in"' : '')+'>'+p.nome+'</span>').join('')+
-      '<em>'+(inCampo ? inCampo+' in campo' : 'solo panchina')+'</em></div></div>';
+      '<em>'+(inCampo ? inCampo+' in campo' : 'solo panchina')+'</em></div>'+esitiQuando(casa, fuori, miei, g[1])+'</div>';
   });
-  box.innerHTML = !partite ? '' : '<h2>Quando giocano i tuoi</h2>'+partite;
+  const senzaQuote = !(D.quote && D.quote[String(g[1])]);
+  box.innerHTML = !partite ? '' : '<h2>Quando giocano i tuoi</h2>'+
+    (senzaQuote ? '<p class="qe-avviso"><i></i>Quote della giornata non ancora uscite: gli esiti 1X2 arrivano appena escono.</p>' : '')+partite;
+}
+/* esiti della partita sotto i tuoi (26/10/2026, scelta dell'utente: «Duello», mockup esiti-1 B2):
+   vittoria delle due squadre ai lati e pareggio al centro, barra nei colori delle squadre,
+   porta inviolata sotto, in oro se di quella squadra hai portiere o difensori */
+const ICONA_SCUDO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+
+  '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>';   // Lucide «shield» (ISC)
+/* colore della squadra leggibile sul fondo scuro: il primo della maglia, se troppo scuro il secondo, se no il primo schiarito */
+function coloreClub(c){
+  const [, c1, c2] = MAGLIE[c] || MAGLIA_NEUTRA, hex = h => /^#[0-9a-f]{6}$/i.test(h);
+  const lum = h => { const n = parseInt(h.slice(1), 16); return (0.299*(n>>16) + 0.587*(n>>8&255) + 0.114*(n&255))/255; };
+  if(hex(c1) && lum(c1) > 0.22) return c1;
+  if(hex(c2) && lum(c2) > 0.22) return c2;
+  const n = parseInt((hex(c1) ? c1 : MAGLIA_NEUTRA[1]).slice(1), 16), su = v => Math.round(v + (255 - v)*0.45);
+  return 'rgb('+su(n>>16)+','+su(n>>8&255)+','+su(n&255)+')';
+}
+function esitiQuando(casa, fuori, miei, sa){
+  const q = quotePartita(casa, sa);
+  if(!q) return '';
+  const e = esitoPartita(q.lc, q.lt), pc = x => Math.round(100*x)+'%', tre = cento3(e.uno, e.x, e.due);
+  const mio = c => miei.some(p=>p.club===c), dif = c => miei.some(p=>p.club===c && (p.ruolo==='P' || p.ruolo==='D'));
+  const scudo = (c, v) => '<span class="qs'+(dif(c) ? ' su' : '')+'">'+ICONA_SCUDO+'inviolata '+pc(v)+'</span>';
+  const lato = (c, v, cls) => '<div class="qd-lato '+cls+(mio(c) ? ' mio' : '')+'" style="--t:'+coloreClub(c)+'"><b>'+v+'%</b><small>'+c+'</small></div>';
+  return '<div class="qd"><div class="qd-numeri">'+lato(casa, tre[0], 'sx')+
+    '<div class="qd-x"><b>'+tre[1]+'%</b><small>pari</small></div>'+lato(fuori, tre[2], 'dx')+'</div>'+
+    '<div class="qd-barra"><i style="flex:'+e.uno+';background:'+coloreClub(casa)+'"></i><i class="x" style="flex:'+e.x+'"></i>'+
+    '<i style="flex:'+e.due+';background:'+coloreClub(fuori)+'"></i></div>'+
+    '<div class="qd-piede">'+scudo(casa, e.inviolataCasa)+'<span>più probabile <b>'+e.risultato+'</b></span>'+scudo(fuori, e.inviolataTrasf)+'</div></div>';
 }
 
 /* ---------- voti delle giornate (dati/voti.json) ---------- */
