@@ -41,7 +41,7 @@ scripts/quote.py        scarica I1.csv e fixtures.csv di football-data (solo a m
 scripts/lucchetto.js    apri | chiudi | stato | inizia
 archivio/               file di Leghe già importati, bundle della storia (solo PC, fuori da Git)
 prove/                  prove automatiche
-.github/workflows/      aggiorna.yml (tre volte al giorno, dopo le probabili delle 11:30 e 19:30),
+.github/workflows/      aggiorna.yml (quattro volte al giorno: dopo le probabili delle 11:30 e 19:30, e alle 14:15/15:15 per le quote del martedì),
                         prova.yml (a ogni push e pull request)
 ```
 
