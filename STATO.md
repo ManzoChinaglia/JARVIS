@@ -14,7 +14,7 @@ Stato: attivo
 Scadenza: 27/10 sera, quote G9 uscite e prima della giornata: Duello + 4 difetti minori della Panchina
 1. Duello (pannello interno) sul riferimento Apple Sports, appena escono le quote G9; poi collaudo MANZO.
 2. Panchina, difetti minori di MANZO: riga larga a 1280 (voto lontano), barrette andamento piccole, sigle P/D/C/A sature, stemma in trasparenza.
-3. Decisioni aperte: quale totale mostrare (tessera vs sfida); simulatore esiti G8 da rifare quando football-data aggiunge la G8.
+3. Decisioni aperte: quale totale mostrare (tessera vs sfida); simulatore esiti G8 da rifare quando football-data aggiunge la G8. Da verificare 28/10: primo giro di `aggiorna.yml` alle 13:15 UTC (quote del martedì, `b4079b9`).
 
 ### Note dal vecchio «Prossimo» (fino al 26/10)
 1. Formazioni G8 definitive importate il 23/10 (BF 4 4-3-3 con Perrone, QI 3 4-4-2 con Rowe). Dopo le partite della G8 (dom 25/10): «dati di lega» per entrambe (QI: `importa_lega.py --lega qi <classifica.txt> <calendario.txt>`, PROCEDURE.md). Poi: verificare da una sessione cloud che si apra www.fantacalcio.it (domini aggiunti dall'utente il 23/10) e solo allora aggiornare CLAUDE.md e skill dubbio. «Ragiona con Jarvis» v3 FATTO 23/10 (`6154f2b`, prove 359/359): il fascicolo porta l'altra lega (salvata in localStorage quando si apre la sua Giornata, accoppiata per giornata di Serie A) e l'incastro tra le leghe, più i controlli da fare sul web; la skill dubbio ha il modo di ragionare concordato (verdetto prima, quote 1X2, scommessa/protezione, coperture tra leghe). Da provare sull'iPhone: aprire tutte e due le leghe nello stesso posto (app Home e Safari hanno memorie separate).
