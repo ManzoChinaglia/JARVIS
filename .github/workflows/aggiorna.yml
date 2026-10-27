@@ -6,7 +6,11 @@ on:
     # così prima di qualunque scadenza, anche infrasettimanale, i dati sono freschi.
     # Orari in UTC: il giro della sera è doppio perché con l'ora legale e con quella
     # solare è un giro diverso a cadere dopo le 19:30 italiane.
+    # Il giro del primo pomeriggio (27/10/2026) è per le quote dei turni infrasettimanali:
+    # football-data le mette il martedì entro le 13 inglesi, e con l'ora solare i giri
+    # della sera cadono dopo l'anticipo delle 18:30 (le quote arrivavano a partita iniziata).
     - cron: '45 10 * * *'   # 12:45 con l'ora legale, 11:45 con la solare
+    - cron: '15 13 * * *'   # 15:15 con l'ora legale, 14:15 con la solare (dopo le quote del martedì)
     - cron: '45 17 * * *'   # 19:45 con l'ora legale, 18:45 con la solare
     - cron: '45 18 * * *'   # 20:45 con l'ora legale, 19:45 con la solare
   workflow_dispatch:

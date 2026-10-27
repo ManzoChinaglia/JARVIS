@@ -34,7 +34,7 @@ scripts/
   importa_rose.py             aggiorna le rose dal file di Leghe, dopo uno scambio
   importa_lega.py             aggiorna la classifica dal file di Leghe
 .github/workflows/
-  aggiorna.yml                esegue script e notifiche tre volte al giorno
+  aggiorna.yml                esegue script e notifiche quattro volte al giorno
 prove/
   app.js                      prova l'app in Node:              node prove/app.js
   notifiche.js                prova le notifiche:               node prove/notifiche.js

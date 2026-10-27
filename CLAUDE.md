@@ -118,7 +118,7 @@ dati/                   dati della lega (chiusi), automatici, storico/, modello.
 scripts/                aggiorna.py, importa_rose/lega/formazioni.py, notifiche.js, storico.py, modello.py, lucchetto.js
 archivio/               file di Leghe già importati, bundle della storia (solo PC, fuori da Git)
 prove/                  prove automatiche
-.github/workflows/      aggiorna.yml (tre volte al giorno), prova.yml (a ogni push e pull request)
+.github/workflows/      aggiorna.yml (quattro volte al giorno), prova.yml (a ogni push e pull request)
 ```
 
 Codice e dati separati di proposito: non reincorporare i dati nell'HTML.
