@@ -2655,7 +2655,7 @@ function rigaPanchina(p, g, n){
   return '<div class="pb-riga" data-id="'+p.id+'"><span class="pb-ord ruolo-'+p.ruolo+'"><small>'+n+'°</small></span>'+maglia(p.club)+
     '<div class="pb-chi"><b>'+p.nome+'</b><div class="pb-chips"><span class="pb-chip">'+partita+'</span>'+tit+avv+'</div></div>'+
     '<div class="pb-num"><b class="cond">'+(a ? n1(a.media)+'</b><em>±'+n1(a.sd)+'</em>' : fm+'</b>')+
-    '<small>FM '+fm+'</small><small>'+(p.pgv || 0)+(p.pgv === 1 ? ' gara' : ' gare')+'</small>'+(barrette ? '<small>ultime'+barrette+'</small>' : '')+'</div></div>';
+    '<small>FM '+fm+'</small><small>'+(p.pgv || 0)+(p.pgv === 1 ? ' gara' : ' gare')+'</small>'+(barrette ? '<small>FV ultime'+barrette+'</small>' : '')+'</div></div>';
 }
 function riga(p, g, ordine){
   const m = avversarioClub(p.club, g[1]);
