@@ -11,10 +11,10 @@
 ## Prossimo
 <!-- pannello «Punti aperti»: max 3 punti, una riga ciascuno; si aggiorna a fine sessione -->
 Stato: attivo
-Scadenza: 27/10 sera, quote G9 uscite e prima della giornata: Duello + 4 difetti minori della Panchina
-1. Duello (pannello interno) sul riferimento Apple Sports, appena escono le quote G9; poi collaudo MANZO.
-2. Panchina, difetti minori di MANZO: riga larga a 1280 (voto lontano), barrette andamento piccole, sigle P/D/C/A sature, stemma in trasparenza.
-3. Decisioni aperte: quale totale mostrare (tessera vs sfida); simulatore esiti G8 da rifare quando football-data aggiunge la G8. Da verificare 28/10: primo giro di `aggiorna.yml` alle 13:15 UTC (quote del martedì, `b4079b9`).
+Scadenza: G9 in corso fino al 29/10 sera
+1. Push di `b3f1f81` + `4618082` (Duello e Panchina sul riferimento, fondo pieno) con l'ok dell'utente; MANZO 28/10 BOCCIATO (stemma sotto il Duello a .93), corretto, ricollaudo solo se lo chiede.
+2. GitHub ritarda o salta i giri programmati (27/10: 17:45→21:29, 18:45→22:35 UTC; 28/10: 10:45 e 13:15 non partiti alle 14:10; «Probabili» 8 giri in 38 ore): il codice è a posto, decidere se aggiungere un innesco di riserva.
+3. Decisioni aperte: quale totale mostrare (tessera vs sfida); simulatore esiti G8 da rifare quando football-data aggiunge la G8; partite già giocate nel Duello mostrano le quote di prima senza il risultato (MANZO 28/10).
 
 ### Note dal vecchio «Prossimo» (fino al 26/10)
 1. Formazioni G8 definitive importate il 23/10 (BF 4 4-3-3 con Perrone, QI 3 4-4-2 con Rowe). Dopo le partite della G8 (dom 25/10): «dati di lega» per entrambe (QI: `importa_lega.py --lega qi <classifica.txt> <calendario.txt>`, PROCEDURE.md). Poi: verificare da una sessione cloud che si apra www.fantacalcio.it (domini aggiunti dall'utente il 23/10) e solo allora aggiornare CLAUDE.md e skill dubbio. «Ragiona con Jarvis» v3 FATTO 23/10 (`6154f2b`, prove 359/359): il fascicolo porta l'altra lega (salvata in localStorage quando si apre la sua Giornata, accoppiata per giornata di Serie A) e l'incastro tra le leghe, più i controlli da fare sul web; la skill dubbio ha il modo di ragionare concordato (verdetto prima, quote 1X2, scommessa/protezione, coperture tra leghe). Da provare sull'iPhone: aprire tutte e due le leghe nello stesso posto (app Home e Safari hanno memorie separate).
