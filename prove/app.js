@@ -1105,10 +1105,12 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   // con meno punti, sugli stessi campioni, si vinca di più
   const fv33 = p => (t.attesoModello('fantavoto', p, g) || {}).media;
   // (nell'undici gli attaccanti non sono per forza i migliori se giocano: fuori quello col
-  // fantavoto atteso più alto, dentro il panchinaro col più basso)
+  // fantavoto atteso più alto, dentro l'attaccante del listone col più basso: un panchinaro della
+  // rosa può valere quasi uguale, e con i voti al mezzo punto la differenza sparisce (28/10/2026,
+  // Maldini 6,73 per Esposito 6,77 dava totali identici)
   const u33 = ps33.s.mio.u, per33 = (a, b) => fv33(a) - fv33(b);
   const fuori33 = u33.A.slice().sort(per33).pop();
-  const peggio33 = t.mia.filter(p => p.ruolo === 'A' && !u33.A.includes(p) && fv33(p) !== undefined).sort(per33)[0];
+  const peggio33 = t.players.filter(p => p.ruolo === 'A' && !u33.A.includes(p) && fv33(p) !== undefined).sort(per33)[0];
   const tm33 = peggio33 ? t.totaliSquadra(Object.assign({}, u33, { A: u33.A.map(p => p === fuori33 ? peggio33 : p) }), g, 2000) : null;
   const media33 = x => x.reduce((a, b) => a + b, 0) / x.length;
   verifica('se l\'undici peggiora, la media dei totali scende', peggio33 && tm33 && fv33(peggio33) < fv33(fuori33) && media33(tm33) < ps33.mio,
