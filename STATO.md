@@ -12,7 +12,7 @@
 <!-- pannello «Punti aperti»: max 3 punti, una riga ciascuno; si aggiorna a fine sessione -->
 Stato: attivo
 Scadenza: G9 in corso fino al 29/10 sera
-1. Push di `b3f1f81` + `4618082` (Duello e Panchina sul riferimento, fondo pieno) con l'ok dell'utente; ricollaudo MANZO 28/10 PROMOSSO CON RISERVA (minori: riga Panchina mezza vuota a 1280, contrasto delle partite passate 2,9-3,1, barrette senza etichetta; fuori criteri: stemma ancora sotto la Sfida).
+1. Push di 6 commit locali (`b3f1f81`…, Duello e Panchina sul riferimento Apple Sports) con l'ok dell'utente; MANZO 28/10 terzo giro PROMOSSO CON RISERVA (unico minore, «ultime» senza dire che è il fantavoto: corretto in «FV ultime»); fuori criteri: stemma ancora sotto la Sfida.
 2. GitHub ritarda o salta i giri programmati (27/10: 17:45→21:29, 18:45→22:35 UTC; 28/10: 10:45 e 13:15 non partiti alle 14:10; «Probabili» 8 giri in 38 ore): il codice è a posto, decidere se aggiungere un innesco di riserva.
 3. Decisioni aperte: quale totale mostrare (tessera vs sfida); simulatore esiti G8 da rifare quando football-data aggiunge la G8; partite già giocate nel Duello mostrano le quote di prima senza il risultato (MANZO 28/10).
 
