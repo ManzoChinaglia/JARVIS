@@ -1406,13 +1406,16 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('«Quando giocano i tuoi» senza quote: avviso e niente esiti', /qe-avviso/.test(qs40) && !/class="qd"/.test(qs40));
   t.D.quote[String(g[1])] = q40;
   t.renderQuando(g);
-  const qc40 = el.quando.innerHTML, nq40 = (qc40.match(/class="qd"/g) || []).length;
+  // con i dati veri la giornata provata può avere partite già finite (Duello col punteggio): valgono tutte e due
+  const qc40 = el.quando.innerHTML, nq40 = (qc40.match(/class="qd( fin)?"/g) || []).length;
   verifica('«Quando giocano i tuoi» con le quote: esiti Duello sotto le partite, niente avviso',
-           nq40 > 0 && !/qe-avviso/.test(qc40) && /inviolata \d+%/.test(qc40) && /(più probabile|prima del fischio:) <b>\d+-\d+<\/b>/.test(qc40) && !/undefined|NaN/.test(qc40), nq40 + ' partite');
+           nq40 > 0 && !/qe-avviso/.test(qc40) && (/inviolata \d+%/.test(qc40) && /(più probabile|prima del fischio:) <b>\d+-\d+<\/b>/.test(qc40)
+           || /prevista <b>\d+-\d+<\/b>/.test(qc40)) && !/undefined|NaN/.test(qc40), nq40 + ' partite');
   const pq40 = q40[0], fin40 = t.esitiQuando(pq40[0], pq40[1], [], g[1], [2, 6]), pari40 = t.esitiQuando(pq40[0], pq40[1], [], g[1], [1, 1]);
-  verifica('partita finita: acceso l\'esito vero, il pronostico detto «prima del fischio»',
-           /qd-lato dx[^"]*vince/.test(fin40) && !/qd-lato sx[^"]*vince/.test(fin40) && /prima del fischio: <b>\d+-\d+<\/b>/.test(fin40)
-           && /qd-x vince/.test(pari40) && !/qd-lato [^"]*vince/.test(pari40));
+  verifica('partita finita: punteggio al centro, in chiaro chi ha vinto (tutti e due se pari), quote di prima nel piede',
+           /class="qd fin"/.test(fin40) && /<b>2<\/b>[\s\S]*finale[\s\S]*<b>6<\/b>/.test(fin40) && /qd-lato dx[^"]*vince/.test(fin40) && !/qd-lato sx[^"]*vince/.test(fin40)
+           && /prima del fischio \d+ · \d+ · \d+%, prevista <b>\d+-\d+<\/b>/.test(fin40)
+           && /qd-lato sx[^"]*vince/.test(pari40) && /qd-lato dx[^"]*vince/.test(pari40));
   const scuri40 = Object.keys(t.MAGLIE).filter(c => { const m = /rgb\((\d+),(\d+),(\d+)\)|#(\w\w)(\w\w)(\w\w)/.exec(t.coloreClub(c));
     const v = m[1] ? [m[1], m[2], m[3]].map(Number) : [m[4], m[5], m[6]].map(h => parseInt(h, 16));
     return (0.299 * v[0] + 0.587 * v[1] + 0.114 * v[2]) / 255 <= 0.22; });

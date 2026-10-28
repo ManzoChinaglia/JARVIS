@@ -347,9 +347,16 @@
   .qd-numeri{display:grid; grid-template-columns:1fr auto 1fr; align-items:end;}
   .qd-lato b, .qd-x b{display:block; font-family:"Barlow Condensed",sans-serif; font-weight:700; line-height:1; font-variant-numeric:tabular-nums;}
   .qd-lato b{font-size:40px; color:rgba(241,243,239,.5);}
-  .qd-lato.vince b, .qd-x.vince b{color:var(--ink);}
-  .qd-x.vince b{font-size:26px;}
-  .qd-x.vince small{color:var(--ink);}
+  .qd-lato.vince b{color:var(--ink);}
+  .qd.fin .qd-lato b{font-size:48px;}
+  .qd-gol{display:flex; align-items:center; gap:12px;}
+  .qd-lato.dx .qd-gol{justify-content:flex-end;}
+  .qd-gol .maglia{width:30px; height:30px; flex:none; filter:drop-shadow(0 2px 3px rgba(0,0,0,.45));}
+  .qd.fin .qd-lato small{margin-top:4px; color:var(--dim);}   /* a partita finita il nome si accende col risultato, la sottolineatura resta per i miei */
+  .qd.fin .qd-lato.vince small{color:var(--ink);}
+  .qd.fin .qd-x{align-self:start; padding-top:18px;}   /* allineato alla riga dei punteggi, non ai nomi sotto */
+  .qd.fin .qd-x small{margin:0; font-size:12px; font-weight:700; color:var(--ink); letter-spacing:.08em; text-transform:uppercase;}
+  .qd.fin .qd-piede{justify-content:center; margin-top:8px;}
   .qd-lato small, .qd-x small{display:block; margin-top:2px; font-size:11px; color:var(--dim);}
   .qd-lato.mio small{color:var(--ink); text-decoration:underline; text-decoration-color:var(--t); text-decoration-thickness:2px; text-underline-offset:3px;}
   .qd-lato.dx{text-align:right;}
@@ -3145,10 +3152,12 @@ function renderQuando(g){
     const inCampo = miei.filter(p=>scelti.has(p.id)).length;
     if(gg !== giorno){ giorno = gg; partite += '<div class="qg-giorno" style="--c:'+colore+'">'+gg+'<i></i></div>'; }
     /* partita finita (28/10/2026, MANZO): il risultato al posto dell'orario, il Duello resta come quote di prima */
-    const fin = gc != null && gf != null, passata = fin || d.getTime()+2*3600000 < ora;
+    const fin = gc != null && gf != null, passata = fin || d.getTime()+2*3600000 < ora, alCentro = fin && quotePartita(casa, g[1]);
     partite += '<div class="qg-partita'+(inCampo >= 3 ? ' forte' : '')+(passata ? ' passata' : '')+'" style="--c:'+colore+'; --ca:'+coloreClub(casa)+'; --cb:'+coloreClub(fuori)+'">'+
-      '<div class="qg-testa"><span class="qg-maglie">'+maglia(casa)+maglia(fuori)+'</span><b>'+casa+' – '+fuori+'</b>'+
-      (fin ? '<span class="qg-ora qg-fin cond" aria-label="finita '+gc+' a '+gf+'"><small>fin.</small>'+gc+'–'+gf+'</span>'
+      /* a punteggio al centro maglie e stato stanno nel Duello: in testa solo i nomi */
+      '<div class="qg-testa"><span class="qg-maglie">'+(alCentro ? '' : maglia(casa)+maglia(fuori))+'</span><b>'+casa+' – '+fuori+'</b>'+
+      (alCentro ? ''
+       : fin ? '<span class="qg-ora qg-fin cond" aria-label="finita '+gc+' a '+gf+'"><small>fin.</small>'+gc+'–'+gf+'</span>'
            : '<span class="qg-ora cond">'+hh+'</span>')+'</div>'+
       '<div class="qg-nomi">'+miei.map(p=>'<span data-id="'+p.id+'"'+(scelti.has(p.id) ? ' class="in"' : '')+'>'+p.nome+'</span>').join('')+
       '<em>'+(inCampo ? inCampo+' in campo' : 'solo panchina')+'</em></div>'+esitiQuando(casa, fuori, miei, g[1], passata ? (fin ? [gc, gf] : []) : null)+'</div>';
@@ -3178,12 +3187,18 @@ function esitiQuando(casa, fuori, miei, sa, fatto){
   const e = esitoPartita(q.lc, q.lt), pc = x => Math.round(100*x)+'%', tre = cento3(e.uno, e.x, e.due);
   const mio = c => miei.some(p=>p.club===c), dif = c => miei.some(p=>p.club===c && (p.ruolo==='P' || p.ruolo==='D'));
   const scudo = (c, v) => '<span class="qs'+(dif(c) ? ' su' : '')+'">'+ICONA_SCUDO+'inviolata '+pc(v)+'</span>';
-  /* in chiaro l'esito più probabile; a partita finita quello vero */
-  const vero = fatto && fatto.length ? Math.sign(fatto[0] - fatto[1]) : null;
-  const acceso = k => vero !== null ? vero === k : (k === 1 ? tre[0] : k === -1 ? tre[2] : -1) === Math.max(tre[0], tre[2]);
-  const lato = (c, v, cls, k) => '<div class="qd-lato '+cls+(mio(c) ? ' mio' : '')+(acceso(k) ? ' vince' : '')+'" style="--t:'+coloreClub(c)+'"><b>'+v+'%</b><small>'+c+'</small></div>';
-  return '<div class="qd"><div class="qd-numeri">'+lato(casa, tre[0], 'sx', 1)+
-    '<div class="qd-x'+(vero === 0 ? ' vince' : '')+'"><b>'+tre[1]+'%</b><small>pari</small></div>'+lato(fuori, tre[2], 'dx', -1)+'</div>'+
+  /* partita finita (28/10/2026, scelta dell'utente sul riferimento Apple Sports): il punteggio è il
+     protagonista, in chiaro chi ha vinto (tutti e due se pari); le quote di prima scendono nel piede */
+  if(fatto && fatto.length){
+    /* come Apple Sports: maglia all'esterno, punteggio verso il centro, lo stato in mezzo */
+    const [a, b] = fatto, gol = (c, n, cls, su) => '<div class="qd-lato '+cls+(mio(c) ? ' mio' : '')+(su ? ' vince' : '')+'" style="--t:'+coloreClub(c)+'">'+
+      '<div class="qd-gol">'+(cls === 'sx' ? maglia(c)+'<b>'+n+'</b>' : '<b>'+n+'</b>'+maglia(c))+'</div><small>'+c+'</small></div>';
+    return '<div class="qd fin"><div class="qd-numeri">'+gol(casa, a, 'sx', a >= b)+'<div class="qd-x"><small>finale</small></div>'+gol(fuori, b, 'dx', b >= a)+'</div>'+
+      '<div class="qd-piede"><span>prima del fischio '+tre[0]+' · '+tre[1]+' · '+tre[2]+'%, prevista <b>'+e.risultato+'</b></span></div></div>';
+  }
+  const lato = (c, v, cls) => '<div class="qd-lato '+cls+(mio(c) ? ' mio' : '')+(v === Math.max(tre[0], tre[2]) ? ' vince' : '')+'" style="--t:'+coloreClub(c)+'"><b>'+v+'%</b><small>'+c+'</small></div>';
+  return '<div class="qd"><div class="qd-numeri">'+lato(casa, tre[0], 'sx')+
+    '<div class="qd-x"><b>'+tre[1]+'%</b><small>pari</small></div>'+lato(fuori, tre[2], 'dx')+'</div>'+
     '<div class="qd-barra"><i style="flex:'+e.uno+';background:'+coloreClub(casa)+'"></i><i class="x" style="flex:'+e.x+'"></i>'+
     '<i style="flex:'+e.due+';background:'+coloreClub(fuori)+'"></i></div>'+
     '<div class="qd-piede">'+scudo(casa, e.inviolataCasa)+'<span>'+(fatto ? 'prima del fischio: ' : 'più probabile ')+'<b>'+e.risultato+'</b></span>'+scudo(fuori, e.inviolataTrasf)+'</div></div>';
