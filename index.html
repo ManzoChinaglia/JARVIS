@@ -348,6 +348,8 @@
   .qd-lato b, .qd-x b{display:block; font-family:"Barlow Condensed",sans-serif; font-weight:700; line-height:1; font-variant-numeric:tabular-nums;}
   .qd-lato b{font-size:40px; color:rgba(241,243,239,.5);}
   .qd-lato.vince b, .qd-x.vince b{color:var(--ink);}
+  .qd-x.vince b{font-size:26px;}
+  .qd-x.vince small{color:var(--ink);}
   .qd-lato small, .qd-x small{display:block; margin-top:2px; font-size:11px; color:var(--dim);}
   .qd-lato.mio small{color:var(--ink); text-decoration:underline; text-decoration-color:var(--t); text-decoration-thickness:2px; text-underline-offset:3px;}
   .qd-lato.dx{text-align:right;}
@@ -2643,12 +2645,14 @@ function disponibile(p, isoData){
 function rigaPanchina(p, g, n){
   const m = avversarioClub(p.club, g[1]), o = oraPartita(p.club, g[1]), t = titolarita(p, g), f = forza(p, g);
   const a = attesoModello('fantavoto', p, g), n1 = x => x.toFixed(1).replace('.', ','), fm = p.pgv ? p.fm.toFixed(2).replace('.', ',') : '—';
-  const partita = m ? (m.casa ? 'vs ' : 'a ')+m.avv+(o ? ' · '+oraBreve(o) : '') : p.club;
-  const tit = !t ? '' : t.stato==='s' ? '<span class="pb-chip">'+descrizionePres(t)+'</span>'
+  /* a partita finita il risultato, e niente titolarità o avversario: erano previsioni (MANZO 28/10) */
+  const fin = finalePartita(p.club, g[1]);
+  const partita = m ? (m.casa ? 'vs ' : 'a ')+m.avv+(fin ? ' · finita '+fin : o ? ' · '+oraBreve(o) : '') : p.club;
+  const tit = !t || fin ? '' : t.stato==='s' ? '<span class="pb-chip">'+descrizionePres(t)+'</span>'
     : '<span class="pb-chip '+(t.stato==='t' && t.perc >= 70 ? 'verde' : t.stato==='r' ? 'rosso' : 'giallo')+'">'+
       (t.stato==='t' ? 'titolare '+t.perc+'%' : t.stato==='c' ? 'in panchina'+(t.perc ? ' '+t.perc+'%' : '') : 'non nelle probabili')+
       '<i class="pb-barra"><i style="width:'+t.perc+'%"></i></i></span>';
-  const avv = !f ? '' : '<span class="pb-chip avv'+(f.delta <= -0.2 ? ' rosso' : f.delta >= 0.2 ? ' verde' : '')+'">'+
+  const avv = !f || fin ? '' : '<span class="pb-chip avv'+(f.delta <= -0.2 ? ' rosso' : f.delta >= 0.2 ? ' verde' : '')+'">'+
     (Math.abs(f.delta) < 0.2 ? 'avversario nella media'
       : f.avv+(f.dietro ? ' segna ' : ' subisce ')+n1(f.val))+(f.stima ? ' · stima' : '')+'</span>';
   const ultime = andamento(p).slice(-4);
@@ -2923,6 +2927,11 @@ function renderSfida(g){
     '<div class="sf-sq">'+stemma(s.avv)+'<b class="cond">'+s.avv+'</b><span class="sf-tot cond'+(diff > 0 ? ' perde' : '')+'">'+num(s.loro.att.tot,1)+'</span></div></div>'+
     barra+
     ['P','D','C','A'].map(reparto).join('')+
+    /* il modificatore difesa in riga, così i reparti sommano al totale (MANZO 28/10) */
+    (s.mio.att.mod || s.loro.att.mod ? (() => { const mm = x => x ? (x > 0 ? '+' : '')+num(x,1) : 'nessuno';
+      return '<div class="sf-riga"><div class="sf-nomi">modificatore difesa<small'+(s.mio.att.mod > s.loro.att.mod+0.05 ? ' class="meglio"' : '')+'>'+mm(s.mio.att.mod)+'</small></div>'+
+        '<span class="sf-ruolo cond">M</span>'+
+        '<div class="sf-nomi sf-destra">modificatore difesa<small'+(s.loro.att.mod > s.mio.att.mod+0.05 ? ' class="meglio"' : '')+'>'+mm(s.loro.att.mod)+'</small></div></div>'; })() : '')+
     '<p class="sf-nota">Tu '+s.mio.modulo+' · loro '+s.loro.modulo+(s.loro.vero ? ' <b class="sf-vero">schierato davvero</b>' + (s.loro.letto ? ' · letto alle '+oraBreve(new Date(s.loro.letto)).replace(/^\S+\s/, '') : '') : ' · stima di Jarvis')+
     '</div>';
   if(html !== sfidaDisegnata){ sfidaDisegnata = html; document.getElementById('sfida').innerHTML = html; }
@@ -3107,6 +3116,12 @@ function oraPartita(club, sa){
   const o = D.orari && D.orari[String(sa)];
   const m = o && o.ufficiale && o.partite && o.partite.find(x=>x[0]===club || x[1]===club);
   return m ? new Date(m[2]) : null;
+}
+/* risultato della partita del club, se è finita (gol in orari.json dal 28/10/2026): «1–3», casa prima */
+function finalePartita(club, sa){
+  const o = D.orari && D.orari[String(sa)];
+  const m = o && o.partite && o.partite.find(x=>x[0]===club || x[1]===club);
+  return m && m[3] != null && m[4] != null ? m[3]+'–'+m[4] : null;
 }
 function oraBreve(d){
   return d.toLocaleString('it-IT',{weekday:'short', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Rome'});
@@ -3858,7 +3873,7 @@ function apriGiocatore(id){
     cartaAtteso(p, g)+
     stato+
     (m ? '<div class="gio-riga"><span>Giornata '+g[0]+'</span><b>'+(m.casa ? 'in casa con ' : 'a ')+m.avv+
-         (oraPartita(p.club, g[1]) ? ' · '+oraBreve(oraPartita(p.club, g[1])) : '')+'</b></div>' : '')+
+         (finalePartita(p.club, g[1]) ? ' · finita '+finalePartita(p.club, g[1]) : oraPartita(p.club, g[1]) ? ' · '+oraBreve(oraPartita(p.club, g[1])) : '')+'</b></div>' : '')+
     (prossimi3(p, g).length ? '<div class="gio-riga"><span>Prossime 3</span><b class="cal3-testo">'+
       prossimi3(p, g).map(x=>'<span class="'+x.livello+'">'+(x.casa ? 'vs ' : 'a ')+x.avv+'</span>').join('')+'</b></div>' : '')+
     (f ? '<div class="gio-nota'+(f.delta>=0.2 ? ' buona' : f.delta<=-0.2 ? ' dura' : '')+'">'+motivoAvv(f)+'</div>' : '')+
@@ -3881,7 +3896,7 @@ function magliaRosa(p, g, i){
   const st = statoRosa(p, g), t = titolarita(p, g), m = avversarioClub(p.club, g[1]), quando = oraPartita(p.club, g[1]);
   const fuori = fuoriGiornata(p, g[2]);
   const sotto = st==='fuori' ? '<span class="ko">'+(fuori ? fuori.motivo : p.motivo || 'Fuori')+'</span>'
-    : (m ? (m.casa ? 'vs ' : 'a ')+m.avv : p.club)+(quando ? '<br>'+oraBreve(quando) : '');
+    : (m ? (m.casa ? 'vs ' : 'a ')+m.avv : p.club)+(finalePartita(p.club, g[1]) ? '<br>finita '+finalePartita(p.club, g[1]) : quando ? '<br>'+oraBreve(quando) : '');
   return '<button class="rc'+(st==='fuori' ? ' fuori' : '')+'" data-id="'+p.id+'" data-stato="'+st+'" style="--i:'+i+'">'+
     '<span class="sagoma">'+maglia(p.club)+(t && st!=='fuori' ? '<i class="pallino '+statoTit(t)+'"></i>' : '')+
     '<b class="voto">'+(p.pgv ? p.fm.toFixed(1) : '–')+'</b></span>'+
