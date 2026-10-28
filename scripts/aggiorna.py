@@ -366,14 +366,15 @@ def orari(vecchie):
     for m in r.json():
         quando = datetime.strptime(m['DateUtc'], '%Y-%m-%d %H:%M:%SZ').replace(tzinfo=timezone.utc)
         casa, fuori = SQUADRE.get(m['HomeTeam'], m['HomeTeam']), SQUADRE.get(m['AwayTeam'], m['AwayTeam'])
-        partite.setdefault(int(m['RoundNumber']), []).append((quando, casa, fuori))
+        gol = [] if m.get('HomeTeamScore') is None or m.get('AwayTeamScore') is None             else [int(m['HomeTeamScore']), int(m['AwayTeamScore'])]
+        partite.setdefault(int(m['RoundNumber']), []).append((quando, casa, fuori, gol))
 
     giornate = {}
     for n, lista in sorted(partite.items()):
         if len(lista) != 10:
             raise ValueError(f'giornata {n} con {len(lista)} partite: la fonte ha cambiato struttura')
         lista.sort()
-        if any((q.hour, q.minute) == (0, 0) for q, _, _ in lista):
+        if any((q.hour, q.minute) == (0, 0) for q, *_ in lista):
             vecchia = vecchie.get(str(n))
             if vecchia and vecchia.get('ufficiale'):
                 print(f'[orari] giornata {n}: la fonte non ha piu\' l\'orario, tengo quello noto.')
@@ -381,16 +382,17 @@ def orari(vecchie):
             else:
                 giornate[str(n)] = {'ufficiale': False}
             continue
-        primo, casa, fuori = lista[0]
+        primo, casa, fuori, _ = lista[0]
         # un recupero spostato di settimane non deve allungare la giornata
-        vicine = [q for q, _, _ in lista if q - primo <= timedelta(days=4)]
+        vicine = [q for q, *_ in lista if q - primo <= timedelta(days=4)]
         giornate[str(n)] = {
             'ufficiale': True,
             'inizio': primo.isoformat(),
             'fine': max(vicine).isoformat(),
             'prima': f'{casa}-{fuori}',
-            # ogni partita con il suo orario: l'app dice quando gioca ogni tuo giocatore
-            'partite': [[c, f, q.isoformat()] for q, c, f in lista],
+            # ogni partita con il suo orario: l'app dice quando gioca ogni tuo giocatore;
+            # dal 28/10/2026 i gol di casa e trasferta in coda, quando la partita è finita
+            'partite': [[c, f, q.isoformat()] + gol for q, c, f, gol in lista],
         }
 
     uff = sum(1 for g in giornate.values() if g['ufficiale'])

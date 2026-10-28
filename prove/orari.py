@@ -58,6 +58,15 @@ verifica('ogni partita con il suo orario, in ordine', len(g['1']['partite']) == 
          and [p[2] for p in g['1']['partite']] == sorted(p[2] for p in g['1']['partite']), g['1']['partite'][0])
 verifica('senza orario ufficiale nessuna partita con orario', 'partite' not in g['13'])
 
+print('\n1b. Partite finite: i gol in coda (28/10/2026)')
+f = feed()
+f[0]['HomeTeamScore'], f[0]['AwayTeamScore'] = 2, 0
+f[1]['HomeTeamScore'], f[1]['AwayTeamScore'] = None, None
+con(f)
+g = mod.orari({})['giornate']
+verifica('finita: gol di casa e trasferta', g['1']['partite'][0] == ['Inter', 'Monza', '2026-08-21T18:45:00+00:00', 2, 0], g['1']['partite'][0])
+verifica('da giocare: solo l\'orario', len(g['1']['partite'][1]) == 3, g['1']['partite'][1])
+
 print('\n2. La fonte perde un orario gia\' noto')
 con(feed(ufficiali=12))
 vecchie = {'13': {'ufficiale': True, 'inizio': 'X', 'fine': 'Y', 'prima': 'A-B'}}

@@ -3,7 +3,7 @@ name: Probabili Jarvis
 # Giro leggero delle probabili formazioni (09/10/2026): ogni 30 minuti, ma lo script esce subito
 # se non si è nella finestra della giornata (da 36 ore prima del primo calcio d'inizio fino a
 # un'ora dopo; vale anche per i turni infrasettimanali). Salva e avvisa solo se le probabili
-# sono cambiate. Il giro completo (aggiorna.yml) resta com'è.
+# sono cambiate. Dal 28/10/2026 fa anche da riserva del giro completo (aggiorna.yml) quando GitHub lo salta.
 # Dal 20/10/2026 cerca anche i voti delle giornate finite (da 6 ore a 3 giorni dopo l'ultimo
 # calcio d'inizio) che non ci sono ancora: i giri completi a orario fisso GitHub li ritarda
 # anche di ore, e «Com'è andata» e Stagione restavano senza la giornata.
@@ -23,10 +23,37 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: write
     steps:
       - uses: actions/checkout@v7
         with:
           ref: main
+
+      # riserva del giro completo (28/10/2026): GitHub non ritarda soltanto i giri di aggiorna.yml,
+      # a volte li salta (il 28/10 nessuno partito fino alle 14:51 UTC). Se l'ultimo orario del giro
+      # completo è passato da più di 90 minuti e da allora non è partito nessun giro, lo lancia da qui.
+      # Gli orari sono quelli dei cron di aggiorna.yml: vanno cambiati insieme.
+      - name: Giro completo saltato?
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'EOF'
+          import datetime as dt, json, subprocess
+          orari = [(10, 45), (13, 15), (17, 45), (18, 45)]
+          limite = dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=90)
+          passati = [dt.datetime.combine(limite.date() - dt.timedelta(days=g), dt.time(h, m), dt.timezone.utc)
+                     for g in (0, 1) for h, m in orari]
+          atteso = max(t for t in passati if t <= limite)
+          giri = json.loads(subprocess.check_output(
+              ["gh", "run", "list", "--workflow", "aggiorna.yml", "-L", "1", "--json", "createdAt"]))
+          ultimo = dt.datetime.fromisoformat(giri[0]["createdAt"].replace("Z", "+00:00")) if giri else None
+          if ultimo is None or ultimo < atteso:
+              print(f"Giro completo delle {atteso:%H:%M} UTC saltato (ultimo: {ultimo}): lo lancio.")
+              subprocess.check_call(["gh", "workflow", "run", "aggiorna.yml", "--ref", "main"])
+          else:
+              print(f"Giro completo a posto (ultimo: {ultimo:%d/%m %H:%M} UTC).")
+          EOF
 
       - uses: actions/setup-python@v7
         with:
