@@ -1414,7 +1414,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const pq40 = q40[0], fin40 = t.esitiQuando(pq40[0], pq40[1], [], g[1], [2, 6]), pari40 = t.esitiQuando(pq40[0], pq40[1], [], g[1], [1, 1]);
   verifica('partita finita: punteggio al centro, in chiaro chi ha vinto (tutti e due se pari), quote di prima nel piede',
            /class="qd fin"/.test(fin40) && /<b>2<\/b>[\s\S]*finale[\s\S]*<b>6<\/b>/.test(fin40) && /qd-lato dx[^"]*vince/.test(fin40) && !/qd-lato sx[^"]*vince/.test(fin40)
-           && /prima del fischio \d+ · \d+ · \d+%, prevista <b>\d+-\d+<\/b>/.test(fin40)
+           && /prima del fischio 1 \d+% · X \d+% · 2 \d+%, prevista <b>\d+-\d+<\/b>/.test(fin40) && !/<small>/.test(fin40.split('qd-x')[0])
            && /qd-lato sx[^"]*vince/.test(pari40) && /qd-lato dx[^"]*vince/.test(pari40));
   const scuri40 = Object.keys(t.MAGLIE).filter(c => { const m = /rgb\((\d+),(\d+),(\d+)\)|#(\w\w)(\w\w)(\w\w)/.exec(t.coloreClub(c));
     const v = m[1] ? [m[1], m[2], m[3]].map(Number) : [m[4], m[5], m[6]].map(h => parseInt(h, 16));

@@ -351,10 +351,9 @@
   .qd.fin .qd-lato b{font-size:48px;}
   .qd-gol{display:flex; align-items:center; gap:12px;}
   .qd-lato.dx .qd-gol{justify-content:flex-end;}
-  .qd-gol .maglia{width:30px; height:30px; flex:none; filter:drop-shadow(0 2px 3px rgba(0,0,0,.45));}
-  .qd.fin .qd-lato small{margin-top:4px; color:var(--dim);}   /* a partita finita il nome si accende col risultato, la sottolineatura resta per i miei */
-  .qd.fin .qd-lato.vince small{color:var(--ink);}
-  .qd.fin .qd-x{align-self:start; padding-top:18px;}   /* allineato alla riga dei punteggi, non ai nomi sotto */
+  /* alone chiaro: le maglie scure (Roma, Torino, Cagliari) sparivano sul fondo (collaudo MANZO 28/10) */
+  .qd-gol .maglia{width:34px; height:34px; flex:none; filter:drop-shadow(0 0 1px rgba(255,255,255,.7)) drop-shadow(0 0 4px rgba(255,255,255,.18)) drop-shadow(0 2px 3px rgba(0,0,0,.45));}
+  .qd.fin .qd-x{align-self:center;}
   .qd.fin .qd-x small{margin:0; font-size:12px; font-weight:700; color:var(--ink); letter-spacing:.08em; text-transform:uppercase;}
   .qd.fin .qd-piede{justify-content:center; margin-top:8px;}
   .qd-lato small, .qd-x small{display:block; margin-top:2px; font-size:11px; color:var(--dim);}
@@ -3191,10 +3190,11 @@ function esitiQuando(casa, fuori, miei, sa, fatto){
      protagonista, in chiaro chi ha vinto (tutti e due se pari); le quote di prima scendono nel piede */
   if(fatto && fatto.length){
     /* come Apple Sports: maglia all'esterno, punteggio verso il centro, lo stato in mezzo */
-    const [a, b] = fatto, gol = (c, n, cls, su) => '<div class="qd-lato '+cls+(mio(c) ? ' mio' : '')+(su ? ' vince' : '')+'" style="--t:'+coloreClub(c)+'">'+
-      '<div class="qd-gol">'+(cls === 'sx' ? maglia(c)+'<b>'+n+'</b>' : '<b>'+n+'</b>'+maglia(c))+'</div><small>'+c+'</small></div>';
+    /* i nomi stanno già nel titolo della card, nello stesso ordine: qui solo maglie e gol (collaudo MANZO 28/10) */
+    const [a, b] = fatto, gol = (c, n, cls, su) => '<div class="qd-lato '+cls+(su ? ' vince' : '')+'" aria-label="'+c+' '+n+'">'+
+      '<div class="qd-gol">'+(cls === 'sx' ? maglia(c)+'<b>'+n+'</b>' : '<b>'+n+'</b>'+maglia(c))+'</div></div>';
     return '<div class="qd fin"><div class="qd-numeri">'+gol(casa, a, 'sx', a >= b)+'<div class="qd-x"><small>finale</small></div>'+gol(fuori, b, 'dx', b >= a)+'</div>'+
-      '<div class="qd-piede"><span>prima del fischio '+tre[0]+' · '+tre[1]+' · '+tre[2]+'%, prevista <b>'+e.risultato+'</b></span></div></div>';
+      '<div class="qd-piede"><span>prima del fischio 1 '+tre[0]+'% · X '+tre[1]+'% · 2 '+tre[2]+'%, prevista <b>'+e.risultato+'</b></span></div></div>';
   }
   const lato = (c, v, cls) => '<div class="qd-lato '+cls+(mio(c) ? ' mio' : '')+(v === Math.max(tre[0], tre[2]) ? ' vince' : '')+'" style="--t:'+coloreClub(c)+'"><b>'+v+'%</b><small>'+c+'</small></div>';
   return '<div class="qd"><div class="qd-numeri">'+lato(casa, tre[0], 'sx')+
