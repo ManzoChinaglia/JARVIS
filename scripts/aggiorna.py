@@ -7,7 +7,8 @@ Scrive cinque file in dati/:
   dati/infortuni.json   { "aggiornato": "...", "voci": { "<id>": {...} } }
   dati/titolari.json    { "aggiornato": "...", "giornata": 5, "squadre": [...],
                           "titolari": { "<id>": 97 }, "panchina": { "<id>": 30 },
-                          "indisponibili": { "<id>": { "motivo": "Squalificato", "fino": "28/10" } } }
+                          "indisponibili": { "<id>": { "motivo": "Squalificato", "fino": "28/10" } },
+                          "dubbi": { "<id>": "affaticamento al polpaccio, in forte dubbio" } }
   dati/orari.json       { "aggiornato": "...", "giornate": { "<giornata Serie A>": {...} } }
   dati/squadre.json     { "aggiornato": "...", "squadre": { "<squadra>": {...} }, ... }
   dati/jarvis.ics       calendario da sottoscrivere: scadenze di schieramento
@@ -57,6 +58,7 @@ def guasto(e):
 URL_INFORTUNI = 'https://www.fantacalcio-online.com/it/infortunati-serie-a'
 # probabili della singola giornata: media di quattro redazioni
 URL_GIORNATA = 'https://www.fantacalcio-online.com/it/serie-a/2026-2027/probabili-formazioni/{}-giornata'
+URL_DUBBI = 'https://www.fantacalcio.it/probabili-formazioni-serie-a'   # distingue infortunati e in dubbio
 # formazioni tipo di stagione: servono solo per il modulo abituale, mai per la titolarita'
 URL_SQUADRE_TIPO = 'https://www.fantacalcio-online.com/it/consigli-fantacalcio/probabili-formazioni-serie-a'
 URL_ORARI = 'https://fixturedownload.com/feed/json/serie-a-2026'
@@ -293,8 +295,68 @@ def titolari(listone, n):
     squalificati = sum(1 for v in indisp.values() if v['motivo'].lower().startswith('squalific'))
     print(f'[titolari] giornata {n}: {len(pubblicate)} squadre pubblicate su 20, '
           f'{len(indisp)} indisponibili ({squalificati} squalificati).')
-    return {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'giornata': n,
-            'squadre': sorted(pubblicate), 'titolari': tit, 'panchina': panca, 'indisponibili': indisp}
+    t = {'aggiornato': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'giornata': n,
+         'squadre': sorted(pubblicate), 'titolari': tit, 'panchina': panca, 'indisponibili': indisp}
+    try:
+        incrocia_dubbi(t, dubbi_giornata(n))
+    except Exception as e:                # senza la seconda fonte valgono gli indisponibili della prima
+        print('[titolari] dubbi non letti:', e)
+    return t
+
+
+def id_link(a):
+    """L'Id del listone dal link del giocatore («.../squadre/milan/rabiot/2379»)."""
+    m = re.search(r'/(\d+)/?$', a.get('href', ''))
+    return m[1] if m else None
+
+
+def perc_lista(soup, selettore):
+    """{id: percentuale} di una lista di probabili di fantacalcio.it."""
+    uscita = {}
+    for li in soup.select(selettore):
+        a, barra = li.select_one('a.player-link'), li.select_one('[aria-valuenow]')
+        if a and barra and id_link(a):
+            uscita[id_link(a)] = int(barra['aria-valuenow'])
+    return uscita
+
+
+def dubbi_giornata(n):
+    """Infortunati, in dubbio e probabili di fantacalcio.it, che ha una sola pagina senza numero
+    di giornata: vale solo se le sue partite sono quelle della giornata n negli orari salvati."""
+    with open(os.path.join(DATI, 'orari.json'), encoding='utf-8') as f:
+        attese = {frozenset(m[:2]) for m in json.load(f)['giornate'][str(n)]['partite']}
+    r = get(URL_DUBBI)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, 'lxml')
+    gare = {frozenset(h.get_text(strip=True) for h in g.select('h3.team-name')) for g in soup.select('li.match-item')}
+    if gare != attese:
+        raise ValueError(f'la pagina non e\' della giornata {n}: {len(gare & attese)} partite su {len(attese)}')
+    dubbi = {}
+    for li in soup.select('ul.doubts-list li'):
+        a, testo = li.select_one('a.player-link'), li.select_one('.description')
+        if a and id_link(a):
+            dubbi[id_link(a)] = testo.get_text(' ', strip=True) if testo else 'in dubbio'
+    return {'dubbi': dubbi, 'fuori': {id_link(a) for a in soup.select('ul.injured-list a.player-link')} - {None},
+            'titolari': perc_lista(soup, 'ul.player-list.starters li'), 'panchina': perc_lista(soup, 'ul.player-list.reserves li')}
+
+
+def incrocia_dubbi(t, it):
+    """Le due fonti a confronto. fantacalcio-online chiama «Infortunato» anche chi e' solo in dubbio:
+    se fantacalcio.it lo da' in dubbio o nelle probabili, e non tra gli infortunati, resta schierabile,
+    con la sua percentuale. Gli squalificati restano fuori."""
+    t['dubbi'] = {}
+    candidati = set(it['dubbi']) | {i for i in t['indisponibili'] if i in it['titolari'] or i in it['panchina']}
+    for i in candidati - it['fuori']:
+        if t['indisponibili'].get(i, {}).get('motivo', '').lower().startswith('squalific'):
+            continue
+        t['indisponibili'].pop(i, None)
+        t['dubbi'][i] = it['dubbi'].get(i, 'in dubbio')
+        if i not in t['titolari'] and i not in t['panchina']:
+            if i in it['titolari']:
+                t['titolari'][i] = it['titolari'][i]
+            elif i in it['panchina']:
+                t['panchina'][i] = it['panchina'][i]
+    print(f"[titolari] {len(t['dubbi'])} in dubbio secondo fantacalcio.it.")
 
 
 def listone_nuovi(listone):

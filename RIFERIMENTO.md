@@ -17,7 +17,7 @@ dati/lega.json          classifica e risultati di lega (chiuso)
 dati/consigli.json      l'undici consigliato salvato prima di ogni scadenza (chiuso)
 dati/formazioni.json    la tua formazione schierata, giornata per giornata (chiuso)
 dati/infortuni.json     automatico
-dati/titolari.json      automatico: probabili della prossima giornata e indisponibili
+dati/titolari.json      automatico: probabili della prossima giornata e indisponibili e dubbi (fantacalcio.it distingue chi è solo in dubbio)
 dati/orari.json         automatico: orari, primo e ultimo calcio d'inizio, `partite`
 dati/squadre.json       automatico: rendimento casa/fuori, quest'anno e l'anno scorso
 dati/statistiche.json   automatico: partite, MV, FM, quotazioni, bonus; `iniziali`

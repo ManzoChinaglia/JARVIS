@@ -79,8 +79,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   vm.runInContext(codice + '\n;globalThis.__t={get D(){return D},get mia(){return mia},get PESI(){return PESI},' +
     'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
     'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,cartaAtteso,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
-    'prossima,scadenza,orario,undici,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,campioneVoti,campioneFantavoti,partitaCondivisa,esitoPartita,quotePartita,cento3,coloreClub,esitiQuando,renderQuando,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,dossierDi,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,forma,movimentoLega,risultatoLega,forfaitLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
+    'moduliSchierabili,mancaModulo,avvisoModuli,prossima,scadenza,orario,undici,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,avvisoPortiere,conModificatore,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,campioneVoti,campioneFantavoti,partitaCondivisa,esitoPartita,quotePartita,cento3,coloreClub,esitiQuando,renderQuando,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,dossierDi,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,forma,movimentoLega,risultatoLega,forfaitLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (attendi && el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -395,6 +395,34 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
              && t.mia.filter(p => p.ruolo === 'D' && t.disponibile(p, g[2]) && !u.D.includes(p))
                   .every(p => u.D.every(d => t.punteggio(d, g) >= t.punteggio(p, g))));
     verifica(m + ': niente modificatore nel totale', t.totaleModulo(g, m).mod === 0);
+  }
+  // 30/10/2026: pochi disponibili in un ruolo (QI G5: 2 centrocampisti). Mai un modulo incompleto consigliato se ce n'è uno completo
+  {
+    const cc = t.mia.filter(p => p.ruolo === 'C'), aa = t.mia.filter(p => p.ruolo === 'A'), out0 = new Map([...cc, ...aa].map(p => [p, p.out]));
+    const fuori = l => l.forEach(p => { p.out = '31/12/2030'; }), riapri = () => out0.forEach((v, p) => { p.out = v; });
+    fuori(cc.slice(3)); fuori(aa.slice(3));
+    verifica('3 centrocampisti: chi ne chiede di più è fuori dai moduli che si possono scegliere', t.moduliSchierabili(g).every(m => t.MODULI[m].C <= 3)
+             && t.moduliSchierabili(g).includes(t.moduloConsigliato(g)), t.moduliSchierabili(g).join(' '));
+    t.scegliModulo('4-5-1');
+    verifica('un modulo incompleto non si può scegliere', t.modulo !== '4-5-1');
+    fuori(cc.slice(2));
+    const s = t.moduliSchierabili(g), man = t.mancaModulo(g, t.moduloConsigliato(g));
+    verifica('nessun modulo completo: restano quelli con meno posti vuoti', s.length > 0 && man.C === 1 && t.undiciDi(t.mia, g, s[0]).C.length === 2, s.join(' '));
+    verifica('nessun modulo completo: l\'avviso dice chi manca', /^Nessun modulo completo: manca 1 centrocampista\./.test(t.avvisoModuli(g)), t.avvisoModuli(g));
+    t.renderGiornata();
+    verifica('il modulo scelto segue quelli possibili e il campo mostra il posto vuoto', s.includes(t.modulo) && (el.campo.innerHTML.match(/class="gioc vuoto"/g) || []).length === 1
+             && (el.campo.innerHTML.match(/class="gioc/g) || []).length === 11 && /disabled/.test(el.modulo.innerHTML) && /Nessun modulo completo/.test(el['moduli-avviso'].innerHTML));
+    const dubbio = cc[2], prob0 = t.D.prob;
+    t.D.prob = { ...prob0, giornata: g[1], dubbi: { [dubbio.id]: 'in forte dubbio' } };
+    verifica('chi è in dubbio resta schierabile anche con una data di rientro', t.disponibile(dubbio, g[2]) && t.avvisoModuli(g) === '', t.avvisoModuli(g));
+    const nellUndici = [].concat(...Object.values(t.undici(g)))[1];
+    t.D.prob = { ...prob0, giornata: g[1], squadre: [nellUndici.club], dubbi: { [nellUndici.id]: 'in forte dubbio' } };
+    verifica('chi è in dubbio nell\'undici consigliato finisce negli avvisi', t.avvisi(g).some(a => a.titolo === nellUndici.nome + ' in dubbio' && /^In forte dubbio\. /.test(a.testo)));
+    t.D.prob = prob0;
+    riapri();
+    t.renderGiornata();
+    verifica('coi disponibili tornati niente avviso né tessere spente', t.avvisoModuli(g) === '' && !/disabled/.test(el.modulo.innerHTML));
+    verifica('con la difesa a quattro nessuna nota sul portiere', t.conModificatore(t.modulo) && t.avvisoPortiere(g) === '', t.modulo);
   }
   t.scegliModulo('3-5-2');
   verifica('scelto il 3-5-2: la tessera si accende e il campo ha tre difensori', t.modulo === '3-5-2'

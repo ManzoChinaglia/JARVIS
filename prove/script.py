@@ -112,6 +112,12 @@ verifica('2 indisponibili e niente probabili: non si scrive', not mod.titolari_u
 verifica('con le probabili di una squadra si scrive', mod.titolari_utili({'titolari': {str(i): 90 for i in range(11)}, 'indisponibili': {}}))
 verifica('con 5 indisponibili si scrive anche senza probabili',
          mod.titolari_utili({'titolari': {}, 'indisponibili': {str(i): {'motivo': 'Infortunato'} for i in range(5)}}))
+incr = {'titolari': {}, 'panchina': {}, 'indisponibili': {'1': {'motivo': 'Infortunato'}, '2': {'motivo': 'Infortunato'},
+                                                         '3': {'motivo': 'Infortunato'}, '4': {'motivo': 'Squalificato'}}}
+mod.incrocia_dubbi(incr, {'dubbi': {'1': 'in forte dubbio', '4': 'in dubbio'}, 'fuori': {'3'}, 'titolari': {'1': 55, '3': 100}, 'panchina': {'2': 50}})
+verifica('l\'altra fonte lo dà in dubbio o in panchina: resta schierabile con la sua percentuale',
+         incr['dubbi'] == {'1': 'in forte dubbio', '2': 'in dubbio'} and incr['titolari'] == {'1': 55} and incr['panchina'] == {'2': 50}, incr)
+verifica('infortunati per entrambe e squalificati restano fuori', set(incr['indisponibili']) == {'3', '4'}, incr['indisponibili'])
 with tempfile.TemporaryDirectory() as d:
     p = os.path.join(d, 'titolari.json')
     with open(p, 'w', encoding='utf-8') as f:

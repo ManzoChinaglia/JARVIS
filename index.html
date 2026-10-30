@@ -138,7 +138,8 @@
   .lega-voce[aria-selected="true"] .lega-spunta{display:grid;}
   .versione{margin:30px 0 6px; text-align:center; font-size:11px; color:var(--dim);}
 
-  main{position:relative; z-index:1; padding:0 16px; max-width:640px; margin-left:auto; margin-right:auto;}
+  /* overflow-x: le entrate di lato e le ombre non devono allargare la pagina al telefono */
+  main{position:relative; z-index:1; overflow-x:clip; padding:0 16px; max-width:640px; margin-left:auto; margin-right:auto;}
   section{display:none;}
   section.on{display:block;}
   /* cambiando scheda i blocchi salgono uno dopo l'altro */
@@ -221,12 +222,18 @@
   .moduli{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:12px;}
   .moduli button{position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; min-width:0;
                  padding:7px 0 5px; border-radius:11px; color:var(--ink);
-                 background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.02)), rgba(255,255,255,.04);
+                 background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.02)), rgba(14,18,16,.82);
                  border:1px solid rgba(255,255,255,.16);
                  box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 4px 14px rgba(0,0,0,.18);
                  -webkit-backdrop-filter:var(--vetro-sfoca); backdrop-filter:var(--vetro-sfoca);
                  transition:transform .3s var(--molla), background .25s, border-color .25s, box-shadow .25s;}
   .moduli button:active{transform:scale(.95);}
+  /* il modulo che non si può schierare: fondo pieno, altrimenti lo stemma della lega passa sotto ai numeri */
+  .moduli button.off{background:#12161a; border-color:rgba(255,255,255,.1); box-shadow:none; -webkit-backdrop-filter:none; backdrop-filter:none;}
+  .moduli button.off svg{opacity:.4;}
+  .moduli button.off .mn{color:var(--dim);}
+  .moduli button.off .mt{font-size:9px; letter-spacing:-.1px; font-family:inherit; color:var(--oro-chiaro);}
+  #moduli-avviso .qe-avviso{margin:10px 0 0;}
   .moduli button.on{background:linear-gradient(180deg,rgba(233,185,73,.26),rgba(233,185,73,.08)); border-color:rgba(233,185,73,.75);
                     box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 0 0 3px rgba(233,185,73,.16), 0 6px 18px rgba(233,185,73,.2);}
   .moduli svg{width:100%; max-width:34px; height:auto; aspect-ratio:30/24; display:block; padding:0 3px; box-sizing:border-box;}
@@ -264,6 +271,8 @@
   .sagoma{position:relative; width:50px; height:50px; transition:transform .15s;
           filter:drop-shadow(0 7px 6px rgba(0,0,0,.5));}
   .gioc:active .sagoma{transform:scale(.9);}
+  .gioc.vuoto .buco{display:flex; align-items:center; justify-content:center; width:100%; height:100%; box-sizing:border-box; border-radius:50%;
+                    border:2px dashed rgba(255,255,255,.55); background:rgba(5,8,6,.45); font-weight:700; font-size:17px; color:rgba(255,255,255,.75);}
   .maglia{display:block; width:100%; height:100%;}
   .voto{position:absolute; right:-11px; bottom:1px; min-width:29px; padding:2px 5px; border-radius:8px;
         font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:13.5px; line-height:1.1; text-align:center;
@@ -1219,6 +1228,9 @@
   /* campo (18/10): nome e voto in pastiglie scure ben leggibili, sotto l'avversario con la sua maglia */
   #campo .gioc{overflow:visible;}
   #campo .nm{max-width:none; padding:1px 8px; font-size:14px; background:rgba(5,8,6,.84);}
+  /* in una fila da cinque i nomi hanno meno spazio: si stringono per non toccarsi */
+  #campo .gioc.stretta .nm{max-width:calc(100% + 6px); padding:1px 3px; font-size:11px; letter-spacing:0;}
+  #campo .gioc.stretta .nm.lungo{font-size:10px;}
   #campo .vl{margin-top:3px; padding:1px 9px 0; border-radius:9px; font:800 18px/1.15 "Big Shoulders Display",sans-serif; letter-spacing:.3px;
              text-shadow:none; background:rgba(5,8,6,.86); border:1px solid rgba(255,255,255,.16);}
   #campo .vl.a{color:#5BE3A0; border-color:rgba(91,227,160,.55);}
@@ -1442,6 +1454,7 @@ try{ const t = sessionStorage.getItem('jarvis-tr'); if(t){ sessionStorage.remove
       <h2>Undici consigliato</h2>
     </div>
     <div class="moduli" id="modulo"></div>
+    <div id="moduli-avviso"></div>
     <div class="campo" id="campo"></div>
     <div id="difesa"></div>
     <div id="sfida"></div>
@@ -1876,6 +1889,7 @@ function dataIt(iso){
 /* ---------- giornata ---------- */
 function renderGiornata(){
   const g = prossima(), av = avversarioLega(g);
+  if(!moduliSchierabili(g).includes(modulo)) modulo = moduloConsigliato(g);
   document.getElementById('gg').textContent =
     'Giornata '+g[0]+' · '+dataIt(g[2])+' · '+(av.casa?'in casa':'in trasferta');
   document.getElementById('avv').textContent = av.nome.toUpperCase();
@@ -2440,10 +2454,41 @@ function attesoUndici(u, mod, g){
   const m = conModificatore(mod) && u.P.length && u.D.length >= 4 ? modificatoreAtteso(u.P[0], u.D, SIMULAZIONI, g) : null;
   return {fv, mod: m ? m.atteso : 0, tot: fv + (m ? m.atteso : 0)};
 }
+/* quanti posti di un modulo restano vuoti per ruolo, coi disponibili della giornata */
+function mancaModulo(g, mod){
+  const q = Object.assign({P:1}, MODULI[mod]), manca = {};
+  ['P','D','C','A'].forEach(r=>{
+    const n = q[r] - mia.filter(p=>p.ruolo===r && disponibile(p, g[2])).length;
+    if(n > 0) manca[r] = n;
+  });
+  return manca;
+}
+const postiVuoti = manca => Object.values(manca).reduce((s,n)=>s+n, 0);
+const etichettaVuoti = n => '−'+n+(n === 1 ? ' posto' : ' posti');
+/* i moduli che si possono scegliere: quelli completi; se nessuno lo è, quelli con meno posti vuoti */
+function moduliSchierabili(g){
+  const vuoti = Object.keys(MODULI).map(m=>[m, postiVuoti(mancaModulo(g, m))]), meno = Math.min(...vuoti.map(x=>x[1]));
+  return vuoti.filter(x=>x[1]===meno).map(x=>x[0]);
+}
 function moduloConsigliato(g){
   let meglio = null;
-  Object.keys(MODULI).forEach(m=>{ const t = totaleModulo(g, m).tot; if(!meglio || t > meglio.tot + 1e-9) meglio = {m, tot:t}; });
+  moduliSchierabili(g).forEach(m=>{ const t = totaleModulo(g, m).tot; if(!meglio || t > meglio.tot + 1e-9) meglio = {m, tot:t}; });
   return meglio && meglio.m;
+}
+/* nessun modulo completo: chi manca */
+const UNO_RUOLO = {P:'portiere', D:'difensore', C:'centrocampista', A:'attaccante'};
+function avvisoModuli(g){
+  const manca = mancaModulo(g, modulo), ruoli = Object.keys(manca);
+  if(!ruoli.length) return '';
+  return 'Nessun modulo completo: '+(postiVuoti(manca)===1 ? 'manca ' : 'mancano ')+
+    ruoli.map(r=>manca[r]+' '+(manca[r]===1 ? UNO_RUOLO[r] : PLURALI[r].toLowerCase())).join(' e ')+'.';
+}
+/* con la difesa a tre il portiere si sceglie da solo, con quella a quattro a blocco col modificatore: se cambia, si dice perché */
+function avvisoPortiere(g){
+  const quattro = moduliSchierabili(g).find(conModificatore);
+  if(conModificatore(modulo) || !quattro) return '';
+  const a = undiciDi(mia, g, modulo).P[0], b = undiciDi(mia, g, quattro).P[0];
+  return a && b && a.id!==b.id ? 'In porta '+cognome(a)+': senza modificatore conta solo il suo voto. Con la difesa a quattro va '+cognome(b)+'.' : '';
 }
 /* la formazione in piccolo: portiere in basso, poi difesa, centrocampo e attacco, coi colori dei ruoli */
 const COLORI_RUOLO = {P:'#E4B451', D:'#7FB3D5', C:'#71C295', A:'#E0605C'};
@@ -2457,14 +2502,16 @@ let moduliDisegnati = '';
 function renderModuli(g){
   const box = document.getElementById('modulo');
   if(!box) return;
-  const cons = moduloConsigliato(g);
+  const cons = moduloConsigliato(g), schierabili = moduliSchierabili(g);
   const html = Object.keys(MODULI).map(m=>{
-    const t = totaleModulo(g, m), tre = !conModificatore(m);
-    return '<button data-m="'+m+'" class="'+(m===modulo ? 'on' : '')+'"'+(tre ? '' : '')+' aria-pressed="'+(m===modulo)+'">'+
+    const t = totaleModulo(g, m), tre = !conModificatore(m), si = schierabili.includes(m);
+    return '<button data-m="'+m+'" class="'+(m===modulo ? 'on' : si ? '' : 'off')+'"'+(si ? '' : ' disabled')+' aria-pressed="'+(m===modulo)+'">'+
       (m===cons ? '<i class="cons">CONSIGLIATA</i>' : '')+disegnoModulo(MODULI[m])+
-      '<b class="mn">'+m+'</b><hr><span class="mt">'+num(t.tot)+'</span>'+(tre ? '<i class="nomod">NO MOD.</i>' : '')+'</button>';
+      '<b class="mn">'+m+'</b><hr><span class="mt">'+(si ? num(t.tot) : etichettaVuoti(postiVuoti(mancaModulo(g, m))))+'</span>'+(tre && si ? '<i class="nomod">NO MOD.</i>' : '')+'</button>';
   }).join('');
   if(html !== moduliDisegnati){ moduliDisegnati = html; box.innerHTML = html; }
+  const avviso = avvisoModuli(g) || avvisoPortiere(g);
+  document.getElementById('moduli-avviso').innerHTML = avviso ? '<p class="qe-avviso"><i></i>'+avviso+'</p>' : '';
 }
 /* Il banner del modificatore difesa (decisione dell'utente del 17/10/2026): resta solo quello,
    non si tocca, si aggiorna da solo a ogni cambio di modulo. Senza voti misurati non c'è:
@@ -2496,8 +2543,12 @@ function disegnaCampo(g){
   const campo = document.getElementById('campo');
   let i = 0;                       // ordine di entrata: dal portiere all'attacco
   const migliore = Math.max(...[].concat(u.P,u.D,u.C,u.A).map(p=>p.pgv ? atteso(p, g) : -1));
+  const q = Object.assign({P:1}, MODULI[modulo]);
   const html = pianoCampo() + ['P','D','C','A'].map(r=>
-    u[r].map((p,k)=>cella(p, g, prospettiva(posizione(r, k, u[r].length)), i++, migliore)).join('')
+    Array.from({length:q[r]}, (_, k)=>{
+      const pos = prospettiva(posizione(r, k, q[r]));
+      return u[r][k] ? cella(u[r][k], g, pos, i++, migliore) : postoVuoto(r, pos, i++);
+    }).join('')
   ).join('');
   /* si ridisegna solo se qualcosa è cambiato; le maglie entrano solo quando cambia
      l'undici, non a ogni aggiornamento del minuto, e finita l'entrata restano ferme */
@@ -2582,14 +2633,19 @@ function pianoCampo(){
 }
 /* il numero che si legge sul campo è lo stesso dei reparti della sfida: fantavoto atteso, o fantamedia stimata senza modello */
 function atteso(p, g){ const a = attesoModello('fantavoto', p, g); return a ? a.media : fmStimata(p); }
+/* un posto del modulo senza nessuno disponibile in quel ruolo */
+function postoVuoto(r, pos, i){
+  return '<div class="gioc vuoto" style="left:'+pos.x+'%;top:'+pos.y+'%;width:'+pos.w+'%;--i:'+i+';--sc:'+pos.sc.toFixed(2)+'">'+
+    '<span class="sagoma"><span class="buco">'+r+'</span></span><span class="nm">Nessuno</span></div>';
+}
 function cella(p, g, pos, i, migliore){
   const m = avversarioClub(p.club, g[1]);
   const t = titolarita(p, g);
-  const rischio = t && (t.stato==='c' || t.stato==='r' || t.perc<60);
-  return '<button class="gioc'+(rischio?' rischio':'')+'" data-id="'+p.id+'" style="left:'+pos.x+'%;top:'+pos.y+'%;width:'+pos.w+'%;--i:'+i+';--sc:'+pos.sc.toFixed(2)+'">'+
+  const rischio = dubbioGiornata(p, g[2]) || t && (t.stato==='c' || t.stato==='r' || t.perc<60);
+  return '<button class="gioc'+(rischio?' rischio':'')+(pos.w<19?' stretta':'')+'" data-id="'+p.id+'" style="left:'+pos.x+'%;top:'+pos.y+'%;width:'+pos.w+'%;--i:'+i+';--sc:'+pos.sc.toFixed(2)+'">'+
     '<span class="sagoma"><span class="ombra"></span>'+maglia(p.club)+
       (t ? '<i class="pallino '+statoTit(t)+'"></i>' : '')+'</span>'+
-    '<span class="nm">'+cognome(p)+'</span>'+
+    '<span class="nm'+(cognome(p).length>9?' lungo':'')+'">'+cognome(p)+'</span>'+
     '<span class="vl '+(!p.pgv ? '' : p.fm>=7 ? 'a' : p.fm<6 ? 'c' : '')+'">'+(p.pgv && atteso(p, g)===migliore ? '<i>★</i>' : '')+(p.pgv ? num(atteso(p, g), 1) : '–')+'</span>'+
     '<span class="av">'+(m ? '<em>'+(m.casa?'vs':'@')+'</em>'+maglia(m.avv)+'<b>'+m.avv.slice(0,3).toUpperCase()+'</b>' : '')+'</span>'+
   '</button>';
@@ -2600,6 +2656,11 @@ function cella(p, g, pos, i, migliore){
 function fuoriGiornata(p, isoData){
   const pr = D.prob, g = D.g.find(x=>x[2]===isoData);
   return pr && g && pr.giornata===g[1] && pr.indisponibili ? pr.indisponibili[String(p.id)] || null : null;
+}
+/* una fonte lo dà fuori e un'altra in dubbio o nelle probabili: resta schierabile, col segno di rischio */
+function dubbioGiornata(p, isoData){
+  const pr = D.prob, g = D.g.find(x=>x[2]===isoData);
+  return pr && g && pr.giornata===g[1] && pr.dubbi ? pr.dubbi[String(p.id)] || null : null;
 }
 /* perché è fuori, in poche parole */
 function perche(p, isoData){
@@ -2643,6 +2704,7 @@ function apriNonDisponibili(){
 }
 function disponibile(p, isoData){
   if(fuoriGiornata(p, isoData)) return false;
+  if(dubbioGiornata(p, isoData)) return true;
   if(!p.out) return true;
   const [g,m,a] = p.out.split('/');
   return (a+'-'+m+'-'+g) <= isoData;   // rientra entro la giornata
@@ -2656,7 +2718,7 @@ function rigaPanchina(p, g, n){
   const partita = m ? (m.casa ? 'vs ' : 'a ')+m.avv+(fin ? ' · finita '+fin : o ? ' · '+oraBreve(o) : '') : p.club;
   const tit = !t || fin ? '' : t.stato==='s' ? '<span class="pb-chip">'+descrizionePres(t)+'</span>'
     : '<span class="pb-chip '+(t.stato==='t' && t.perc >= 70 ? 'verde' : t.stato==='r' ? 'rosso' : 'giallo')+'">'+
-      (t.stato==='t' ? 'titolare '+t.perc+'%' : t.stato==='c' ? 'in panchina'+(t.perc ? ' '+t.perc+'%' : '') : 'non nelle probabili')+
+      (t.stato==='t' ? 'titolare '+t.perc+'%' : t.stato==='c' ? 'in panchina'+(t.perc ? ', impiego '+t.perc+'%' : '') : 'non nelle probabili')+
       '<i class="pb-barra"><i style="width:'+t.perc+'%"></i></i></span>';
   const avv = !f || fin ? '' : '<span class="pb-chip avv'+(f.delta <= -0.2 ? ' rosso' : f.delta >= 0.2 ? ' verde' : '')+'">'+
     (Math.abs(f.delta) < 0.2 ? 'avversario nella media'
@@ -2682,7 +2744,7 @@ function riga(p, g, ordine){
   const sotto = ko
     ? '<span class="ko">'+perche(p, g[2])+'</span>'
     : p.club + (sfida?' · '+sfida:'') + (stato?' · '+stato:'');
-  const fm = p.pgv>0 ? p.fm.toFixed(2) : '—';
+  const fm = p.pgv>0 ? p.fm.toFixed(2).replace('.', ',') : '—';
   return '<div class="riga'+(ko?' fuori':'')+'" data-id="'+p.id+'"><div class="ruolo '+p.ruolo+' cond">'+p.ruolo+
     (ordine ? '<small>'+ordine+'</small>' : '')+'</div>'+
     '<span class="mini">'+maglia(p.club)+'</span>'+
@@ -3059,7 +3121,7 @@ function dossierDi(g, dubbio){
     if(b && b.io) b.io.forEach(x=>club.add(x[2]));
     return 'Da controllare sul web prima di rispondere: coppe europee e Coppa Italia giocate in settimana o in arrivo, forma vista, malanni e partite pericolose per '+[...club].join(', ')+'.';
   };
-  const moduli =Object.keys(MODULI).map(m=>m+' '+num(totaleModulo(g, m).tot)+(m===cons ? '*' : '')).join(' · ');
+  const moduli =Object.keys(MODULI).map(m=>m+' '+num(totaleModulo(g, m).tot)+(m===cons ? '*' : '')).join(' · ')+(avvisoModuli(g) ? '\n'+avvisoModuli(g) : '');
   const loro = s.loro;
   return [
     'JARVIS · DOSSIER v3 — usa la skill dubbio (controlli a 360°, incastro tra le due leghe)',
@@ -3863,7 +3925,7 @@ function apriGiocatore(id){
   const p = players.find(x=>x.id===id);
   if(!p) return;
   const g = prossima(), m = avversarioClub(p.club, g[1]), t = titolarita(p, g), f = forza(p, g);
-  const ko = !disponibile(p, g[2]);
+  const ko = !disponibile(p, g[2]), dubbio = dubbioGiornata(p, g[2]);
   const tessera = (k, v) => '<div class="tessera"><b class="cond">'+v+'</b><span>'+k+'</span></div>';
   /* partite a voto su quelle giocate dalla sua squadra; i bonus solo se la fonte li ha dati.
      Statistiche e risultati si aggiornano in momenti diversi: la squadra ha giocato almeno
@@ -3877,6 +3939,8 @@ function apriGiocatore(id){
   document.getElementById('foglio-corpo').innerHTML =
     '<div class="gio-testa">'+maglia(p.club)+'<div><div class="gio-nome cond">'+p.nome+'</div>'+
       '<div class="gio-sub">'+p.club+' · '+RUOLI[p.ruolo]+(p.team===ME ? '' : ' · rosa di '+p.team)+'</div></div></div>'+
+    (dubbio ? '<p class="qe-avviso"><i></i>In dubbio: '+dubbio+'</p>'
+     : !ko && t && t.stato==='c' ? '<p class="qe-avviso"><i></i>In panchina nelle probabili</p>' : '')+
     '<div class="tessere">'+tessera('fantamedia', p.pgv ? num(p.fm,2) : '—')+tessera('media voto', p.pgv ? num(p.mv,2) : '—')+
       tessera('quotazione', p.quot)+tessera('partite a voto', giocate ? p.pgv+'/'+giocate : p.pgv)+
       (p.ruolo==='P' ? tessera('gol subiti', b(p.gs))+tessera('rigori parati', b(p.rp))
@@ -3905,7 +3969,7 @@ const FILTRI_ROSA = [['tutti','Tutti'], ['ok','Disponibili'], ['dubbio','In dubb
 function statoRosa(p, g){
   if(!disponibile(p, g[2])) return 'fuori';
   const t = titolarita(p, g);
-  return t && (t.stato==='c' || t.stato==='r' || t.perc<60) ? 'dubbio' : 'ok';
+  return dubbioGiornata(p, g[2]) || t && (t.stato==='c' || t.stato==='r' || t.perc<60) ? 'dubbio' : 'ok';
 }
 function magliaRosa(p, g, i){
   const st = statoRosa(p, g), t = titolarita(p, g), m = avversarioClub(p.club, g[1]), quando = oraPartita(p.club, g[1]);
@@ -3914,7 +3978,7 @@ function magliaRosa(p, g, i){
     : (m ? (m.casa ? 'vs ' : 'a ')+m.avv : p.club)+(finalePartita(p.club, g[1]) ? '<br>finita '+finalePartita(p.club, g[1]) : quando ? '<br>'+oraBreve(quando) : '');
   return '<button class="rc'+(st==='fuori' ? ' fuori' : '')+'" data-id="'+p.id+'" data-stato="'+st+'" style="--i:'+i+'">'+
     '<span class="sagoma">'+maglia(p.club)+(t && st!=='fuori' ? '<i class="pallino '+statoTit(t)+'"></i>' : '')+
-    '<b class="voto">'+(p.pgv ? p.fm.toFixed(1) : '–')+'</b></span>'+
+    '<b class="voto">'+(p.pgv ? num(p.fm, 1) : '–')+'</b></span>'+
     '<span class="rc-nome">'+p.nome+'</span><span class="rc-sotto">'+sotto+'</span>'+pallini3(p, g)+'</button>';
 }
 function renderRosa(){
@@ -3983,7 +4047,7 @@ function renderLega(){
     '<div class="team'+(x.t===ME?' io':'')+'"><span class="pos cond">'+(i+1)+'</span>'+stemma(x.t)+
     '<span class="nome">'+x.t+'<span class="barretta"><i style="width:'+
       (max>min ? 15+85*(x.fm-min)/(max-min) : 100).toFixed(0)+'%"></i></span></span>'+
-    '<span class="val cond">'+x.fm.toFixed(2)+'</span></div>').join('')+'</div>';
+    '<span class="val cond">'+num(x.fm, 2)+'</span></div>').join('')+'</div>';
 
   const pr = prossima(), ip = D.g.indexOf(pr);
   document.getElementById('calendario').innerHTML = '<div class="lista">'+D.g.map((g,i)=>{
@@ -4041,8 +4105,11 @@ function avvisi(g){
     out.push({id:'probabili-'+g[1]+'-'+(pr.squadre.length>=20 ? 'tutte' : 'alcune'), livello:'info', titolo:'Probabili uscite',
               testo:pr.squadre.length+' squadre su 20. Dei tuoi giocatori già nelle probabili, '+tit+' su '+miei.length+' sono titolari.'});
     [].concat(...Object.values(undici(g))).forEach(p=>{
-      const t = titolarita(p, g);
-      if(t && (t.stato==='c' || t.stato==='r'))
+      const t = titolarita(p, g), dubbio = dubbioGiornata(p, g[2]);
+      if(dubbio)
+        out.push({id:'dubbio-'+p.id+'-'+g[1], livello:'attenzione', titolo:p.nome+' in dubbio',
+                  testo:dubbio.charAt(0).toUpperCase()+dubbio.slice(1)+'. È nell\'undici consigliato: guarda la panchina nella Giornata.'});
+      else if(t && (t.stato==='c' || t.stato==='r'))
         out.push({id:'dubbio-'+p.id+'-'+g[1], livello:'attenzione',
                   titolo:p.nome+(t.stato==='c' ? ' in panchina' : ' fuori')+' nelle probabili',
                   testo:'È nell\'undici consigliato: guarda la panchina nella Giornata.'});
@@ -4296,7 +4363,7 @@ function nellaFinestraDellaScadenza(){
 setInterval(()=>{ if(document.visibilityState === 'visible' && nellaFinestraDellaScadenza()) rileggiFormazioni(); }, 120000);
 /* modulo: cinque tessere, si sceglie toccandone una */
 function scegliModulo(m){
-  if(!MODULI[m] || m===modulo) return;
+  if(!MODULI[m] || m===modulo || !moduliSchierabili(prossima()).includes(m)) return;
   modulo = m;
   renderGiornata();
 }
