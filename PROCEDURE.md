@@ -37,6 +37,8 @@ Spostate da `CLAUDE.md` il 23/09/2026 (testo invariato). Si leggono quando l'ute
   `python scripts/importa_lega.py --lega qi <classifica.txt> <calendario.txt>` (prima `--prova`) fa gli
   stessi controlli dei file e copia i testi in `archivio/qi/` con la data. Il numero di giornate viene dal
   calendario della lega (`base.json`: BF 34, QI 33).
+  Lo stesso giro a testo vale per la BF (30/10/2026): il calendario va fatto scorrere prima di leggerlo e
+  nel file restano solo le giornate giocate; se `get_page_text` unisce le righe della partita, si usa `innerText` dell'articolo.
   Giornata di lega ≠ giornata di Serie A: BF parte dalla 5ª, QI dalla 6ª (G7 = BF 3, QI 2).
   Pagina della partita QI: `/fantalega-qi/view/competition/886465/round/<giornata di lega>` (aspettare
   qualche secondo prima di leggere il testo).

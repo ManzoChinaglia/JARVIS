@@ -93,8 +93,16 @@ def estrai(testo, squadra):
     titolari_2, resto = blocchi(resto, N_TITOLARI)
     if not resto or resto[0] != 'Panchina':
         raise ValueError('sezione «Panchina» non trovata: la pagina ha cambiato struttura')
-    panchina_1, resto = blocchi(resto[1:], N_PANCHINA)
-    panchina_2, resto = blocchi(resto, N_PANCHINA)
+    # L'avversario può aver schierato una panchina più corta (30/10/2026, 9 nomi invece di 14): i nomi
+    # sono in fila senza stacco, quindi si tagliano i 14 della tua dal lato tuo; se la tua fosse corta,
+    # nomi non in rosa fermano l'import.
+    fine = resto.index('Totale parziali') if 'Totale parziali' in resto else len(resto)
+    righe_panchina = resto[1:fine]
+    nomi_panchina, _ = blocchi(righe_panchina, sum(not RE_VALORE.match(r) for r in righe_panchina))
+    if len(nomi_panchina) < N_PANCHINA:
+        raise ValueError(f'attesi almeno {N_PANCHINA} giocatori in panchina, trovati {len(nomi_panchina)}')
+    taglio = N_PANCHINA if primo else len(nomi_panchina) - N_PANCHINA
+    panchina_1, panchina_2 = nomi_panchina[:taglio], nomi_panchina[taglio:]
     titolari, panchina = (titolari_1, panchina_1) if primo else (titolari_2, panchina_2)
     altro = [t for t in squadre if t != squadra][0]
     moduli = [m for _, m in sorted(squadre.values())]
