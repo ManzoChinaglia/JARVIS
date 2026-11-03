@@ -12,6 +12,11 @@ on:
     # minuti dispari: GitHub ritarda spesso i giri a :00 e :30
     - cron: '7,37 * * * *'
   workflow_dispatch:
+  # sveglia dalla routine cloud di Claude (04/11/2026): GitHub fa partire il cron solo 3-8 volte al
+  # giorno invece di 48; la routine ogni ora spinge un commit vuoto su questo ramo. Il giro lavora
+  # sempre su main (checkout con ref: main), il ramo serve solo da campanello.
+  push:
+    branches: ['claude/sveglia']
 
 # stesso gruppo del giro completo: mai due giri insieme sugli stessi file
 concurrency:
