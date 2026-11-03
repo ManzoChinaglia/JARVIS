@@ -39,8 +39,10 @@ Spostate da `CLAUDE.md` il 23/09/2026 (testo invariato). Si leggono quando l'ute
   calendario della lega (`base.json`: BF 34, QI 33).
   Lo stesso giro a testo vale per la BF (30/10/2026): il calendario va fatto scorrere prima di leggerlo e
   nel file restano solo le giornate giocate; se `get_page_text` unisce le righe della partita, si usa `innerText` dell'articolo.
-  Dal 04/11/2026 la pagina Calendario BF può non mostrare le partite: si prende l'ultimo testo in `archivio/lega` e si
-  aggiunge la giornata dalla pagina `view/competition/748699/round/<N>?i=0..4` (righe in testa: casa, gol, totale, -, gol, totale, fuori).
+  La pagina Calendario tiene nel testo solo le giornate vicine allo schermo e toglie le altre mentre scorre (04/11/2026):
+  se si scorre in fondo e poi si legge, non c'è nessuna giornata. Si scorre a passi di 300 px con una pausa di 0,7 s,
+  raccogliendo a ogni passo i blocchi «N° GIORNATA» + 30 righe ancora mancanti, poi si scrivono in ordine.
+  Riserva: pagina `view/competition/748699/round/<N>?i=0..4` (righe in testa: casa, gol, totale, -, gol, totale, fuori).
   Giornata di lega ≠ giornata di Serie A: BF parte dalla 5ª, QI dalla 6ª (G7 = BF 3, QI 2).
   Pagina della partita QI: `/fantalega-qi/view/competition/886465/round/<giornata di lega>` (aspettare
   qualche secondo prima di leggere il testo).
