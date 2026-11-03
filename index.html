@@ -2199,8 +2199,11 @@ function attesoModello(quale, p, g){
      «senza» tiene il valore senza quote per mostrare la differenza */
   const pt = mq ? parti(mq.coef, xq) : parti(m0.coef, x), m = mq || m0;
   const sd = ballo===null || ballo===undefined ? m.sd : (n*ballo + m0.n0*m.sd)/(n + m0.n0);
-  return {media: tot(pt), sd, parti: pt, storia: lam, casa: (mq ? xq : x) ? (mq ? xq : x).casa : null,
-          quote: !!mq, senza: mq ? tot(parti(m0.coef, x)) : null};
+  /* il modello impara dai fantavoti di fantacalcio.it, senza il bonus del portiere imbattuto: qui la sua media */
+  const imb = quale==='fantavoto' && p.ruolo==='P' && g && bonusImbattuto() ? bonusImbattuto()*probInviolata(p.club, g[1]) : 0;
+  if(imb) pt.imbattuto = imb;
+  return {media: tot(pt) + imb, sd, parti: pt, storia: lam, casa: (mq ? xq : x) ? (mq ? xq : x).casa : null,
+          quote: !!mq, senza: mq ? tot(parti(m0.coef, x)) + imb : null};
 }
 /* voto atteso: dal modello dove si usa; altrimenti come prima, la media del giocatore
    mescolata con quella del suo ruolo, con il ballo misurato su tutta la lega */
@@ -2221,7 +2224,8 @@ function cartaAtteso(p, g){
     (Math.abs(x) < 0.05 ? '' : x > 0 ? '+' : '−')+num(Math.abs(x))+'</span>';
   const pezzi = !a ? [] : ['<span class="ga-p base">base '+num(a.parti.base)+(a.storia >= 0.5 ? '' : ' · conta la quotazione')+'</span>']
     .concat(a.casa===1 ? [pill('in casa', a.parti.casa)] : [])
-    .concat(a.casa===null ? [] : a.quote ? [pill('partita (quote)', a.parti.squadra)] : [pill('avversario', a.parti.avv), pill('squadra', a.parti.squadra)]);
+    .concat(a.casa===null ? [] : a.quote ? [pill('partita (quote)', a.parti.squadra)] : [pill('avversario', a.parti.avv), pill('squadra', a.parti.squadra)])
+    .concat(a.parti.imbattuto ? [pill('imbattuto', a.parti.imbattuto)] : []);
   return '<div class="ga">'+
     (a ? '<div class="ga-testa"><span class="k">Fantavoto atteso, se gioca</span><b class="cond">'+num(a.media)+
       '<small> ± '+num(a.sd)+'</small></b></div><div class="ga-parti">'+pezzi.join('')+'</div>'+
@@ -2273,6 +2277,26 @@ function quotePartita(club, sa){
   const m = D.quote && avversarioClub(club, sa);
   const q = m && (D.quote[String(sa)] || []).find(x=>m.casa ? x[0]===club && x[1]===m.avv : x[0]===m.avv && x[1]===club);
   return q ? {casa: q[0], trasf: q[1], lc: q[2], lt: q[3], inCasa: m.casa} : null;
+}
+/* portiere imbattuto: il bonus della lega (0 se non c'è), i gol subiti dal club nella giornata sa (null se la partita
+   non è giocata) e la probabilità di porta inviolata: dalle quote se ci sono, altrimenti la media della stagione */
+function bonusImbattuto(){ return LEGA && LEGA.bonus_imbattuto || 0; }
+function golSubiti(club, sa){
+  const o = D.orari && D.orari[String(sa)], m = o && o.partite && o.partite.find(x=>x[0]===club || x[1]===club);
+  return m && m.length >= 5 && m[3]!==null && m[4]!==null ? (m[0]===club ? m[4] : m[3]) : null;
+}
+let INVIOLATE = null;
+function probInviolata(club, sa){
+  const q = quotePartita(club, sa);
+  if(q) return Math.exp(-(q.inCasa ? q.lt : q.lc));
+  if(!INVIOLATE || INVIOLATE.v !== D.orari_v){
+    let n = 0, z = 0;
+    Object.values(D.orari || {}).forEach(o=>(o.partite || []).forEach(m=>{
+      if(m.length >= 5 && m[3]!==null && m[4]!==null){ n += 2; z += (m[3]===0) + (m[4]===0); }
+    }));
+    INVIOLATE = {v: D.orari_v, p: n >= 40 ? z/n : 0.27};
+  }
+  return INVIOLATE.p;
 }
 /* per il club: scarti dai gol attesi, fatti (f) e subiti (s), nelle n simulazioni, e i gol attesi (lf, ls) */
 function partitaCondivisa(club, g, n){
@@ -2874,8 +2898,11 @@ function campioneFantavoti(p, n, g){
   const vb = Math.max(0.05, a.sd*a.sd - va.sd*va.sd), pg = pa && parteGol(vb, [bf[0] - bv[0], bf[1] - bv[1]], pa);
   const df = pg ? pg.k*(bf[0] - bv[0]) : 0, ds = pg ? pg.k*(bf[1] - bv[1]) : 0;
   const mb = a.media - va.media, sdb = Math.sqrt(pg ? Math.max(0.05, pg.resto) : vb);
+  /* portiere imbattuto: con la partita simulata il bonus segue i gol subiti, al posto della sua media */
+  const imb = pa && a.parti && a.parti.imbattuto || 0, bi = imb ? bonusImbattuto() : 0;
   const r = casuale(p.id*104729 + 7), out = new Float64Array(n);
-  for(let i = 0; i < n; i++) out[i] = v[i] + mb + (pg ? df*pa.f[i] + ds*pa.s[i] : 0) + sdb*normale(r);
+  for(let i = 0; i < n; i++) out[i] = v[i] + mb + (pg ? df*pa.f[i] + ds*pa.s[i] : 0) + sdb*normale(r) +
+    (imb ? (Math.round(pa.s[i] + pa.ls)===0 ? bi : 0) - imb : 0);
   return (CAMPIONI_FV[chiave] = out);
 }
 /* i totali di una squadra nelle simulazioni: fantavoti dei suoi undici più il suo
@@ -3268,9 +3295,12 @@ function esitiQuando(casa, fuori, miei, sa, fatto){
 
 /* ---------- voti delle giornate (dati/voti.json) ---------- */
 /* [voto, fantavoto] della redazione Fantacalcio; chi non ha preso voto non c'è */
+/* portiere imbattuto (04/11/2026): le due leghe danno LEGA.bonus_imbattuto (+1) al portiere che ha preso voto
+   con la squadra senza gol subiti (gol da dati/orari.json); i fantavoti di fantacalcio.it non lo contano.
+   Non coperto (raro): portiere sostituito sullo 0 e gol subiti dopo. */
 function votoDi(p, sa){
-  const v = D.voti && D.voti[String(sa)];
-  return v && v[String(p.id)] || null;
+  const v = D.voti && D.voti[String(sa)], x = v && v[String(p.id)] || null, b = bonusImbattuto();
+  return x && b && p.ruolo==='P' && golSubiti(p.club, sa)===0 ? [x[0], x[1] + b] : x;
 }
 /* fantavoti di un undici con la regola della lega: chi non prende voto lascia il posto al
    primo panchinaro dello stesso ruolo, nell'ordine, che il voto l'ha preso */

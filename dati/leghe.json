@@ -17,7 +17,8 @@
    "soglie_gol": [66, 71, 76, 81, 86, 91, 96, 101, 106, 111],
    "modificatore": [[7, 6], [6.75, 4.5], [6.5, 3], [6.25, 2], [6, 1]],
    "prima_giornata_serie_a": 5,
-   "forfait": {"gol_vinta": 3, "gol_persa": 0}
+   "forfait": {"gol_vinta": 3, "gol_persa": 0},
+   "bonus_imbattuto": 1
   },
   {
    "id": "qi",
@@ -33,6 +34,7 @@
    "soglie_gol": [66, 72, 76, 80, 84, 88, 92, 96, 100, 104],
    "modificatore": [[7, 6], [6.75, 4.5], [6.5, 3], [6.25, 2], [6, 1]],
    "prima_giornata_serie_a": 6,
+   "bonus_imbattuto": 1,
    "stemma": "img/stemma-qi.png",
    "tema": {"a": "#B3173F", "b": "#2347A8", "nome_a": "#FF6B86", "nome_b": "#7FA8FF", "sfondo": "img/sfondo-qi.jpg", "simbolo": "peperoncino"}
   }
