@@ -244,10 +244,10 @@
   /* difesa a tre: niente modificatore. Una piccola etichetta centrata sul bordo alto (non copre i punti), così le tessere restano tutte uguali e compatte */
   .moduli .nomod{position:absolute; top:-6px; left:50%; transform:translateX(-50%); padding:1px 3px; border-radius:6px; white-space:nowrap;
                  font-style:normal; font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:8.5px; letter-spacing:.4px; line-height:1.15;
-                 color:#BFDDF0; background:#1d3447; border:1px solid rgba(127,179,213,.45);}
+                 color:#B9B4A6; background:#1a1d1b; border:1px solid rgba(255,255,255,.14);}
   .moduli .cons{position:absolute; top:-6px; left:50%; transform:translateX(-50%); padding:1px 4px; border-radius:6px; white-space:nowrap; z-index:1;
                 font-style:normal; font-family:"Barlow Condensed",sans-serif; font-weight:700; font-size:8.5px; letter-spacing:.3px; line-height:1.15;
-                color:#0c2a19; background:#43e08f; box-shadow:0 2px 8px rgba(67,224,143,.4);}
+                color:#1D1604; background:var(--oro); box-shadow:0 2px 8px rgba(0,0,0,.4);} /* 04/11 MANZO: oro come il bordo, un solo accento */
 
   /* ---- campo ---- */
   /* proporzioni di un campo vero, erba tagliata a strisce, luci da stadio */
@@ -995,6 +995,8 @@
   .cal3{display:flex; justify-content:center; gap:4px; margin-top:5px;}
   .cal3 i{width:8px; height:8px; border-radius:50%; background:#5E6B63;}
   .cal3 .facile{background:#2BD67B;} .cal3 .media{background:var(--bf-stella);} .cal3 .dura{background:var(--bf-rosso);}
+  /* 04/11: nelle tessere della Rosa i tre pallini più piccoli e smorzati (25 tessere × 3 colori pieni gridavano più del nome) */
+  .rc .cal3 i{width:6px; height:6px; opacity:.7;}
   .cal3-testo{display:flex; flex-wrap:wrap; justify-content:flex-end; gap:4px;}
   .cal3-testo span{padding:2px 7px; border-radius:8px; font-size:12px; background:rgba(255,255,255,.06);}
   .cal3-testo .facile{color:#43E08F;} .cal3-testo .media{color:var(--bf-stella);} .cal3-testo .dura{color:#FF6B6B;}
@@ -1019,13 +1021,14 @@
   .reparto-t small{margin-left:4px; font-size:11px; color:var(--dim);}
   .rosa-griglia{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
   .rc{position:relative; min-width:0; display:flex; flex-direction:column; align-items:center; gap:2px; padding:12px 4px 10px;
-      border-radius:18px; color:var(--ink); background:var(--vetro); border:1px solid var(--bordo);
-      -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); box-shadow:0 8px 20px rgba(0,0,0,.25);
+      border-radius:18px; color:var(--ink); background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015)), #0c0e0d;
+      border:1px solid rgba(255,255,255,.09); box-shadow:0 8px 20px rgba(0,0,0,.25);
       animation:sale .45s var(--morbida) both; animation-delay:calc(var(--i) * .025s);}
   .rc .sagoma{width:48px; height:48px; margin-bottom:6px;}
   .rc-nome{max-width:100%; font-size:12.5px; line-height:1.2; font-weight:600; overflow:hidden; overflow-wrap:anywhere;
            display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2;}
   .rc-sotto{max-width:100%; font-size:10.5px; line-height:1.3; text-align:center; color:var(--dim); overflow:hidden;}
+  .rc .voto{color:#F3EFE6; background:#262a27; border:1px solid rgba(255,255,255,.16); box-shadow:0 2px 6px rgba(0,0,0,.5);}
   .rc[data-stato="dubbio"]{border-color:rgba(252,209,22,.35);}
   .rc.fuori{opacity:.6;}
   .rc.fuori .sagoma{filter:grayscale(.85) drop-shadow(0 7px 6px rgba(0,0,0,.5));}
@@ -1122,7 +1125,7 @@
   .countdown.ap .stato::before{content:''; width:5px; height:5px; border-radius:50%; background:var(--oro); box-shadow:0 0 8px var(--oro); animation:g-alone 2s infinite;}
   .countdown.ch .stato{color:#B9B4A6; background:rgba(255,255,255,.05); box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);}
   .countdown.ch .stato::before{content:''; width:5px; height:5px; border-radius:50%; background:#8a8579;}
-  .countdown .rg{display:flex; align-items:center; gap:12px; margin-top:14px;}
+  .countdown .rg{display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:14px;}
   .anelli{display:flex; gap:10px;}
   .anelli .u{position:relative; width:64px; text-align:center;}
   .anelli .u svg{display:block; width:64px; height:64px;}
@@ -1132,7 +1135,8 @@
   .anelli small{display:block; margin-top:5px; font:600 9px "Barlow Condensed",sans-serif; letter-spacing:.2em; text-transform:uppercase; color:#A29C8A;}
   .anelli .big{font:300 46px/1 "Big Shoulders Display",sans-serif; color:#B9B4A6; display:flex; align-items:baseline; gap:10px;}
   .anelli .big small{margin:0; font-size:11px; letter-spacing:.18em;}
-  .countdown .dett{margin-left:auto; text-align:right; font-size:12px; line-height:1.45; color:#A29C8A; margin-top:0;}
+  /* 04/11: sotto gli anelli su una riga (a destra andava a capo cinque volte) */
+  .countdown .dett{flex-basis:100%; text-align:left; font-size:12.5px; line-height:1.45; color:#A29C8A; margin-top:0;}
   .solo-lettura{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
   .barra-tempo{position:relative; height:3px; margin-top:16px; border-radius:2px; background:rgba(255,255,255,.08); overflow:visible;}
   .barra-tempo i{border-radius:2px; overflow:visible; background:linear-gradient(90deg,#B8862C,#FFF1C8); box-shadow:0 0 12px rgba(228,180,81,.8);}
@@ -1172,7 +1176,6 @@
   #campo .nm{margin-top:7px; font-family:"Big Shoulders Display","Barlow Condensed",sans-serif; font-weight:800; font-size:13px; letter-spacing:.2px;}
   #campo .vl{display:flex; align-items:center; justify-content:center; gap:4px; margin-top:1px;
              font:300 18px/1 "Big Shoulders Display",sans-serif; letter-spacing:.5px; color:var(--ink); text-shadow:0 1px 4px #000;}
-  #campo .vl.a{color:#8fe9b0;} #campo .vl.c{color:#ff9a8f;}
   #campo .vl i{font-style:normal; font-size:11px; color:var(--oro-chiaro); filter:drop-shadow(0 0 5px var(--oro));}
 
   /* barra in basso: icone e testo oro sulla scheda attiva, lente più luminosa */
@@ -1233,8 +1236,6 @@
   #campo .gioc.stretta .nm.lungo{font-size:10px;}
   #campo .vl{margin-top:3px; padding:1px 9px 0; border-radius:9px; font:800 18px/1.15 "Big Shoulders Display",sans-serif; letter-spacing:.3px;
              text-shadow:none; background:rgba(5,8,6,.86); border:1px solid rgba(255,255,255,.16);}
-  #campo .vl.a{color:#5BE3A0; border-color:rgba(91,227,160,.55);}
-  #campo .vl.c{color:#FF8A8A; border-color:rgba(255,138,138,.55);}
   #campo .av{display:flex; align-items:center; gap:3px; margin-top:3px; padding:1px 7px 1px 4px; border-radius:99px; background:rgba(5,8,6,.66);
              font:600 9.5px "Space Grotesk",sans-serif; color:rgba(255,255,255,.88); text-shadow:none; overflow:visible; max-width:none;}
   #campo .av em{font-style:normal; font-size:8.5px; text-transform:uppercase; opacity:.62;}
@@ -1277,7 +1278,7 @@
   .blocco{position:relative; background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.025)); border-color:rgba(255,255,255,.1);}
   .blocco::before{content:''; position:absolute; left:12%; right:12%; top:0; height:1px; pointer-events:none;
                   background:linear-gradient(90deg,transparent,rgba(255,236,190,.55),transparent);}
-  .blocco-t{font-family:"Space Grotesk",sans-serif; font-weight:600; font-size:11px; letter-spacing:.14em; display:flex; align-items:center; gap:8px;}
+  .blocco-t{font-family:"Space Grotesk",sans-serif; font-weight:600; font-size:11px; letter-spacing:.14em; display:flex; align-items:center; gap:8px; justify-content:flex-start;}
   .blocco-t::before{content:''; flex:none; width:5px; height:5px; border-radius:50%; background:var(--oro); box-shadow:0 0 8px var(--oro);}
   .blocco-t small{margin-left:auto; font-family:"Space Grotesk",sans-serif; font-weight:500;}
   .cond, .fvn, .fm, .lg-val, .team .val, .gio-riga b.cond, .u11-testa b.cond{font-family:"Big Shoulders Display","Barlow Condensed",sans-serif; font-weight:800; letter-spacing:.01em;}
@@ -2199,8 +2200,11 @@ function attesoModello(quale, p, g){
      «senza» tiene il valore senza quote per mostrare la differenza */
   const pt = mq ? parti(mq.coef, xq) : parti(m0.coef, x), m = mq || m0;
   const sd = ballo===null || ballo===undefined ? m.sd : (n*ballo + m0.n0*m.sd)/(n + m0.n0);
-  return {media: tot(pt), sd, parti: pt, storia: lam, casa: (mq ? xq : x) ? (mq ? xq : x).casa : null,
-          quote: !!mq, senza: mq ? tot(parti(m0.coef, x)) : null};
+  /* il modello impara dai fantavoti di fantacalcio.it, senza il bonus del portiere imbattuto: qui la sua media */
+  const imb = quale==='fantavoto' && p.ruolo==='P' && g && bonusImbattuto() ? bonusImbattuto()*probInviolata(p.club, g[1]) : 0;
+  if(imb) pt.imbattuto = imb;
+  return {media: tot(pt) + imb, sd, parti: pt, storia: lam, casa: (mq ? xq : x) ? (mq ? xq : x).casa : null,
+          quote: !!mq, senza: mq ? tot(parti(m0.coef, x)) + imb : null};
 }
 /* voto atteso: dal modello dove si usa; altrimenti come prima, la media del giocatore
    mescolata con quella del suo ruolo, con il ballo misurato su tutta la lega */
@@ -2221,7 +2225,8 @@ function cartaAtteso(p, g){
     (Math.abs(x) < 0.05 ? '' : x > 0 ? '+' : '−')+num(Math.abs(x))+'</span>';
   const pezzi = !a ? [] : ['<span class="ga-p base">base '+num(a.parti.base)+(a.storia >= 0.5 ? '' : ' · conta la quotazione')+'</span>']
     .concat(a.casa===1 ? [pill('in casa', a.parti.casa)] : [])
-    .concat(a.casa===null ? [] : a.quote ? [pill('partita (quote)', a.parti.squadra)] : [pill('avversario', a.parti.avv), pill('squadra', a.parti.squadra)]);
+    .concat(a.casa===null ? [] : a.quote ? [pill('partita (quote)', a.parti.squadra)] : [pill('avversario', a.parti.avv), pill('squadra', a.parti.squadra)])
+    .concat(a.parti.imbattuto ? [pill('imbattuto', a.parti.imbattuto)] : []);
   return '<div class="ga">'+
     (a ? '<div class="ga-testa"><span class="k">Fantavoto atteso, se gioca</span><b class="cond">'+num(a.media)+
       '<small> ± '+num(a.sd)+'</small></b></div><div class="ga-parti">'+pezzi.join('')+'</div>'+
@@ -2273,6 +2278,26 @@ function quotePartita(club, sa){
   const m = D.quote && avversarioClub(club, sa);
   const q = m && (D.quote[String(sa)] || []).find(x=>m.casa ? x[0]===club && x[1]===m.avv : x[0]===m.avv && x[1]===club);
   return q ? {casa: q[0], trasf: q[1], lc: q[2], lt: q[3], inCasa: m.casa} : null;
+}
+/* portiere imbattuto: il bonus della lega (0 se non c'è), i gol subiti dal club nella giornata sa (null se la partita
+   non è giocata) e la probabilità di porta inviolata: dalle quote se ci sono, altrimenti la media della stagione */
+function bonusImbattuto(){ return LEGA && LEGA.bonus_imbattuto || 0; }
+function golSubiti(club, sa){
+  const o = D.orari && D.orari[String(sa)], m = o && o.partite && o.partite.find(x=>x[0]===club || x[1]===club);
+  return m && m.length >= 5 && m[3]!==null && m[4]!==null ? (m[0]===club ? m[4] : m[3]) : null;
+}
+let INVIOLATE = null;
+function probInviolata(club, sa){
+  const q = quotePartita(club, sa);
+  if(q) return Math.exp(-(q.inCasa ? q.lt : q.lc));
+  if(!INVIOLATE || INVIOLATE.v !== D.orari_v){
+    let n = 0, z = 0;
+    Object.values(D.orari || {}).forEach(o=>(o.partite || []).forEach(m=>{
+      if(m.length >= 5 && m[3]!==null && m[4]!==null){ n += 2; z += (m[3]===0) + (m[4]===0); }
+    }));
+    INVIOLATE = {v: D.orari_v, p: n >= 40 ? z/n : 0.27};
+  }
+  return INVIOLATE.p;
 }
 /* per il club: scarti dai gol attesi, fatti (f) e subiti (s), nelle n simulazioni, e i gol attesi (lf, ls) */
 function partitaCondivisa(club, g, n){
@@ -2646,7 +2671,7 @@ function cella(p, g, pos, i, migliore){
     '<span class="sagoma"><span class="ombra"></span>'+maglia(p.club)+
       (t ? '<i class="pallino '+statoTit(t)+'"></i>' : '')+'</span>'+
     '<span class="nm'+(cognome(p).length>9?' lungo':'')+'">'+cognome(p)+'</span>'+
-    '<span class="vl '+(!p.pgv ? '' : p.fm>=7 ? 'a' : p.fm<6 ? 'c' : '')+'">'+(p.pgv && atteso(p, g)===migliore ? '<i>★</i>' : '')+(p.pgv ? num(atteso(p, g), 1) : '–')+'</span>'+
+    '<span class="vl">'+(p.pgv && atteso(p, g)===migliore ? '<i>★</i>' : '')+(p.pgv ? num(atteso(p, g), 1) : '–')+'</span>'+
     '<span class="av">'+(m ? '<em>'+(m.casa?'vs':'@')+'</em>'+maglia(m.avv)+'<b>'+m.avv.slice(0,3).toUpperCase()+'</b>' : '')+'</span>'+
   '</button>';
 }
@@ -2874,8 +2899,11 @@ function campioneFantavoti(p, n, g){
   const vb = Math.max(0.05, a.sd*a.sd - va.sd*va.sd), pg = pa && parteGol(vb, [bf[0] - bv[0], bf[1] - bv[1]], pa);
   const df = pg ? pg.k*(bf[0] - bv[0]) : 0, ds = pg ? pg.k*(bf[1] - bv[1]) : 0;
   const mb = a.media - va.media, sdb = Math.sqrt(pg ? Math.max(0.05, pg.resto) : vb);
+  /* portiere imbattuto: con la partita simulata il bonus segue i gol subiti, al posto della sua media */
+  const imb = pa && a.parti && a.parti.imbattuto || 0, bi = imb ? bonusImbattuto() : 0;
   const r = casuale(p.id*104729 + 7), out = new Float64Array(n);
-  for(let i = 0; i < n; i++) out[i] = v[i] + mb + (pg ? df*pa.f[i] + ds*pa.s[i] : 0) + sdb*normale(r);
+  for(let i = 0; i < n; i++) out[i] = v[i] + mb + (pg ? df*pa.f[i] + ds*pa.s[i] : 0) + sdb*normale(r) +
+    (imb ? (Math.round(pa.s[i] + pa.ls)===0 ? bi : 0) - imb : 0);
   return (CAMPIONI_FV[chiave] = out);
 }
 /* i totali di una squadra nelle simulazioni: fantavoti dei suoi undici più il suo
@@ -3268,9 +3296,12 @@ function esitiQuando(casa, fuori, miei, sa, fatto){
 
 /* ---------- voti delle giornate (dati/voti.json) ---------- */
 /* [voto, fantavoto] della redazione Fantacalcio; chi non ha preso voto non c'è */
+/* portiere imbattuto (04/11/2026): le due leghe danno LEGA.bonus_imbattuto (+1) al portiere che ha preso voto
+   con la squadra senza gol subiti (gol da dati/orari.json); i fantavoti di fantacalcio.it non lo contano.
+   Non coperto (raro): portiere sostituito sullo 0 e gol subiti dopo. */
 function votoDi(p, sa){
-  const v = D.voti && D.voti[String(sa)];
-  return v && v[String(p.id)] || null;
+  const v = D.voti && D.voti[String(sa)], x = v && v[String(p.id)] || null, b = bonusImbattuto();
+  return x && b && p.ruolo==='P' && golSubiti(p.club, sa)===0 ? [x[0], x[1] + b] : x;
 }
 /* fantavoti di un undici con la regola della lega: chi non prende voto lascia il posto al
    primo panchinaro dello stesso ruolo, nell'ordine, che il voto l'ha preso */

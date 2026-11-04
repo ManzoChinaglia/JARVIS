@@ -180,7 +180,7 @@ l'iPhone le riprende solo togliendo e rimettendo l'app sulla Home.
 
 ## Multilega (dal 07/10/2026)
 
-- `dati/leghe.json`: configurazione pubblica di ogni lega (moduli, `soglie_gol`, modificatore difesa, cartella dati, ids Leghe, tema, stemma). Le regole stanno qui, mai nel codice.
+- `dati/leghe.json`: configurazione pubblica di ogni lega (moduli, `soglie_gol`, modificatore difesa, cartella dati, ids Leghe, tema, stemma). Le regole stanno qui, mai nel codice. `bonus_imbattuto` (04/11/2026): +1 al portiere a porta inviolata, che `voti.json` non conta: lo aggiunge `votoDi` (gol da `orari.json`), l'atteso dei portieri ne mette la media (probabilità di porta inviolata) e le simulazioni lo legano ai gol subiti estratti.
 - Cartelle: `dati/` = prima lega (BURKINA FASO), `dati/qi/` = Fantalega QI (BOCA NDUJORS). I dati da fonti pubbliche (Serie A, orari, infortuni) sono condivisi.
 - `scripts/lega_cfg.py`: legge `leghe.json` per gli script. `scripts/crea_lega.py <id>` rigenera la base di una lega da `archivio/qi/` (rosters, `rose-asta.csv`, `calendario.json`).
 - `--lega <id>` in `importa_lega.py`, `importa_formazioni.py`, `schiera.py` (senza l'opzione: prima lega).

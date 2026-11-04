@@ -80,7 +80,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
     'get players(){return players},get STIME(){return STIME},get CALCOLO_VECCHIO(){return CALCOLO_VECCHIO},' +
     'set CALCOLO_VECCHIO(v){CALCOLO_VECCHIO=v},attesoModello,cartaAtteso,apriNonDisponibili,get sblocca(){return sblocca},golDa,probabilitaSfida,suggerimentoSfida,totaliSquadra,esitoSfida,punteggioVecchio,contestoModello,avvisi,apriAvvisi,renderGiornata,' +
     'moduliSchierabili,mancaModulo,avvisoModuli,prossima,scadenza,orario,undici,quando,titolarita,forza,punteggio,avversarioClub,fmStimata,disponibile,panchina,' +
-    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,avvisoPortiere,conModificatore,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,campioneVoti,campioneFantavoti,partitaCondivisa,esitoPartita,quotePartita,cento3,coloreClub,esitiQuando,renderQuando,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,dossierDi,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,forma,movimentoLega,risultatoLega,forfaitLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME}};', ctx);
+    'apriGiocatore,chiudiFogli,posizione,MAGLIE,undiciDi,avvisoPortiere,conModificatore,renderDifesa,bonusModificatore,modificatoreAtteso,votoAtteso,campioneVoti,campioneFantavoti,partitaCondivisa,esitoPartita,quotePartita,cento3,coloreClub,esitiQuando,renderQuando,bloccoDifensivo,combinazioni,stimaVoti,arrotondaVoto,sfidaDati,dossierDi,stemma,coloreSquadra,oraPartita,comeAndata,apriComeAndata,chiudiSovra,stagione,renderStagione,apriProduttori,apriUndiciGiornata,scegliGiornata,MODULI,totaleModulo,moduloConsigliato,scegliModulo,get modulo(){return modulo},accuratezzaConsiglio,prossimi3,forma,movimentoLega,risultatoLega,forfaitLega,contributi,puntiUndici,scelte,apriScelte,get ME(){return ME},votoDi,golSubiti,probInviolata,bonusImbattuto,get LEGA(){return LEGA}};', ctx);
   await new Promise(r => setTimeout(r, 50));
   if (attendi && el['cd'] === undefined) throw new Error('avvio fallito: ' + (el['_q'] || {}).innerHTML);
   return { t: ctx.__t, el };
@@ -1450,6 +1450,31 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const c40 = [[0.454, 0.276, 0.27], [0.333, 0.333, 0.334], [0.5, 0.5, 0], [0.004, 0.006, 0.99]].map(x => t.cento3(...x));
   verifica('percentuali 1X2 e sfida: sempre 100 in tutto', c40.every(r => r[0] + r[1] + r[2] === 100), c40.map(r => r.join('/')).join(' '));
   verifica('i colori dei club negli esiti si leggono sul fondo scuro', !scuri40.length, scuri40.length + ' scuri');
+
+  console.log('\n41. Portiere imbattuto (04/11/2026): +1 della lega, che i fantavoti di fantacalcio.it non contano');
+  const pp41 = t.mia.find(p => p.ruolo === 'P'), dd41 = t.mia.find(p => p.ruolo === 'D');
+  t.D.voti['99'] = { [pp41.id]: [6, 5], [dd41.id]: [6, 6] };
+  t.D.orari['99'] = { partite: [[pp41.club, dd41.club === pp41.club ? 'ZZZ' : dd41.club, '2026-01-01T00:00:00Z', 2, 0]] };
+  const zero41 = t.votoDi(pp41, 99), dif41 = t.votoDi(dd41, 99);
+  t.D.orari['99'].partite[0][4] = 1;
+  const uno41 = t.votoDi(pp41, 99);
+  t.D.orari['99'].partite[0].splice(3);
+  const nongioc41 = t.votoDi(pp41, 99);
+  delete t.D.voti['99']; delete t.D.orari['99'];
+  verifica('la lega ha il bonus in dati/leghe.json', t.bonusImbattuto() === 1, t.LEGA.id);
+  verifica('voto vero: +1 al portiere a porta inviolata, niente con un gol subito o senza risultato, niente ai difensori',
+           zero41[1] === 6 && zero41[0] === 6 && uno41[1] === 5 && nongioc41[1] === 5 && (dd41.club === pp41.club || dif41[1] === 6),
+           [zero41, uno41, nongioc41, dif41].map(x => x.join('/')).join(' '));
+  const pa41 = t.mia.filter(p => p.ruolo === 'P').map(p => [p, t.attesoModello('fantavoto', p, g)]).find(x => x[1]);
+  if (pa41) {
+    const a = pa41[1], pi = t.probInviolata(pa41[0].club, g[1]), x = a.parti;
+    verifica('atteso del portiere: più il bonus per la probabilità di porta inviolata, con la sua pillola',
+             circa(x.imbattuto, pi) && pi > 0.05 && pi < 0.8 && Math.abs(a.media - (x.base + x.casa + x.avv + x.squadra + x.imbattuto)) < 1e-9
+             && /imbattuto \+/.test(t.cartaAtteso(pa41[0], g)), 'p inviolata ' + pi.toFixed(2));
+    const c41 = t.campioneFantavoti(pa41[0], 4000, g), m41 = c41 && c41.reduce((s, v) => s + v, 0) / c41.length;
+    verifica('nelle simulazioni il fantavoto del portiere tiene la media col bonus', c41 && Math.abs(m41 - a.media) < 0.15,
+             m41 && m41.toFixed(2) + ' contro ' + a.media.toFixed(2));
+  } else verifica('un portiere con il modello per provare l\'atteso', false);
   console.log('\n' + (esiti - falliti) + '/' + esiti + ' verifiche superate');
   process.exit(falliti ? 1 : 0);
 })().catch(e => { console.error('ERRORE', e); process.exit(2); });
