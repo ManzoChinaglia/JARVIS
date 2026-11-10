@@ -1,4 +1,4 @@
-// Prova di scripts/notifiche.js con un ntfy finto e dati controllati.
+// Prova di scripts/notifiche.js con un Web Push finto e dati controllati.
 // Uso: node prove/notifiche.js
 process.env.TZ = 'Europe/Rome';
 const fs = require('fs'), os = require('os'), path = require('path');
@@ -23,114 +23,107 @@ const fuori = (quanti) => {
 };
 const dati = q => ({ 'titolari.json': fuori(q), 'infortuni.json': null, 'squadre.json': null, 'statistiche.json': null,
                      'orari.json': { ...orari, aggiornato: '2026-09-18T07:00:00+00:00' } });
-function ntfyFinto(ok = true) {
-  const inviati = [];
-  const invia = async (url, opz) => { inviati.push({ url, ...JSON.parse(opz.body) }); return { ok, status: ok ? 200 : 500 }; };
-  return { inviati, invia };
+const iscr = e => JSON.stringify({ endpoint: 'https://web.push.apple.com/' + e, expirationTime: null,
+                                   keys: { p256dh: 'chiave-p256dh', auth: 'chiave-auth' } });
+function pushFinto(errore) {
+  const spediti = [];
+  const spedisci = async (sub, m, chiavi) => {
+    if (errore === 'rete') throw new Error('rete assente');
+    if (errore) { const e = new Error('rifiutata'); e.statusCode = errore; throw e; }
+    spediti.push({ sub, ...m, chiavi });
+  };
+  return { spediti, spedisci };
+}
+/* esegue main() raccogliendo le righe di log */
+async function conLog(opzioni) {
+  const righe = [], vero = console.log;
+  console.log = (...a) => righe.push(a.join(' '));
+  try { return { r: await main(opzioni), righe }; } finally { console.log = vero; }
 }
 
 (async () => {
   const cartella = fs.mkdtempSync(path.join(os.tmpdir(), 'notifiche-'));
   const registro = path.join(cartella, 'notifiche.json');
+  const canali = (p, altro = {}) => ({ iscrizione: iscr('uno'), chiave: 'chiave-privata', spedisci: p.spedisci, registro, ...altro });
 
-  console.log('\n1. Argomento non impostato');
-  let n = ntfyFinto();
-  let r = await main({ argomento: '', invia: n.invia, adesso: venerdi, registro, dati: dati(1) });
-  verifica('non invia niente', n.inviati.length === 0 && r.nuovi.length > 0, r.nuovi.length + ' avvisi in attesa');
+  console.log('\n1. Notifiche di Jarvis non attive');
+  let p = pushFinto();
+  let r = await main({ ...canali(p, { iscrizione: '' }), adesso: venerdi, dati: dati(1) });
+  verifica('senza iscrizione non invia niente', p.spediti.length === 0 && r.nuovi.length > 0, r.nuovi.length + ' avvisi in attesa');
   verifica('e non segna niente', !fs.existsSync(registro));
+  r = await main({ ...canali(p, { chiave: '' }), adesso: venerdi, dati: dati(1) });
+  verifica('senza chiave privata: non invia e non segna', p.spediti.length === 0 && !fs.existsSync(registro));
+  r = await main({ ...canali(p, { iscrizione: 'incollata male' }), adesso: venerdi, dati: dati(1) });
+  verifica('iscrizione incollata male: non invia e non segna', p.spediti.length === 0 && r.inviati.length === 0 && !fs.existsSync(registro));
 
-  console.log('\n2. Primo giro con l\'argomento');
-  n = ntfyFinto();
-  r = await main({ argomento: 'argomento-di-prova', invia: n.invia, adesso: venerdi, registro, dati: dati(1) });
-  verifica('invia gli avvisi a ntfy.sh con l\'argomento', n.inviati.length === r.nuovi.length && n.inviati.every(x => x.url === 'https://ntfy.sh/'
-           && x.topic === 'argomento-di-prova'), n.inviati.map(x => x.title).join(' | '));
-  const scad = n.inviati.find(x => /^Formazione entro/.test(x.title));
-  verifica('scadenza del giorno con priorità alta', scad && scad.priority === 4 && scad.click === 'https://manzochinaglia.github.io/JARVIS/');
-  verifica('tuo giocatore fuori', n.inviati.some(x => x.title === miei[0][1] + ' non gioca'));
-  const reg = JSON.parse(fs.readFileSync(registro, 'utf8'));
-  verifica('registro con i soli codici, senza argomento', reg.inviati.length === n.inviati.length && !JSON.stringify(reg).includes('argomento-di-prova'));
+  console.log('\n2. Primo giro con l\'iscrizione');
+  p = pushFinto();
+  r = await main({ ...canali(p), adesso: venerdi, dati: dati(1) });
+  verifica('invia gli avvisi da Jarvis', p.spediti.length > 0 && p.spediti.length === r.nuovi.length && r.daJarvis === p.spediti.length,
+           p.spediti.map(x => x.titolo).join(' | '));
+  verifica('chiave pubblica presa dall\'app, privata dai Secrets', p.spediti.every(x => x.chiavi.chiave === 'chiave-privata'
+           && /^B[A-Za-z0-9_-]{86}$/.test(x.chiavi.pubblica) && x.sub.endpoint.endsWith('/uno')));
+  const scad = p.spediti.find(x => /^Formazione entro/.test(x.titolo));
+  verifica('scadenza del giorno con livello urgente', scad && scad.livello === 'urgente');
+  verifica('tuo giocatore fuori', p.spediti.some(x => x.titolo === miei[0][1] + ' non gioca'));
+  const testoReg = fs.readFileSync(registro, 'utf8');
+  verifica('registro con i soli codici, senza segreti', JSON.parse(testoReg).inviati.length === p.spediti.length
+           && !/chiave-privata|web\.push\.apple\.com|chiave-auth/.test(testoReg));
 
   console.log('\n3. Giro successivo');
-  n = ntfyFinto();
-  r = await main({ argomento: 'argomento-di-prova', invia: n.invia, adesso: venerdi + 3600000, registro, dati: dati(1) });
-  verifica('niente doppioni', n.inviati.length === 0, r.nuovi.length + ' nuovi');
-  n = ntfyFinto();
-  await main({ argomento: 'argomento-di-prova', invia: n.invia, adesso: new Date('2026-09-18T18:30:00+02:00').getTime(), registro, dati: dati(1) });
-  verifica('sotto le 3 ore arriva l\'ultima chiamata', n.inviati.some(x => /^Ultima chiamata/.test(x.title)), n.inviati.map(x => x.title).join(' | '));
+  p = pushFinto();
+  r = await main({ ...canali(p), adesso: venerdi + 3600000, dati: dati(1) });
+  verifica('niente doppioni', p.spediti.length === 0, r.nuovi.length + ' nuovi');
+  p = pushFinto();
+  await main({ ...canali(p), adesso: new Date('2026-09-18T18:30:00+02:00').getTime(), dati: dati(1) });
+  verifica('sotto le 3 ore arriva l\'ultima chiamata', p.spediti.some(x => /^Ultima chiamata/.test(x.titolo)), p.spediti.map(x => x.titolo).join(' | '));
 
   console.log('\n4. Limiti ed errori');
   fs.rmSync(registro, { force: true });
-  n = ntfyFinto();
-  await main({ argomento: 'argomento-di-prova', invia: n.invia, adesso: venerdi, registro, dati: dati(10) });
-  verifica(`mai più di ${MASSIMO} per giro`, n.inviati.length === MASSIMO, n.inviati.length);
+  p = pushFinto();
+  await main({ ...canali(p), adesso: venerdi, dati: dati(10) });
+  verifica(`mai più di ${MASSIMO} per giro`, p.spediti.length === MASSIMO, p.spediti.length);
   fs.rmSync(registro, { force: true });
-  n = ntfyFinto(false);
-  r = await main({ argomento: 'argomento-di-prova', invia: n.invia, adesso: venerdi, registro, dati: dati(1) });
-  verifica('ntfy non risponde: niente segnato, si riprova', r.inviati.length === 0 && !fs.existsSync(registro));
-  r = await main({ argomento: 'argomento-di-prova', invia: async () => { throw new Error('rete assente'); }, adesso: venerdi, registro, dati: dati(1) });
-  verifica('rete assente: nessun errore, si riprova', r.inviati.length === 0);
+  p = pushFinto(500);
+  r = await main({ ...canali(p), adesso: venerdi, dati: dati(1) });
+  verifica('errore del servizio: niente segnato, si riprova al giro dopo', r.inviati.length === 0 && r.nuovi.length > 0 && !fs.existsSync(registro));
+  const { righe } = await conLog({ ...canali(p), adesso: venerdi, dati: dati(1) });
+  verifica('il log dice che si riprova, senza altri canali', righe.some(x => /riprovo al prossimo giro/.test(x)) && righe.every(x => /^\[notifiche\] /.test(x)), righe[0]);
+  p = pushFinto('rete');
+  r = await main({ ...canali(p), adesso: venerdi, dati: dati(1) });
+  verifica('rete assente: nessun errore, niente segnato, si riprova', r.inviati.length === 0 && !fs.existsSync(registro));
 
-  console.log('\n5. Notifiche da Jarvis (Web Push)');
-  const iscr = e => JSON.stringify({ endpoint: 'https://web.push.apple.com/' + e, expirationTime: null,
-                                     keys: { p256dh: 'chiave-p256dh', auth: 'chiave-auth' } });
-  function pushFinto(errore) {
-    const spediti = [];
-    const spedisci = async (sub, m, chiavi) => {
-      if (errore) { const e = new Error('rifiutata'); e.statusCode = errore; throw e; }
-      spediti.push({ sub, ...m, chiavi });
-    };
-    return { spediti, spedisci };
-  }
-  const canali = (p, nt, altro = {}) => ({ argomento: 'argomento-di-prova', iscrizione: iscr('uno'), chiave: 'chiave-privata',
-                                           spedisci: p.spedisci, invia: nt.invia, registro, ...altro });
+  console.log('\n5. Iscrizione chiusa dall\'iPhone');
   fs.rmSync(registro, { force: true });
-  let p = pushFinto(); n = ntfyFinto();
-  r = await main({ ...canali(p, n), adesso: venerdi, dati: dati(1) });
-  verifica('con l\'iscrizione arrivano da Jarvis, non da ntfy', p.spediti.length > 0 && p.spediti.length === r.nuovi.length
-           && n.inviati.length === 0 && r.daJarvis === p.spediti.length, p.spediti.map(x => x.titolo).join(' | '));
-  verifica('chiave pubblica presa dall\'app, privata dai Secrets', p.spediti.every(x => x.chiavi.chiave === 'chiave-privata'
-           && /^B[A-Za-z0-9_-]{86}$/.test(x.chiavi.pubblica) && x.sub.endpoint.endsWith('/uno')));
-  verifica('registro senza segreti', !/chiave-privata|web\.push\.apple\.com|chiave-auth/.test(fs.readFileSync(registro, 'utf8')));
-
+  p = pushFinto(410);
+  const chiusa = await conLog({ ...canali(p), adesso: venerdi, dati: dati(1) });
+  const avviso = chiusa.righe.filter(x => x.startsWith('::warning::'));
+  verifica('410: nessun invio e nessun avviso segnato', chiusa.r.inviati.length === 0 && chiusa.r.nuovi.length > 0
+           && JSON.parse(fs.readFileSync(registro, 'utf8')).inviati.length === 0);
+  verifica('una sola riga di annotazione per GitHub Actions', avviso.length === 1 && /Secret PUSH_ISCRIZIONE/.test(avviso[0]) && chiusa.righe.length === 2, chiusa.righe.length + ' righe');
+  const testoScad = fs.readFileSync(registro, 'utf8');
+  verifica('nel registro solo un\'impronta dell\'iscrizione', /"push_scaduta":"[0-9a-f]{12}"/.test(testoScad) && !/web\.push/.test(testoScad));
   fs.rmSync(registro, { force: true });
-  p = pushFinto(500); n = ntfyFinto();
-  r = await main({ ...canali(p, n), adesso: venerdi, dati: dati(1) });
-  verifica('errore del servizio: quegli avvisi arrivano con ntfy', n.inviati.length === r.nuovi.length && r.inviati.length === r.nuovi.length);
-  verifica('e al giro dopo si riprova da Jarvis', !JSON.parse(fs.readFileSync(registro, 'utf8')).push_scaduta);
-
+  r = await main({ ...canali(pushFinto(404)), adesso: venerdi, dati: dati(1) });
+  verifica('anche con 404 l\'iscrizione si segna scaduta', /"push_scaduta"/.test(fs.readFileSync(registro, 'utf8')) && r.inviati.length === 0);
   fs.rmSync(registro, { force: true });
-  p = pushFinto(410); n = ntfyFinto();
-  r = await main({ ...canali(p, n), adesso: venerdi, dati: dati(1) });
-  verifica('iscrizione chiusa dall\'iPhone: avvisi con ntfy e invito a riattivarle', r.inviati.length === r.nuovi.length
-           && n.inviati.some(x => x.title === 'Riattiva le notifiche di Jarvis'), n.inviati.map(x => x.title).join(' | '));
-  const testoReg = fs.readFileSync(registro, 'utf8');
-  verifica('nel registro solo un\'impronta dell\'iscrizione', /"push_scaduta":"[0-9a-f]{12}"/.test(testoReg) && !/web\.push/.test(testoReg));
+  await main({ ...canali(pushFinto(410)), adesso: venerdi, dati: dati(1) });
   let chiamate = 0;
   const conta = { spedisci: async () => { chiamate++; } };
-  n = ntfyFinto();
-  await main({ ...canali(conta, n), adesso: new Date('2026-09-18T18:30:00+02:00').getTime(), dati: dati(1) });
-  verifica('la stessa iscrizione non si riprova e l\'invito non si ripete', chiamate === 0 && n.inviati.length > 0
-           && !n.inviati.some(x => /^Riattiva/.test(x.title)), n.inviati.map(x => x.title).join(' | '));
-  n = ntfyFinto();
-  r = await main({ ...canali(conta, n, { iscrizione: iscr('due') }), prova: true,
+  const dopo = await conLog({ ...canali(conta), adesso: new Date('2026-09-18T18:30:00+02:00').getTime(), dati: dati(1) });
+  verifica('la stessa iscrizione non si riprova: niente invio, niente segnato, «nessun canale»', chiamate === 0 && dopo.r.inviati.length === 0
+           && dopo.r.nuovi.length > 0 && dopo.righe.some(x => /nessun canale impostato/.test(x)) && !dopo.righe.some(x => x.startsWith('::warning::')));
+  r = await main({ ...canali(conta, { iscrizione: iscr('due') }), prova: true,
                    adesso: new Date('2026-09-18T18:40:00+02:00').getTime(), dati: dati(1) });
-  verifica('iscrizione nuova: si torna a Jarvis', chiamate === 1 && n.inviati.length === 0, chiamate + ' da Jarvis, ' + n.inviati.length + ' con ntfy');
-  verifica('notifica di prova su richiesta', r.nuovi.length === 1 && r.nuovi[0].titolo === 'Notifica di prova');
-
-  fs.rmSync(registro, { force: true });
-  p = pushFinto(); n = ntfyFinto();
-  r = await main({ ...canali(p, n, { argomento: '' }), adesso: venerdi, dati: dati(1) });
-  verifica('solo Jarvis, senza ntfy: funziona lo stesso', p.spediti.length === r.nuovi.length && fs.existsSync(registro));
-  fs.rmSync(registro, { force: true });
-  r = await main({ ...canali(p, n, { argomento: '', iscrizione: 'incollata male' }), adesso: venerdi, dati: dati(1) });
-  verifica('iscrizione incollata male e niente ntfy: non invia e non segna', r.inviati.length === 0 && !fs.existsSync(registro));
+  verifica('iscrizione nuova: si torna a Jarvis', chiamate > 0 && chiamate === r.nuovi.length && r.inviati.length === r.nuovi.length, chiamate + ' invii');
+  verifica('notifica di prova su richiesta', r.nuovi[0].titolo === 'Notifica di prova');
 
   console.log('\n5bis. Consiglio salvato prima della scadenza');
   fs.rmSync(registro, { force: true });
   const consigli = path.join(cartella, 'consigli.json');
   fs.rmSync(consigli, { force: true });
-  n = ntfyFinto();
-  await main({ argomento: '', invia: n.invia, adesso: venerdi, registro, dati: dati(1) });
+  p = pushFinto();
+  await main({ ...canali(p, { iscrizione: '' }), adesso: venerdi, dati: dati(1) });
   let cs = JSON.parse(fs.readFileSync(consigli, 'utf8'));
   const c1 = cs.giornate && cs.giornate['1'];
   verifica('undici e panchina per ognuno dei sette moduli, anche senza canali di notifica', c1 && c1.sa === 5
@@ -140,7 +133,7 @@ function ntfyFinto(ok = true) {
   {
     const tmpQ = fs.mkdtempSync(path.join(require('os').tmpdir(), 'jarvis-qi-'));
     fs.mkdirSync(path.join(tmpQ, 'qi'));
-    const r = await main({ argomento: '', invia: n.invia, adesso: Date.parse('2026-10-09T10:00:00Z'), registro: path.join(tmpQ, 'notifiche.json'), lega: 'qi' });
+    const r = await main({ iscrizione: '', adesso: Date.parse('2026-10-09T10:00:00Z'), registro: path.join(tmpQ, 'notifiche.json'), lega: 'qi' });
     const f = path.join(tmpQ, 'qi', 'consigli.json');
     const cq = fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null;
     const g = cq && Object.values(cq.giornate || {})[0];
@@ -152,7 +145,7 @@ function ntfyFinto(ok = true) {
            !fs.existsSync(path.join(__dirname, '..', 'dati', 'modello.json'))
            || (c1 && c1.undici_vecchio && c1.undici_vecchio['4-3-3'].length === 11 && c1.panchina_vecchio['4-3-3'].length > 0));
   const primaVolta = c1.salvato;
-  await main({ argomento: '', invia: n.invia, adesso: new Date('2026-09-18T21:00:00+02:00').getTime(), registro, dati: dati(1) });
+  await main({ ...canali(p, { iscrizione: '' }), adesso: new Date('2026-09-18T21:00:00+02:00').getTime(), dati: dati(1) });
   cs = JSON.parse(fs.readFileSync(consigli, 'utf8'));
   verifica('dopo la scadenza resta l\'ultimo salvato prima', cs.giornate['1'].salvato === primaVolta);
 

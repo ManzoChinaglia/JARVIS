@@ -34,7 +34,7 @@ scripts/aggiorna.py     il giro automatico dei dati
 scripts/importa_rose.py rose da Leghe (xlsx) in base.json
 scripts/importa_lega.py classifica e risultati da Leghe in lega.json
 scripts/importa_formazioni.py  la formazione schierata (testo di una pagina Leghe) in formazioni.json
-scripts/notifiche.js    avvisi sull'iPhone (Web Push o ntfy) e salvataggio del consiglio
+scripts/notifiche.js    avvisi sull'iPhone (Web Push) e salvataggio del consiglio
 scripts/storico.py      giro una tantum e ripartibile dello storico (B1)
 scripts/modello.py      addestra il modello (B2), nel giro automatico
 scripts/quote.py        scarica I1.csv e fixtures.csv di football-data (solo a mano, ogni download confermato), li conserva in archivio/football-data/, scrive quote.json; `--storico` ricostruisce quote-storico.json.gz
@@ -74,7 +74,7 @@ Codice e dati separati di proposito: non reincorporare i dati nell'HTML.
 - **Notifiche** (`scripts/notifiche.js`, nel workflow): esegue il codice dell'app sui dati
   nuovi, manda solo gli avvisi mai inviati (≤ 6 per giro). Canale principale **Web Push**
   (Secret `PUSH_ISCRIZIONE`, `PUSH_CHIAVE`; pubblica `CHIAVE_PUSH` in `index.html`; al tocco
-  apre Jarvis), di riserva **ntfy** (Secret `NTFY_ARGOMENTO`). Mai argomento, iscrizione o
+  apre Jarvis); senza notifiche attive non invia e non segna niente. Mai iscrizione o
   chiave privata nei file; un errore non fa fallire il giro. Prova: Actions → *Aggiorna
   Jarvis* → *Run workflow* con la notifica di prova.
 

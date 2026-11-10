@@ -103,11 +103,10 @@ jobs:
       - name: Manda le notifiche
         if: steps.cambiate.outputs.si == 'true' && always()
         env:
-          NTFY_ARGOMENTO: ${{ secrets.NTFY_ARGOMENTO }}
           PUSH_ISCRIZIONE: ${{ secrets.PUSH_ISCRIZIONE }}
           PUSH_CHIAVE: ${{ secrets.PUSH_CHIAVE }}
         run: |
-          npm install --no-save --no-package-lock --no-audit --no-fund web-push@3.6.7 || echo "web-push non installato: solo ntfy"
+          npm install --no-save --no-package-lock --no-audit --no-fund web-push@3.6.7 || echo "web-push non installato"
           node scripts/notifiche.js
 
       - name: Richiudi il lucchetto

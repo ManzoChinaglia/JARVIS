@@ -1163,8 +1163,8 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   const modello34 = JSON.parse(fs.readFileSync(path.join(REPO, 'dati', 'modello.json'), 'utf8'));
   const chiusi34 = { 'lucchetto.json': lk34, 'modello.json': modello34, 'base.json': null, 'lega.json': null, 'consigli.json': null };
   chiusi34[L34.chiusoDi('base.json')] = JSON.parse(await L34.chiudi(ch34, 'base.json', fs.readFileSync(path.join(REPO, 'dati', 'base.json'), 'utf8')));
-  const mem34 = {}, ntfy34 = [];
-  ({ t, el } = await avvia({ adesso: giovedi, dati: chiusi34, memoria: mem34, ntfy: ntfy34, attendi: false }));
+  const mem34 = {};
+  ({ t, el } = await avvia({ adesso: giovedi, dati: chiusi34, memoria: mem34, attendi: false }));
   for (let i = 0; i < 100 && !t.sblocca; i++) await aspetta(10);
   verifica('col lucchetto e senza chiave: la schermata della password, nessun dato', !!el.lucchetto && el.lucchetto.hidden === false && !t.D);
   verifica('password sbagliata: resta chiuso', await t.sblocca('non è questa la password') === false
@@ -1177,7 +1177,7 @@ async function avvia({ adesso, senzaOrari = false, dati = {}, search = '', sr, m
   verifica('i dati chiusi si aprono uguali: stesso undici che in chiaro', !!t.D && t.mia.length === 25 && el.lucchetto.hidden === true
            && und34 === tutti34(t034.undici(t034.prossima())));
   verifica('sul telefono resta la chiave, mai la password', !!mem34['jarvis-chiave'] && !Object.values(mem34).some(v => v.includes(PW34)));
-  ({ t, el } = await avvia({ adesso: giovedi, dati: chiusi34, memoria: mem34, ntfy: ntfy34 }));
+  ({ t, el } = await avvia({ adesso: giovedi, dati: chiusi34, memoria: mem34 }));
   verifica('riaprendo l\'app non la richiede', !!t.D && (el.lucchetto === undefined || el.lucchetto.hidden !== false));
 
   console.log('\n35. Il giudizio «rivelato»: le tue scelte contro quelle di Jarvis');
