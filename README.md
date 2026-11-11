@@ -30,7 +30,7 @@ dati/
   listone.json                elenco ufficiale, serve agli script
 scripts/
   aggiorna.py                 scarica infortuni, probabili, orari, squadre e statistiche
-  notifiche.js                manda gli avvisi nuovi sull'iPhone (da Jarvis, ntfy di riserva)
+  notifiche.js                manda gli avvisi nuovi sull'iPhone (notifiche di Jarvis)
   importa_rose.py             aggiorna le rose dal file di Leghe, dopo uno scambio
   importa_lega.py             aggiorna la classifica dal file di Leghe
 .github/workflows/
@@ -178,11 +178,6 @@ l'app (un link, invece, sull'iPhone apre sempre Safari).
    Serve anche il Secret `PUSH_CHIAVE`, con la chiave privata che ti ha dato Claude.
 3. Prova: **Actions** → *Aggiorna Jarvis* → *Run workflow*, spunta «Manda anche
    una notifica di prova».
-
-Di riserva c'è l'app gratuita **ntfy** (open source, niente account): se le
-notifiche di Jarvis non funzionano, gli avvisi arrivano lì. Per attivarla:
-installa ntfy, tocca **+** e iscriviti all'argomento che ti ha dato Claude; su
-GitHub crea il Secret `NTFY_ARGOMENTO` con lo stesso argomento.
 
 Con le notifiche attive, l'icona di Jarvis sulla Home mostra il numero degli
 avvisi non ancora letti; aprendo la campanella si azzera. Il riquadro per

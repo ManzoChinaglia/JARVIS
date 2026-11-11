@@ -4,17 +4,13 @@
 // prove) sui dati appena scaricati e invia solo gli avvisi mai inviati prima,
 // segnati in dati/notifiche.json (solo i codici degli avvisi, niente di segreto).
 //
-// Due canali:
-// - notifiche di Jarvis (Web Push): arrivano con l'icona di Jarvis e toccandole si
-//   apre l'app sulla Home (un link, anche da ntfy, sull'iPhone apre sempre Safari).
-//   Servono l'iscrizione dell'iPhone (PUSH_ISCRIZIONE, l'utente la copia dall'app)
-//   e la chiave privata (PUSH_CHIAVE), tutte e due nei Secrets di GitHub; la chiave
-//   pubblica è CHIAVE_PUSH in index.html.
-// - ntfy, di riserva: se le notifiche di Jarvis non sono attive, se un invio
-//   fallisce o se l'iPhone ha chiuso l'iscrizione. L'argomento (NTFY_ARGOMENTO) è
-//   segreto e sta solo nei Secrets.
-// Senza nessun canale non invia e non segna niente, così appena se ne imposta uno
-// arriva tutto. Un errore non fa mai fallire il giro.
+// Un solo canale: le notifiche di Jarvis (Web Push), che arrivano con l'icona di Jarvis
+// e toccandole si apre l'app sulla Home. Servono l'iscrizione dell'iPhone
+// (PUSH_ISCRIZIONE, l'utente la copia dall'app) e la chiave privata (PUSH_CHIAVE), tutte
+// e due nei Secrets di GitHub; la chiave pubblica è CHIAVE_PUSH in index.html.
+// Senza notifiche attive non invia e non segna niente, così appena si attivano arriva
+// tutto; un invio fallito non viene segnato e si riprova al giro dopo. Un errore non
+// fa mai fallire il giro.
 //
 // Prima di ogni scadenza salva anche l'undici consigliato in dati/consigli.json: dopo
 // la giornata l'app lo confronta con i voti veri («com'è andata»).
@@ -27,11 +23,6 @@ const REPO = path.join(__dirname, '..');
 const REGISTRO = path.join(REPO, 'dati', 'notifiche.json');
 const APP = 'https://manzochinaglia.github.io/JARVIS/';
 const MASSIMO = 6;                                      // mai più di sei notifiche per giro
-const PRIORITA = { urgente: 4, attenzione: 3, info: 2 };  // scala di ntfy: 1 minima, 5 massima
-const ETICHETTE = { urgente: ['rotating_light'], attenzione: ['warning'], info: ['soccer'] };
-const RIATTIVA = { id: 'riattiva', livello: 'urgente', titolo: 'Riattiva le notifiche di Jarvis',
-  testo: 'L\'iPhone ha chiuso l\'iscrizione. Apri Jarvis dalla Home → campanella → «Attiva le notifiche», ' +
-         'copia il codice e mettilo su GitHub nel Secret PUSH_ISCRIZIONE. Intanto gli avvisi arrivano qui.' };
 
 /* Il codice dell'app sui file di dati/, pronto per chiedergli gli avvisi e il consiglio.
    dati: file da sostituire (prove). */
@@ -145,24 +136,10 @@ async function spedisciPush(iscrizione, messaggio, chiavi) {
   const webpush = require('web-push');                  // installato dal workflow solo per questo passo
   return webpush.sendNotification(iscrizione, JSON.stringify(messaggio), opzioniPush(messaggio, chiavi));
 }
-async function ntfy(invia, argomento, a) {
-  try {
-    const r = await invia('https://ntfy.sh/', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ topic: argomento, title: a.titolo, message: a.testo,
-                             priority: PRIORITA[a.livello], tags: ETICHETTE[a.livello], click: APP })
-    });
-    if (r.ok) return true;
-    console.log(`[notifiche] ntfy ha risposto ${r.status}: riprovo al prossimo giro.`);
-  } catch (e) {
-    console.log(`[notifiche] invio con ntfy fallito (${e.message}): riprovo al prossimo giro.`);
-  }
-  return false;
-}
 
-async function main({ argomento = process.env.NTFY_ARGOMENTO, iscrizione = process.env.PUSH_ISCRIZIONE,
+async function main({ iscrizione = process.env.PUSH_ISCRIZIONE,
                       chiave = process.env.PUSH_CHIAVE, prova = process.env.PROVA_NOTIFICHE === 'true',
-                      invia = fetch, spedisci = spedisciPush, adesso = Date.now(),
+                      spedisci = spedisciPush, adesso = Date.now(),
                       registro = REGISTRO, consigli, repo = REPO, dati = {}, lega = null } = {}) {
   const app = await appSuiDati({ repo, adesso, dati, lega });
   /* più leghe (07/10/2026): ogni lega ha i suoi consigli nella sua cartella e i suoi codici d'avviso
@@ -178,46 +155,37 @@ async function main({ argomento = process.env.NTFY_ARGOMENTO, iscrizione = proce
   nuovi = nuovi.slice(0, MASSIMO);
 
   const sub = leggiIscrizione(iscrizione), pubblica = chiavePubblica(repo);
-  if (iscrizione && !sub) console.log('[notifiche] PUSH_ISCRIZIONE non è un\'iscrizione valida: uso ntfy.');
-  let daJarvis = !!(sub && chiave && pubblica) && reg.push_scaduta !== impronta(sub);
-  if (!daJarvis && !argomento) {
+  if (iscrizione && !sub) console.log('[notifiche] PUSH_ISCRIZIONE non è un\'iscrizione valida.');
+  const daJarvis = !!(sub && chiave && pubblica) && reg.push_scaduta !== impronta(sub);
+  if (!daJarvis) {
     console.log(`[notifiche] nessun canale impostato: ${nuovi.length} avvisi nuovi non inviati.`);
     return { inviati: [], nuovi, daJarvis: 0 };
   }
 
   const fatti = [];
-  let conJarvis = 0, scaduta = false;
+  let scaduta = false;
   for (const a of nuovi) {
-    let ok = false;
-    if (daJarvis) {
-      try {
-        await spedisci(sub, { id: a.id, livello: a.livello, titolo: a.titolo, testo: a.testo }, { chiave, pubblica });
-        ok = true; conJarvis++;
-      } catch (e) {
-        if (e.statusCode === 404 || e.statusCode === 410) {
-          scaduta = true; daJarvis = false;
-          console.log('[notifiche] l\'iPhone ha chiuso l\'iscrizione alle notifiche di Jarvis: passo a ntfy.');
-        } else {
-          console.log(`[notifiche] notifica di Jarvis non inviata (${e.statusCode || e.message}): uso ntfy.`);
-        }
-      }
+    if (scaduta) break;
+    try {
+      await spedisci(sub, { id: a.id, livello: a.livello, titolo: a.titolo, testo: a.testo }, { chiave, pubblica });
+      fatti.push(a.id);
+    } catch (e) {
+      if (e.statusCode === 404 || e.statusCode === 410) scaduta = true;
+      else console.log(`[notifiche] notifica di Jarvis non inviata (${e.statusCode || e.message}): riprovo al prossimo giro.`);
     }
-    if (!ok && argomento) ok = await ntfy(invia, argomento, a);
-    if (ok) fatti.push(a.id);
   }
   /* iscrizione chiusa: la si segna per non riprovarla a ogni giro e lo si dice una volta sola */
   if (scaduta) {
     reg.push_scaduta = impronta(sub);
-    if (argomento) await ntfy(invia, argomento, RIATTIVA);
+    console.log("::warning::Jarvis: l'iPhone ha chiuso l'iscrizione alle notifiche. Apri Jarvis → campanella → «Attiva le notifiche» e aggiorna il Secret PUSH_ISCRIZIONE.");
   }
   if (fatti.length || scaduta) {
     reg.inviati = [...(reg.inviati || []), ...fatti].slice(-500);
     reg.aggiornato = new Date(adesso).toISOString();
     fs.writeFileSync(registro, JSON.stringify(reg));
   }
-  console.log(`[notifiche] inviate ${fatti.length} su ${nuovi.length} nuove ` +
-              `(${conJarvis} da Jarvis, ${fatti.length - conJarvis} con ntfy).`);
-  return { inviati: fatti, nuovi, daJarvis: conJarvis };
+  console.log(`[notifiche] inviate ${fatti.length} su ${nuovi.length} nuove.`);
+  return { inviati: fatti, nuovi, daJarvis: fatti.length };
 }
 
 if (require.main === module) {
