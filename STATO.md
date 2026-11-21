@@ -303,6 +303,7 @@ Mockup: `archivio/mockup/wow-1.html` (fuori da git: contiene i nomi degli avvers
    `prefers-reduced-motion` le ferma. Prove `prove/app.js` sempre verdi; residui CSS tolti nello stesso lavoro.
 
 ## Storico recente
+- **21/11/2026 — rose aggiornate (Opus):** scaricate da Leghe le rose di entrambe le leghe; QI con due scambi (uno è dell'utente: entrano Schmid, Simeone, Birindelli; escono Bremer, Bernardeschi, Mendy P.), Rivoluzione senza cambi. Prove rose, privacy, lega e lucchetto verdi, push b01c096. Il consiglio lo calcola l'app dalle rose; `consigli.json` (archivio di «com'è andata») si riscrive al giro prima della scadenza.
 
 **Fatto il 13/10 (non committato):** (1) «Tu, Jarvis e il massimo»: con Tu e Max vicini le etichette si sovrapponevano; ora `.cf.vicini` porta quella del massimo su una seconda riga. (2) «Il migliore che non hai schierato» non conta più chi è senza voto (prima Robinson s.v. prendeva l'8 di Mendy, il panchinaro che entra): `meglio()` in `htmlScelte`. Prove 334/334.
 **Aperti (richiesta utente 13/10):** (a) Jarvis ragiona solo a numeri: consiglia insieme due giocatori che nella realtà sono alternativi (Pellegrino+Beto contro il Como) → collegare all'Atlante del calcio di THE CLUB (da pianificare con Opus); (b) grafica «wow» mantenendo il liquid glass.
